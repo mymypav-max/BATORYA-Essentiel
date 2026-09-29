@@ -185,6 +185,7 @@ Statut : **pièce obligatoire du modèle de données**
 | INV-165 | Une anomalie informative est un avertissement au rapport de migration ; seule une donnée qui ne peut pas être représentée correctement part en quarantaine | SVC | |
 | INV-166 | Le catalogue par défaut V6 exclut ELE-008 (prise RJ45 Cat6) ; un document historique qui la contient la conserve par snapshot, `prestation_id NULL` | SVC | |
 | INV-167 | Les tests d'intégrité T-01 à T-20 (modèle §13.2) sont couverts avant le passage au DDL | test | T-01 à T-20 |
+| INV-168 | Avant le gel, aucune fonction ne référence une ligne de BC (`bc_lignes.id`), hors `facture_lignes.bc_ligne_id` en `RESTRICT` ; toute nouvelle fonction qui en aurait besoin exige d'abord de rétablir des identifiants stables (décision D-20) | SVC, revue | |
 
 ## M. Sauvegarde, restauration, licence
 
