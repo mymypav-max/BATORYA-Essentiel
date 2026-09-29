@@ -743,7 +743,7 @@ CK-01 numéros uniques et conformes · CK-02 séquences ≥ max des numéros `or
 
 ---
 
-## 15. Décisions ajoutées par cette rédaction (D-01 à D-19 validées le 2026-09-29 ; D-20 à valider)
+## 15. Décisions ajoutées par cette rédaction (D-01 à D-20 validées le 2026-09-29)
 
 | ID | Décision par défaut | Alternative | Statut |
 |---|---|---|---|
@@ -766,7 +766,7 @@ CK-01 numéros uniques et conformes · CK-02 séquences ≥ max des numéros `or
 | D-17 | Statut inconnu et non vide (devis, facture, conformité PV) → quarantaine | import avec valeur par défaut | **Validée** 2026-09-29 |
 | D-18 | Catégories de dépenses initiales (table `categories_depenses`, modifiables) : Matériaux, Sous-traitance, Location de matériel, Carburant et déplacements, Outillage et consommables, Assurances, Frais administratifs et comptabilité, Autre | énumération figée | **Validée** 2026-09-29 |
 | D-19 | Facture V2 sans statut → importée non réglée, comptée dans la facturation, le reste dû et le CA engagé (pas dans le CA encaissé ni l'URSSAF), listée « À vérifier » | quarantaine | **Validée** 2026-09-29 |
-| D-20 | Lignes de BC : pas de colonne `active`, régénération avant gel, lignes de facture en `RESTRICT` (écart 1 de §18) | rétablir `active`, `updated_at` et identifiants stables (V3.4) | **À valider** |
+| D-20 | Lignes de BC : pas de colonne `active`, régénération avant gel, lignes de facture en `RESTRICT` (écart 1 de §18) | rétablir `active`, `updated_at` et identifiants stables (V3.4) | **Validée** 2026-09-29 |
 
 ### Points à figer avant le DDL (P-xx)
 - **P-01** *(quasi clos)* : unités figées par D-13 ; catégories de prestations = 13 du catalogue par défaut V5.16 + `Revêtement` ; le mapping des types de planning est sans objet (la V2 n'a pas de planning) ; **reste** : liste initiale des catégories de dépenses (D-18).
@@ -797,7 +797,7 @@ CK-01 numéros uniques et conformes · CK-02 séquences ≥ max des numéros `or
 Le modèle est prêt pour le DDL lorsque :
 1. chaque INV de `invariants.md` a une garde désignée et un nom de test ; les tests T-01 à T-20 (§13.2) sont écrits ;
 2. D-01 à D-12 sont validées (fait le 2026-09-29) ; D-13 à D-17 sont validées (fait le 2026-09-29) ;
-3. D-18, D-19 et D-20 sont validées (P-01 soldé) ; D-16 est tranchée (aucune garantie recréée, fait) ;
+3. D-18, D-19 et D-20 sont validées (P-01 soldé, fait) ; D-16 est tranchée (aucune garantie recréée, fait) ;
 4. les errata E-01 à E-07 sont au fichier `cdc-errata-v6.md` ;
 5. l'ordre du DDL est : `machine/001` (indépendant) puis métier : migration → séquences → listes → clients/fournisseurs → catalogue → devis → BC → factures → règlements → garanties → PV → dépenses → planning → documents → historique → paramètres → URSSAF → triggers → index.
 
@@ -859,7 +859,7 @@ La V3.4 comptait 102 sections courtes ; la V3.5 les regroupe en 17 chapitres (el
 | §102 État de préparation au DDL | §17 |
 
 ### Écarts assumés par rapport à la V3.4
-1. **Lignes de BC** : la V3.4 prévoyait `bc_lignes.active`, `updated_at` et des identifiants stables. La V3.5 supprime `active` et régénère les lignes avant gel (§4.7, INV-38). Ce changement vient du point « lignes de BC / lignes de facture » de l'audit V3.4 ; il reste sûr parce qu'aucune facture ne référence une ligne BC avant le gel et que `facture_lignes.bc_ligne_id` est en `RESTRICT`. **À confirmer** par Rémy (D-20).
+1. **Lignes de BC** : la V3.4 prévoyait `bc_lignes.active`, `updated_at` et des identifiants stables. La V3.5 supprime `active` et régénère les lignes avant gel (§4.7, INV-38). Ce changement vient du point « lignes de BC / lignes de facture » de l'audit V3.4 ; il reste sûr parce qu'aucune facture ne référence une ligne BC avant le gel et que `facture_lignes.bc_ligne_id` est en `RESTRICT`. **Validé** par Rémy (D-20, 2026-09-29) ; contrainte associée : INV-168.
 2. **BC terminé** : la V3.4 disait « solde actif et reste dû du solde = 0 ». Arbitrage 1 du 2026-09-29 : Σ reste dû des factures actives hors avoir = 0.
 3. **Types de planning** : `intervention` et `travaux` rétablis (CDC §26, D-03) ; ils manquaient à la V3.4.
 4. **Migration** : la source est la V2 (la V5 n'a jamais été distribuée) ; les compteurs ne sont plus importés ; `complete → solde` sans objet (§10, D-13 à D-19).
