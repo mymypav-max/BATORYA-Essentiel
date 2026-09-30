@@ -1,6 +1,6 @@
 # BATORYA Essentiel V6 — Registre des invariants
 
-Version du registre : 2 — 2026-09-30 (rattaché au modèle SQLite V3.6 révisé : migration V2 externalisée, voir le journal en bas)
+Version du registre : 3 — 2026-09-30 (rattaché au modèle SQLite V3.7 ; V2 : migration V2 externalisée, V3 : high-water, voir le journal en bas)
 Statut : **pièce obligatoire du modèle de données**
 
 ## Mode d'emploi
@@ -47,7 +47,7 @@ Statut : **pièce obligatoire du modèle de données**
 | INV-22 | Attribution atomique dans la transaction de création ; numéro jamais réattribué ; erreur explicite au plafond (99 999 / 9 999) ; `dernier_numero` ne diminue jamais | SVC, TRG (TR-95), SQL | T-20 |
 | INV-23 | `numero` immuable ; l'année (yy) de la date de numérotation ne change jamais ; `date_creation` devis/BC immuable | TRG (TR-01) | |
 | INV-24 | ACP, FAC, AVO : `date_emission` ≥ dernière date de la séquence (pas pour DEV, BCD, PVR, DEP) | TRG (TR-02) | |
-| INV-25 | `sequence_high_water` (machine.db) : initialisé à l'import depuis `sequences` (INV-135) ; après restauration, séquence = max(restaurée, high-water) ; au démarrage normal, high-water > séquence = crash → high-water abaissé | SVC, test | C-18, T-22 |
+| INV-25 | `sequence_high_water` (machine.db) : `max_attribue` ne diminue jamais automatiquement ; initialisé à l'import depuis `sequences` (INV-135) ; après restauration, `dernier_numero` = max(restauré, `max_attribue`) et `max_attribue` = max(`max_attribue`, `dernier_numero` restauré) ; au démarrage normal, si `max_attribue` > `dernier_numero` (crash avant COMMIT), `max_attribue` est conservé, le prochain numéro est `max_attribue` + 1, le trou est accepté et journalisé ; aucun numéro attribué n'est réutilisé | SVC, test | C-18, T-22, T-24 |
 | INV-26 | Suffixe PV de levée = max + 1 par PV d'origine, dans la transaction | TRG (TR-41), SQL | |
 | INV-27 | Les devis, factures et PV importés gardent le numéro historique remis au client, jamais transformé en numéro V6 ; les BC et codes clients importés reçoivent un numéro V6 du convertisseur (ancien code dans `legacy_numero`) | SQL, CK-01 | T-23 |
 
@@ -205,15 +205,16 @@ Flux : sauvegarde JSON V2 → **convertisseur externe** → `import-v6.json` →
 | 2026-09-30 | INV-15 | Modifié : réarrondi à la migration remplacé par rejet de tout montant hors précision | V6 ne réarrondit plus ; l'arrondi V2 est fait par le convertisseur | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-20 | Modifié : format contrôlé sans exception sauf devis/factures/PV importés | exemptions d'origine supprimées | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-25 | Modifié : initialisation du high-water à l'import ajoutée | INV-135 remplacé | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-25 | Modifié (V3.7) : « high-water abaissé » au démarrage normal **supprimé** ; `max_attribue` ne diminue jamais, prochain numéro = `max_attribue` + 1, trou accepté et journalisé ; restauration : `max_attribue` relevé aussi | L'ancienne règle pouvait réattribuer un numéro déjà attribué avant un incident | Correction demandée par Rémy (D-27) |
 | 2026-09-30 | INV-27 | Modifié : « numéros V2 jamais transformés » limité aux devis, factures, PV ; BC et codes clients au format V6 | D-01 et E-09 | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-54 | Modifié : exemption « migration » supprimée | aucune exemption | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-110 / INV-111 | Modifié : acteur et événement `migration` renommés `import` | vocabulaire de l'import | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-130 | Modifié : quarantaine et rapport de migration remplacés par `import_anomalies` (TR-90) | D-22 | Migration V2 externalisée (D-21, E-09) |
-| 2026-09-30 | INV-131 | Modifié : principe général d'exemptions par `origine='migration'` supprimé ; reste une exemption unique (format du `numero` historique) | D-24 (à valider) | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-131 | Modifié : principe général d'exemptions par `origine='migration'` supprimé ; reste une exemption unique (format du `numero` historique) | D-24 (validée 2026-09-30) | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-133 | Modifié : contrôle « reste dû V6 = reste dû V2 » remplacé par les totaux de contrôle du fichier ; `resteAPayer` V2 ne concerne plus V6 | le calcul du reste dû V2 est une règle du convertisseur | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-134 | Modifié : « la migration n'en crée aucune » remplacé par « le contrat n'accepte aucune garantie » ; NOT NULL sans exception | D-16, D-23 | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-135 | **Remplacé** — ancien énoncé : « Compteurs V2 jamais importés (incohérents, sans année) ; séquences V6 vides après migration » | Compteurs récupérés par le convertisseur et transmis dans `sequences` ; V6 initialise ses séquences ; saut acceptable, réutilisation interdite | D-26 (brief du 2026-09-30) |
-| 2026-09-30 | INV-136 | Modifié : `migration_id` supprimé ; `origine` ∈ (`v6`,`import`) ; `legacy_*` NULL si `origine='v6'` | D-23 (à valider) | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-136 | Modifié : `migration_id` supprimé ; `origine` ∈ (`v6`,`import`) ; `legacy_*` NULL si `origine='v6'` | D-23 (validée 2026-09-30) | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-144 | **Réécrit** — ancien énoncé : « JSON = export, pas format de restauration ; l'import des sauvegardes V2 JSON reste possible via la migration (base vide uniquement) » | Le JSON V2 n'est pas un format de restauration V6 ; c'est une entrée du convertisseur | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-153 | Modifié : lecteur V2 tolérant remplacé par lecteur strict du contrat `import-v6.json` | V6 ne lit plus la V2 (D-25) | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-154 | Modifié : import V2 → import de `import-v6.json` | même règle, autre entrée | Migration V2 externalisée (D-21, E-09) |
