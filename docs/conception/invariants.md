@@ -1,6 +1,6 @@
 # BATORYA Essentiel V6 — Registre des invariants
 
-Version du registre : 2 — 2026-09-30 (rattaché au modèle SQLite V3.5 révisé : migration V2 externalisée, voir le journal en bas)
+Version du registre : 2 — 2026-09-30 (rattaché au modèle SQLite V3.6 révisé : migration V2 externalisée, voir le journal en bas)
 Statut : **pièce obligatoire du modèle de données**
 
 ## Mode d'emploi
