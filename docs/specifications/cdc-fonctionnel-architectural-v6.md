@@ -125,7 +125,6 @@ BATORYA doit distinguer clairement :
 * règle réglementaire.
 
 Aucune donnée ne doit être inventée automatiquement lorsqu’elle n’est pas disponible.
-
 ⸻
 
 4. Architecture technique
@@ -244,7 +243,6 @@ Les mentions légalement obligatoires ne peuvent pas être supprimées simplemen
 Sauvegardes
 
 Le module permet :
-
 * activation/désactivation des sauvegardes automatiques ;
 * fréquence lorsque nécessaire ;
 * sauvegarde manuelle ;
@@ -365,7 +363,6 @@ Il s’agit d’une prestation spécifique :
 ELE-008 — F+P prise RJ45 Cat6 avec câblage
 
 Cette prestation doit être supprimée du catalogue V6.
-
 ⸻
 
 12. Clients
@@ -484,8 +481,7 @@ Les dépenses peuvent être globales ou rattachées à un BC.
 
 Lorsqu’un devis est accepté :
 
-* le BC est créé automatiquement ;
-* la création est atomique ;
+* le BC est créé automatiquement ;* la création est atomique ;
 * l’opération est idempotente ;
 * aucun double BC ne doit être créé pour le même devis accepté.
 
@@ -604,7 +600,6 @@ Chaque règlement comporte :
 * date ;
 * montant ;
 * mode de paiement.
-
 Modes notamment :
 
 * espèces ;
@@ -724,3 +719,587 @@ Cela est distinct du passage du BC à Terminé : les garanties sont déclenchée
 Date de garantie
 
 La date affichée dans BATORYA est une date de suivi interne.
+Elle doit être identifiée dans l’interface comme telle, par exemple :
+
+« Suivi interne BATORYA — date indicative »
+
+Elle ne constitue pas une détermination juridique du point de départ d’une garantie légale.
+
+⸻
+
+25. Consultation des garanties
+
+Les garanties ne constituent pas un module métier autonome. Leur configuration est gérée directement depuis le Catalogue des prestations.
+
+Le suivi des garanties générées est consultable depuis le BC concerné et les vues de suivi nécessaires à l’interface. Il présente notamment :
+* BC ;
+* client ;
+* prestation ;
+* type de garantie ;
+* date de début du suivi interne ;
+* date d’échéance ;
+* état dérivé.
+
+L’interface affiche « Suivi interne BATORYA — date indicative ». Aucun affichage ne doit présenter cette date comme une détermination juridique du point de départ d’une garantie légale.
+
+⸻
+
+26. Planification
+
+Le module s’appelle **Planification** et comporte deux onglets : **Calendrier** et **Gantt**.
+
+Calendrier :
+* événements typés : intervention, travaux, rendez-vous client, réunion, appel, administratif, congé, indisponibilité, autre ;
+* une intervention ou des travaux sont obligatoirement rattachés à un BC ;
+* congé et indisponibilité ne sont jamais rattachés à un BC ;
+* les autres types peuvent être rattachés ou non à un BC ;
+* les événements peuvent être sur journée entière ou avec horaires.
+
+Gantt :
+* il est dédié aux BC ;
+* il utilise les dates de début et de fin du BC ;
+* un BC sans dates n’a pas de barre ;
+* il ne constitue pas une gestion de chantier indépendante du BC.
+
+La Planification est facultative et n’a aucune autorité sur le cycle de vie du BC. Une intervention planifiée ne rend pas un BC actif ou terminé.
+
+Aucune synchronisation Outlook ou Google n’est prévue en V6. Les jours ouvrés et jours fériés français sont pris en compte.
+
+⸻
+
+27. Notes
+
+Les notes sont des informations internes rattachées à un BC.
+
+Une note comporte :
+
+* texte libre ;
+* date de création ;
+* date de modification.
+
+Elle peut être :
+
+* modifiée ;
+* supprimée.
+
+Il n’existe pas dans V6 de moteur de tâches ou de workflow de rappel associé aux notes.
+
+⸻
+
+28. Dépenses
+
+BATORYA permet d’enregistrer des dépenses afin d’alimenter les analyses de gestion.
+
+Une dépense peut être :
+
+* globale ;
+* rattachée à un BC.
+
+Une dépense peut être associée à un fournisseur lorsque nécessaire.
+
+Les dépenses ne réduisent jamais directement le CA utilisé pour le calcul URSSAF.
+
+Hors périmètre
+
+BATORYA V6 ne gère pas :
+
+* le paiement des dépenses ;
+* les dépenses à payer ;
+* les échéanciers fournisseurs ;
+* un workflow de règlement fournisseur.
+
+Les dépenses servent uniquement aux analyses comptables et de marge.
+
+⸻
+
+29. Analyse comptable et marge
+
+La comptabilité de BATORYA est une couche d’analyse.
+
+BATORYA ne crée pas un second moteur comptable parallèle.
+
+Les analyses peuvent utiliser :
+
+* facturation ;
+* règlements ;
+* dépenses ;
+* BC ;
+* clients ;
+* périodes.
+
+Les calculs de marge doivent distinguer les recettes et les charges sans confondre cette analyse avec la base réglementaire URSSAF.
+
+⸻
+
+30. Module URSSAF — principe
+
+Le module URSSAF constitue une assistance au suivi déclaratif.
+
+BATORYA :
+
+* calcule ;
+* estime ;* historise ;
+* alerte ;
+* aide l’utilisateur à préparer sa déclaration.
+
+BATORYA ne transmet jamais automatiquement une déclaration officielle à l’URSSAF.
+
+L’utilisateur reste responsable de sa déclaration.
+
+⸻
+
+31. Profil réglementaire URSSAF
+
+Le profil cible est fixe :
+
+* statut : Micro-entrepreneur ;
+* secteur : Travaux BTP ;
+* activité : Prestation de services ;
+* date de début d’activité ;
+* périodicité : mensuelle ou trimestrielle ;
+* ACRE : oui/non.
+
+Les autres paramètres sont dérivés des données réglementaires.
+
+La date de début d’activité est une donnée essentielle.
+
+Elle ne doit pas être confondue avec une simple date de création de l’entreprise.
+
+⸻
+
+32. CA encaissé
+
+Le CA utilisé pour le suivi URSSAF repose sur les sommes effectivement encaissées, avec application des règles réglementaires versionnées relatives notamment aux avoirs et remboursements.
+
+Ainsi :
+
+* facture émise mais impayée → aucun CA encaissé ;
+* paiement partiel → seul le montant effectivement reçu est pris en compte ;
+* plusieurs paiements → chacun est affecté à sa date réelle ;
+* acompte payé → pris en compte à la date de réception ;
+* une même facture peut contribuer à plusieurs périodes ;
+* un avoir ou remboursement est traité selon la règle portée par le référentiel réglementaire applicable.
+
+Le CA encaissé est distinct du montant facturé.
+
+⸻
+
+33. CA engagé et CA prévisionnel
+
+BATORYA distingue :
+
+CA encaissé
+
+Sommes réellement reçues.
+
+CA engagé
+
+Montant des devis acceptés mais pas encore totalement encaissés.
+
+Un BC annulé est automatiquement retiré du CA engagé.
+
+Il ne doit plus être pris en compte dans les alertes de seuil ou projections utilisant le CA engagé.
+
+Son historique reste conservé.
+
+CA prévisionnel
+
+Projection future construite à partir des données connues, notamment le CA engagé et les éléments planifiés disponibles.
+
+Ces deux indicateurs ne doivent jamais être présentés comme du CA encaissé.
+
+Seul le CA effectivement reçu constitue le CA réalisé pour le suivi URSSAF.
+
+⸻
+
+34. Périodes URSSAF
+
+Les périodes sont :
+
+Mensuelles
+
+Du premier au dernier jour du mois.
+
+Trimestrielles
+
+Trimestres civils.
+
+Chaque paiement est affecté à la période correspondant à sa date réelle de réception.
+
+Si l’activité débute en cours de mois ou de trimestre, la première période est partielle.
+
+Le calcul porte uniquement sur la période réellement concernée.
+
+Une période sans encaissement existe néanmoins et doit être déclarée.
+
+⸻
+
+35. Déclarations
+
+Pour chaque période, BATORYA conserve notamment :
+
+* période ;
+* CA encaissé calculé ;
+* contributions estimées ;
+* CFP ;
+* autres éléments réglementaires applicables ;
+* montant effectivement déclaré par l’utilisateur ;
+* date réelle de déclaration ;
+* statut ;
+* différence entre estimation et déclaration ;
+* version du référentiel réglementaire.
+
+États notamment :
+
+* À déclarer ;
+* Déclarée ;
+* À vérifier.
+
+BATORYA ne marque jamais automatiquement une déclaration comme officiellement réalisée.
+
+⸻
+36. Historique et corrections
+
+Une période déclarée ne doit jamais être silencieusement réécrite.
+
+Si une donnée postérieure modifie une situation historique :
+
+* l’ancienne valeur est conservée ;
+* la nouvelle valeur est identifiée ;
+* l’écart est affiché ;
+* une anomalie/correction est créée ;
+* la période originale reste traçable.
+
+Les calculs historiques doivent rester reproductibles avec la version réglementaire utilisée à l’époque.
+
+⸻
+
+37. ACRE et CFP
+
+ACRE
+
+L’utilisateur indique s’il bénéficie de l’ACRE.
+
+BATORYA détermine les règles applicables à partir :
+
+* de la date de début d’activité ;
+* de la période ;
+* du référentiel réglementaire.
+
+La transition vers les règles normales est automatique.
+
+L’historique conserve la règle réellement appliquée.
+
+CFP
+
+La CFP est traitée séparément des contributions sociales.
+
+Son applicabilité et son taux proviennent du référentiel réglementaire.
+
+Elle apparaît séparément dans les calculs et l’historique.
+
+Versement libératoire
+
+Hors périmètre V6.
+
+⸻
+
+38. Seuils et alertes
+
+BATORYA surveille le seuil réglementaire applicable.
+
+Le module distingue :
+
+* CA encaissé réel ;
+* CA engagé ;
+* CA prévisionnel.
+
+Le seuil peut faire l’objet d’une alerte prévisionnelle.
+
+Exemple :
+
+* marge restante avant seuil : 3 000 € ;
+* devis accepté : 10 000 € ;
+* BATORYA signale l’exposition.
+
+BATORYA ne bloque jamais :
+
+* la création d’un devis ;
+* l’acceptation d’un devis ;
+* la création d’un BC ;
+* la facturation.
+
+L’utilisateur conserve entièrement sa décision.
+
+⸻
+
+39. Référentiel réglementaire
+
+Les paramètres réglementaires sont séparés du code applicatif.
+
+Chaque version possède :
+
+* identifiant/version ;
+* date d’effet ;
+* données réglementaires concernées ;
+* règles nécessaires au traitement des différents cas réglementaires, notamment les avoirs et remboursements lorsqu’ils ont un impact sur le CA.
+
+Les versions historiques sont conservées.
+
+Les versions du référentiel réglementaire sont **append-only**. Une nouvelle version est ajoutée sans modifier ni remplacer les versions historiques.
+
+Chaque version possède une date de début d’effet strictement croissante. Pour une période donnée, la version applicable est celle en vigueur à sa date de début d’effet.
+
+Aucune valeur historique du référentiel n’est modifiée manuellement : une correction ou une nouvelle règle donne lieu à une nouvelle version.
+
+Les anciennes versions restent disponibles pour les calculs historiques.
+
+Une nouvelle version future peut être téléchargée avant son entrée en vigueur.
+
+Si une donnée réglementaire nécessaire est absente :
+
+* BATORYA avertit ;
+* ne fabrique aucune valeur ;
+* ne bloque pas inutilement l’application.
+
+⸻
+
+40. Services BATORYA
+
+Le service distant BATORYA possède trois fonctions principales :
+
+1. Licence
+2. Mises à jour logicielles
+3. Références réglementaires
+
+Le service ne reçoit pas les données métier de l’utilisateur.
+
+Les données métier restent locales.
+
+Une indisponibilité du service distant ne doit jamais bloquer BATORYA immédiatement.
+Les communications distantes sont explicitement limitées aux fonctions prévues.
+
+⸻
+
+41. Licence et changement d’ordinateur
+
+La licence est liée à l’ordinateur / installation.
+
+La vérification de licence intervient tous les trois mois.
+
+En cas d’échec de vérification :
+
+« La licence de BATORYA n’a pas pu être vérifiée. Vous disposez de 15 jours pour connecter cet ordinateur à Internet afin de vérifier la validité de votre licence. »
+
+Pendant les 15 jours :
+
+* utilisation complète.
+
+Après expiration :
+
+* consultation autorisée ;
+* exports autorisés ;
+* création interdite ;
+* modification interdite ;
+* suppression interdite ;
+* opérations de facturation interdites.
+
+Une vérification réussie rétablit immédiatement le fonctionnement normal.
+
+Changement d’ordinateur
+
+En cas de changement d’ordinateur :
+
+* l’utilisateur contacte le support BATORYA ;
+* le support génère une nouvelle clé de licence spécifique au nouvel ordinateur ;
+* l’ancienne clé devient invalide.
+
+Il n’existe pas de procédure automatique de migration de licence entre deux ordinateurs.
+
+⸻
+
+42. Sauvegardes, restauration et import historique
+
+Sauvegardes
+
+Lors de la première sauvegarde, BATORYA crée :
+Dossier de travail/
+└── Sauvegardes/
+
+Les sauvegardes officielles sont des sauvegardes cohérentes de la **base SQLite métier**. Le JSON est un export de consultation/archivage et n’est pas un format de restauration V6.
+
+Le moteur est commun aux :
+* sauvegardes automatiques ;
+* sauvegardes manuelles ;
+* sauvegarde à la fermeture lorsque configurée.
+
+Lors d’un changement de dossier de travail, la sauvegarde immédiate proposée avant le changement est réalisée dans l’ancien dossier, afin de conserver une sauvegarde de sécurité avant la modification du chemin documentaire.
+
+Import historique V2
+
+V6 ne lit jamais directement le JSON V2. La reprise suit exclusivement le flux :
+
+**JSON V2 → convertisseur externe → import-v6.json → import V6**
+
+Le convertisseur externe porte les règles de transformation, normalisation et compatibilité propres à la V2. V6 ne contient aucune logique d’adaptation à la structure V2.
+
+L’import V6 :
+* accepte uniquement un import-v6.json conforme à son contrat ;
+* effectue une validation complète sans écriture, puis un import en transaction unique ;
+* est prévu uniquement sur une base métier vide ;
+* applique les règles métier V6 normales ;
+* ne lit jamais les états dérivés, caches du BC ou frozen_at fournis par le fichier ;
+* recalcule les valeurs dérivées selon les règles V6 ;
+* conserve uniquement l’exception prévue pour le numéro historique des devis, factures et PV déjà remis aux clients ;
+* initialise les séquences V6 et le high-water à partir des compteurs historiques compatibles transmis par le convertisseur ;
+* conserve les anomalies déclarées par le fichier dans import_anomalies, notamment a_verifier et non_importe, sans suppression silencieuse ;
+* trace les objets importés avec origine import et, lorsque disponible, legacy_id, legacy_numero et legacy_data.
+
+Aucune table migration_rapports, migration_quarantaine ou migration_id n’est utilisée.
+
+Restauration
+
+Avant restauration :
+* une sauvegarde de sécurité de la base métier courante est réalisée ;
+* le fichier est validé ;
+* une version de schéma supérieure à celle supportée est refusée ;
+* les migrations éventuelles sont effectuées sur une copie ;
+* les contrôles d’intégrité sont exécutés ;
+* le remplacement est atomique ;
+* les contrôles post-restauration sont exécutés.
+
+machine.db n’est jamais restaurée avec la base métier. Elle conserve notamment l’utilisateur local, la licence, l’identifiant d’installation, les dossiers de stockage, les préférences, Gmail et le high-water de numérotation.
+
+Après restauration, max_attribue ne diminue jamais : le prochain numéro respecte le maximum entre le high-water de la machine et les numéros restaurés. Un numéro déjà attribué n’est donc jamais réutilisé.
+
+⸻
+
+43. Services transversaux, sécurité, erreurs et documents
+
+DocumentService
+
+Un service central gère :
+
+* chemins ;
+* classement ;
+* déplacement ;
+* existence ;
+* génération des chemins documentaires.
+
+PdfService
+
+Le service PDF :
+
+* utilise les données SQLite ;
+* récupère les paramètres entreprise via les services applicatifs ;
+* produit les documents selon les modèles BATORYA ;
+* respecte le classement annuel.
+
+Les PDF V5.16 validés servent de référence fonctionnelle.
+EmailService
+
+Les envois sont manuels.
+
+Gmail est utilisé comme compte d’envoi.
+
+BATORYA ne doit jamais prétendre avoir envoyé un email si le compte Gmail n’est pas configuré ou si l’envoi n’a pas réellement réussi.
+
+ErrorService
+
+Un service centralise les erreurs.
+
+L’utilisateur peut ouvrir un rapport d’erreur contenant notamment :
+
+* contexte ;
+* erreur ;
+* informations techniques utiles ;
+* version BATORYA.
+
+Le rapport peut être envoyé manuellement depuis Gmail au support :
+
+batorya.app@outlook.fr
+
+Si Gmail n’est pas configuré :
+
+* aucun faux envoi ;
+* possibilité de copier ou sauvegarder le rapport ;
+* indication de la nécessité de configurer Gmail pour l’envoi.
+
+Données et confidentialité
+
+Les données métier restent locales.
+
+Aucune donnée métier n’est envoyée automatiquement vers :
+
+* Services BATORYA ;
+* Gmail ;
+* un serveur distant ;
+* un système d’analyse externe.
+
+Les communications distantes sont explicitement limitées aux fonctions prévues :
+
+* licence ;
+* mises à jour ;
+* références réglementaires.
+
+Cohérence et traçabilité
+
+Les opérations sensibles doivent être :
+
+* atomiques ;
+* validées ;
+* traçables ;
+* réversibles lorsque le métier le permet.
+
+Les documents historiques ne doivent jamais être modifiés silencieusement lorsqu’une nouvelle opération doit être créée.
+
+⸻
+
+Synthèse fonctionnelle finale
+
+BATORYA Essentiel V6 est une application locale de gestion destinée exclusivement au micro-entrepreneur du BTP en prestation de services.
+
+Le BC constitue le centre du workflow, sans devenir un document.
+
+Le cycle principal est :
+
+Client → Devis → Acceptation → BC → Facturation → Règlements → Terminé
+
+avec les fonctions transversales :
+
+* planification ;
+* notes ;
+* PV ;
+* garanties ;
+* dépenses ;
+* analyses ;
+* URSSAF ;
+* documents ;
+* sauvegardes.
+
+Les principes structurants sont :
+
+* données métier locales ;
+* SQLite indépendant du dossier de travail ;
+* précision monétaire conservée ;
+* historique préservé ;
+* absence de TVA ;
+* absence d’avenants ;
+* absence de comptabilité complète ;
+* absence de gestion des paiements fournisseurs ;
+* absence de télétransmission URSSAF ;
+* assistance réglementaire versionnée ;
+* licence et mises à jour via Services BATORYA ;
+* aucune décision commerciale ou réglementaire automatisée à la place de l’utilisateur.
+
+Le suivi interne des garanties démarre à 100 % facturé, indépendamment du paiement final et du statut Terminé.
+
+Une Situation émise interdit l’annulation directe du BC, car elle matérialise un avancement de travaux commencé.
+
+Le CA engagé exclut les BC annulés.
+
+Le CA URSSAF repose sur les encaissements réels, avec traitement des avoirs et remboursements déterminé par le référentiel réglementaire versionné.
+
+Le fonctionnement hors connexion demeure la règle, sous réserve du mécanisme de validation de licence.
+
+Le changement de dossier de travail ne déplace jamais les données SQLite et propose une sauvegarde immédiate avant changement.
