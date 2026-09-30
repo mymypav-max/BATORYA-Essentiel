@@ -18,7 +18,7 @@ BATORYA centralise notamment :
 * BC ;
 * facturation ;
 * règlements ;
-* planning ;
+* planification ;
 * PV ;
 * garanties ;
 * notes ;
@@ -52,7 +52,7 @@ Le périmètre V6 couvre exclusivement :
 * avoirs ;
 * clients ;
 * catalogue ;
-* planning ;
+* planification ;
 * PV ;
 * garanties ;
 * notes ;
@@ -161,17 +161,17 @@ Le dossier de travail concerne principalement le stockage des documents génér�
 
 6. Gestion monétaire
 
-Les montants monétaires ne doivent jamais être arrondis prématurément.
+Les montants monétaires sont manipulés avec une représentation décimale exacte. SQLite ne doit pas utiliser REAL comme représentation exacte d’un montant.
 
-Les calculs intermédiaires doivent conserver leur précision.
+BATORYA utilise une représentation décimale fiable, avec stockage canonique en texte décimal et calcul via une bibliothèque décimale adaptée.
 
-SQLite ne doit pas être utilisé comme représentation exacte d’une valeur monétaire via un simple REAL.
+Les calculs intermédiaires conservent leur précision et aucun arrondi prématuré n’est effectué.
 
-BATORYA doit utiliser une représentation décimale fiable, notamment par stockage canonique en texte décimal et calcul via une bibliothèque décimale adaptée.
+Les montants commerciaux finaux (totaux, acomptes, factures, règlements, dépenses) sont à 2 décimales. L’arrondi est HALF_UP et intervient une seule fois par ligne ; le total est obtenu par somme des lignes arrondies, moins la remise globale arrondie.
 
-Les fractions de centime présentes dans les données doivent pouvoir être conservées.
+Les quantités, prix unitaires et remises en valeur peuvent conserver une précision libre lorsqu’elle est prévue par le modèle. Les pourcentages saisis utilisent 2 décimales.
 
-Les valeurs historiques comportant des artefacts de calcul JavaScript doivent être traitées lors de la migration et non arrondies aveuglément.
+Aucune perte silencieuse de précision n’est autorisée. Pour l’import historique, V6 ne réarrondit pas les données : le convertisseur externe produit un import-v6.json conforme à la précision attendue, et un fichier hors précision est rejeté par l’import V6.
 
 ⸻
 
@@ -331,15 +331,15 @@ Le catalogue constitue la base des prestations proposées dans les devis.
 
 Le catalogue V6 doit reprendre le catalogue réel validé de V5.16.
 
-Le catalogue actuel contient environ 205 prestations prédéfinies.
+Le catalogue réel de référence contient 205 prestations prédéfinies. Après suppression de ELE-008, le catalogue par défaut V6 comporte donc 204 prestations.
 
-La liste définitive doit être récupérée depuis le fichier catalogue réel et non reconstruite manuellement.
+La liste doit être récupérée depuis le catalogue réel audité, et non reconstruite manuellement.
 
 Garanties
 
 Les garanties peuvent être gérées depuis le catalogue de prestations.
 
-Une prestation peut disposer d’une garantie par défaut.
+Une prestation peut disposer d’un ou plusieurs types de garantie par défaut.
 
 Les garanties sont notamment :
 
@@ -370,7 +370,7 @@ Ils peuvent être utilisés par :
 * devis ;
 * BC ;
 * factures ;
-* planning ;
+* planification ;
 * PV ;
 * garanties ;
 * notes ;
@@ -421,18 +421,26 @@ Les PDF sont déplacés selon leur état :
 
 14. Modification d’un devis accepté
 
-Un devis accepté reste modifiable tant que la facturation n’a pas commencé.
+Un devis accepté reste modifiable tant qu’il n’est pas gelé.
 
-Lorsqu’il est modifié :
+Le gel est irréversible et intervient au premier événement suivant :
+* encaissement actif, même partiel, d’un acompte ;
+* émission d’une situation ;
+* émission d’un solde.
 
+Un acompte émis mais non encaissé ne gèle pas le devis ni le BC.
+
+Lorsqu’un devis accepté non gelé est modifié :
 * l’historique est conservé ;
-* le BC associé est mis à jour ;
-* les données commerciales restent cohérentes.
+* le BC associé est régénéré dans la même transaction ;
+* les snapshots, lignes, garanties de lignes et montant contractuel du BC restent cohérents ;
+* tout acompte émis mais non encaissé est annulé automatiquement dans la même transaction.
 
-Dès qu’une facturation a commencé :
+Un devis refusé ou annulé est immuable.
 
-* le devis est figé sur ses éléments commerciaux structurants ;
-* le BC est également figé sur ces éléments.
+Après le gel :
+* le devis et le BC sont figés sur leurs éléments commerciaux structurants ;
+* les lignes, garanties de lignes, remises, acompte prévu, client, chantier, snapshots et montant contractuel ne sont plus modifiables.
 
 Les travaux supplémentaires ne donnent pas lieu à un avenant dans Essentiel.
 
@@ -456,7 +464,7 @@ Le BC relie notamment :
 * devis accepté ;
 * facturation ;
 * règlements ;
-* planning ;
+* planification ;
 * notes ;
 * PV ;
 * garanties.
@@ -482,13 +490,13 @@ Le statut métier n’est pas librement modifiable par l’utilisateur.
 
 Passage à Terminé
 
-Le BC devient :
+Le BC devient **Terminé** si et seulement si :
+* un solde actif existe ;
+* la somme des restes dus des factures actives hors avoir est nulle.
 
-Terminé
+Un solde à 0 € ne suffit pas s’il reste un acompte ou une situation dû.
 
-uniquement lorsque la facture de solde est entièrement réglée.
-
-L’émission d’une facture de solde ne suffit pas.
+Le passage à Terminé est dérivé du service métier et n’est pas librement saisi par l’utilisateur. Une annulation de règlement ou d’avoir peut faire revenir le BC à En cours lorsque les conditions de Terminé ne sont plus réunies.
 
 ⸻
 
@@ -540,7 +548,7 @@ BATORYA V6 gère quatre types fonctionnels :
 * Solde
 * Avoir
 
-Le type technique historique complete de V5.16 n’est pas conservé comme type métier V6.
+Le type technique historique `complete` n’est pas conservé comme type métier V6.
 
 Solde
 
@@ -554,7 +562,9 @@ Préfixe :
 
 ACP
 
-Les autres préfixes documentaires sont ceux définis à partir du fonctionnement V5.16 et doivent être conservés lors de la migration V6.
+Les numéros V6 suivent la convention uniforme définie par le modèle : DEV, BCD, FAC, ACP, AVO, PVR, DEP suivis du compteur sur 5 chiffres et de l’année sur 2 chiffres.
+
+Les devis, factures, acomptes, situations, soldes, avoirs et PV importés peuvent conserver leur numéro historique lorsqu’il a déjà été remis au client. Les BC et codes clients/fournisseurs importés utilisent les formats V6.
 
 ⸻
 
@@ -571,7 +581,7 @@ Plusieurs situations peuvent être émises.
 
 Le solde clôture la facturation commerciale du BC.
 
-Les numérotations sont indépendantes par type de document lorsque cela correspond au système V5.16.
+Les situations et les soldes partagent la même séquence FAC. Les numéros ne sont pas configurables manuellement et un numéro déjà attribué n’est jamais réutilisé ; les trous de numérotation sont acceptables.
 
 Les factures historiques restent conservées.
 
@@ -668,9 +678,9 @@ Numérotation
 
 Le numéro du PV initial est réutilisé avec suffixe :
 
-* PV-0001-26
-* PV-0001-26-01
-* PV-0001-26-02
+* PVR-00001-26
+* PVR-00001-26-01
+* PVR-00001-26-02
 
 La levée de réserves ne modifie pas le suivi interne des garanties.
 
@@ -700,7 +710,7 @@ Il ne dépend pas :
 * de la présence de réserves ;
 * de la levée des réserves.
 
-Cela est distinct du passage du BC à Terminé, qui intervient uniquement lorsque le solde est entièrement payé.
+Cela est distinct du passage du BC à Terminé : les garanties sont déclenchées par le franchissement de 100 % facturé, alors que Terminé dépend du solde actif et de l’absence de reste dû sur les factures actives hors avoir.
 
 Date de garantie
 
@@ -714,55 +724,43 @@ Elle ne constitue pas une détermination juridique du point de départ d’une g
 
 ⸻
 
-25. Interface Garanties
+25. Consultation des garanties
 
-Le module Commande comporte un onglet Garanties.
+Les garanties ne constituent pas un module métier autonome. Leur configuration est gérée directement depuis le Catalogue des prestations.
 
-Il présente uniquement les BC concernés par le suivi des garanties.
-
-Colonnes principales :
-
+Le suivi des garanties générées est consultable depuis le BC concerné et les vues de suivi nécessaires à l’interface. Il présente notamment :
 * BC ;
 * client ;
-* facturation ;
-* prochaine échéance ;
-* état.
-
-Il n’est pas nécessaire d’afficher le type de garantie dans la table principale.
-
-L’ouverture du BC permet d’afficher :
-
 * prestation ;
 * type de garantie ;
 * date de début du suivi interne ;
 * date d’échéance ;
-* état.
+* état dérivé.
+
+L’interface affiche « Suivi interne BATORYA — date indicative ». Aucun affichage ne doit présenter cette date comme une détermination juridique du point de départ d’une garantie légale.
 
 ⸻
 
-26. Planning
+26. Planification
 
-Le planning est mixte.
+Le module s’appelle **Planification** et comporte deux onglets : **Calendrier** et **Gantt**.
 
-Il peut contenir :
+Calendrier :
+* événements typés : intervention, travaux, rendez-vous client, réunion, appel, administratif, congé, indisponibilité, autre ;
+* une intervention ou des travaux sont obligatoirement rattachés à un BC ;
+* congé et indisponibilité ne sont jamais rattachés à un BC ;
+* les autres types peuvent être rattachés ou non à un BC ;
+* les événements peuvent être sur journée entière ou avec horaires.
 
-Éléments liés à un BC
+Gantt :
+* il est dédié aux BC ;
+* il utilise les dates de début et de fin du BC ;
+* un BC sans dates n’a pas de barre ;
+* il ne constitue pas une gestion de chantier indépendante du BC.
 
-* intervention ;
-* travaux ;
-* rendez-vous ;
-* événement lié au dossier.
+La Planification est facultative et n’a aucune autorité sur le cycle de vie du BC. Une intervention planifiée ne rend pas un BC actif ou terminé.
 
-Événements généraux
-
-* congés ;
-* indisponibilité ;
-* rendez-vous ;
-* événements internes.
-
-Le planning est facultatif.
-
-Il ne modifie pas le statut du BC.
+Aucune synchronisation Outlook ou Google n’est prévue en V6. Les jours ouvrés et jours fériés français sont pris en compte.
 
 ⸻
 
@@ -1118,59 +1116,59 @@ Il n’existe pas de procédure automatique de migration de licence entre deux o
 
 ⸻
 
-42. Sauvegardes, migration et restauration
+42. Sauvegardes, restauration et import historique
 
 Sauvegardes
 
 Lors de la première sauvegarde, BATORYA crée :
-
 Dossier de travail/
 └── Sauvegardes/
 
-Toutes les sauvegardes JSON suivantes utilisent ce même emplacement.
+Les sauvegardes officielles sont des sauvegardes cohérentes de la **base SQLite métier**. Le JSON est un export de consultation/archivage et n’est pas un format de restauration V6.
 
 Le moteur est commun aux :
-
 * sauvegardes automatiques ;
 * sauvegardes manuelles ;
 * sauvegarde à la fermeture lorsque configurée.
 
 Lors d’un changement de dossier de travail, la sauvegarde immédiate proposée avant le changement est réalisée dans l’ancien dossier, afin de conserver une sauvegarde de sécurité avant la modification du chemin documentaire.
 
-Migration V2
+Import historique V2
 
-BATORYA V6 doit pouvoir importer une sauvegarde historique V2.
+V6 ne lit jamais directement le JSON V2. La reprise suit exclusivement le flux :
 
-La migration doit :
+**JSON V2 → convertisseur externe → import-v6.json → import V6**
 
-* préserver les données ;
-* normaliser les anciens formats ;
-* corriger les incompatibilités structurelles ;
-* ne jamais supprimer silencieusement une donnée ;
-* produire un rapport de migration.
+Le convertisseur externe porte les règles de transformation, normalisation et compatibilité propres à la V2. V6 ne contient aucune logique d’adaptation à la structure V2.
 
-La sauvegarde historique connue contient notamment :
+L’import V6 :
+* accepte uniquement un import-v6.json conforme à son contrat ;
+* effectue une validation complète sans écriture, puis un import en transaction unique ;
+* est prévu uniquement sur une base métier vide ;
+* applique les règles métier V6 normales ;
+* ne lit jamais les états dérivés, caches du BC ou frozen_at fournis par le fichier ;
+* recalcule les valeurs dérivées selon les règles V6 ;
+* conserve uniquement l’exception prévue pour le numéro historique des devis, factures et PV déjà remis aux clients ;
+* initialise les séquences V6 et le high-water à partir des compteurs historiques compatibles transmis par le convertisseur ;
+* conserve les anomalies déclarées par le fichier dans import_anomalies, notamment a_verifier et non_importe, sans suppression silencieuse ;
+* trace les objets importés avec origine import et, lorsque disponible, legacy_id, legacy_numero et legacy_data.
 
-* 8 devis ;
-* 3 clients ;
-* environ 60 entrées de catalogue anciennes/malformées ;
-* compteurs ;
-* 2 factures ;
-* informations entreprise ;
-* PV ;
-* paramètres URSSAF.
-
-Le catalogue historique n’est pas la source de vérité du catalogue V6.
+Aucune table migration_rapports, migration_quarantaine ou migration_id n’est utilisée.
 
 Restauration
 
 Avant restauration :
+* une sauvegarde de sécurité de la base métier courante est réalisée ;
+* le fichier est validé ;
+* une version de schéma supérieure à celle supportée est refusée ;
+* les migrations éventuelles sont effectuées sur une copie ;
+* les contrôles d’intégrité sont exécutés ;
+* le remplacement est atomique ;
+* les contrôles post-restauration sont exécutés.
 
-* une sauvegarde de sécurité est réalisée ;
-* les données restaurées sont validées ;
-* l’opération est atomique.
+machine.db n’est jamais restaurée avec la base métier. Elle conserve notamment l’utilisateur local, la licence, l’identifiant d’installation, les dossiers de stockage, les préférences, Gmail et le high-water de numérotation.
 
-Une restauration partielle ou incohérente ne doit pas remplacer les données existantes.
+Après restauration, max_attribue ne diminue jamais : le prochain numéro respecte le maximum entre le high-water de la machine et les numéros restaurés. Un numéro déjà attribué n’est donc jamais réutilisé.
 
 ⸻
 
@@ -1268,7 +1266,7 @@ Client → Devis → Acceptation → BC → Facturation → Règlements → Term
 
 avec les fonctions transversales :
 
-* planning ;
+* planification ;
 * notes ;
 * PV ;
 * garanties ;
