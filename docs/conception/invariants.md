@@ -1,11 +1,11 @@
 # BATORYA Essentiel V6 — Registre des invariants
 
-Version du registre : 1 (rattaché au modèle SQLite V3.5)
+Version du registre : 2 — 2026-09-30 (rattaché au modèle SQLite V3.5 révisé : migration V2 externalisée, voir le journal en bas)
 Statut : **pièce obligatoire du modèle de données**
 
 ## Mode d'emploi
 
-- Un invariant (**INV-xx**) est une règle métier ou technique déjà validée. Son numéro est **stable** : il n'est jamais réutilisé ni renuméroté. Les numéros absents de la séquence (trous entre sections) sont **réservés** : ils ne sont jamais attribués rétroactivement, une nouvelle règle reçoit le numéro suivant le plus élevé (INV-153, …).
+- Un invariant (**INV-xx**) est une règle métier ou technique déjà validée. Son numéro est **stable** : il n'est jamais réutilisé ni renuméroté. Les numéros absents de la séquence (trous entre sections) sont **réservés** : ils ne sont jamais attribués rétroactivement, une nouvelle règle reçoit le numéro suivant le plus élevé (INV-171, …).
 - Chaque INV a une **garde** et **un test du même nom** (`test_INV_xx`) : SQL (CHECK, UNIQUE, FK, index partiel), TRG (trigger `TR-xx`), SVC (service applicatif), CK (requête de contrôle `CK-xx`).
 - Avant de valider une nouvelle version du modèle, on la compare à ce registre. **Aucun INV ne disparaît ou ne change de sens sans ligne dans le journal des retraits/modifications** (en bas), avec date, motif et décision.
 - Toute règle nouvelle : ajouter une ligne (nouveau numéro), sa garde, son test.
@@ -36,20 +36,20 @@ Statut : **pièce obligatoire du modèle de données**
 | INV-12 | Arithmétique SQL des montants uniquement par centimes entiers ; jamais `CAST REAL`, `SUM` ou `ORDER BY` sur TEXT décimal | SVC, revue de DDL | |
 | INV-13 | Arrondi HALF_UP (valeur absolue), un seul arrondi par ligne ; total = Σ lignes arrondies − remise globale arrondie | SVC | C-14 à C-17 |
 | INV-14 | Précision libre uniquement pour `quantite`, `prix_unitaire_ht`, remise « montant » de ligne, taux ; tout autre montant : 2 décimales ; négatifs limités à `facture_lignes.montant_ht` (déduction), `ca_encaisse`, `ecart`, `urssaf_details.base`, `montant_retenu` | SQL | |
-| INV-15 | Migration : montant final à plus de 2 décimales → valeur V6 arrondie, valeur d'origine dans `legacy_data`, anomalie au rapport | SVC, CK | |
+| INV-15 | Import : tout montant du fichier `import-v6.json` est à la précision de sa famille décimale, sinon le fichier est rejeté ; V6 ne réarrondit pas à l'import (l'arrondi des totaux V2 non arrondis est fait par le convertisseur) | SVC, CK | T-21 |
 
 ## C. Numérotation
 
 | INV | Énoncé | Garde | Cas |
 |---|---|---|---|
-| INV-20 | Formats V6 : `CLI-0001`, `FOU-0001`, `DEV|BCD|FAC|ACP|AVO|PVR|DEP-00001-yy`, levée `PVR-00001-yy-01` ; `yy` = année de la date métier ; contrôle de format seulement si `origine='v6'` | SQL | |
+| INV-20 | Formats V6 : `CLI-0001`, `FOU-0001`, `DEV|BCD|FAC|ACP|AVO|PVR|DEP-00001-yy`, levée `PVR-00001-yy-01` ; `yy` = année de la date métier ; contrôle de format sans exception, sauf devis, factures et PV `origine='import'` (INV-131) | SQL | |
 | INV-21 | Séquence unique par `(type_objet, annee)` ; `annee=0` pour CLI/FOU ; situation et solde partagent FAC ; ACP et AVO séparés | SQL | |
 | INV-22 | Attribution atomique dans la transaction de création ; numéro jamais réattribué ; erreur explicite au plafond (99 999 / 9 999) ; `dernier_numero` ne diminue jamais | SVC, TRG (TR-95), SQL | T-20 |
 | INV-23 | `numero` immuable ; l'année (yy) de la date de numérotation ne change jamais ; `date_creation` devis/BC immuable | TRG (TR-01) | |
 | INV-24 | ACP, FAC, AVO : `date_emission` ≥ dernière date de la séquence (pas pour DEV, BCD, PVR, DEP) | TRG (TR-02) | |
-| INV-25 | `sequence_high_water` (machine.db) : après restauration, séquence = max(restaurée, high-water) ; au démarrage normal, high-water > séquence = crash → high-water abaissé | SVC, test | C-18 |
+| INV-25 | `sequence_high_water` (machine.db) : initialisé à l'import depuis `sequences` (INV-135) ; après restauration, séquence = max(restaurée, high-water) ; au démarrage normal, high-water > séquence = crash → high-water abaissé | SVC, test | C-18, T-22 |
 | INV-26 | Suffixe PV de levée = max + 1 par PV d'origine, dans la transaction | TRG (TR-41), SQL | |
-| INV-27 | Numéros historiques V2 conservés tels quels ; jamais transformés en numéros V6 | SVC, CK-01 | |
+| INV-27 | Les devis, factures et PV importés gardent le numéro historique remis au client, jamais transformé en numéro V6 ; les BC et codes clients importés reçoivent un numéro V6 du convertisseur (ancien code dans `legacy_numero`) | SQL, CK-01 | T-23 |
 
 ## D. Snapshots, gel, contrat
 
@@ -87,7 +87,7 @@ Statut : **pièce obligatoire du modèle de données**
 |---|---|---|---|
 | INV-52 | Un seul acompte actif, un seul solde actif, une situation active par numéro et par BC | SQL (index partiels) | C-20, T-02, T-03 |
 | INV-53 | Facture immuable dès l'INSERT (contenu, lignes, numéro, montants, snapshots) ; seuls `cancelled_at`/`motif_annulation` (une fois) et le rattachement client évoluent ; jamais supprimée | TRG (TR-20, TR-21) | |
-| INV-54 | `Σ facture_lignes.montant_ht = factures.total_ht` (exemption : migration) | SVC, CK-05 | C-08, T-19 |
+| INV-54 | `Σ facture_lignes.montant_ht = factures.total_ht` (aucune exemption, y compris pour les données importées) | SVC, CK-05 | C-08, T-19 |
 | INV-55 | `total_ht` : acompte, situation, avoir > 0.00 ; solde ≥ 0.00 ; aucun TTC ; type `complete` inexistant ; solde toujours de type `solde` | SQL | C-08 |
 | INV-56 | Facturation nette = Σ acomptes + situations + solde actifs − Σ avoirs actifs | SVC, test | C-09 |
 | INV-57 | Situation = arrondi(contractuel × cumul %) − nette avant ; nette après ≤ contractuel ; acompte ≤ contractuel ; seule la dernière situation active est annulable | TRG (TR-22, TR-24), SVC | C-03, C-09 |
@@ -143,8 +143,8 @@ Statut : **pièce obligatoire du modèle de données**
 | INV-106 | Chemins relatifs à une racine identifiée ; racines jamais supprimées ; changer de dossier crée une nouvelle racine ; anciens documents gardent leur racine ; `chemin_absolu` modifié seulement par remappage explicite | SVC | |
 | INV-107 | Le PDF n'est jamais la source de vérité ; il se régénère depuis SQLite et les snapshots | SVC | |
 | INV-108 | Arborescence annuelle `Devis/{En_attente,Accepte,Refuse,Annule}`, `Factures/{Acomptes,Situations,Soldes,Avoirs}`, `PV` ; le BC n'a pas de PDF | SVC | |
-| INV-110 | `historique` est append-only (aucun UPDATE/DELETE) ; gel, émission, règlement, annulation, remboursement, avoir, passage/retour de Terminé, garantie, rattachement, URSSAF, migration, restauration y sont tracés | TRG (TR-60), SVC | |
-| INV-111 | `historique.type_entite` et `type_evenement` sont des énumérations fermées ; acteur `utilisateur`, `systeme` ou `migration` | SQL | |
+| INV-110 | `historique` est append-only (aucun UPDATE/DELETE) ; gel, émission, règlement, annulation, remboursement, avoir, passage/retour de Terminé, garantie, rattachement, URSSAF, import, restauration y sont tracés | TRG (TR-60), SVC | |
+| INV-111 | `historique.type_entite` et `type_evenement` sont des énumérations fermées ; acteur `utilisateur`, `systeme` ou `import` | SQL | |
 
 ## K. URSSAF
 
@@ -159,33 +159,29 @@ Statut : **pièce obligatoire du modèle de données**
 | INV-126 | Détails et encaissements figés au verrouillage ; `calcul_snapshot` permet de reproduire le calcul avec la version réglementaire de l'époque | TRG (TR-83) | T-18 |
 | INV-127 | Aucune déclaration officielle automatique ; `ecart = montant_declare − (cotisations + cfp)` fixé à la déclaration | SVC, SQL | |
 
-## L. Migration
+## L. Import de `import-v6.json` (contrat d'entrée V6)
+
+Flux : sauvegarde JSON V2 → **convertisseur externe** → `import-v6.json` → **import V6**. Les invariants ci-dessous ne concernent que l'étape 2 (validation et import par V6). Les règles de transformation V2 sont sorties de ce registre : voir le journal (règles transférées au futur `docs/migration/convertisseur-v2-vers-import-v6.md`).
 
 | INV | Énoncé | Garde | Cas |
 |---|---|---|---|
-| INV-130 | Aucune donnée supprimée en silence ; rapport et quarantaine jamais supprimés ; sources jamais modifiées | TRG (TR-90), SVC | |
-| INV-131 | Mode migration = exemptions conditionnées par `origine='migration'`, liste exhaustive (§10.3) ; unicités non exemptées ; écarts signalés par CK | SQL, TRG, CK | |
-| INV-132 | Paiement unique V2 (`Reglee` + `datePaiement`) → un règlement `encaissement` (mode `autre`) ; `Reglee` sans date → quarantaine ; client déduit non présent en base → `a_rattacher` (rapprochement exact normalisé uniquement) ; `prestation_id` NULL si la référence est absente du catalogue importé | SVC, test | |
-| INV-133 | Contrôle de fin de migration : reste dû V6 recalculé = reste dû V2 (0 si `Reglee`, sinon `montantHT`), écarts au rapport ; `resteAPayer` V2 jamais utilisé comme dette | CK-12 | T-16 |
-| INV-134 | La V2 ne contient aucune garantie : la migration n'en crée aucune (D-16) ; le rapport liste les BC soldés concernés ; une garantie migrée éventuelle reste rattachée à un BC et jamais recalculée | SQL, SVC | |
-| INV-135 | Compteurs V2 jamais importés (incohérents, sans année) ; séquences V6 vides après migration | SVC, CK-02 | |
-| INV-136 | `origine='migration'` ⇔ `migration_id` renseigné ; `legacy_numero` seulement s'il diffère de `numero` | SQL | |
-| INV-153 | Lecteur V2 tolérant : `data` et ses clés optionnels ; `version` `2.x` exigée ; clé inconnue conservée au rapport, jamais importée en silence | SVC, test | |
-| INV-154 | Import V2 en deux temps (dry-run puis transaction unique, tout ou rien) et seulement sur base métier vide | SVC, test | |
-| INV-155 | Catalogue V2 : réparation des colonnes décalées seulement si le motif est exact ; en-tête importé et préfixe inconnu → quarantaine ; unités normalisées (D-13) | SVC, test | |
-| INV-156 | Client déduit d'un devis V2 : clé nom+prénom normalisée, e-mails compatibles, sinon deux clients ; création en `a_rattacher` ; aucun fuzzy | SVC, test | |
-| INV-157 | BC reconstruit uniquement pour un devis `accepte` ; `date_acceptation` estimée (D-15) avec avertissement ; `nFacture`/`nAcompte`/`nBC` ne font que confirmer `refDevis` | SVC, test | |
-| INV-158 | Factures V2 : types `acompte`/`solde` seuls ; autre type ou statut non vide inconnu → quarantaine ; acompte = 1 ligne `synthese` ; solde = lignes `prestation` + 1 ligne `deduction` ; `montantHT` fait foi | SVC, SQL | |
-| INV-159 | Montants V2 : totaux recalculés selon les règles V6 pour les devis non acceptés ; factures reprises à `montantHT` ; fraction de centime → HALF_UP + original en `legacy_data` | SVC, CK-05 | |
-| INV-160 | PV V2 sans BC (`refDevis` absent ou devis non accepté) → quarantaine ; numéro V2 conservé | SVC, test | |
-| INV-161 | Profil URSSAF non créé par la migration ; taux V2 comparés au référentiel V6 (avertissement) ; aucune période calculée avant la saisie du profil | SVC | |
-| INV-162 | Snapshot entreprise des documents importés reconstitué depuis `entreprise` V2, avertissement unique au rapport | SVC | |
-| INV-163 | Facture V2 sans statut : importée non réglée, comptée dans facturation, reste dû et CA engagé, jamais dans CA encaissé ni URSSAF sans règlement saisi ; listée « À vérifier » et signalée par un bandeau du tableau de bord tant qu'elle n'est pas traitée (D-19) | SVC, CK-06, test | |
+| INV-130 | Aucune donnée d'import supprimée en silence : ce que le fichier déclare `non_importe` est conservé dans `import_anomalies` ; `import_anomalies` jamais supprimée (seuls `statut` et `traite_at` évoluent) ; le fichier source n'est jamais modifié | TRG (TR-90), SVC | T-21 |
+| INV-131 | Aucune règle métier n'est exemptée pour les données importées. Seule exception : format, préfixe et année du `numero` des devis, factures et PV `origine='import'` (numéro déjà remis au client) ; non vide, unique et immuable (TR-01) | SQL (CHECK conditionnés par `origine`), TRG | T-23 |
+| INV-133 | Fin d'import : comptages, Σ `total_ht` des factures actives et Σ `reste_du` déclarés dans `controles` = valeurs recalculées par V6 ; tout écart, ou tout échec de CK-01 à CK-12, annule l'import | CK-12, SVC | T-16 |
+| INV-134 | Le contrat d'import n'accepte aucune garantie ; les garanties naissent uniquement de la facturation V6 ; `garanties.bc_ligne_id` et `facture_declenchement_id` sont NOT NULL sans exception ; une garantie n'est jamais recalculée | SQL, SVC | |
+| INV-135 | Compteurs : le convertisseur récupère les compteurs historiques compatibles ; ils sont transmis dans `import-v6.json` (`sequences`) ; V6 initialise `numerotation_sequences` et `sequence_high_water` à partir de ces valeurs ; un numéro déjà attribué n'est jamais réutilisé ; un saut de numéro est acceptable | SVC, CK-02 | T-22 |
+| INV-136 | `origine` ∈ (`v6`, `import`) ; `origine='v6'` ⇒ `legacy_id`, `legacy_data` et `legacy_numero` NULL ; `legacy_numero` seulement s'il diffère de `numero` (clients et BC) ; `legacy_id` = `ref` de l'objet dans le fichier ; aucune colonne `migration_id` | SQL | |
+| INV-153 | Lecteur strict de `import-v6.json` : rejet total si JSON invalide, `format`/`contrat_version` inconnus, clé ou bloc inconnu, `ref` dupliqué ou introuvable, énumération ou précision décimale invalide, violation d'un CHECK ou d'un trigger ; jamais de réparation ni de tolérance côté V6 | SVC, test | T-21 |
+| INV-154 | Import en deux temps (validation sans écriture, puis transaction unique, tout ou rien) et seulement sur base métier vide | SVC, test | T-21, T-23 |
+| INV-161 | Le contrat d'import n'accepte aucune donnée URSSAF ; le profil URSSAF est saisi au premier lancement ; aucune période n'est calculée avant | SVC | |
+| INV-163 | Une anomalie `a_verifier` du fichier crée un enregistrement `import_anomalies` lié à l'objet importé ; le tableau de bord affiche le bandeau tant qu'il en existe au statut `a_traiter` ; une facture importée non réglée est une facture ordinaire (facturation, reste dû, CA engagé ; ni CA encaissé ni URSSAF sans règlement saisi) (D-19) | SVC, CK-06, test | T-16 |
 | INV-164 | Ordre de recalcul du service financier : factures actives → facturation nette → montant restant → avancement → état 100 % → `date_100_facture` → reste dû du solde → `termine`/`en_cours` → CA engagé ; jamais de cache intermédiaire incohérent | SVC, CK-06 | |
-| INV-165 | Une anomalie informative est un avertissement au rapport de migration ; seule une donnée qui ne peut pas être représentée correctement part en quarantaine | SVC | |
+| INV-165 | Deux catégories seulement dans V6 : `a_verifier` (objet importé à contrôler) et `non_importe` (donnée non représentable, conservée) ; les avertissements purement informatifs restent dans le rapport du convertisseur | SVC | |
 | INV-166 | Le catalogue par défaut V6 exclut ELE-008 (prise RJ45 Cat6) ; un document historique qui la contient la conserve par snapshot, `prestation_id NULL` | SVC | |
 | INV-167 | Les tests d'intégrité T-01 à T-20 (modèle §13.2) sont couverts avant le passage au DDL | test | T-01 à T-20 |
 | INV-168 | Avant le gel, aucune fonction ne référence une ligne de BC (`bc_lignes.id`), hors `facture_lignes.bc_ligne_id` en `RESTRICT` ; toute nouvelle fonction qui en aurait besoin exige d'abord de rétablir des identifiants stables (décision D-20) | SVC, revue | |
+| INV-169 | Le fichier d'import ne porte que des faits saisis : caches du BC, `frozen_at`, états dérivés et garanties ne sont jamais lus du fichier ; V6 les recalcule (§3.7) et pose le gel par TR-15 | SVC, CK-06 | T-21 |
+| INV-170 | Deux périmètres de tests : tests du convertisseur (`TC-xx`, hors V6) et tests de validation/import V6 (T-16, T-21 à T-23) ; aucun test V6 ne lit un fichier V2 | test | T-16, T-21, T-22, T-23 |
 
 ## M. Sauvegarde, restauration, licence
 
@@ -195,7 +191,7 @@ Statut : **pièce obligatoire du modèle de données**
 | INV-141 | Restauration : validation, `user_version` ≤ supporté (refus sinon), migrations sur copie, `integrity_check`, `foreign_key_check`, sauvegarde de sécurité, remplacement atomique, contrôles post-restauration | SVC, test | |
 | INV-142 | Une restauration ne modifie jamais le mot de passe local, la licence, l'identifiant d'installation, les racines ni le dossier de travail | SVC, test | T-04, T-05, T-06 |
 | INV-143 | Sauvegarde de sécurité avant restauration ; avant un changement de dossier, sauvegarde proposée dans l'ancien dossier, sans copie automatique | SVC | |
-| INV-144 | JSON = export, pas format de restauration ; l'import des sauvegardes V2 JSON reste possible via la migration (base vide uniquement) | SVC | |
+| INV-144 | Le JSON est un export, jamais un format de restauration V6 ; une sauvegarde JSON V2 n'est pas restaurable dans V6 : elle est une entrée du convertisseur externe, qui produit `import-v6.json` ; V6 ne lit jamais le format V2 | SVC | T-21 |
 | INV-150 | Licence hors base métier ; vérification trimestrielle ; 15 jours de grâce ; ensuite consultation et exports seuls | SVC, test | |
 | INV-151 | Secrets (clé de licence, jetons Gmail) dans le coffre système, jamais dans la base métier ; mot de passe local jamais en clair | SVC | |
 | INV-152 | E-mails toujours manuels ; jamais de faux envoi | SVC | |
@@ -206,7 +202,34 @@ Statut : **pièce obligatoire du modèle de données**
 
 | Date | INV | Changement | Motif | Décision |
 |---|---|---|---|---|
-| — | — | Aucun à ce jour | — | — |
+| 2026-09-30 | INV-15 | Modifié : réarrondi à la migration remplacé par rejet de tout montant hors précision | V6 ne réarrondit plus ; l'arrondi V2 est fait par le convertisseur | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-20 | Modifié : format contrôlé sans exception sauf devis/factures/PV importés | exemptions d'origine supprimées | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-25 | Modifié : initialisation du high-water à l'import ajoutée | INV-135 remplacé | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-27 | Modifié : « numéros V2 jamais transformés » limité aux devis, factures, PV ; BC et codes clients au format V6 | D-01 et E-09 | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-54 | Modifié : exemption « migration » supprimée | aucune exemption | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-110 / INV-111 | Modifié : acteur et événement `migration` renommés `import` | vocabulaire de l'import | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-130 | Modifié : quarantaine et rapport de migration remplacés par `import_anomalies` (TR-90) | D-22 | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-131 | Modifié : principe général d'exemptions par `origine='migration'` supprimé ; reste une exemption unique (format du `numero` historique) | D-24 (à valider) | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-133 | Modifié : contrôle « reste dû V6 = reste dû V2 » remplacé par les totaux de contrôle du fichier ; `resteAPayer` V2 ne concerne plus V6 | le calcul du reste dû V2 est une règle du convertisseur | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-134 | Modifié : « la migration n'en crée aucune » remplacé par « le contrat n'accepte aucune garantie » ; NOT NULL sans exception | D-16, D-23 | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-135 | **Remplacé** — ancien énoncé : « Compteurs V2 jamais importés (incohérents, sans année) ; séquences V6 vides après migration » | Compteurs récupérés par le convertisseur et transmis dans `sequences` ; V6 initialise ses séquences ; saut acceptable, réutilisation interdite | D-26 (brief du 2026-09-30) |
+| 2026-09-30 | INV-136 | Modifié : `migration_id` supprimé ; `origine` ∈ (`v6`,`import`) ; `legacy_*` NULL si `origine='v6'` | D-23 (à valider) | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-144 | **Réécrit** — ancien énoncé : « JSON = export, pas format de restauration ; l'import des sauvegardes V2 JSON reste possible via la migration (base vide uniquement) » | Le JSON V2 n'est pas un format de restauration V6 ; c'est une entrée du convertisseur | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-153 | Modifié : lecteur V2 tolérant remplacé par lecteur strict du contrat `import-v6.json` | V6 ne lit plus la V2 (D-25) | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-154 | Modifié : import V2 → import de `import-v6.json` | même règle, autre entrée | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-161 | Modifié : « profil URSSAF non créé par la migration » → « le contrat n'accepte aucune donnée URSSAF » ; la comparaison des taux V2 passe au convertisseur | périmètre V6/convertisseur | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-163 | Modifié : règle V2 (facture sans statut) → mécanisme `a_verifier` du contrat et bandeau V6 | la production de l'anomalie est une règle du convertisseur | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-165 | Modifié : avertissement/quarantaine → `a_verifier` / `non_importe` | D-22 | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-169, INV-170 | **Ajoutés** | Valeurs dérivées jamais lues du fichier ; séparation des tests convertisseur / V6 | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-132 | **Retiré** de V6, règle **transférée au convertisseur** — énoncé d'origine à reprendre : « Paiement unique V2 (`Reglee` + `datePaiement`) → un règlement `encaissement` (mode `autre`) ; `Reglee` sans date → quarantaine ; client déduit non présent en base → `a_rattacher` (rapprochement exact normalisé uniquement) ; `prestation_id` NULL si la référence est absente du catalogue importé » | Règle de transformation purement V2, sans objet dans SQLite | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-155 | **Retiré** de V6, règle **transférée au convertisseur** — énoncé d'origine à reprendre : « Catalogue V2 : réparation des colonnes décalées seulement si le motif est exact ; en-tête importé et préfixe inconnu → quarantaine ; unités normalisées (D-13) » | Règle de transformation purement V2, sans objet dans SQLite | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-156 | **Retiré** de V6, règle **transférée au convertisseur** — énoncé d'origine à reprendre : « Client déduit d'un devis V2 : clé nom+prénom normalisée, e-mails compatibles, sinon deux clients ; création en `a_rattacher` ; aucun fuzzy » | Règle de transformation purement V2, sans objet dans SQLite | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-157 | **Retiré** de V6, règle **transférée au convertisseur** — énoncé d'origine à reprendre : « BC reconstruit uniquement pour un devis `accepte` ; `date_acceptation` estimée (D-15) avec avertissement ; `nFacture`/`nAcompte`/`nBC` ne font que confirmer `refDevis` » | Règle de transformation purement V2, sans objet dans SQLite | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-158 | **Retiré** de V6, règle **transférée au convertisseur** — énoncé d'origine à reprendre : « Factures V2 : types `acompte`/`solde` seuls ; autre type ou statut non vide inconnu → quarantaine ; acompte = 1 ligne `synthese` ; solde = lignes `prestation` + 1 ligne `deduction` ; `montantHT` fait foi » | Règle de transformation purement V2, sans objet dans SQLite | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-159 | **Retiré** de V6, règle **transférée au convertisseur** — énoncé d'origine à reprendre : « Montants V2 : totaux recalculés selon les règles V6 pour les devis non acceptés ; factures reprises à `montantHT` ; fraction de centime → HALF_UP + original en `legacy_data` » | Règle de transformation purement V2, sans objet dans SQLite | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-160 | **Retiré** de V6, règle **transférée au convertisseur** — énoncé d'origine à reprendre : « PV V2 sans BC (`refDevis` absent ou devis non accepté) → quarantaine ; numéro V2 conservé » | Règle de transformation purement V2, sans objet dans SQLite | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | INV-162 | **Retiré** de V6, règle **transférée au convertisseur** — énoncé d'origine à reprendre : « Snapshot entreprise des documents importés reconstitué depuis `entreprise` V2, avertissement unique au rapport » | Règle de transformation purement V2, sans objet dans SQLite | Migration V2 externalisée (D-21, E-09) |
+| 2026-09-30 | D-13 à D-19 (modèle §15) | Règles de transformation V2 transférées au convertisseur (unités, `date_acceptation` estimée, statut inconnu, facture sans statut, garanties non recréées) ; côté V6 : liste fermée des unités, aucune garantie importée, mécanisme `a_verifier` | Les décisions restent valides ; leur exécution change de composant | Migration V2 externalisée (D-21, E-09) |
 
 ## Contrôle de non-régression (à exécuter à chaque nouvelle version du modèle)
 
@@ -214,3 +237,4 @@ Statut : **pièce obligatoire du modèle de données**
 2. Vérifier que chaque INV de ce registre est encore cité dans le modèle (sinon : ligne dans le journal).
 3. Vérifier que chaque INV a un test nommé `test_INV_xx` dans la suite de tests SQL/domaine.
 4. Rejouer les cas chiffrés C-01 à C-20.
+5. Vérifier qu'aucun INV de la section L ne décrit un « lecteur V2 » dans V6 : toute règle V2 vit dans le document du convertisseur.
