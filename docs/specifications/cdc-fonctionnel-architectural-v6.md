@@ -698,19 +698,20 @@ Le suivi des garanties est un suivi interne BATORYA.
 
 Déclenchement
 
-Le suivi interne démarre lorsque le BC atteint :
+Les garanties sont générées à l’émission du **premier solde actif**, c’est-à-dire au franchissement de 100 % facturé.
 
-100 % facturé
+La création est idempotente : la première date de déclenchement est conservée et aucune garantie n’est recréée lors d’une réémission ou à partir de données historiques importées.
 
-Il ne dépend pas :
-
+Le déclenchement ne dépend pas :
 * du paiement du solde ;
 * de la réception ;
 * de l’existence d’un PV ;
 * de la présence de réserves ;
 * de la levée des réserves.
 
-Cela est distinct du passage du BC à Terminé : les garanties sont déclenchées par le franchissement de 100 % facturé, alors que Terminé dépend du solde actif et de l’absence de reste dû sur les factures actives hors avoir.
+Une garantie générée n’est ni modifiée ni supprimée par l’annulation du solde, un avoir ou un règlement.
+
+Cela est distinct du passage du BC à Terminé : les garanties sont déclenchées par le premier solde actif, alors que Terminé dépend du solde actif et de l’absence de reste dû sur les factures actives hors avoir.
 
 Date de garantie
 
