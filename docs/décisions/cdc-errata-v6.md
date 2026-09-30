@@ -1,7 +1,7 @@
 # BATORYA Essentiel V6 — Errata du CDC gelé
 
 Le CDC V6 est gelé. Tout écart décidé ensuite est tracé ici : date, section, ancienne formulation, nouvelle décision, motif, impact, statut.
-Ce fichier est un **registre de décisions**, pas une spécification : le détail des règles est dans le modèle, les invariants et les documents de conception. Il est une pièce obligatoire du modèle de données (V3.5). Chemin dans le dépôt : `docs/decisions/cdc-errata-v6.md`.
+Ce fichier est un **registre de décisions**, pas une spécification : le détail des règles est dans le modèle, les invariants et les documents de conception. Il est une pièce obligatoire du modèle de données (V3.6). Chemin dans le dépôt : `docs/decisions/cdc-errata-v6.md`.
 
 | ID | Date | Section CDC | Ancienne formulation | Nouvelle décision | Motif | Impact | Statut |
 |---|---|---|---|---|---|---|---|
