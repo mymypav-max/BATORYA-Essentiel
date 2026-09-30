@@ -23,7 +23,7 @@ Le risque principal des versions V3.1 à V3.5 a été la **perte de règles déj
 | V3.3 | Séparation `machine.db`, garanties snapshotées, `UNIQUE(devis_id)`, errata |
 | V3.4 | Gel, facturation nette, formules d'avoir, restauration en 9 étapes |
 | **V3.5** | Terminé redéfini, garde-fous financiers rétablis, colonnes exhaustives, `sequence_high_water`, registre INV (le « mode migration par `origine` » de la première rédaction est supprimé, voir ligne suivante) |
-| **V3.5 rév. 2026-09-30** | **Migration V2 externalisée** : V2 JSON → convertisseur externe → `import-v6.json` → import standard V6. Suppression du mode migration, de `migration_rapports`, de `migration_quarantaine` et de `migration_id` ; une seule exemption (format du `numero` historique) ; compteurs transmis par le fichier (D-21 à D-26, E-09) |
+| **V3.6** | **Migration V2 externalisée** : V2 JSON → convertisseur externe → `import-v6.json` → import standard V6. Suppression du mode migration, de `migration_rapports`, de `migration_quarantaine` et de `migration_id` ; une seule exemption (format du `numero` historique) ; compteurs transmis par le fichier (D-21 à D-26, E-09) |
 
 ---
 
