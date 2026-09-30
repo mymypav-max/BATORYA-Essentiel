@@ -171,7 +171,7 @@ Les montants commerciaux finaux (totaux, acomptes, factures, règlements, dépen
 
 Les quantités, prix unitaires et remises en valeur peuvent conserver une précision libre lorsqu’elle est prévue par le modèle. Les pourcentages saisis utilisent 2 décimales.
 
-Aucune perte silencieuse de précision n’est autorisée. Pour l’import historique, V6 ne réarrondit pas les données : le convertisseur externe produit un import-v6.json conforme à la précision attendue, et un fichier hors précision est rejeté par l’import V6.
+Aucune perte silencieuse de précision n’est autorisée. Pour l’import historique, **V6 ne réarrondit pas les données** : le convertisseur externe porte les règles de transformation V2, notamment l’arrondi nécessaire des totaux historiques non arrondis, puis produit un `import-v6.json` conforme. V6 rejette tout fichier dont les montants ne respectent pas la précision de leur famille décimale.
 
 ⸻
 
@@ -504,12 +504,13 @@ Le passage à Terminé est dérivé du service métier et n’est pas librement 
 
 L’annulation du BC est possible uniquement dans les conditions prévues.
 
-Aucun travail facturé en situation
+Annulation directe interdite dès qu’une facture autre qu’un acompte non réglé existe, notamment lorsqu’un solde impayé existe sans situation.
 
-Si aucune Situation n’a été émise et qu’aucun paiement n’a été encaissé :
+Un acompte non réglé peut être annulé automatiquement avec le BC lorsqu’une modification autorisée du devis/BC l’exige.
 
-* le BC peut être annulé selon les règles applicables ;
-* si un acompte impayé existe, il est annulé avec le BC.
+Une Situation émise, même annulée, interdit toujours l’annulation directe du BC.
+
+Un encaissement interdit également l’annulation directe. La correction passe alors par l’annulation de facture ou l’avoir selon le cas.
 
 Situation émise
 
@@ -1046,9 +1047,11 @@ Chaque version possède :
 
 Les versions historiques sont conservées.
 
-Une nouvelle version réglementaire téléchargée remplace les paramètres précédents, y compris lorsqu’une valeur avait été modifiée manuellement auparavant.
+Les versions du référentiel réglementaire sont **append-only**. Une nouvelle version est ajoutée sans modifier ni remplacer les versions historiques.
 
-La nouvelle version devient la référence applicable selon sa date d’effet.
+Chaque version possède une date de début d’effet strictement croissante. Pour une période donnée, la version applicable est celle en vigueur à sa date de début d’effet.
+
+Aucune valeur historique du référentiel n’est modifiée manuellement : une correction ou une nouvelle règle donne lieu à une nouvelle version.
 
 Les anciennes versions restent disponibles pour les calculs historiques.
 
