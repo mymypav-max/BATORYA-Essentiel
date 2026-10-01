@@ -150,6 +150,16 @@ Un test doit avoir un nom explicite permettant d’identifier directement le com
 
 Les tests ne doivent pas devenir une seconde spécification contradictoire : lorsqu’un comportement est modifié volontairement, le test correspondant doit être mis en cohérence avec la décision et les documents de référence.
 
+### 7.1 Campagne de mutation des migrations métier
+
+Chaque nouvelle tranche de migration métier doit être accompagnée de sa campagne de mutation sur la migration et son fichier de test.
+
+L'objectif est de terminer la campagne avec **0 survivant non qualifié**. Un survivant peut uniquement être conservé lorsqu'il est démontré et documenté comme mutant équivalent ou inatteignable ; il ne doit pas être laissé sans qualification.
+
+Cette campagne complète les tests fonctionnels classiques : un résultat « tous les tests passent » ne suffit pas à considérer la couverture de la tranche comme sécurisée.
+
+Lorsqu'une correction est apportée à une migration déjà existante, les tests de cette tranche doivent être rejoués et la campagne de mutation concernée doit être réévaluée avant de poursuivre sur une nouvelle tranche.
+
 ## 8. Séparation des responsabilités
 
 Principe général V6 :
