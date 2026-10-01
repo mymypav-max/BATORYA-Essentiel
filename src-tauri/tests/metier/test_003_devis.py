@@ -207,6 +207,16 @@ class Migration(Base):
         self.assertEqual(infos["acompte_type"][4], "'aucun'")
         self.assertEqual(infos["origine"][4], "'v6'")
 
+    def test_T28_colonnes_obligatoires_lignes_et_garanties(self):
+        attendu = {"devis_lignes": {"devis_id", "ordre", "designation", "quantite", "unite", "prix_unitaire_ht", "remise_type",
+                                    "type_prestation", "total_ht", "created_at", "updated_at"},
+                   "devis_ligne_garanties": {"ligne_id", "garantie_type", "created_at"}}
+        for t, cols in attendu.items():
+            obligatoires = {r[1] for r in self.db.execute(f"PRAGMA table_info({t})") if r[3] and not r[5]}
+            self.assertEqual(obligatoires, cols, t)
+        facultatives = {r[1] for r in self.db.execute("PRAGMA table_info(devis_lignes)") if not r[3]}
+        self.assertEqual(facultatives, {"id", "prestation_id", "reference_prestation", "description", "remise_valeur"})
+
     def test_T28_cles_etrangeres(self):
         def fk(table):
             return {(r[2], r[3], r[4], r[6]) for r in self.db.execute(f"PRAGMA foreign_key_list({table})")}
@@ -893,6 +903,31 @@ class Triggers(Base):
         self.db.execute("UPDATE devis_lignes SET devis_id=?, ordre=1 WHERE id=?", (autre, l_ouvert))           # entre devis modifiables : permis
         self.refuse_inv("INV-36", "UPDATE devis_ligne_garanties SET ligne_id=? WHERE id=?", l_ferme, g_ouvert)
         self.refuse_inv("INV-36", "UPDATE devis_ligne_garanties SET ligne_id=? WHERE id=?", l_ouvert, g_ferme)
+
+    def test_INV_36_deplacer_une_ligne_depuis_ou_vers_chaque_etat_non_modifiable(self):
+        for etat in ETATS_NON_MODIFIABLES:
+            with self.subTest(etat=etat):
+                ouvert, l_ouvert, g_ouvert = self.devis_complet("en_attente")
+                ferme, l_ferme, g_ferme = self.devis_complet(etat)
+                self.refuse_inv("INV-36", "UPDATE devis_lignes SET devis_id=?, ordre=9 WHERE id=?", ferme, l_ouvert)   # vers le devis fermé
+                self.refuse_inv("INV-36", "UPDATE devis_lignes SET devis_id=?, ordre=9 WHERE id=?", ouvert, l_ferme)   # depuis le devis fermé
+                self.refuse_inv("INV-36", "UPDATE devis_ligne_garanties SET ligne_id=? WHERE id=?", l_ferme, g_ouvert)
+                self.refuse_inv("INV-36", "UPDATE devis_ligne_garanties SET ligne_id=? WHERE id=?", l_ouvert, g_ferme)
+                self.assertEqual(self.un("SELECT devis_id FROM devis_lignes WHERE id=?", l_ouvert)[0], ouvert)
+                self.assertEqual(self.un("SELECT devis_id FROM devis_lignes WHERE id=?", l_ferme)[0], ferme)
+
+    def test_INV_31_id_et_created_at_gardes_pendant_une_transition_d_etat(self):
+        """tr_10_devis_modifiable se décide sur l'état d'AVANT (OLD) : une transition ne lève pas la garde."""
+        d, _ = self._preparer("en_attente")
+        self.refuse_inv("INV-31", "UPDATE devis SET statut='accepte', date_acceptation='2026-03-12', created_at=? WHERE id=?", TS2, d)
+        d, _ = self._preparer("en_attente")
+        self.refuse_inv("INV-31", "UPDATE devis SET statut='accepte', date_acceptation='2026-03-12', id=id+700 WHERE id=?", d)
+        d, _ = self._preparer("accepte")
+        self.refuse_inv("INV-31", "UPDATE devis SET statut='annule', cancelled_at=?, motif_annulation='m', created_at=? WHERE id=?", TS, TS2, d)
+        d, _ = self._preparer("accepte")
+        self.refuse_inv("INV-31", "UPDATE devis SET frozen_at=?, created_at=? WHERE id=?", TS, TS2, d)
+        d, _ = self._preparer("accepte")
+        self.db.execute("UPDATE devis SET frozen_at=? WHERE id=?", (TS, d))                              # témoin : la pose du gel seule passe
 
     def test_INV_36_devis_ou_ligne_inexistants_refuses_par_la_cle_etrangere(self):
         with self.assertRaisesRegex(sqlite3.IntegrityError, "FOREIGN KEY"):
