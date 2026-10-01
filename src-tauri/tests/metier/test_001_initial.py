@@ -7,6 +7,7 @@ Exécution : python3 src-tauri/tests/metier/test_001_initial.py
 Les méthodes portent le nom de l'invariant vérifié (test_INV_xx_…).
 """
 import pathlib
+import re
 import sqlite3
 import unittest
 
@@ -287,6 +288,146 @@ class Invariants(Base):
         self.prestation("PLO-001")
         self.assertEqual(self.db.execute("PRAGMA foreign_key_check").fetchall(), [])
         self.assertEqual(self.db.execute("PRAGMA integrity_check").fetchall(), [("ok",)])
+
+
+class Schema(Base):
+    """Garde-fous de schéma : colonnes obligatoires, valeurs par défaut, unicités, listes fermées, formats d'horodatage.
+    Chaque test échoue si la contrainte correspondante de 001_initial.sql est retirée ou affaiblie."""
+
+    NOT_NULL = {
+        "import_anomalies": {"type_entite", "ref_source", "categorie", "motif", "statut", "created_at"},
+        "numerotation_sequences": {"type_objet", "annee", "dernier_numero", "created_at", "updated_at"},
+        "categories_prestations": {"code", "libelle", "actif", "created_at", "updated_at"},
+        "categories_depenses": {"code", "libelle", "actif", "created_at", "updated_at"},
+        "clients": {"code", "nom", "statut", "created_at", "updated_at", "origine"},
+        "prestations": {"reference", "designation", "categorie_id", "unite", "type_prestation", "prix_unitaire_ht",
+                        "actif", "created_at", "updated_at", "origine"},
+        "prestation_garanties": {"prestation_id", "garantie_type", "created_at"},
+    }
+    DEFAUTS_LITTERAUX = {("import_anomalies", "statut"): "'a_traiter'", ("numerotation_sequences", "annee"): "0",
+                         ("numerotation_sequences", "dernier_numero"): "0", ("clients", "statut"): "'actif'",
+                         ("clients", "origine"): "'v6'", ("prestations", "origine"): "'v6'"}
+    UNIQUES = {"import_anomalies": [], "numerotation_sequences": [["type_objet", "annee"]],
+               "categories_prestations": [["code"]], "categories_depenses": [["code"]], "clients": [["code"]],
+               "prestations": [["reference"]], "prestation_garanties": [["prestation_id", "garantie_type"]]}
+    LISTES = {("import_anomalies", "categorie"): {"a_verifier", "non_importe"},
+              ("import_anomalies", "statut"): {"a_traiter", "traite"},
+              ("numerotation_sequences", "type_objet"): {"CLI", "FOU", "DEV", "BCD", "ACP", "FAC", "AVO", "PVR", "DEP"},
+              ("clients", "statut"): {"actif", "archive", "a_rattacher"}, ("clients", "origine"): {"v6", "import"},
+              ("prestations", "unite"): {"u", "ens", "ml", "m2", "m3"},
+              ("prestations", "type_prestation"): {"fourniture", "pose", "fourniture_pose"},
+              ("prestations", "origine"): {"v6", "import"},
+              ("prestation_garanties", "garantie_type"): {"parfait_achevement", "biennale", "decennale"}}
+    TS_MAUVAIS = ("2026-10-01", "2026-10-01 10:00:00", "2026-10-01T10:00:00Z", "2026-10-01T10:00:00.00Z", "now", "")
+
+    def _anomalie(self, categorie, **kw):
+        cols = {"type_entite": "facture", "ref_source": "f1", "categorie": categorie, "motif": "À contrôler"}
+        cols.update({"entite_id": 12} if categorie == "a_verifier" else {"donnees": '{"champ": "valeur"}'})
+        cols.update(kw)
+        self.db.execute(f"INSERT INTO import_anomalies ({','.join(cols)}) VALUES ({','.join('?' * len(cols))})", tuple(cols.values()))
+        return self.un("SELECT MAX(id) FROM import_anomalies")[0]
+
+    def test_T26_colonnes_obligatoires_exactes(self):
+        for t, attendu in self.NOT_NULL.items():
+            obligatoires = {r[1] for r in self.db.execute(f"PRAGMA table_info({t})") if r[3] and not r[5]}
+            self.assertEqual(obligatoires, attendu, t)
+
+    def test_T26_valeurs_par_defaut_exactes(self):
+        TS_DEFAUT = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')"
+        litteraux = {}
+        for t in TABLES:
+            for r in self.db.execute(f"PRAGMA table_info({t})"):
+                if r[4] is None:
+                    continue
+                if r[1] in ("created_at", "updated_at"):
+                    self.assertEqual(r[4], TS_DEFAUT, (t, r[1]))
+                else:
+                    litteraux[(t, r[1])] = r[4]
+        self.assertEqual(litteraux, self.DEFAUTS_LITTERAUX)
+
+    def test_T26_unicites_exactes(self):
+        for t, attendu in self.UNIQUES.items():
+            reel = sorted([c[2] for c in self.db.execute(f"PRAGMA index_info({i[1]})")]
+                          for i in self.db.execute(f"PRAGMA index_list({t})") if i[2] == 1)
+            self.assertEqual(reel, sorted(attendu), t)
+        self.prestation("PLO-001")
+        self.refuse("INSERT INTO prestations (reference, designation, categorie_id, unite, type_prestation, prix_unitaire_ht, actif) "
+                    "VALUES ('PLO-001', 'D', ?, 'u', 'pose', '1', 1)", self.categorie("CAT-2"))
+
+    def test_T26_listes_fermees_exactes(self):
+        for (t, col), attendu in self.LISTES.items():
+            sql = self.un("SELECT sql FROM sqlite_master WHERE name=?", t)[0]
+            m = re.search(rf"\b{col}\s+IN\s+\(([^)]*)\)", sql)
+            self.assertIsNotNone(m, (t, col))
+            self.assertEqual(set(re.findall(r"'([^']*)'", m.group(1))), attendu, (t, col))
+
+    def test_INV_10_format_horodatages_toutes_tables(self):
+        cat = self.categorie("CAT-1")
+        pre = self.prestation("PLO-001", cat=cat)
+        fabriques = {
+            "import_anomalies": {"type_entite": "t", "entite_id": 1, "ref_source": "r", "categorie": "a_verifier", "motif": "m"},
+            "numerotation_sequences": {"type_objet": "FAC", "annee": 26},
+            "categories_prestations": {"code": "Z", "libelle": "L", "actif": 1},
+            "categories_depenses": {"code": "Z", "libelle": "L", "actif": 1},
+            "clients": {"code": "CLI-0001", "nom": "N"},
+            "prestations": {"reference": "Z-1", "designation": "D", "categorie_id": cat, "unite": "u", "type_prestation": "pose",
+                            "prix_unitaire_ht": "1", "actif": 1},
+            "prestation_garanties": {"prestation_id": pre, "garantie_type": "decennale"},
+        }
+        def inserer(t, cols):
+            self.db.execute(f"INSERT INTO {t} ({','.join(cols)}) VALUES ({','.join('?' * len(cols))})", tuple(cols.values()))
+        for t, base in fabriques.items():
+            colonnes = {r[1] for r in self.db.execute(f"PRAGMA table_info({t})")}
+            horodatages = [c for c in ("created_at", "updated_at", "traite_at") if c in colonnes]
+            self.assertTrue(horodatages, t)
+            for c in horodatages:
+                for mauvais in self.TS_MAUVAIS:
+                    with self.subTest(table=t, colonne=c, valeur=mauvais):
+                        cols = dict(base, **{c: mauvais})
+                        if c == "traite_at":
+                            cols["statut"] = "traite"
+                        self.refuse(f"INSERT INTO {t} ({','.join(cols)}) VALUES ({','.join('?' * len(cols))})", *cols.values())
+            bons = {c: TS for c in horodatages}
+            if "traite_at" in bons:
+                bons["statut"] = "traite"
+            inserer(t, dict(base, **bons))                                       # témoin : le format correct passe
+
+    def test_INV_130_TR90_aucune_autre_colonne_modifiable(self):
+        """Le trigger garde chaque colonne : le message INV-130 prouve que c'est lui (BEFORE) et non un CHECK qui refuse."""
+        autres = [("id", 999), ("type_entite", "autre"), ("entite_id", 13), ("ref_source", "autre"), ("categorie", "non_importe"),
+                  ("motif", "autre"), ("donnees", '{"x": 1}'), ("created_at", "2026-01-01T00:00:00.000Z")]
+        for col, valeur in autres:
+            for categorie in ("a_verifier", "non_importe"):
+                with self.subTest(colonne=col, categorie=categorie):
+                    a = self._anomalie(categorie, ref_source=f"{col}-{categorie}")
+                    if col == "categorie":
+                        valeur = "non_importe" if categorie == "a_verifier" else "a_verifier"
+                    with self.assertRaisesRegex(sqlite3.IntegrityError, "INV-130"):
+                        self.db.execute(f"UPDATE import_anomalies SET statut='traite', traite_at=?, {col}=? WHERE id=?", (TS, valeur, a))
+                    self.assertEqual(self.un("SELECT statut FROM import_anomalies WHERE id=?", a)[0], "a_traiter")
+
+    def test_INV_22_types_de_sequence_et_plafonds_par_type(self):
+        for t in ("CLI", "FOU"):
+            self.db.execute("INSERT INTO numerotation_sequences (type_objet, annee, dernier_numero) VALUES (?, 0, 9999)", (t,))
+            self.refuse("UPDATE numerotation_sequences SET dernier_numero=10000 WHERE type_objet=?", t)
+        for t in ("DEV", "BCD", "ACP", "FAC", "AVO", "PVR", "DEP"):
+            self.db.execute("INSERT INTO numerotation_sequences (type_objet, annee, dernier_numero) VALUES (?, 26, 99999)", (t,))
+            self.refuse("UPDATE numerotation_sequences SET dernier_numero=100000 WHERE type_objet=?", t)
+        self.assertEqual(self.un("SELECT COUNT(*) FROM numerotation_sequences")[0], 9)
+
+    def test_INV_136_prestations_sans_fk_masquante(self):
+        """Mêmes refus que test_INV_136_bloc_imp_prestations / test_INV_14_listes_fermees_prestation, avec une catégorie réelle
+        pour que seule la contrainte testée puisse refuser."""
+        cat = self.categorie("CAT-1")
+        entete = ("INSERT INTO prestations (reference, designation, categorie_id, unite, type_prestation, prix_unitaire_ht, actif, "
+                  "origine, legacy_id, legacy_data) VALUES (?, ?, ?, 'u', 'pose', '1', 1, ?, ?, ?)")
+        self.refuse(entete, "A", "D", cat, "v6", "x", None)                      # v6 : legacy_id interdit
+        self.refuse(entete, "B", "D", cat, "v6", None, "{}")                     # v6 : legacy_data interdit
+        self.refuse(entete, "C", "D", cat, "import", None, "{pas du json")
+        self.refuse(entete, "D", "D", cat, "migration", None, None)
+        self.refuse(entete, "E", "", cat, "v6", None, None)                      # designation non vide
+        self.refuse(entete, "", "D", cat, "v6", None, None)                      # reference non vide
+        self.db.execute(entete, ("F", "D", cat, "import", "x", '{"a": 1}'))      # témoin
 
 
 if __name__ == "__main__":
