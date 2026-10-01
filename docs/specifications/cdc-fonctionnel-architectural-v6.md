@@ -1206,14 +1206,35 @@ BATORYA ne doit jamais prétendre avoir envoyé un email si le compte Gmail n’
 
 ErrorService
 
-Un service centralise les erreurs.
+Un service centralise les erreurs applicatives.
 
-L’utilisateur peut ouvrir un rapport d’erreur contenant notamment :
+L’utilisateur peut générer un rapport de diagnostic destiné au support BATORYA.
 
-* contexte ;
-* erreur ;
-* informations techniques utiles ;
-* version BATORYA.
+Le rapport peut notamment contenir :
+
+* contexte de l’erreur ;
+* erreur et informations techniques associées ;
+* version BATORYA ;
+* version de Tauri/Rust lorsque pertinente ;
+* version du schéma SQLite ;
+* version de Windows ;
+* état des migrations ;
+* état technique des bases ;
+* dernières erreurs applicatives et erreurs SQLite pertinentes ;
+* état des services BATORYA ;
+* date et heure de génération ;
+* identifiant unique du rapport.
+
+Le rapport de diagnostic est strictement distinct des données métier et ne doit pas contenir les données commerciales ou personnelles stockées dans BATORYA, sauf évolution explicitement définie ultérieurement.
+
+Le rapport peut être :
+
+* consulté avant transmission ;
+* copié ;
+* enregistré/exporté ;
+* envoyé manuellement au support.
+
+Le mécanisme de diagnostic ne constitue ni une sauvegarde ni un export des données métier.
 
 Le rapport peut être envoyé manuellement depuis Gmail au support :
 
