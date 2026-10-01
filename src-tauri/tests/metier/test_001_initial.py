@@ -216,7 +216,10 @@ class Invariants(Base):
 
     def test_INV_22_derniere_date(self):
         self.db.execute("INSERT INTO numerotation_sequences (type_objet, annee, dernier_numero, derniere_date) VALUES ('FAC', 26, 3, '2026-02-28')")
-        self.refuse("UPDATE numerotation_sequences SET derniere_date='2026-02-30'")   # date réelle
+        self.refuse("UPDATE numerotation_sequences SET derniere_date='2026-02-30'")   # jour invalide
+        self.refuse("UPDATE numerotation_sequences SET derniere_date='2026-00-15'")   # mois 00
+        self.refuse("UPDATE numerotation_sequences SET derniere_date='2026-13-15'")   # mois 13
+        self.refuse("UPDATE numerotation_sequences SET derniere_date='2026-01-00'")   # jour 00
         self.refuse("UPDATE numerotation_sequences SET derniere_date='28/02/2026'")
         self.db.execute("UPDATE numerotation_sequences SET derniere_date=NULL")
 
