@@ -18,7 +18,7 @@ Le document est volontairement évolutif : les conventions seront complétées a
 Avant toute implémentation ou modification structurelle, les références suivantes doivent être considérées dans cet ordre de priorité métier et architectural :
 
 1. `docs/specifications/cdc-fonctionnel-architectural-v6.md`
-2. `docs/conception/modèle-données-sqlite-V6-V3.8.md`
+2. `docs/conception/modèle-données-sqlite-v6-v3.8.md`
 3. `docs/conception/invariants.md`
 4. `docs/conception/modèle-métier-V6.md`
 5. `docs/décisions/cdc-errata-v6.md` pour la traçabilité historique uniquement.
@@ -156,7 +156,7 @@ Les noms doivent être explicites et cohérents avec le vocabulaire métier V6.
 
 Il est interdit d’introduire des synonymes techniques ou fonctionnels simplement pour varier les noms d’un même concept.
 
-Le vocabulaire du domaine doit notamment respecter les termes déjà gelés dans le CDC et le modèle métier : client, devis, BC, facture, acompte, situation, solde, avoir, règlement, PV, garantie, prestation, fournisseur, dépense, planification, etc.
+Le vocabulaire du domaine doit notamment respecter les termes définis dans le CDC V6.1 et le modèle métier : client, devis, BC, facture, acompte, situation, solde, avoir, règlement, PV, garantie, prestation, fournisseur, dépense, planification, etc.
 
 Les conventions détaillées de nommage Rust, TypeScript, React et SQL seront ajoutées avant la création des premières séries importantes de fichiers dans ces technologies.
 
