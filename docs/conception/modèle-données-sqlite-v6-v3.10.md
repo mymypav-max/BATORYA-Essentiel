@@ -834,7 +834,7 @@ CK-01 numéros uniques, et conformes au format V6 sauf devis/factures/PV `origin
 
 ---
 
-## 17. Critères de sortie de la V3.9 et suivi des migrations
+## 17. Critères de sortie de la V3.10 et suivi des migrations
 
 Le modèle est prêt pour le DDL lorsque :
 1. chaque INV de `invariants.md` a une garde désignée et un nom de test ; les tests T-01 à T-20 (§13.2) et T-21 à T-26 (§13.3) sont écrits ;
@@ -850,7 +850,7 @@ Le modèle est prêt pour le DDL lorsque :
 | `src-tauri/migrations/machine/001_initial.sql` | `machine.db` : 7 tables (§5) | V3.8 | T-25 |
 | `src-tauri/migrations/metier/001_initial.sql` | `import_anomalies`, `numerotation_sequences`, `categories_prestations`, `categories_depenses`, `clients`, `prestations`, `prestation_garanties` ; TR-90, TR-95 | V3.9 | T-26 |
 
-Tranches suivantes (ordre du critère 5) : fournisseurs et dépenses, devis, BC, factures, règlements, garanties, PV, planning, documents, historique, paramètres, URSSAF.
+Tranches suivantes (ordre du critère 5) : fournisseurs, devis, BC, dépenses, factures, règlements, garanties, PV, planning, documents, historique, paramètres, URSSAF.
 
 ---
 
