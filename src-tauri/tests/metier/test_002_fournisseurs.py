@@ -131,6 +131,12 @@ class Invariants(Base):
         self.db.execute("UPDATE fournisseurs SET statut='archive' WHERE code='FOU-0001'")
         self.refuse("UPDATE fournisseurs SET statut='supprime' WHERE code='FOU-0001'")
         self.refuse("UPDATE fournisseurs SET statut=NULL WHERE code='FOU-0001'")
+    def test_T27_liste_statut_exacte(self):
+        sql = self.un("SELECT sql FROM sqlite_master WHERE name='fournisseurs'")[0]
+        m = re.search(r"\bstatut\s+IN\s+\(([^)]*)\)", sql)
+        self.assertIsNotNone(m)
+        self.assertEqual(set(re.findall(r"'([^']*)'", m.group(1))), {"actif", "archive"})
+
     def test_INV_10_horodatages(self):
         self.fournisseur("FOU-0001")
         c,u=self.un("SELECT created_at, updated_at FROM fournisseurs WHERE code='FOU-0001'"); self.assertRegex(c,TS_GLOB); self.assertRegex(u,TS_GLOB)
