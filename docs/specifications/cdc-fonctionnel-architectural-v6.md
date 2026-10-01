@@ -202,7 +202,7 @@ Les coordonnées bancaires sont facultatives.
 
 Profil local
 
-BATORYA peut disposer d’un profil local permettant notamment :
+BATORYA dispose obligatoirement d’un profil local permettant notamment :
 
 * affichage du nom de l’utilisateur ;
 * mot de passe local ;
