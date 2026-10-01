@@ -740,6 +740,7 @@ BATORYA propose une sauvegarde immédiate, réalisée dans l'**ancien** dossier 
 | T-20 | numéro → jamais réattribué | INV-22 |
 
 ### 13.3 Tests ajoutés : validation et import V6 (T-21 à T-23), numérotation (T-24) — 2026-09-30 ; premier démarrage `machine.db` (T-25), DDL de la première tranche métier (T-26) — 2026-10-01 [INV-170, INV-25, INV-171, INV-172, INV-04, INV-05, INV-14, INV-20, INV-21, INV-22, INV-130, INV-136]
+| T-27 | `test_002_fournisseurs.py` — DDL, contraintes, numérotation FOU et séparation machine/métier |
 
 Ces tests ne lisent jamais un fichier V2. Les tests du convertisseur (`TC-xx`) sont définis dans son propre document.
 
@@ -849,8 +850,9 @@ Le modèle est prêt pour le DDL lorsque :
 |---|---|---|---|
 | `src-tauri/migrations/machine/001_initial.sql` | `machine.db` : 7 tables (§5) | V3.8 | T-25 |
 | `src-tauri/migrations/metier/001_initial.sql` | `import_anomalies`, `numerotation_sequences`, `categories_prestations`, `categories_depenses`, `clients`, `prestations`, `prestation_garanties` ; TR-90, TR-95 | V3.9 | T-26 |
+| `src-tauri/migrations/metier/002_fournisseurs.sql` | `fournisseurs` ; aucun trigger ; `idx_fournisseurs_statut` | V3.10 | T-27 |
 
-Tranches suivantes (ordre du critère 5) : fournisseurs, devis, BC, dépenses, factures, règlements, garanties, PV, planning, documents, historique, paramètres, URSSAF.
+Tranches suivantes (ordre du critère 5) : devis, BC, dépenses, factures, règlements, garanties, PV, planning, documents, historique, paramètres, URSSAF.
 
 ---
 
