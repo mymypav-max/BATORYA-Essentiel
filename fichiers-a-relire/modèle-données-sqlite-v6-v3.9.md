@@ -27,7 +27,7 @@ Le risque principal des versions V3.1 à V3.4 a été la **perte de règles déj
 | **V3.6** (2026-09-30) | **Migration V2 externalisée** : V2 JSON → convertisseur externe → `import-v6.json` → import standard V6. Suppression du mode migration, de `migration_rapports`, de `migration_quarantaine` et de `migration_id` ; une seule exemption (format du `numero` historique) ; compteurs transmis par le fichier (D-21 à D-26, E-09) |
 | **V3.7** (2026-09-30) | **Numérotation** : `max_attribue` ne diminue jamais, le trou éventuel est accepté et journalisé (§11.4, INV-25, D-27, T-24) ; D-22, D-23, D-24 validées ; intitulés et statuts alignés sur la V3.7 ; audit fonctionnel et modèle métier alignés sur ce document |
 | **V3.8** (2026-10-01) | **`machine.db`** (§5) : compte local obligatoire au premier démarrage (`utilisateur_local.identifiant` UNIQUE NOT NULL, `mot_de_passe_hash` NOT NULL) ; `preferences_sauvegarde.frequence_jours` remplacée par `frequence_minutes` (défaut 30) avec sauvegarde automatique et à la fermeture activées par défaut ; singletons créés par le service d'initialisation (`INSERT OR IGNORE`), jamais par le DDL ; aucun trigger dans `machine.db` (INV-25 et INV-106 restent des gardes de service) ; test T-25 ; D-28 à D-30, INV-171, INV-172 |
-| **V3.9** (2026-10-01) | **DDL de la première tranche métier** (`src-tauri/migrations/metier/001_initial.sql`) : `import_anomalies`, `numerotation_sequences`, listes de référence, `clients`, catalogue (`prestations`, `prestation_garanties`) ; TR-90 et TR-95 ; précisions de DDL du §4.17 (aucune règle ni décision nouvelle) ; suivi des migrations (§17.1) ; test T-26 |
+| **V3.9** (2026-10-01) | **DDL de la première tranche métier** (`src-tauri/migrations/metier/001_initial.sql`) : `import_anomalies`, `numerotation_sequences`, listes de référence, `clients`, catalogue (`prestations`, `prestation_garanties`) ; TR-90 et TR-95 ; précisions de DDL du §4.17 et clarifications de rédaction (§2.1, §2.5, §4.1, §9, §17) sans règle ni décision nouvelle ; suivi des migrations (§17.1) ; test T-26 |
 
 ---
 
@@ -53,7 +53,7 @@ Le risque principal des versions V3.1 à V3.4 a été la **perte de règles déj
 - `id INTEGER PRIMARY KEY AUTOINCREMENT` sur toutes les tables référencées (jamais de réutilisation d'id). [INV-04]
 - Le numéro métier (`numero`, `code`) n'est jamais une clé étrangère.
 - FK : `ON DELETE RESTRICT` par défaut. `ON DELETE CASCADE` uniquement pour : lignes → parent **avant gel**, `*_ligne_garanties`, `prestation_garanties`. [INV-05]
-- Les liens polymorphes (`historique.entite_id`, `documents.entite_id`, `urssaf_corrections.source_id`) n'ont pas de FK : `type_entite` est une énumération fermée et l'existence est vérifiée par le service et par les requêtes de contrôle.
+- Les liens polymorphes `historique.entite_id` et `documents.entite_id` (discriminant `type_entite`) et `urssaf_corrections.source_id` (discriminant `source_type`) n'ont pas de FK : leur discriminant est une énumération fermée (§2.5) et l'existence est vérifiée par le service et par les requêtes de contrôle. **Exception** : `import_anomalies.entite_id` est aussi un lien polymorphe sans FK (CK-09), mais son `type_entite` n'est pas une énumération fermée du modèle (§4.17, point 7).
 
 ### 2.2 Dates et timestamps [INV-10]
 
@@ -134,6 +134,8 @@ Toute liste ci-dessous est un `CHECK(x IN (...))`. Ajouter une valeur = migratio
 | `import_anomalies.categorie` | `a_verifier`, `non_importe` |
 | `import_anomalies.statut` | `a_traiter`, `traite` |
 | `type_objet` (séquences) | `CLI`, `FOU`, `DEV`, `BCD`, `ACP`, `FAC`, `AVO`, `PVR`, `DEP` |
+
+Exception à la règle ci-dessus : `import_anomalies.type_entite` n'est pas une énumération fermée du modèle (texte non vide, valeurs définies par le contrat d'import ; §2.1, §4.17 point 7).
 
 ---
 
@@ -231,7 +233,7 @@ Notation : `PK` = clé primaire autoincrement ; `NN` = NOT NULL ; `UQ` = UNIQUE 
 
 ### 4.1 Import (créée en premier)
 
-**`import_anomalies`** : `id` PK · `type_entite` NN · `entite_id` INTEGER NULL (objet V6 concerné, polymorphe, contrôlé par CK-09) · `ref_source` TEXT NN (`ref` dans `import-v6.json`) · `categorie` NN (`a_verifier` | `non_importe`) · `motif` NN · `donnees` TEXT NULL `json_valid` · `statut` NN défaut `a_traiter` · `created_at` · `traite_at` TS.
+**`import_anomalies`** : `id` PK · `type_entite` TEXT NN non vide, sans énumération fermée (§2.1, §4.17 point 7) · `entite_id` INTEGER NULL (objet V6 concerné, polymorphe, contrôlé par CK-09) · `ref_source` TEXT NN (`ref` dans `import-v6.json`) · `categorie` NN (`a_verifier` | `non_importe`) · `motif` NN · `donnees` TEXT NULL `json_valid` · `statut` NN défaut `a_traiter` · `created_at` · `traite_at` TS.
 CHECK : `(statut='a_traiter') = (traite_at IS NULL)` ; `categorie='a_verifier'` ⇒ `entite_id` NN ; `categorie='non_importe'` ⇒ `entite_id` NULL ∧ `donnees` NN. Jamais supprimée ; seuls `statut` et `traite_at` évoluent (TR-90). [INV-130, INV-163, INV-165]
 Tables **supprimées** de la V3.5 (D-22, V3.6) : `migration_rapports` (la trace de l'import est l'événement `import` de `historique`, §10.7) et `migration_quarantaine` (remplacée par `import_anomalies`, sans FK vers un lot d'import).
 
@@ -409,7 +411,7 @@ Cette sous-section ne crée **aucune règle ni décision nouvelle** : elle fixe 
 4. **Familles et listes** : `prix_unitaire_ht` en famille DL (§2.3) ; `actif` ∈ (0, 1) ; `statut` client, `unite`, `type_prestation`, `garantie_type`, `categorie`/`statut` d'anomalie : listes fermées du §2.5 (`CHECK … IN (…)`).
 5. **Code client** : `CHECK code GLOB 'CLI-[0-9][0-9][0-9][0-9]'`, **sans exception d'origine** (D-01, INV-20, INV-27). `statut = 'a_rattacher'` ⇒ `origine = 'import'` ; `legacy_numero` NULL ou différent de `code` (INV-136).
 6. **BLOC-IMP** (`clients`, `prestations`) : `origine IN ('v6','import')` ; `origine = 'v6'` ⇒ `legacy_id`, `legacy_data` (et `legacy_numero` pour `clients`) NULL ; `legacy_data` JSON valide si présent. Aucune contrainte supplémentaire (en particulier, `legacy_id` n'est pas rendu obligatoire ni unique).
-7. **`import_anomalies`** : `type_entite` est un texte non vide, **sans énumération fermée** (le modèle n'en définit pas ; elle sera figée avec le schéma JSON, point P-04). TR-90 : DELETE interdit ; UPDATE autorisé uniquement pour la transition `a_traiter` → `traite` (colonnes `statut` et `traite_at`, une seule fois). Aucune FK (lien polymorphe, contrôlé par CK-09).
+7. **`import_anomalies`** : `type_entite` est un texte non vide **sans CHECK `IN (…)`** : c'est l'exception explicite à la règle d'énumération fermée des liens polymorphes (§2.1). Motifs : la table est alimentée uniquement à l'import (INV-163) ; une anomalie `non_importe` décrit une donnée que V6 ne représente pas, donc hors des types d'entités V6 ; le modèle (§2.5, §4.1, §10.7) n'en définit pas la liste. Les valeurs admises sont définies par le contrat `import-v6.json` (point P-04) et vérifiées par le lecteur strict (INV-153) ; CK-09 contrôle l'existence de `entite_id` pour les anomalies `a_verifier`. TR-90 : DELETE interdit ; UPDATE autorisé uniquement pour la transition `a_traiter` → `traite` (colonnes `statut` et `traite_at`, une seule fois). Aucune FK (lien polymorphe, contrôlé par CK-09).
 8. **`numerotation_sequences`** : `annee BETWEEN 0 AND 99` ; plafond `dernier_numero` 9 999 (CLI/FOU) ou 99 999 (documents) en CHECK ; TR-95 : `dernier_numero` ne diminue jamais. Création/attribution : `INSERT (type_objet, annee, dernier_numero) VALUES (?, ?, 1) ON CONFLICT(type_objet, annee) DO UPDATE SET dernier_numero = dernier_numero + 1, updated_at = … RETURNING dernier_numero` ; au plafond, le CHECK refuse l'écriture (le service la traduit en erreur métier explicite).
 9. **`prestation_garanties`** : FK `prestation_id` en CASCADE (INV-05) ; l'index de `UQ(prestation_id, garantie_type)` couvre la FK (pas d'index séparé).
 10. **Point ouvert (P-04)** : le contrat d'import accepte un bloc `categories_prestations` dont chaque objet porte un `ref` copié dans `legacy_id`, alors que BLOC-IMP n'existe pas sur `categories_prestations` (§2.4). Le DDL suit le §2.4 (pas de BLOC-IMP sur les listes). La suite (ajouter BLOC-IMP aux catégories, ou ne pas conserver le `ref`) est à trancher avec le schéma JSON.
@@ -543,7 +545,7 @@ Chaque trigger et chaque index est créé par la migration de la tranche qui cr�
 
 ## 9. Index
 
-Un index **par clé étrangère**, plus les index de recherche :
+Un index **par clé étrangère** (l'index d'un `UNIQUE` qui commence par la FK en tient lieu : `prestation_garanties`), plus les index de recherche :
 
 - clients(statut) · fournisseurs(statut) · prestations(categorie_id) · prestations(actif)
 - devis(client_id) · devis(statut) · devis(date_creation) · devis_lignes(devis_id, ordre) · devis_lignes(prestation_id)
@@ -801,7 +803,7 @@ CK-01 numéros uniques, et conformes au format V6 sauf devis/factures/PV `origin
 ### Points à figer avant le DDL (P-xx)
 - **P-01** *(clos)* : unités figées par D-13 ; catégories de prestations = 13 du catalogue par défaut V5.16 + `Revêtement` ; le mapping des types de planning est sans objet (aucune donnée de planning n'est importée) ; liste initiale des catégories de dépenses figée par D-18.
 - **P-02** *(clos sur l'échantillon)* : quantités et prix unitaires V2 ≤ 2 décimales ; totaux V2 non arrondis jusqu'à 5 décimales et artefacts flottants ⇒ INV-15. Le convertisseur refait la mesure sur la sauvegarde réelle ; V6 rejette tout montant hors précision (INV-15).
-- **P-04** *(ouvert)* : schéma JSON détaillé du contrat `import-v6.json` (champs, types, exemples) ; à écrire avec le document du convertisseur, avant l'implémentation de l'import. Bloque l'import, pas le DDL des tables (D-22 est validée : `import_anomalies` est figée). Deux points y sont ajoutés par la V3.9 (§4.17, points 7 et 10) : énumération fermée de `import_anomalies.type_entite`, et sort du `ref` des objets du bloc `categories_prestations` (BLOC-IMP absent des listes).
+- **P-04** *(ouvert)* : schéma JSON détaillé du contrat `import-v6.json` (champs, types, exemples) ; à écrire avec le document du convertisseur, avant l'implémentation de l'import. Bloque l'import, pas le DDL des tables (D-22 est validée : `import_anomalies` est figée). Deux points y sont ajoutés par la V3.9 (§4.17, points 7 et 10) : liste des valeurs admises de `import_anomalies.type_entite` (définie par le contrat, sans CHECK en base), et sort du `ref` des objets du bloc `categories_prestations` (BLOC-IMP absent des listes).
 - **P-03** *(clos)* : une prestation V5.16 porte une seule garantie ; le modèle multi-garanties est conservé, le catalogue par défaut n'en utilise qu'une.
 
 ---
@@ -831,7 +833,7 @@ Le modèle est prêt pour le DDL lorsque :
 2. D-01 à D-12 sont validées (fait le 2026-09-29) ; D-13 à D-17 sont validées (fait le 2026-09-29) ; D-21 à D-27 validées (2026-09-30) ; D-28 à D-30 validées (2026-10-01) ;
 3. D-18, D-19 et D-20 sont validées (P-01 soldé, fait) ; D-16 est tranchée (aucune garantie recréée, fait) ;
 4. les errata E-01 à E-09 sont au fichier `cdc-errata-v6.md` ;
-5. l'ordre du DDL est : `machine/001` (indépendant) puis métier : import_anomalies → séquences → listes → clients/fournisseurs → catalogue → devis → BC → factures → règlements → garanties → PV → dépenses → planning → documents → historique → paramètres → URSSAF → triggers → index. Chaque tranche est une migration distincte, accompagnée de ses triggers, de ses index et de ses tests ; le modèle passe à la version suivante **avant** chaque migration (§17.1).
+5. l'ordre du DDL est : `machine/001` (indépendant) puis métier : import_anomalies → séquences → listes → clients/fournisseurs → catalogue → devis → BC → factures → règlements → garanties → PV → dépenses → planning → documents → historique → paramètres → URSSAF. Chaque tranche est une migration distincte, accompagnée de ses triggers, de ses index et de ses tests ; le modèle passe à la version suivante **avant** chaque migration (§17.1).
 
 ### 17.1 Suivi des migrations
 
