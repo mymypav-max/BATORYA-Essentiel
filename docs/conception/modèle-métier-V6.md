@@ -4,7 +4,7 @@
 
 Produit : BATORYA Essentiel
 Version : V6
-Statut : Modèle métier — mis à jour le 2026-10-01, aligné sur le modèle de données SQLite V3.10, le registre des invariants (v4) et les errata E-01 à E-09
+Statut : Modèle métier — mis à jour le 2026-10-01, aligné sur le modèle de données SQLite V3.11, le registre des invariants (v6) et les errata E-01 à E-09
 Périmètre : Micro-entrepreneur BTP — prestations de services — franchise en base de TVA
 
 ⸻
@@ -101,7 +101,7 @@ Le code client est indépendant de la numérotation des documents.
 
 * **actif** ;
 * **archivé** : un client ayant un historique n'est jamais supprimé ;
-* **à rattacher** : statut réservé à un client issu de l'import de données historiques, en attente de rattachement à un client existant. Le rattachement réaffecte les documents concernés, est tracé dans l'historique et ne modifie pas les snapshots. C'est la seule modification de client autorisée sur un document gelé.
+* **à rattacher** : statut réservé à un client issu de l'import de données historiques, en attente de rattachement à un client existant. Le rattachement réaffecte les documents concernés, est tracé dans l'historique et ne modifie pas les snapshots. C'est la seule modification de client autorisée sur un document gelé ; sur un devis `refuse` ou `annule`, il constitue également l'unique modification autorisée.
 
 **Règles**
 
@@ -176,9 +176,10 @@ L'expiration de la validité est un état dérivé, jamais stocké.
 **Règles**
 
 * La **date de création** est distincte de la **date d'acceptation** ; la date de création est immuable, la date de validité reste modifiable.
-* Un devis est modifiable s'il est En attente, ou Accepté et **non gelé**. Un devis Refusé ou Annulé est immuable.
+* Un devis est modifiable s'il est En attente, ou Accepté et **non gelé**. Un devis Refusé ou Annulé est immuable, **sauf** rattachement d'un client `a_rattacher` par modification de `client_id` uniquement. Un devis gelé conserve la même exception de rattachement ; les snapshots et les autres données commerciales ne changent pas.
 * Le devis est le **seul point d'édition** : toute modification d'un devis accepté non gelé régénère le BC correspondant (lignes, garanties de lignes, montant contractuel, snapshots).
 * Un devis accepté produit **un seul BC**, de façon idempotente.
+* Un devis sans BC peut être supprimé physiquement ; ses lignes et garanties sont supprimées en cascade. Dès qu'un BC existe, la relation future `bons_commande.devis_id` en `RESTRICT` interdit sa suppression.
 
 **Relations**
 
