@@ -56,7 +56,8 @@ src-tauri/
     ├── machine/
     │   └── test_premier_demarrage.py
     └── metier/
-        └── test_001_initial.py
+        ├── test_001_initial.py
+        └── test_002_fournisseurs.py
 ```
 
 Cette arborescence sera complétée lorsque les premières implémentations Rust, SQLite métier et interfaces applicatives seront réellement introduites.
@@ -130,10 +131,11 @@ Le test actuellement défini pour le premier démarrage de `machine.db` est :
 src-tauri/tests/machine/test_premier_demarrage.py
 ```
 
-Le test de la première migration métier est :
+Les tests des migrations métier sont :
 
 ```text
 src-tauri/tests/metier/test_001_initial.py
+src-tauri/tests/metier/test_002_fournisseurs.py
 ```
 
 Pour les migrations métier : un fichier de test par migration, dans `src-tauri/tests/metier/`, nommé `test_<nom de la migration>.py` ; les méthodes de test portent le nom de l’invariant vérifié (`test_INV_xx_…`), conformément au registre des invariants.
