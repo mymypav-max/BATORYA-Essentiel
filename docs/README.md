@@ -20,7 +20,7 @@ Il n'existe pas de dossier `migration/` autonome à ce stade. La migration V2 �
 - `conception/invariants.md` — invariants fonctionnels et techniques validés
 - `conception/conventions-techniques-v6.md` — conventions techniques et de code V6
 - `conception/modèle-métier-V6.md` — modèle métier V6
-- `conception/modèle-données-sqlite-v6-v3.10.md` — modèle de données SQLite V3.10, référence validée
+- `conception/modèle-données-sqlite-v6-v3.11.md` — modèle de données SQLite V3.11, référence validée
 
 ### Décisions
 - `décisions/cdc-errata-v6.md` — errata et corrections validés au cours de la consolidation du CDC
@@ -34,7 +34,7 @@ Le CDC V6 doit être lu conjointement avec les documents de référence ci-dessu
 
 Les décisions validées dans les invariants, le modèle métier, le modèle de données SQLite et les errata doivent être cohérentes avec le CDC. Lorsqu'une décision validée a été intégrée au CDC, le CDC présente directement la règle courante ; les documents de décisions conservent la traçabilité des corrections.
 
-Le modèle de données SQLite V3.10 est la référence validée pour le schéma de données. Les modèles V3.6, V3.7, V3.8 et V3.9 ont été remplacés et ne doivent pas être réintroduits.
+Le modèle de données SQLite V3.11 est la référence validée pour le schéma de données. Les modèles V3.6, V3.7, V3.8, V3.9 et V3.10 ont été remplacés et ne doivent pas être réintroduits.
 
 ## Périmètre
 
