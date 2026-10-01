@@ -1,6 +1,6 @@
 # Audit fonctionnel V5.16 → BATORYA V6
 
-Statut : Audit clôturé — mis à jour le 2026-09-30 (alignement sur le modèle SQLite V3.7, le registre des invariants v3 et les errata E-01 à E-09)
+Statut : Audit clôturé — mis à jour le 2026-10-01 (alignement sur le modèle SQLite V3.8, le registre des invariants v4 et les errata E-01 à E-09)
 Version de référence : BATORYA V5.16 (**jamais distribuée**)
 Cible : BATORYA V6 – Essentiel
 
@@ -22,7 +22,7 @@ L'objectif n'est pas de déterminer quelles parties du code V5.16 peuvent être 
 
 * CDC V6 (gelé) et registre d'errata `cdc-errata-v6.md` (E-01 à E-09) ;
 * modèle métier V6 ;
-* modèle de données SQLite V6 (V3.7) et registre des invariants `invariants.md`.
+* modèle de données SQLite V6 (V3.8) et registre des invariants `invariants.md`.
 
 En cas de divergence entre cet audit et ces documents, ce sont ces derniers qui font foi.
 
@@ -579,4 +579,4 @@ Les différences entre V5.16 et V6 correspondent principalement à :
 
 Le code V5.16 ne constitue donc pas une base technique à refactoriser. Il constitue une **source de vérification fonctionnelle et technique** et la source du catalogue de prestations, et non une source de migration.
 
-À compter de la clôture de cet audit, le CDC V6 constitue la référence fonctionnelle. Le modèle métier V6, le modèle de données SQLite (V3.7), les invariants et les errata en sont la déclinaison à jour. La conception technique V6 est engagée indépendamment de l'architecture V5.16, dans l'architecture Tauri 2 + React + TypeScript.
+À compter de la clôture de cet audit, le CDC V6 constitue la référence fonctionnelle. Le modèle métier V6, le modèle de données SQLite (V3.8), les invariants et les errata en sont la déclinaison à jour. La conception technique V6 est engagée indépendamment de l'architecture V5.16, dans l'architecture Tauri 2 + React + TypeScript.
