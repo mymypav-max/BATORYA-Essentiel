@@ -475,6 +475,8 @@ Le BC relie notamment :
 
 Les dépenses peuvent être globales ou rattachées à un BC.
 
+Lorsqu'un BC atteint 100 % facturé, les nouvelles dépenses peuvent encore être rattachées normalement pendant 30 jours calendaires à compter de la date de facturation à 100 %. Après ce délai, le BC est considéré comme clôturé pour les nouvelles dépenses. Une tentative de rattachement affiche simplement : « Ce BC est clôturé depuis X jours. Êtes-vous sûr de vouloir ajouter cette dépense sur ce BC ? ». Une confirmation positive permet le rattachement. Aucun système de déblocage, d'autorisation supplémentaire ou de délai maximal n'est prévu.
+
 ⸻
 
 16. Création et cycle de vie du BC
