@@ -18,7 +18,7 @@ Le document est volontairement évolutif : les conventions seront complétées a
 Avant toute implémentation ou modification structurelle, les références suivantes doivent être considérées dans cet ordre de priorité métier et architectural :
 
 1. `docs/specifications/cdc-fonctionnel-architectural-v6.md`
-2. `docs/conception/modèle-données-sqlite-v6-v3.9.md`
+2. `docs/conception/modèle-données-sqlite-v6-v3.11.md`
 3. `docs/conception/invariants.md`
 4. `docs/conception/modèle-métier-V6.md`
 5. `docs/décisions/cdc-errata-v6.md` pour la traçabilité historique uniquement.
@@ -50,14 +50,17 @@ src-tauri/
 │   ├── machine/
 │   │   └── 001_initial.sql
 │   └── metier/
-│       └── 001_initial.sql
+│       ├── 001_initial.sql
+│       ├── 002_fournisseurs.sql
+│       └── 003_devis.sql
 │
 └── tests/
     ├── machine/
     │   └── test_premier_demarrage.py
     └── metier/
         ├── test_001_initial.py
-        └── test_002_fournisseurs.py
+        ├── test_002_fournisseurs.py
+        └── test_003_devis.py
 ```
 
 Cette arborescence sera complétée lorsque les premières implémentations Rust, SQLite métier et interfaces applicatives seront réellement introduites.
@@ -90,6 +93,8 @@ La base métier a ses propres migrations, séparées de celles de `machine.db` :
 
 ```text
 src-tauri/migrations/metier/001_initial.sql
+src-tauri/migrations/metier/002_fournisseurs.sql
+src-tauri/migrations/metier/003_devis.sql
 ```
 
 Règles :
@@ -136,6 +141,7 @@ Les tests des migrations métier sont :
 ```text
 src-tauri/tests/metier/test_001_initial.py
 src-tauri/tests/metier/test_002_fournisseurs.py
+src-tauri/tests/metier/test_003_devis.py
 ```
 
 Pour les migrations métier : un fichier de test par migration, dans `src-tauri/tests/metier/`, nommé `test_<nom de la migration>.py` ; les méthodes de test portent le nom de l’invariant vérifié (`test_INV_xx_…`), conformément au registre des invariants.
