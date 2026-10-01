@@ -131,7 +131,8 @@ Statut : **pièce obligatoire du modèle de données**
 | INV-95 | Le PV est facultatif ; il ne conditionne ni le solde, ni Terminé, ni les garanties | SVC | |
 | INV-96 | PV immuable dès l'INSERT ; une levée est un nouveau PV référençant un PV `reception_avec_reserves` du même BC ; jamais de levée sur levée ; `UNIQUE(origine_pv_id, suffixe)` | TRG (TR-40, TR-41), SQL | T-15 |
 | INV-97 | `reserves` renseigné ⇔ `reception_avec_reserves` ; levée ⇔ `origine_pv_id` et `suffixe` renseignés | SQL | |
-| INV-100 | Dépense : fournisseur par identifiant, BC optionnel ; ni statut de paiement, ni échéance, ni règlement fournisseur ; ne réduit jamais le CA URSSAF | SQL (pas de colonne), SVC | |
+| INV-100 | Dépense : fournisseur par identifiant, BC optionnel ; ni statut de paiement, ni échéance, ni règlement fournisseur ; ne réduit jamais le CA URSSAF ; un fournisseur archivé ne peut pas être sélectionné pour une nouvelle dépense | SQL (pas de colonne), SVC | |
+| INV-103 | Après 30 jours calendaires à compter de `date_100_facture`, un nouveau rattachement de dépense au BC nécessite une confirmation explicite ; cette confirmation suffit et aucun délai maximal de rattachement tardif n'existe | SVC | C-21, C-22 |
 | INV-101 | Planning : `fin ≥ début` ; `intervention`/`travaux` avec BC ; `conge`/`indisponibilite` sans BC ; aucun effet sur le statut du BC ; le Gantt lit `date_debut/date_fin` du BC | SQL, SVC | |
 | INV-102 | Les notes BC sont libres, modifiables, supprimables ; pas de tâches, aucun effet sur les montants | SVC | |
 
