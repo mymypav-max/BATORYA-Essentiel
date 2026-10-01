@@ -1,0 +1,180 @@
+"""
+T-25 — Premier démarrage de machine.db (modèle V3.8, §5.1 ; INV-171, INV-172, INV-151, INV-08)
++ contrôles des contraintes de machine/001_initial.sql.
+
+Exécution : python3 machine/tests/test_premier_demarrage.py
+Ce test simule le service d'initialisation (INSERT OR IGNORE) ; le service réel
+(Rust) doit exécuter les mêmes instructions.
+"""
+import pathlib
+import sqlite3
+import unittest
+
+SQL = (pathlib.Path(__file__).resolve().parent.parent / "001_initial.sql").read_text(encoding="utf-8")
+TS = "2026-10-01T10:00:00.000Z"
+HASH = "$argon2id$v=19$m=65536,t=3,p=4$c2VsdA$aGFzaA"
+SINGLETONS = ("utilisateur_local", "licence", "services_etat", "preferences_sauvegarde", "gmail_etat")
+TABLES = SINGLETONS + ("stockage_racines", "sequence_high_water")
+
+# Instructions du service d'initialisation (modèle §5.1)
+INIT = [
+    "INSERT OR IGNORE INTO services_etat (id) VALUES (1)",
+    "INSERT OR IGNORE INTO gmail_etat (id, connecte) VALUES (1, 0)",
+    "INSERT OR IGNORE INTO preferences_sauvegarde (id) VALUES (1)",
+]
+INIT_LICENCE = "INSERT OR IGNORE INTO licence (id, identifiant_installation) VALUES (1, ?)"
+CREATE_COMPTE = ("INSERT OR IGNORE INTO utilisateur_local (id, identifiant, nom, prenom, mot_de_passe_hash) "
+                 "VALUES (1, ?, ?, ?, ?)")
+
+
+def migrer():
+    """Applique la migration comme le runner : une transaction, user_version après succès."""
+    db = sqlite3.connect(":memory:", isolation_level=None)
+    db.execute("PRAGMA foreign_keys=ON")
+    db.executescript("BEGIN;" + SQL + "\nCOMMIT;")
+    db.execute("PRAGMA user_version = 1")
+    return db
+
+
+def compte(db, table):
+    return db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+
+
+class PremierDemarrage(unittest.TestCase):
+    def setUp(self):
+        self.db = migrer()
+
+    def demarrer(self, identifiant="remy", nom=None, prenom=None, install="install-1"):
+        for stmt in INIT:
+            self.db.execute(stmt)
+        self.db.execute(INIT_LICENCE, (install,))
+        self.db.execute(CREATE_COMPTE, (identifiant, nom, prenom, HASH))
+
+    def test_migration_ne_cree_aucune_ligne_ni_trigger(self):
+        self.assertEqual(self.db.execute("PRAGMA user_version").fetchone()[0], 1)
+        for t in TABLES:
+            self.assertEqual(compte(self.db, t), 0, t)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='trigger'").fetchone()[0], 0)
+        stricts = [r[5] for r in self.db.execute("PRAGMA table_list") if not r[1].startswith("sqlite_")]
+        self.assertEqual(set(stricts), {1})
+
+    def test_initialisation_cree_les_singletons(self):
+        self.demarrer(nom="Pavy", prenom="Rémy")
+        for t in SINGLETONS:
+            self.assertEqual(self.db.execute(f"SELECT id FROM {t}").fetchall(), [(1,)], t)
+        self.assertEqual(self.db.execute(
+            "SELECT auto_active, frequence_minutes, sauvegarde_fermeture, derniere_sauvegarde_at, derniere_sauvegarde_statut "
+            "FROM preferences_sauvegarde").fetchone(), (1, 30, 1, None, None))
+        self.assertEqual(self.db.execute("SELECT connecte, compte_email, connecte_at FROM gmail_etat").fetchone(),
+                         (0, None, None))
+        self.assertEqual(self.db.execute("SELECT mise_a_jour_disponible FROM services_etat").fetchone(), (0,))
+        self.assertEqual(self.db.execute("SELECT identifiant_installation FROM licence").fetchone(), ("install-1",))
+        # tables sans singleton
+        self.assertEqual(compte(self.db, "stockage_racines"), 0)
+        self.assertEqual(compte(self.db, "sequence_high_water"), 0)
+
+    def test_compte_cree_avec_identifiant_et_hash(self):
+        self.demarrer(identifiant="remy")
+        ident, nom, prenom, h = self.db.execute(
+            "SELECT identifiant, nom, prenom, mot_de_passe_hash FROM utilisateur_local").fetchone()
+        self.assertEqual((ident, nom, prenom, h), ("remy", None, None, HASH))  # nom / prenom facultatifs
+        self.assertTrue(h.startswith("$argon2id$"))
+
+    def test_compte_invalide_refuse(self):
+        ins = "INSERT INTO utilisateur_local (id, identifiant, mot_de_passe_hash) VALUES (1, ?, ?)"
+        for label, args in {
+            "identifiant NULL": (None, HASH),
+            "identifiant vide": ("", HASH),
+            "mot de passe NULL": ("remy", None),
+            "mot de passe en clair": ("remy", "secret"),
+            "hash autre algorithme": ("remy", "$2b$12$abcdefghijklmnopqrstuv"),
+        }.items():
+            with self.subTest(label), self.assertRaises(sqlite3.IntegrityError):
+                self.db.execute(ins, args)
+        with self.assertRaises(sqlite3.IntegrityError):  # id != 1
+            self.db.execute("INSERT INTO utilisateur_local (id, identifiant, mot_de_passe_hash) VALUES (2, 'x', ?)", (HASH,))
+        self.assertEqual(compte(self.db, "utilisateur_local"), 0)
+
+    def test_second_demarrage_n_ecrase_rien(self):
+        self.demarrer(identifiant="remy", nom="Pavy")
+        self.db.execute("UPDATE preferences_sauvegarde SET auto_active=0, frequence_minutes=60, sauvegarde_fermeture=0")
+        self.db.execute("UPDATE gmail_etat SET connecte=1, compte_email='a@b.fr', connecte_at=?", (TS,))
+        self.db.execute("UPDATE services_etat SET mise_a_jour_disponible=1")
+        avant = {t: self.db.execute(f"SELECT * FROM {t} ORDER BY id").fetchall() for t in SINGLETONS}
+        # redémarrage : mêmes instructions, autres valeurs proposées
+        self.demarrer(identifiant="autre", nom="X", prenom="Y", install="install-2")
+        apres = {t: self.db.execute(f"SELECT * FROM {t} ORDER BY id").fetchall() for t in SINGLETONS}
+        self.assertEqual(avant, apres)
+        self.assertEqual(self.db.execute("SELECT identifiant_installation FROM licence").fetchone(), ("install-1",))
+
+    def test_identifiant_unique(self):
+        self.demarrer(identifiant="remy")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute("UPDATE utilisateur_local SET identifiant=NULL")
+        self.assertEqual(self.db.execute("SELECT identifiant FROM utilisateur_local").fetchone(), ("remy",))
+
+
+class Contraintes(unittest.TestCase):
+    def setUp(self):
+        self.db = migrer()
+        for stmt in INIT:
+            self.db.execute(stmt)
+        self.db.execute(INIT_LICENCE, ("install-1",))
+        self.db.execute(CREATE_COMPTE, ("remy", None, None, HASH))
+
+    def refuse(self, sql, *args):
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute(sql, args)
+
+    def test_token_deblocage_et_expiration_ensemble(self):
+        self.refuse("UPDATE utilisateur_local SET deblocage_token_hash='h'")
+        self.db.execute("UPDATE utilisateur_local SET deblocage_token_hash='h', deblocage_expire_at=?", (TS,))
+
+    def test_timestamp_invalide(self):
+        self.refuse("UPDATE licence SET grace_debut_at='2026-10-01'")
+        self.db.execute("UPDATE licence SET grace_debut_at=?", (TS,))
+
+    def test_racines(self):
+        self.db.execute("INSERT INTO stockage_racines (chemin_absolu, actif) VALUES ('/a', 1)")
+        self.refuse("INSERT INTO stockage_racines (chemin_absolu, actif) VALUES ('/b', 1)")  # 2 actives
+        self.refuse("INSERT INTO stockage_racines (chemin_absolu) VALUES ('/a')")              # doublon
+        self.db.execute("UPDATE stockage_racines SET actif=0 WHERE chemin_absolu='/a'")
+        self.db.execute("INSERT INTO stockage_racines (chemin_absolu, actif) VALUES ('/b', 1)")
+
+    def test_preferences_sauvegarde(self):
+        self.refuse("UPDATE preferences_sauvegarde SET frequence_minutes=0")
+        self.refuse("UPDATE preferences_sauvegarde SET frequence_minutes=NULL")
+        self.refuse("UPDATE preferences_sauvegarde SET derniere_sauvegarde_statut='succes'")  # sans date
+        self.refuse("UPDATE preferences_sauvegarde SET derniere_sauvegarde_statut='inconnu', derniere_sauvegarde_at=?", TS)
+        self.db.execute("UPDATE preferences_sauvegarde SET derniere_sauvegarde_statut='succes', derniere_sauvegarde_at=?", (TS,))
+
+    def test_gmail(self):
+        self.refuse("UPDATE gmail_etat SET connecte=1")
+        self.db.execute("UPDATE gmail_etat SET connecte=1, compte_email='a@b.fr', connecte_at=?", (TS,))
+        self.refuse("UPDATE gmail_etat SET connecte=0")
+        self.db.execute("UPDATE gmail_etat SET connecte=0, compte_email=NULL, connecte_at=NULL")
+
+    def test_sequence_high_water(self):
+        ins = "INSERT INTO sequence_high_water (type_objet, annee, max_attribue) VALUES (?, ?, ?)"
+        self.db.execute(ins, ("CLI", 0, 5))
+        self.db.execute(ins, ("FAC", 26, 12))
+        self.refuse(ins, "CLI", 26, 1)       # CLI/FOU => annee 0
+        self.refuse(ins, "DEV", 0, 1)        # documents => annee != 0
+        self.refuse(ins, "XXX", 26, 1)       # type inconnu
+        self.refuse(ins, "FAC", 26, 13)      # clé dupliquée
+        self.refuse("UPDATE sequence_high_water SET max_attribue=10000 WHERE type_objet='CLI'")   # plafond CLI
+        self.refuse("UPDATE sequence_high_water SET max_attribue=100000 WHERE type_objet='FAC'")  # plafond documents
+        self.db.execute("UPDATE sequence_high_water SET max_attribue=99999 WHERE type_objet='FAC'")
+        # écriture du service : max(max_attribue, numéro)
+        self.db.execute(ins.replace("VALUES (?, ?, ?)", "VALUES (?, ?, ?) ON CONFLICT(type_objet, annee) "
+                        "DO UPDATE SET max_attribue = max(max_attribue, excluded.max_attribue), "
+                        "updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')"), ("CLI", 0, 3))
+        self.assertEqual(self.db.execute("SELECT max_attribue FROM sequence_high_water WHERE type_objet='CLI'").fetchone(), (5,))
+
+    def test_integrite(self):
+        self.assertEqual(self.db.execute("PRAGMA integrity_check").fetchall(), [("ok",)])
+        self.assertEqual(self.db.execute("PRAGMA foreign_key_check").fetchall(), [])
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
