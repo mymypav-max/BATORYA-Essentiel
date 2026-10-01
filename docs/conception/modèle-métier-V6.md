@@ -4,7 +4,7 @@
 
 Produit : BATORYA Essentiel
 Version : V6
-Statut : Modèle métier — mis à jour le 2026-09-30, aligné sur le modèle de données SQLite V3.7, le registre des invariants (v3) et les errata E-01 à E-09
+Statut : Modèle métier — mis à jour le 2026-10-01, aligné sur le modèle de données SQLite V3.8, le registre des invariants (v4) et les errata E-01 à E-09
 Périmètre : Micro-entrepreneur BTP — prestations de services — franchise en base de TVA
 
 ⸻
@@ -32,7 +32,7 @@ Client → Devis → Bon de commande → Facturation → Règlements
 
 Les objets métier sont indépendants des écrans qui les manipulent. Aucune interface ne doit devenir propriétaire des données ou des règles métier.
 
-Ce document est la référence des **règles métier**. Il ne recopie pas le schéma SQLite : les tables, types, contraintes et triggers sont dans le modèle de données SQLite V3.7, et chaque règle importante y porte un identifiant d'invariant (`INV-xx`) défini dans `invariants.md`. Les écarts décidés par rapport au CDC gelé sont tracés dans `cdc-errata-v6.md`.
+Ce document est la référence des **règles métier**. Il ne recopie pas le schéma SQLite : les tables, types, contraintes et triggers sont dans le modèle de données SQLite V3.8, et chaque règle importante y porte un identifiant d'invariant (`INV-xx`) défini dans `invariants.md`. Les écarts décidés par rapport au CDC gelé sont tracés dans `cdc-errata-v6.md`.
 
 ⸻
 
@@ -668,7 +668,7 @@ Les valeurs courantes ne reconstruisent jamais un document historique (snapshots
 
 ## 30. Utilisateur local
 
-BATORYA Essentiel est une application locale. Le profil utilisateur sert à identifier l'utilisateur local, protéger l'accès et gérer le mot de passe local (conservé sous forme de hachage, jamais en clair). Il n'existe pas de comptes distants ni de rôles.
+BATORYA Essentiel est une application locale. Le compte local est créé obligatoirement au premier démarrage, avec un identifiant et un mot de passe (nom et prénom facultatifs) ; tant qu'il n'existe pas, seul l'écran de création du compte est accessible. Le profil sert à identifier l'utilisateur local, protéger l'accès et gérer le mot de passe local (conservé sous forme de hachage, jamais en clair). Il n'existe pas de comptes distants ni de rôles.
 
 ⸻
 
@@ -682,7 +682,7 @@ BATORYA Essentiel est une application locale. Le profil utilisateur sert à iden
 
 ### 31.2 Sauvegarde
 
-* Sauvegarde **SQLite** cohérente (manuelle, automatique, à la fermeture), par un seul moteur.
+* Sauvegarde **SQLite** cohérente (manuelle, automatique, à la fermeture), par un seul moteur. Par défaut : sauvegarde automatique activée toutes les 30 minutes et sauvegarde à chaque fermeture activée.
 * **Export JSON** : consultation et archivage uniquement ; ce n'est pas un format de restauration.
 
 ### 31.3 Restauration
@@ -780,7 +780,7 @@ Aucune entité métier ne doit connaître l'implémentation technique de la pers
 * ni du système de fichiers ;
 * ni de l'interface graphique.
 
-Les relations définies ici sont traduites en repositories et en tables SQLite (modèle de données SQLite V3.7).
+Les relations définies ici sont traduites en repositories et en tables SQLite (modèle de données SQLite V3.8).
 
 ⸻
 
@@ -815,7 +815,7 @@ Le modèle V6 garantit notamment que :
 
 Ce document est le modèle métier de BATORYA Essentiel V6. Il est aligné sur :
 
-* le modèle de données SQLite V6 (V3.7) ;
+* le modèle de données SQLite V6 (V3.8) ;
 * le registre des invariants (`invariants.md`, version 3) ;
 * les errata au CDC gelé (`cdc-errata-v6.md`, E-01 à E-09).
 
