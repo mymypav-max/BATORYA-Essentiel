@@ -1,6 +1,6 @@
 # BATORYA Essentiel V6 — Conventions techniques et de code
 
-**Version : 0.1 — document évolutif**  
+**Version : 0.2 — document évolutif**  
 **Périmètre : conventions techniques de développement V6**
 
 ## 1. Objet
@@ -18,7 +18,7 @@ Le document est volontairement évolutif : les conventions seront complétées a
 Avant toute implémentation ou modification structurelle, les références suivantes doivent être considérées dans cet ordre de priorité métier et architectural :
 
 1. `docs/specifications/cdc-fonctionnel-architectural-v6.md`
-2. `docs/conception/modèle-données-sqlite-v6-v3.8.md`
+2. `docs/conception/modèle-données-sqlite-v6-v3.9.md`
 3. `docs/conception/invariants.md`
 4. `docs/conception/modèle-métier-V6.md`
 5. `docs/décisions/cdc-errata-v6.md` pour la traçabilité historique uniquement.
@@ -47,12 +47,16 @@ L’arborescence technique actuellement validée est volontairement minimale :
 ```text
 src-tauri/
 ├── migrations/
-│   └── machine/
+│   ├── machine/
+│   │   └── 001_initial.sql
+│   └── metier/
 │       └── 001_initial.sql
 │
 └── tests/
-    └── machine/
-        └── test_premier_demarrage.py
+    ├── machine/
+    │   └── test_premier_demarrage.py
+    └── metier/
+        └── test_001_initial.py
 ```
 
 Cette arborescence sera complétée lorsque les premières implémentations Rust, SQLite métier et interfaces applicatives seront réellement introduites.
@@ -79,7 +83,22 @@ Règles :
 - le runner de migrations est responsable de la transaction et de la mise à jour de `PRAGMA user_version` selon le modèle SQLite ;
 - une migration ne doit pas introduire de trigger ou de contrainte qui contredit les invariants ou les responsabilités explicitement attribuées aux services.
 
-Les conventions détaillées des migrations métier seront ajoutées lorsque la première migration métier sera définie.
+### Migrations de la base métier
+
+La base métier a ses propres migrations, séparées de celles de `machine.db` :
+
+```text
+src-tauri/migrations/metier/001_initial.sql
+```
+
+Règles :
+
+- une migration correspond à une tranche du schéma définie dans le suivi des migrations du modèle de données SQLite ; elle contient les tables de la tranche, avec leurs triggers et leurs index ;
+- la première migration métier s’appelle `001_initial.sql` ; les suivantes sont nommées `NNN_<objet>.sql` (numéro séquentiel, objet en minuscules sans accent) ;
+- le modèle de données SQLite passe à la version suivante et est mis à jour **avant** la création ou la modification d’une migration ; l’en-tête de la migration cite la version du modèle ;
+- une migration n’insère aucune ligne : listes de référence, catalogue par défaut et singletons relèvent du jeu de données d’installation ou du service d’initialisation (l’emplacement du jeu de données sera défini dans ce document lorsqu’il sera introduit) ;
+- noms SQL : triggers `tr_<NN>_<table>_<règle>` où `NN` est le numéro `TR-NN` du modèle ; index `idx_<table>_<colonnes>` ; les contraintes `UNIQUE` de colonnes restent déclarées dans la table ;
+- chaque migration métier est livrée avec son test (section 7).
 
 ## 6. machine.db
 
@@ -110,6 +129,14 @@ Le test actuellement défini pour le premier démarrage de `machine.db` est :
 ```text
 src-tauri/tests/machine/test_premier_demarrage.py
 ```
+
+Le test de la première migration métier est :
+
+```text
+src-tauri/tests/metier/test_001_initial.py
+```
+
+Pour les migrations métier : un fichier de test par migration, dans `src-tauri/tests/metier/`, nommé `test_<nom de la migration>.py` ; les méthodes de test portent le nom de l’invariant vérifié (`test_INV_xx_…`), conformément au registre des invariants.
 
 Un test doit avoir un nom explicite permettant d’identifier directement le comportement vérifié.
 
@@ -200,4 +227,3 @@ Il ne doit pas :
 - introduire une fonctionnalité hors du périmètre V6.
 
 Lorsqu’un emplacement ou une convention n’est pas encore défini, l’assistant peut proposer une solution, mais celle-ci doit être validée avant de devenir une convention du projet.
-
