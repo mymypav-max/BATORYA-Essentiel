@@ -4,7 +4,7 @@
 
 Produit : BATORYA Essentiel
 Version : V6
-Statut : Modèle métier — mis à jour le 2026-10-01, aligné sur le modèle de données SQLite V3.8, le registre des invariants (v4) et les errata E-01 à E-09
+Statut : Modèle métier — mis à jour le 2026-10-01, aligné sur le modèle de données SQLite V3.9, le registre des invariants (v4) et les errata E-01 à E-09
 Périmètre : Micro-entrepreneur BTP — prestations de services — franchise en base de TVA
 
 ⸻
@@ -32,7 +32,7 @@ Client → Devis → Bon de commande → Facturation → Règlements
 
 Les objets métier sont indépendants des écrans qui les manipulent. Aucune interface ne doit devenir propriétaire des données ou des règles métier.
 
-Ce document est la référence des **règles métier**. Il ne recopie pas le schéma SQLite : les tables, types, contraintes et triggers sont dans le modèle de données SQLite V3.8, et chaque règle importante y porte un identifiant d'invariant (`INV-xx`) défini dans `invariants.md`. Les écarts décidés par rapport au CDC gelé sont tracés dans `cdc-errata-v6.md`.
+Ce document est la référence des **règles métier**. Il ne recopie pas le schéma SQLite : les tables, types, contraintes et triggers sont dans le modèle de données SQLite V3.9, et chaque règle importante y porte un identifiant d'invariant (`INV-xx`) défini dans `invariants.md`. Les écarts décidés par rapport au CDC gelé sont tracés dans `cdc-errata-v6.md`.
 
 ⸻
 
@@ -780,7 +780,7 @@ Aucune entité métier ne doit connaître l'implémentation technique de la pers
 * ni du système de fichiers ;
 * ni de l'interface graphique.
 
-Les relations définies ici sont traduites en repositories et en tables SQLite (modèle de données SQLite V3.8).
+Les relations définies ici sont traduites en repositories et en tables SQLite (modèle de données SQLite V3.9).
 
 ⸻
 
@@ -815,7 +815,7 @@ Le modèle V6 garantit notamment que :
 
 Ce document est le modèle métier de BATORYA Essentiel V6. Il est aligné sur :
 
-* le modèle de données SQLite V6 (V3.8) ;
+* le modèle de données SQLite V6 (V3.9) ;
 * le registre des invariants (`invariants.md`, version 3) ;
 * les errata au CDC gelé (`cdc-errata-v6.md`, E-01 à E-09).
 
