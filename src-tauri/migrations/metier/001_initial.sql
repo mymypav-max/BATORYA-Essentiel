@@ -88,7 +88,7 @@ CREATE TABLE numerotation_sequences (
     CHECK ((type_objet IN ('CLI', 'FOU')) = (annee = 0)),
     CHECK (dernier_numero BETWEEN 0 AND CASE WHEN type_objet IN ('CLI', 'FOU') THEN 9999 ELSE 99999 END),
     CHECK (derniere_date IS NULL OR
-           (derniere_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(derniere_date) = derniere_date)),
+           (derniere_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(derniere_date) IS derniere_date)),
     CHECK (created_at GLOB
         '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]Z'),
     CHECK (updated_at GLOB
