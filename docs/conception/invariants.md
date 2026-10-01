@@ -1,6 +1,6 @@
 # BATORYA Essentiel V6 — Registre des invariants
 
-Version du registre : 3 — 2026-09-30 (rattaché au modèle SQLite V3.7 ; V2 : migration V2 externalisée, V3 : high-water, voir le journal en bas)
+Version du registre : 4 — 2026-10-01 (rattaché au modèle SQLite V3.8 ; V2 : migration V2 externalisée, V3 : high-water, V4 : compte local et initialisation de `machine.db`, voir le journal en bas)
 Statut : **pièce obligatoire du modèle de données**
 
 ## Mode d'emploi
@@ -195,6 +195,8 @@ Flux : sauvegarde JSON V2 → **convertisseur externe** → `import-v6.json` →
 | INV-150 | Licence hors base métier ; vérification trimestrielle ; 15 jours de grâce ; ensuite consultation et exports seuls | SVC, test | |
 | INV-151 | Secrets (clé de licence, jetons Gmail) dans le coffre système, jamais dans la base métier ; mot de passe local jamais en clair | SVC | |
 | INV-152 | E-mails toujours manuels ; jamais de faux envoi | SVC | |
+| INV-171 | Le compte local est créé obligatoirement au premier démarrage : `identifiant` unique non vide et mot de passe (`mot_de_passe_hash` argon2id, NOT NULL) ; `nom` et `prenom` facultatifs ; tant que le compte n'existe pas, seul l'écran de création est accessible | SQL (NOT NULL, UNIQUE, CHECK), SVC, test | T-25 |
+| INV-172 | Le DDL de `machine.db` ne crée aucune ligne : les singletons `id=1` sont créés par le service d'initialisation avec `INSERT OR IGNORE` (jamais d'écrasement) ; préférences de sauvegarde par défaut : automatique activée, 30 minutes, sauvegarde à la fermeture activée, `derniere_sauvegarde_*` NULL ; `machine.db` ne contient aucun trigger | SVC, test | T-25 |
 
 ---
 
@@ -231,6 +233,8 @@ Flux : sauvegarde JSON V2 → **convertisseur externe** → `import-v6.json` →
 | 2026-09-30 | INV-160 | **Retiré** de V6, règle **transférée au convertisseur** — énoncé d'origine à reprendre : « PV V2 sans BC (`refDevis` absent ou devis non accepté) → quarantaine ; numéro V2 conservé » | Règle de transformation purement V2, sans objet dans SQLite | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | INV-162 | **Retiré** de V6, règle **transférée au convertisseur** — énoncé d'origine à reprendre : « Snapshot entreprise des documents importés reconstitué depuis `entreprise` V2, avertissement unique au rapport » | Règle de transformation purement V2, sans objet dans SQLite | Migration V2 externalisée (D-21, E-09) |
 | 2026-09-30 | D-13 à D-19 (modèle §15) | Règles de transformation V2 transférées au convertisseur (unités, `date_acceptation` estimée, statut inconnu, facture sans statut, garanties non recréées) ; côté V6 : liste fermée des unités, aucune garantie importée, mécanisme `a_verifier` | Les décisions restent valides ; leur exécution change de composant | Migration V2 externalisée (D-21, E-09) |
+| 2026-10-01 | INV-171, INV-172 | **Ajoutés** (V3.8) | Compte local obligatoire avec identifiant ; initialisation des singletons de `machine.db` par le service ; défauts de sauvegarde | D-28, D-29, D-30 (réponse de Rémy, 2026-10-01) |
+| 2026-10-01 | INV-25, INV-106 | Confirmés : garde **SVC** (aucun trigger dans `machine.db`) | Les triggers proposés dans le premier jet de `machine/001_initial.sql` sont supprimés | D-30 |
 
 ## Contrôle de non-régression (à exécuter à chaque nouvelle version du modèle)
 
