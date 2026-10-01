@@ -452,6 +452,10 @@ BATORYA ne devient pas un logiciel comptable complet. Les analyses exploitent le
 
 Les dépenses servent à l'analyse de marge ; elles ne réduisent jamais le CA servant au calcul URSSAF.
 
+Un fournisseur archivé reste consultable pour l'historique mais ne peut pas être sélectionné pour une nouvelle dépense.
+
+Lorsqu'un BC atteint 100 % facturé, les dépenses peuvent encore lui être rattachées normalement pendant 30 jours calendaires à compter de `date_100_facture`. Après ce délai, le BC est considéré comme clôturé pour les nouvelles dépenses. BATORYA affiche alors une confirmation simple indiquant depuis combien de jours le BC est clôturé ; si l'utilisateur confirme, la dépense est rattachée. Il n'existe ni procédure de déblocage, ni autorisation supplémentaire, ni délai maximal de rattachement tardif.
+
 ⸻
 
 ## 18. Dépense
