@@ -7,6 +7,7 @@ Les méthodes portent le nom de l'invariant vérifié (test_INV_xx_…) ; les au
 Ces tests ne dépendent d'aucune interface graphique ni d'aucun service : l'attribution du numéro par le
 service est reproduite avec la requête documentée (modèle §4.17 point 8). Le BC, le gel par TR-15 (factures,
 règlements) et l'historique n'existent pas encore : le gel est posé ici par un UPDATE de frozen_at.
+Renforcé (seconde passe V3.12, D-39) : la connexion de test active explicitement PRAGMA recursive_triggers=ON, un test vérifie que le réglage est actif, un test ciblé vérifie que INSERT OR REPLACE ne contourne pas les triggers de protection applicables.
 """
 import pathlib
 import re
@@ -52,10 +53,12 @@ ATTRIBUER = ("INSERT INTO numerotation_sequences (type_objet, annee, dernier_num
 TS_GLOB = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
 
 
-def migrer():
-    """Applique 001, 002 puis 003 comme le runner : une transaction par fichier, user_version après succès."""
+def migrer(recursive=True):
+    """Applique 001, 002 puis 003 comme le runner : une transaction par fichier, user_version après succès.
+    La connexion applique les réglages obligatoires (D-39) : foreign_keys=ON et recursive_triggers=ON."""
     db = sqlite3.connect(":memory:", isolation_level=None)
     db.execute("PRAGMA foreign_keys=ON")
+    db.execute("PRAGMA recursive_triggers=" + ("ON" if recursive else "OFF"))
     for numero, sql in ((1, SQL_001), (2, SQL_002), (3, SQL_003)):
         db.executescript("BEGIN;" + sql + "\nCOMMIT;")
         db.execute(f"PRAGMA user_version = {numero}")
@@ -1021,6 +1024,49 @@ class Triggers(Base):
         apres = {t: self.db.execute(f"SELECT * FROM {t} ORDER BY id").fetchall() for t in TABLES_001 | TABLES_002 | TABLES_003}
         diffs = [t for t in avant if avant[t] != apres[t]]
         self.assertEqual(sorted(diffs), ["devis", "devis_lignes"])
+
+
+class ConnexionEtReplace(Base):
+    """D-39 : recursive_triggers=ON et non-contournement des protections TR-11 par INSERT OR REPLACE."""
+
+    def gele_avec_ligne(self, db_base):
+        """Devis accepté et gelé portant une ligne et une garantie ; second devis modifiable (cible du REPLACE)."""
+        d1 = db_base.devis()
+        l1 = db_base.ligne(d1)
+        db_base.garantie(l1)
+        d2 = db_base.devis()
+        db_base.accepter(d1)
+        db_base.geler(d1)
+        return d1, l1, d2
+
+    REPLACE_LIGNE = ("INSERT OR REPLACE INTO devis_lignes (id, devis_id, ordre, designation, quantite, unite, "
+                     "prix_unitaire_ht, remise_type, type_prestation, total_ht) "
+                     "VALUES (?, ?, 1, 'x', '1', 'u', '1', 'aucune', 'pose', '1.00')")
+
+    def test_D39_recursive_triggers_actif(self):
+        self.assertEqual(self.un("PRAGMA recursive_triggers")[0], 1)
+
+    def test_INV_36_replace_ne_contourne_pas_tr_11_lignes(self):
+        # Témoin : sans recursive_triggers, REPLACE « déplace » la ligne d'un devis gelé (BEFORE DELETE non déclenché).
+        t = Base(); t.db = migrer(recursive=False); t._n = 0
+        d1, l1, d2 = self.gele_avec_ligne(t)
+        t.db.execute(self.REPLACE_LIGNE, (l1, d2))
+        self.assertEqual(t.un("SELECT devis_id FROM devis_lignes WHERE id=?", l1)[0], d2)
+        # Connexion conforme : refus INV-36, ligne et garantie intactes.
+        d1, l1, d2 = self.gele_avec_ligne(self)
+        with self.assertRaisesRegex(sqlite3.IntegrityError, "INV-36"):
+            self.db.execute(self.REPLACE_LIGNE, (l1, d2))
+        self.assertEqual(self.un("SELECT devis_id FROM devis_lignes WHERE id=?", l1)[0], d1)
+        self.assertEqual(self.un("SELECT count(*) FROM devis_ligne_garanties WHERE ligne_id=?", l1)[0], 1)
+
+    def test_INV_36_replace_ne_contourne_pas_tr_11_garanties(self):
+        d1, l1, d2 = self.gele_avec_ligne(self)
+        l2 = self.ligne(d2)
+        gid = self.un("SELECT id FROM devis_ligne_garanties WHERE ligne_id=?", l1)[0]
+        with self.assertRaisesRegex(sqlite3.IntegrityError, "INV-36"):
+            self.db.execute("INSERT OR REPLACE INTO devis_ligne_garanties (id, ligne_id, garantie_type) VALUES (?, ?, 'decennale')",
+                            (gid, l2))
+        self.assertEqual(self.un("SELECT ligne_id FROM devis_ligne_garanties WHERE id=?", gid)[0], l1)
 
 
 if __name__ == "__main__":
