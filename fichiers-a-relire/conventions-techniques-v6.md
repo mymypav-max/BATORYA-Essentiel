@@ -1,6 +1,6 @@
 # BATORYA Essentiel V6 — Conventions techniques et de code
 
-**Version : 0.3 — document évolutif**  
+**Version : 0.4 — document évolutif**  
 **Périmètre : conventions techniques de développement V6**
 
 ## 1. Objet
@@ -146,6 +146,8 @@ src-tauri/tests/metier/test_003_devis.py
 
 Pour les migrations métier : un fichier de test par migration, dans `src-tauri/tests/metier/`, nommé `test_<nom de la migration>.py` ; les méthodes de test portent le nom de l’invariant vérifié (`test_INV_xx_…`), conformément au registre des invariants.
 
+Les connexions de test appliquent les mêmes réglages que les connexions applicatives (« Réglages de connexion SQLite », §9), dont `PRAGMA recursive_triggers=ON` posé **explicitement**. Chaque fichier de test de migration contient un contrôle que ce réglage est effectivement actif et, lorsque la migration porte des triggers de protection applicables, un test ciblé vérifiant qu'`INSERT OR REPLACE` ne les contourne pas.
+
 Un test doit avoir un nom explicite permettant d’identifier directement le comportement vérifié.
 
 Les tests ne doivent pas devenir une seconde spécification contradictoire : lorsqu’un comportement est modifié volontairement, le test correspondant doit être mis en cohérence avec la décision et les documents de référence.
@@ -159,6 +161,8 @@ L'objectif est de terminer la campagne avec **0 survivant non qualifié**. Un su
 Cette campagne complète les tests fonctionnels classiques : un résultat « tous les tests passent » ne suffit pas à considérer la couverture de la tranche comme sécurisée.
 
 Lorsqu'une correction est apportée à une migration déjà existante, les tests de cette tranche doivent être rejoués et la campagne de mutation concernée doit être réévaluée avant de poursuivre sur une nouvelle tranche.
+
+Lorsque les tests d'une tranche déjà intégrée sont modifiés sans que sa migration change (par exemple le renforcement des tests 001–003 par `recursive_triggers=ON`), une **nouvelle campagne de mutation** (0 survivant non qualifié) doit être exécutée **avant l'intégration** des tests modifiés.
 
 ## 8. Séparation des responsabilités
 
@@ -211,8 +215,10 @@ Chaque ouverture de connexion pose les réglages suivants, hors des migrations (
 
 - `INSERT OR REPLACE` et `REPLACE` sont **interdits**. On utilise `INSERT`, `UPDATE` ou un UPSERT explicitement maîtrisé (`INSERT … ON CONFLICT(…) DO UPDATE`) ; `INSERT OR IGNORE` reste permis lorsque l'idempotence est voulue (singletons de `machine.db`, création des garanties).
 - Raison : préserver les garanties apportées par les triggers et éviter les suppressions implicites.
+- Cette interdiction est une **convention technique** : elle n'est pas imposée mécaniquement (aucun contrôle du mot `REPLACE`) ; les tests vérifient le comportement de protection (§7). Un REPLACE ne déclenche pas les triggers `UPDATE` (par exemple TR-95) : pour ces cas, la convention est la seule protection.
 - Un contrôle qui compare des lignes de plusieurs tables n'est jamais un `CHECK` ni un trigger de miroir : c'est une requête de contrôle `CK-xx` (modèle de données §14).
-- Les requêtes de contrôle `CK-xx` sont exécutées après un import et après une restauration, y compris CK-13 (cohérence devis ↔ BC).
+- Les requêtes de contrôle `CK-xx` sont exécutées après un import et après une restauration, y compris CK-13 (cohérence devis ↔ BC). CK-13 est un contrôle diagnostique : il ne corrige rien.
+- Restauration : si un contrôle d'intégrité obligatoire échoue ou si CK-13 retourne une incohérence, la restauration est considérée comme échouée ; l'état restauré ne devient pas l'état de travail validé et la sauvegarde de sécurité créée avant la restauration permet le retour à l'état précédent. Le détail technique relève du module Sauvegarde / Restauration.
 
 ## 10. Nommage
 
