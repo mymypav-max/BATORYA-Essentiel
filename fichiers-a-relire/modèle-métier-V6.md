@@ -65,7 +65,7 @@ Convention uniforme `TRI-00001-yy` (trigramme, compteur sur 5 chiffres, année s
 | Fournisseur | FOU-0001 |
 
 * Les situations et les soldes partagent la même séquence `FAC`. Les codes client et fournisseur n'ont pas d'année.
-* L'année d'un numéro est celle de la date métier du document (création du devis, création — c'est-à-dire enregistrement — du BC, émission de la facture, réception du PV, date de la dépense) et ne change jamais. Les années supportées vont de 2001 à 2099 (contrôle du service).
+* L'année d'un numéro est celle de la date métier du document (création du devis, création — c'est-à-dire enregistrement — du BC, émission de la facture, réception du PV, date de la dépense) et ne change jamais. Pour ces numérotations annuelles, les années supportées vont de 2001 à 2099 (contrôle du service sur ces seules dates de numérotation ; les autres dates ne sont pas bornées).
 * **Un numéro déjà attribué n'est jamais réutilisé ; un trou de numérotation est acceptable.** Le dernier numéro attribué est mémorisé hors de la base métier, pour qu'une restauration ou un incident ne puisse pas ramener un compteur en arrière.
 * Factures, acomptes et avoirs suivent une chronologie continue : la date d'émission n'est jamais antérieure à la dernière date de la séquence.
 * Les numéros ne sont pas configurables manuellement.
@@ -246,7 +246,7 @@ L'avancement mesure la facturation, jamais l'avancement physique du chantier. Fa
 
 * À sa création : **En cours**, non gelé, facturation cumulée et avancement à zéro, sans date de 100 % facturé ni de passage à Terminé, sans annulation.
 * **Dates** : la date de création est la date du jour où le BC est enregistré dans BATORYA ; elle est immuable et son année donne l'année du numéro `BCD`. La date d'acceptation est la date contractuelle d'acceptation, copiée exactement du devis. Les deux dates peuvent différer — une acceptation contractuelle peut être antérieure à l'enregistrement du BC — et il n'existe pas de règle d'ordre entre elles.
-* **Cohérence avec le devis** : tant que le BC n'est pas annulé, ses snapshots (client, entreprise, chantier) et leurs versions sont la copie exacte de ceux du devis, de même que le client, la remise, l'acompte prévu, la date d'acceptation, les lignes et leurs garanties ; le montant contractuel est égal au total HT du devis. Les modifications passent par le service métier, qui maintient cette cohérence ; un contrôle de cohérence permet de la vérifier après un import ou une restauration.
+* **Cohérence avec le devis** : tant que le BC n'est pas annulé, ses snapshots (client, entreprise, chantier) et leurs versions sont la copie exacte de ceux du devis, de même que le client, la remise, l'acompte prévu, la date d'acceptation, les lignes et leurs garanties ; le montant contractuel est égal au total HT du devis. À la création, le service métier construit cette cohérence (vérification du devis accepté, copie des données contractuelles, création du BC, initialisation des caches) ; les modifications passent ensuite par le service, qui la maintient ; un contrôle de cohérence de diagnostic permet de la vérifier après un import ou une restauration.
 * **Terminé** ⇔ un **solde actif** existe **et** la somme des restes dus des factures actives (hors avoirs) est nulle. Un solde à 0 € ne suffit pas tant qu'un acompte ou une situation reste dû. Un avoir n'est pas un encaissement ; il intervient par la réduction du reste dû.
 * Le BC repasse En cours si un règlement ou un avoir est annulé et que la condition n'est plus remplie. Un BC **Annulé est terminal** : il ne repasse jamais En cours, n'est jamais réactivé et n'accepte aucune modification commerciale ; seul le rattachement d'un client « à rattacher » reste possible (§ 3).
 * **Annulation** : interdite directement dès qu'une facture autre qu'un acompte non réglé existe ; une situation émise (même annulée) l'interdit toujours ; un encaissement l'interdit. Un acompte non réglé est annulé avec le BC. La correction passe sinon par avoir ou annulation de facture. L'annulation du BC entraîne l'annulation de son devis (BC d'abord, puis devis, dans la même transaction).
@@ -462,7 +462,7 @@ Les dépenses servent à l'analyse de marge ; elles ne réduisent jamais le CA s
 
 Un fournisseur archivé reste consultable pour l'historique mais ne peut pas être sélectionné pour une nouvelle dépense.
 
-Lorsqu'un BC atteint 100 % facturé, les dépenses peuvent encore lui être rattachées normalement pendant 30 jours calendaires à compter de `date_100_facture`. Après ce délai, le BC est considéré comme clôturé pour les nouvelles dépenses. BATORYA affiche alors une confirmation simple indiquant depuis combien de jours le BC est clôturé ; si l'utilisateur confirme, la dépense est rattachée. Il n'existe ni procédure de déblocage, ni autorisation supplémentaire, ni délai maximal de rattachement tardif.
+Lorsqu'un BC atteint 100 % facturé, les dépenses peuvent encore lui être rattachées normalement pendant 30 jours calendaires à compter de `date_100_facture`. Après ce délai, le BC est considéré comme clôturé pour les nouvelles dépenses. BATORYA affiche alors une confirmation simple indiquant depuis combien de jours le BC est clôturé ; si l'utilisateur confirme, la dépense est rattachée. Il n'existe ni procédure de déblocage, ni autorisation supplémentaire, ni délai maximal de rattachement tardif. Le rattachement d'une dépense à un BC annulé sera déterminé lors de la conception de la tranche Dépenses.
 
 ⸻
 
@@ -700,7 +700,7 @@ BATORYA Essentiel est une application locale. Le compte local est créé obligat
 
 ### 31.3 Restauration
 
-Restauration **validée et atomique** : validation du fichier, refus si la version du schéma est supérieure à celle supportée, migrations de schéma sur une copie, contrôles d'intégrité, **sauvegarde de sécurité** de la base courante avant remplacement, remplacement atomique, contrôles après restauration (dont la cohérence entre chaque devis et son BC).
+Restauration **validée et atomique** : validation du fichier, refus si la version du schéma est supérieure à celle supportée, migrations de schéma sur une copie, contrôles d'intégrité, **sauvegarde de sécurité** de la base courante avant remplacement, remplacement atomique, contrôles après restauration (dont la cohérence entre chaque devis et son BC). Si un contrôle d'intégrité obligatoire échoue ou si le contrôle de cohérence devis ↔ BC retourne une incohérence, la restauration est considérée comme échouée : l'état restauré ne devient pas l'état de travail validé et la sauvegarde de sécurité permet le retour à l'état précédent. Le détail technique relève du module Sauvegarde / Restauration.
 
 Une restauration ne modifie jamais le mot de passe local, la licence, l'identifiant d'installation ni le dossier de travail. Après restauration, aucun numéro déjà attribué n'est réutilisé (§ 2.2).
 
@@ -714,7 +714,7 @@ JSON V2 → convertisseur externe → `import-v6.json` → import V6
 * L'import V6 n'accepte qu'un fichier `import-v6.json` conforme (lecteur strict), en deux temps (validation sans écriture, puis transaction unique), **uniquement sur une base métier vide**.
 * Toutes les règles métier s'appliquent aux données importées. La seule exception est la conservation du numéro historique des devis, factures et PV importés, déjà remis aux clients.
 * Les valeurs dérivées (état du BC, avancement, gel) sont recalculées par V6.
-* Aucune garantie n'est importée, ni native ni de ligne. Les bornes du service (années 2001 à 2099, devis accepté à montant non nul) s'appliquent aussi à la validation. Un BC historique annulé s'importe par les étapes normales (création du BC puis annulation avec son devis), sans traitement particulier ; la cohérence entre chaque devis et son BC est contrôlée à la fin de l'import.
+* Aucune garantie n'est importée, ni native ni de ligne. Le service n'accepte pas un devis à montant nul, y compris à la validation ; la borne d'année 2001–2099 ne concerne que les dates de numérotation et son application à l'import est définie par le contrat d'import, sans limitation des autres dates historiques. Un BC historique annulé s'importe par les étapes normales (création du BC puis annulation avec son devis), sans traitement particulier ; la cohérence entre chaque devis et son BC est contrôlée à la fin de l'import.
 * Les compteurs historiques compatibles initialisent la numérotation V6 ; un saut de numéro est acceptable.
 * Les éléments à contrôler sont signalés à l'utilisateur (bandeau) jusqu'à traitement ; les données non représentables sont conservées pour consultation.
 
