@@ -2,7 +2,7 @@
 
 **Statut** : modèle consolidé, prérequis aux migrations SQL (suivi des migrations : §17.1)
 **Base** : V3.4 + audit V3.4 + arbitrages de Rémy Pavy du 2026-09-29 ; révisions V3.6 (migration V2 externalisée) et V3.7 (high-water) du 2026-09-30 ; révision V3.8 (`machine.db`), V3.9 (DDL de la première tranche métier), V3.10 (fournisseurs et règle de rattachement tardif des dépenses aux BC), V3.11 (DDL Devis, rattachement client et contrôles de dates) et V3.12 (conception de la tranche Bons de commande, réglages de connexion SQLite) du 2026-10-01
-**Version courante** : V3.12, **en relecture : non validée tant qu'elle n'est pas intégrée et validée**. À l'intégration, elle remplace `modèle-données-sqlite-v6-v3.11.md` (la V3.11 ne reste pas une seconde version courante ; son historique est conservé ici). Les mentions V3.4 à V3.11 ci-dessous désignent l'historique du document.
+**Version courante** : V3.12, **validée après intégration de la migration 004 Bons de commande et de son test T-29**. Elle remplace `modèle-données-sqlite-v6-v3.11.md` comme version courante ; la V3.11 reste uniquement historique. Les mentions V3.4 à V3.11 ci-dessous désignent l'historique du document.
 **Pièces obligatoires du modèle** : ce document + `invariants.md` + `cdc-errata-v6.md`
 
 ---
@@ -480,7 +480,7 @@ Cette sous-section ne crée **aucune règle ni décision nouvelle** : elle fixe 
 
 ### 4.18 Précisions de DDL de `metier/004_bons_commande.sql` (V3.12) [INV-04 à INV-06, INV-10, INV-20, INV-23, INV-31, INV-36, INV-40, INV-46, INV-48, INV-136, INV-173 à INV-176]
 
-Cette sous-section fixe la traduction SQL des §2, §4.6, §4.7, §6, §7.2 et §8 pour la tranche Bons de commande. Elle ne crée **aucune règle nouvelle** : les règles sont aux sections citées. Le fichier `004_bons_commande.sql` et son test (T-29) **ne sont pas encore écrits** (§17.1).
+Cette sous-section fixe la traduction SQL des §2, §4.6, §4.7, §6, §7.2 et §8 pour la tranche Bons de commande. Elle ne crée **aucune règle nouvelle** : les règles sont aux sections citées. Le fichier `004_bons_commande.sql` et son test (T-29) sont intégrés au dépôt et couverts par la campagne de mutation décrite au §17.1.
 
 1. **Périmètre** : `bons_commande`, `bc_lignes`, `bc_ligne_garanties` ; 15 triggers (dont `tr_96`, posé sur `numerotation_sequences` comme TR-18 l'est sur `devis`) ; 3 index. Hors tranche : `bc_notes`, `depenses`, `factures`, `reglements`, `garanties`, `pv` (aucune FK ni aucun trigger de la migration ne les anticipe ; ces tables référenceront `bons_commande` dans leur propre migration).
 2. **Généralités** : tables `STRICT` ; aucune ligne insérée ; aucune clause `ON UPDATE` ; `PRAGMA user_version = 4` posé par le runner ; textes obligatoires non vides (`motif_annulation` s'il est renseigné) ; `origine` défaut `v6` ; `created_at` et `updated_at` défaut instant UTC en millisecondes, contrôlés par `GLOB` ; familles décimales et dates comme en 003 (`GLOB` explicites, `date(x) IS x`, jamais `date(x) = x`).
@@ -928,7 +928,7 @@ CK-01 numéros uniques, et conformes au format V6 sauf devis/factures/PV `origin
 | D-35 | **Cycle de vie du BC** : un BC `annule` est terminal (jamais `en_cours`, jamais réactivé, aucune modification commerciale ; seule exception : rattachement d'un client `a_rattacher`) ; aucun BC n'est jamais supprimé physiquement, garanti en base (TR-19, FK `RESTRICT`, `bc_lignes.bc_id` en `RESTRICT`) ; l'annulation est la seule sortie sans facturation complète | BC annulé réactivable ; suppression d'un BC sans facture ; `bc_lignes.bc_id` en CASCADE (V3.11) | **Validée** 2026-10-01 (réponse de Rémy, audit BC et C-R3) |
 | D-36 | **Cohérence devis ↔ BC** : un devis ayant un BC ne quitte `accepte` que si ce BC est `annule` (TR-18) ; les données structurantes (liste S) restent identiques côté devis et côté BC, maintenues par le service (copie exacte, mêmes versions) ; à la création, le **service** construit la cohérence (vérifie le devis accepté, copie les données contractuelles, crée le BC, initialise les caches, dans la transaction) ; le SQL ne porte que des invariants locaux du BC (TR-17 : devis `accepte`, `client_id`, état de naissance) et TR-18 ; **CK-13** est un contrôle diagnostique inter-tables (après import, à la restauration, en test, à la demande), jamais un CHECK ni un trigger ; ni trigger de miroir ligne à ligne ; un devis à `0.00` € ne peut pas être accepté (service, INV-178) | triggers de synchronisation continue ; CHECK inter-tables ; comparaison complète BC ↔ devis dans TR-17 | **Validée** 2026-10-01 (réponse de Rémy, audit BC et C-R2) ; formulation précisée le 2026-10-02 (seconde passe) |
 | D-37 | **Dates du BC** : `date_creation` = date du jour de l'enregistrement du BC (son année détermine le `yy` du numéro `BCD`) ; `date_acceptation` = date contractuelle héritée exactement du devis ; elles peuvent différer ; aucune règle d'ordre entre elles | `date_creation` = `date_acceptation` ; règle `date_acceptation >= date_creation` | **Validée** 2026-10-01 (réponse de Rémy, audit BC et C-R1) |
-| D-38 | **Périmètre de la borne 2001–2099** : la borne ne concerne que les dates dont l'année est exploitée par les conventions de numérotation annuelle (`yy`), au niveau du **service** là où elle est nécessaire ; aucune contrainte générale sur les autres dates, aucune limitation artificielle des dates historiques ou importées, aucun CHECK, aucun changement de la validation calendaire `GLOB` + `date(x) IS x` | borne sur toutes les dates de type D ; CHECK d'année dans le DDL | Périmètre corrigé le 2026-10-02 (seconde passe, instruction de Rémy) ; **à valider avec la V3.12** |
+| D-38 | **Périmètre de la borne 2001–2099** : la borne ne concerne que les dates dont l'année est exploitée par les conventions de numérotation annuelle (`yy`), au niveau du **service** là où elle est nécessaire ; aucune contrainte générale sur les autres dates, aucune limitation artificielle des dates historiques ou importées, aucun CHECK, aucun changement de la validation calendaire `GLOB` + `date(x) IS x` | borne sur toutes les dates de type D ; CHECK d'année dans le DDL | Périmètre corrigé le 2026-10-02 (seconde passe, instruction de Rémy) ; **Validée** avec la migration 004 le 2026-10-02 |
 | D-39 | **Écritures SQLite** : `PRAGMA recursive_triggers=ON` fait partie des PRAGMA de connexion ; `INSERT OR REPLACE` et `REPLACE` sont interdits par convention (`INSERT`, `UPDATE` ou UPSERT explicitement maîtrisé) | laisser `recursive_triggers` désactivé (un REPLACE supprime la ligne sans déclencher les triggers `BEFORE DELETE`) ; s'en remettre à la seule convention pour `numerotation_sequences` (précision technique : TR-96, migration 004) | **Validée** 2026-10-01 (réponse de Rémy, C-R3) ; précisée le 2026-10-02 par TR-96 |
 
 **Décisions existantes complétées par la V3.12** (leur énoncé d'origine reste valable) :
@@ -970,7 +970,7 @@ CK-01 numéros uniques, et conformes au format V6 sauf devis/factures/PV `origin
 ## 17. Critères de sortie de la V3.12 et suivi des migrations
 
 Le modèle est prêt pour le DDL lorsque :
-1. chaque INV de `invariants.md` a une garde désignée et un nom de test ; les tests T-01 à T-20 (§13.2) et T-21 à T-28 (§13.3) sont écrits ; T-29 (BC) est défini au §13.3 et sera écrit avec la migration 004 ;
+1. chaque INV de `invariants.md` a une garde désignée et un nom de test ; les tests T-01 à T-20 (§13.2) et T-21 à T-29 (§13.3) sont écrits ; T-29 (BC) est intégré avec la migration 004 ;
 2. D-01 à D-12 sont validées (fait le 2026-09-29) ; D-13 à D-17 sont validées (fait le 2026-09-29) ; D-21 à D-27 validées (2026-09-30) ; D-28 à D-31 validées (2026-10-01) ; D-32 et D-33 validées (2026-10-01) ; D-34 à D-39 validées (2026-10-01) ;
 3. D-18, D-19 et D-20 sont validées (P-01 soldé, fait) ; D-16 est tranchée (aucune garantie recréée, fait) ;
 4. les errata E-01 à E-09 sont au fichier `cdc-errata-v6.md` ;
@@ -985,7 +985,7 @@ Le modèle est prêt pour le DDL lorsque :
 | `src-tauri/migrations/metier/002_fournisseurs.sql` | `fournisseurs` ; aucun trigger ; `idx_fournisseurs_statut` | V3.10 | T-27 |
 | `src-tauri/migrations/metier/003_devis.sql` | `devis`, `devis_lignes`, `devis_ligne_garanties` ; 11 triggers ; 4 index | V3.11 | T-28 |
 
-**Tranche en préparation** : `src-tauri/migrations/metier/004_bons_commande.sql` (`bons_commande`, `bc_lignes`, `bc_ligne_garanties` ; 15 triggers dont TR-96 sur `numerotation_sequences` ; 3 index ; modèle V3.12 ; test T-29, §4.18) — **non encore créée** ; elle sera ajoutée au tableau à son intégration.
+| `src-tauri/migrations/metier/004_bons_commande.sql` | `bons_commande`, `bc_lignes`, `bc_ligne_garanties` ; 15 triggers dont TR-96 sur `numerotation_sequences` ; 3 index | V3.12 | T-29 |
 
 Tranches suivantes (ordre du critère 5) : dépenses, facturation (factures), règlements, garanties, PV, planification.
 
