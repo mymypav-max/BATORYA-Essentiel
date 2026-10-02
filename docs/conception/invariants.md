@@ -1,11 +1,11 @@
 # BATORYA Essentiel V6 — Registre des invariants
 
-Version du registre : 5 — 2026-10-01 (rattaché au modèle SQLite V3.10 ; V2 : migration V2 externalisée, V3 : high-water, V4 : compte local et initialisation de `machine.db`, V5 : dépenses tardives sur BC, voir le journal en bas)
+Version du registre : 6 — 2026-10-02, seconde passe (rattaché au modèle SQLite V3.12, en relecture, non validé ; V2 : migration V2 externalisée, V3 : high-water, V4 : compte local et initialisation de `machine.db`, V5 : dépenses tardives sur BC, V6 : tranche Bons de commande, voir le journal en bas)
 Statut : **pièce obligatoire du modèle de données**
 
 ## Mode d'emploi
 
-- Un invariant (**INV-xx**) est une règle métier ou technique déjà validée. Son numéro est **stable** : il n'est jamais réutilisé ni renuméroté. Les numéros absents de la séquence (trous entre sections) sont **réservés** : ils ne sont jamais attribués rétroactivement, une nouvelle règle reçoit le numéro suivant le plus élevé (INV-171, …).
+- Un invariant (**INV-xx**) est une règle métier ou technique déjà validée. Son numéro est **stable** : il n'est jamais réutilisé ni renuméroté. Les numéros absents de la séquence (trous entre sections) sont **réservés** : ils ne sont jamais attribués rétroactivement, une nouvelle règle reçoit le numéro suivant le plus élevé (INV-179, …).
 - Chaque INV a une **garde** et **un test du même nom** (`test_INV_xx`) : SQL (CHECK, UNIQUE, FK, index partiel), TRG (trigger `TR-xx`), SVC (service applicatif), CK (requête de contrôle `CK-xx`).
 - Avant de valider une nouvelle version du modèle, on la compare à ce registre. **Aucun INV ne disparaît ou ne change de sens sans ligne dans le journal des retraits/modifications** (en bas), avec date, motif et décision.
 - Toute règle nouvelle : ajouter une ligne (nouveau numéro), sa garde, son test.
@@ -21,9 +21,9 @@ Statut : **pièce obligatoire du modèle de données**
 | INV-02 | Deux bases : métier (sauvegardée/restaurée) et `machine.db` (jamais incluse, jamais écrasée par une restauration) | SVC, test de restauration | |
 | INV-03 | Aucune donnée métier n'est transmise au service distant (licence, mises à jour, référentiels seuls) | SVC | |
 | INV-04 | `id` = `INTEGER PRIMARY KEY AUTOINCREMENT`, jamais réutilisé ; un numéro métier n'est jamais une clé étrangère | SQL | |
-| INV-05 | FK en `RESTRICT` ; `CASCADE` uniquement pour lignes → parent avant gel, `*_ligne_garanties`, `prestation_garanties` | SQL | |
-| INV-06 | Aucune suppression physique des entités historiques (clients/fournisseurs/prestations utilisés, devis avec BC, BC facturés, factures, règlements, PV, garanties, historique) : archivage, annulation, avoir | SQL, TRG | |
-| INV-07 | À chaque connexion : `foreign_keys=ON`, WAL, `synchronous=FULL`, `busy_timeout` | SVC, test | |
+| INV-05 | FK en `RESTRICT` ; `CASCADE` uniquement pour `devis_lignes` → devis, garanties de ligne (`devis_ligne_garanties`, `bc_ligne_garanties`) et `prestation_garanties` ; `bc_lignes.bc_id` en `RESTRICT` ; aucune clause `ON UPDATE` | SQL | |
+| INV-06 | Aucune suppression physique des entités historiques (clients/fournisseurs/prestations utilisés, devis avec BC, tout BC (INV-174), factures, règlements, PV, garanties, historique) : archivage, annulation, avoir | SQL, TRG | |
+| INV-07 | À chaque connexion : `foreign_keys=ON`, WAL, `synchronous=FULL`, `busy_timeout`, `recursive_triggers=ON` ; `INSERT OR REPLACE` (et `REPLACE`) interdit par convention : `INSERT`, `UPDATE` ou UPSERT explicitement maîtrisé (un REPLACE supprime la ligne sans déclencher les triggers `BEFORE DELETE` si `recursive_triggers` est désactivé) ; l'interdiction est une convention, non imposée mécaniquement : les tests 001–003 vérifient le réglage actif et le refus d'un REPLACE par les triggers `BEFORE DELETE` applicables ; un REPLACE ne déclenche pas les triggers `UPDATE`, d'où TR-96 pour `numerotation_sequences` (INV-22) | SVC, test | |
 | INV-08 | Migrations de schéma numérotées, atomiques, `user_version` mis à jour après succès ; `machine.db` a le sien | SVC, test | |
 | INV-09 | Toute opération métier multi-tables est une transaction unique ; aucune opération partielle | SVC, test | |
 
@@ -37,6 +37,7 @@ Statut : **pièce obligatoire du modèle de données**
 | INV-13 | Arrondi HALF_UP (valeur absolue), un seul arrondi par ligne ; total = Σ lignes arrondies − remise globale arrondie | SVC | C-14 à C-17 |
 | INV-14 | Précision libre uniquement pour `quantite`, `prix_unitaire_ht`, remise « montant » de ligne, taux ; tout autre montant : 2 décimales ; négatifs limités à `facture_lignes.montant_ht` (déduction), `ca_encaisse`, `ecart`, `urssaf_details.base`, `montant_retenu` | SQL | |
 | INV-15 | Import : tout montant du fichier `import-v6.json` est à la précision de sa famille décimale, sinon le fichier est rejeté ; V6 ne réarrondit pas à l'import (l'arrondi des totaux V2 non arrondis est fait par le convertisseur) | SVC, CK | T-21 |
+| INV-177 | Borne d'année 2001 à 2099 **limitée aux dates de numérotation annuelle** (création du devis, enregistrement du BC, émission de la facture, réception du PV, date de la dépense), car `yy = 00` est impossible dans les séquences (`annee = 0` réservé à CLI/FOU) ; contrôle du service uniquement, jamais un CHECK ; aucune borne d'année sur les autres dates (validité, acceptation, historiques ou importées) ; le contrôle SQL des dates reste `GLOB` + `date(x) IS x` ; application à l'import : contrat d'import (P-04) | SVC | |
 
 ## C. Numérotation
 
@@ -44,7 +45,7 @@ Statut : **pièce obligatoire du modèle de données**
 |---|---|---|---|
 | INV-20 | Formats V6 : `CLI-0001`, `FOU-0001`, `DEV|BCD|FAC|ACP|AVO|PVR|DEP-00001-yy`, levée `PVR-00001-yy-01` ; `yy` = année de la date métier ; contrôle de format sans exception, sauf devis, factures et PV `origine='import'` (INV-131) | SQL | |
 | INV-21 | Séquence unique par `(type_objet, annee)` ; `annee=0` pour CLI/FOU ; situation et solde partagent FAC ; ACP et AVO séparés | SQL | |
-| INV-22 | Attribution atomique dans la transaction de création ; numéro jamais réattribué ; erreur explicite au plafond (99 999 / 9 999) ; `dernier_numero` ne diminue jamais | SVC, TRG (TR-95), SQL | T-20 |
+| INV-22 | Attribution atomique dans la transaction de création ; numéro jamais réattribué ; erreur explicite au plafond (99 999 / 9 999) ; `dernier_numero` ne diminue jamais (UPDATE : TR-95) et la ligne de séquence ne se supprime jamais, y compris par le DELETE implicite d'un `INSERT OR REPLACE` avec `recursive_triggers=ON` (TR-96, posé par la migration 004 car 001 est immuable) ; les deux messages portent `INV-22` et se distinguent par leur libellé (« ne diminue jamais » / « ne se supprime jamais ») | SVC, TRG (TR-95, TR-96), SQL | T-20, T-29 |
 | INV-23 | `numero` immuable ; l'année (yy) de la date de numérotation ne change jamais ; `date_creation` devis/BC immuable | TRG (TR-01) | |
 | INV-24 | ACP, FAC, AVO : `date_emission` ≥ dernière date de la séquence (pas pour DEV, BCD, PVR, DEP) | TRG (TR-02) | |
 | INV-25 | `sequence_high_water` (machine.db) : `max_attribue` ne diminue jamais automatiquement ; initialisé à l'import depuis `sequences` (INV-135) ; après restauration, `dernier_numero` = max(restauré, `max_attribue`) et `max_attribue` = max(`max_attribue`, `dernier_numero` restauré) ; au démarrage normal, si `max_attribue` > `dernier_numero` (crash avant COMMIT), `max_attribue` est conservé, le prochain numéro est `max_attribue` + 1, le trou est accepté et journalisé ; aucun numéro attribué n'est réutilisé | SVC, test | C-18, T-22, T-24 |
@@ -56,30 +57,35 @@ Statut : **pièce obligatoire du modèle de données**
 | INV | Énoncé | Garde | Cas |
 |---|---|---|---|
 | INV-30 | Devis, BC, factures, PV portent des snapshots versionnés (client, entreprise, chantier) ; le catalogue, la fiche client et les paramètres n'altèrent jamais un document existant | SQL, SVC | |
-| INV-31 | Devis/BC non gelés : snapshots réécrits à chaque sauvegarde ; devis modifiable seulement si `en_attente`, ou `accepte` non gelé ; `refuse`/`annule` immuables | TRG (TR-10) | |
+| INV-31 | Devis/BC non gelés : snapshots réécrits à chaque sauvegarde ; devis modifiable seulement si `en_attente`, ou `accepte` non gelé ; `refuse`/`annule` immuables (seule exception : rattachement d'un client `a_rattacher`, INV-49) ; BC annulé immuable (INV-173) | TRG (TR-10, TR-12) | |
 | INV-32 | Factures et PV figés dès l'INSERT (aucun brouillon) | TRG (TR-20, TR-40) | |
 | INV-33 | `frozen_at` posé par trigger sur devis et BC, même transaction, au premier de : encaissement actif (même partiel) d'un acompte, insertion d'une situation, insertion d'un solde | TRG (TR-15) | C-02, T-09, T-10, T-11 |
 | INV-34 | `frozen_at` est irréversible ; l'annulation d'une facture ne dégèle pas | TRG (TR-14) | T-09 |
 | INV-35 | Un acompte émis non encaissé ne gèle pas ; modifier le devis/BC l'annule automatiquement dans la même transaction (acteur `systeme`, motif automatique) | SVC, test | C-01, T-08 |
-| INV-36 | Après gel : lignes, garanties de lignes, remises, acompte prévu, client, chantier, snapshots, montant contractuel immuables | TRG (TR-10 à TR-13) | |
+| INV-36 | Après gel : lignes, garanties de lignes, remises, acompte prévu, client, chantier, snapshots, montant contractuel immuables ; exceptions : rattachement d'un client `a_rattacher` (INV-49) et, pour un BC gelé, les colonnes listées au modèle §7.2 (caches, `date_debut`, `date_fin`, annulation) | TRG (TR-10 à TR-13) | |
 | INV-37 | Une modification du catalogue ne modifie jamais lignes ni garanties d'un devis, BC ou facture existants | SQL, test | T-07 |
-| INV-38 | Le devis est le seul point d'édition ; sa modification régénère `bc_lignes`, garanties de lignes, montant contractuel et snapshots du BC dans la même transaction | SVC, test | |
+| INV-38 | Le devis est le seul point d'édition ; sa modification régénère `bc_lignes`, garanties de lignes, montant contractuel et snapshots du BC dans la même transaction, dans l'ordre : supprimer `bc_lignes` → modifier le devis et ses lignes → recopier lignes et garanties → mettre à jour le BC (copie exacte, INV-175) | SVC, test | |
 | INV-39 | `montant_contractuel_ht` = Σ lignes du BC − remise globale arrondie | SVC, CK-05 | |
 
 ## E. Bon de commande
 
 | INV | Énoncé | Garde | Cas |
 |---|---|---|---|
-| INV-40 | Un devis accepté produit un seul BC (création atomique, idempotente) ; le BC naît `en_cours` | SQL (`UNIQUE(devis_id)`), TRG (TR-17) | T-01 |
+| INV-40 | Un devis accepté produit un seul BC (création atomique, idempotente) ; le BC naît `en_cours`, avec `frozen_at`, `cancelled_at`, `completed_at`, `motif_annulation` et `date_100_facture` NULL, `montant_deja_facture_ht` et `avancement` à zéro | SQL (`UNIQUE(devis_id)`, défauts, CHECK), TRG (TR-17) | T-01, C-23 |
 | INV-41 | Le statut du BC n'est pas librement modifiable par l'utilisateur | SVC | |
 | INV-42 | BC `termine` ⇔ solde actif ET Σ reste dû des factures actives hors avoir = 0 ; un solde à 0.00 ne suffit pas ; l'avoir n'est pas un encaissement mais réduit le reste dû via `absorbe` | SVC, CK-06, SQL (`termine ⇔ completed_at`) | C-05, C-08, C-10 |
 | INV-43 | `date_100_facture` = date d'émission du premier solde actif ; conservée par avoir, règlement, remboursement ; `NULL` seulement à l'annulation du solde ; distincte de `garanties.date_declenchement` | SVC, CK-06 | C-07, C-20 |
 | INV-44 | Annulation directe du BC : interdite si encaissement actif, ou si une situation a été émise (même annulée) ; autorisée avec acompte non réglé, annulé dans la même transaction ; toute autre facture interdit l'annulation (décision D-05) | SVC, test | C-01, C-19 |
-| INV-45 | BC annulé : devis `annule`, PDF du devis dans `Devis/Annule`, exclu du CA engagé, aucune nouvelle facturation ; CA engagé = Σ max(0, (contractuel − avoirs) − (encaissements − remboursements)) des BC `en_cours` | SVC, test | C-13 |
-| INV-46 | Caches BC (`montant_deja_facture_ht`, `avancement`, `date_100_facture`, `statut`, `completed_at`) recalculés par un service financier unique, même transaction ; source de vérité = factures + règlements | SVC, CK-06 | |
+| INV-45 | BC annulé : devis `annule` (BC d'abord, puis devis, dans la même transaction : TR-18), PDF du devis dans `Devis/Annule`, exclu du CA engagé, aucune nouvelle facturation ; CA engagé = Σ max(0, (contractuel − avoirs) − (encaissements − remboursements)) des BC `en_cours` | SVC, TRG (TR-18), test | C-13, C-28 |
+| INV-46 | Caches BC (`montant_deja_facture_ht`, `avancement`, `date_100_facture`, `statut`, `completed_at`) recalculés par un service financier unique, même transaction ; source de vérité = factures + règlements ; écrits en un seul `UPDATE` ; aucune contrainte `montant_deja_facture_ht <= montant_contractuel_ht` (transitoirement fausse) ; seuls des CHECK de cohérence sûrs : `termine` ⇒ gelé, `date_100_facture` ⇒ gelé et `avancement = 100.00` | SVC, CK-06, SQL (CHECK) | |
 | INV-47 | Facturation possible uniquement sur un BC `en_cours` | TRG (TR-16) | |
-| INV-48 | `client_id` cohérent entre devis, BC et factures | TRG (TR-16, TR-17) | |
+| INV-48 | `client_id` cohérent entre devis, BC et factures : à l'INSERT (TR-16, TR-17) puis par le rattachement, qui réaffecte devis, BC et factures dans la même transaction | TRG (TR-16, TR-17), SVC, CK-13 | C-29 |
 | INV-49 | La seule modification autorisée de `client_id` sur un document gelé ou une facture est le rattachement d'un client `a_rattacher` (tracé) | TRG (TR-20) | |
+| INV-173 | Un BC `annule` est terminal : jamais `en_cours`, jamais réactivé, aucune modification commerciale (statut, lignes, garanties de ligne, snapshots, montants, remise, acompte, dates) ; seule exception : réaffectation de `client_id` (avec `updated_at`) lorsque l'ancien client est `a_rattacher` (INV-49) | TRG (TR-12, TR-13) | C-26 |
+| INV-174 | Aucun BC n'est jamais supprimé physiquement (gelé ou non, annulé ou non, avec ou sans facture) ; l'annulation est la seule sortie sans facturation complète ; le devis d'un BC n'est donc jamais supprimable ; `recursive_triggers=ON` et l'interdiction de `INSERT OR REPLACE` (INV-07) empêchent le contournement de la garde | TRG (TR-19), SQL (FK `RESTRICT`), SVC (PRAGMA, convention) | C-27 |
+| INV-175 | Cohérence structurelle devis ↔ BC : à la création, le service construit la cohérence par copie exacte de la liste S (client, total ↔ contractuel, remise, acompte, trois snapshots et leurs versions, `date_acceptation`, lignes 1:1, garanties de ligne) ; tant que le BC n'est pas annulé, S reste identique côté devis et côté BC en fin de transaction (maintenue par le service) ; un devis ayant un BC ne quitte `accepte` que si ce BC est `annule` ; contrôle diagnostique CK-13, jamais un CHECK ni un trigger de miroir ; TR-17 ne compare pas le BC au devis (invariants locaux seulement) | TRG (TR-13, TR-18), SQL (`UNIQUE(devis_ligne_id)`), SVC, CK-13 (diagnostic) | C-23, C-28, C-29 |
+| INV-176 | Dates du BC : `date_creation` = date du jour de l'enregistrement du BC (immuable ; son année détermine le `yy` du numéro `BCD`) ; `date_acceptation` = date contractuelle copiée exactement du devis ; les deux peuvent différer ; aucune règle d'ordre entre elles | SQL (format, TR-01), SVC | C-23, C-24 |
+| INV-178 | Un devis à `0.00` € ne peut pas être accepté (aucun BC n'est créé) ; règle du service d'acceptation, sans CHECK ; CK-13 signale un BC dont le contractuel est `0.00` | SVC, CK-13 | C-25 |
 
 ## F. Facturation
 
@@ -168,20 +174,20 @@ Flux : sauvegarde JSON V2 → **convertisseur externe** → `import-v6.json` →
 |---|---|---|---|
 | INV-130 | Aucune donnée d'import supprimée en silence : ce que le fichier déclare `non_importe` est conservé dans `import_anomalies` ; `import_anomalies` jamais supprimée (seuls `statut` et `traite_at` évoluent) ; le fichier source n'est jamais modifié | TRG (TR-90), SVC | T-21 |
 | INV-131 | Aucune règle métier n'est exemptée pour les données importées. Seule exception : format, préfixe et année du `numero` des devis, factures et PV `origine='import'` (numéro déjà remis au client) ; non vide, unique et immuable (TR-01) | SQL (CHECK conditionnés par `origine`), TRG | T-23 |
-| INV-133 | Fin d'import : comptages, Σ `total_ht` des factures actives et Σ `reste_du` déclarés dans `controles` = valeurs recalculées par V6 ; tout écart, ou tout échec de CK-01 à CK-12, annule l'import | CK-12, SVC | T-16 |
-| INV-134 | Le contrat d'import n'accepte aucune garantie ; les garanties naissent uniquement de la facturation V6 ; `garanties.bc_ligne_id` et `facture_declenchement_id` sont NOT NULL sans exception ; une garantie n'est jamais recalculée | SQL, SVC | |
+| INV-133 | Fin d'import : comptages, Σ `total_ht` des factures actives et Σ `reste_du` déclarés dans `controles` = valeurs recalculées par V6 ; tout écart, ou tout échec de CK-01 à CK-13, annule l'import | CK-12, CK-13, SVC | T-16 |
+| INV-134 | Le contrat d'import n'accepte aucune garantie ; aucune garantie de ligne n'est importée (`devis_ligne_garanties` et `bc_ligne_garanties` restent vides pour les objets importés, un BC importé ne génère donc aucune garantie native) ; les garanties naissent uniquement de la facturation V6 ; `garanties.bc_ligne_id` et `facture_declenchement_id` sont NOT NULL sans exception ; une garantie n'est jamais recalculée | SQL, SVC | |
 | INV-135 | Compteurs : le convertisseur récupère les compteurs historiques compatibles ; ils sont transmis dans `import-v6.json` (`sequences`) ; V6 initialise `numerotation_sequences` et `sequence_high_water` à partir de ces valeurs ; un numéro déjà attribué n'est jamais réutilisé ; un saut de numéro est acceptable | SVC, CK-02 | T-22 |
 | INV-136 | `origine` ∈ (`v6`, `import`) ; `origine='v6'` ⇒ `legacy_id`, `legacy_data` et `legacy_numero` NULL ; `legacy_numero` seulement s'il diffère de `numero` (clients et BC) ; `legacy_id` = `ref` de l'objet dans le fichier ; aucune colonne `migration_id` | SQL | |
 | INV-153 | Lecteur strict de `import-v6.json` : rejet total si JSON invalide, `format`/`contrat_version` inconnus, clé ou bloc inconnu, `ref` dupliqué ou introuvable, énumération ou précision décimale invalide, violation d'un CHECK ou d'un trigger ; jamais de réparation ni de tolérance côté V6 | SVC, test | T-21 |
 | INV-154 | Import en deux temps (validation sans écriture, puis transaction unique, tout ou rien) et seulement sur base métier vide | SVC, test | T-21, T-23 |
 | INV-161 | Le contrat d'import n'accepte aucune donnée URSSAF ; le profil URSSAF est saisi au premier lancement ; aucune période n'est calculée avant | SVC | |
 | INV-163 | Une anomalie `a_verifier` du fichier crée un enregistrement `import_anomalies` lié à l'objet importé ; le tableau de bord affiche le bandeau tant qu'il en existe au statut `a_traiter` ; une facture importée non réglée est une facture ordinaire (facturation, reste dû, CA engagé ; ni CA encaissé ni URSSAF sans règlement saisi) (D-19) | SVC, CK-06, test | T-16 |
-| INV-164 | Ordre de recalcul du service financier : factures actives → facturation nette → montant restant → avancement → état 100 % → `date_100_facture` → reste dû du solde → `termine`/`en_cours` → CA engagé ; jamais de cache intermédiaire incohérent | SVC, CK-06 | |
+| INV-164 | Ordre de recalcul du service financier : factures actives → facturation nette → montant restant → avancement → état 100 % → `date_100_facture` → reste dû du solde → `termine`/`en_cours` → CA engagé ; jamais de cache intermédiaire incohérent : les caches du BC sont écrits en un seul `UPDATE` | SVC, CK-06 | |
 | INV-165 | Deux catégories seulement dans V6 : `a_verifier` (objet importé à contrôler) et `non_importe` (donnée non représentable, conservée) ; les avertissements purement informatifs restent dans le rapport du convertisseur | SVC | |
 | INV-166 | Le catalogue par défaut V6 exclut ELE-008 (prise RJ45 Cat6) ; un document historique qui la contient la conserve par snapshot, `prestation_id NULL` | SVC | |
 | INV-167 | Les tests d'intégrité T-01 à T-20 (modèle §13.2) sont couverts avant le passage au DDL | test | T-01 à T-20 |
 | INV-168 | Avant le gel, aucune fonction ne référence une ligne de BC (`bc_lignes.id`), hors `facture_lignes.bc_ligne_id` en `RESTRICT` ; toute nouvelle fonction qui en aurait besoin exige d'abord de rétablir des identifiants stables (décision D-20) | SVC, revue | |
-| INV-169 | Le fichier d'import ne porte que des faits saisis : caches du BC, `frozen_at`, états dérivés et garanties ne sont jamais lus du fichier ; V6 les recalcule (§3.7) et pose le gel par TR-15 | SVC, CK-06 | T-21 |
+| INV-169 | Le fichier d'import ne porte que des faits saisis : caches du BC, `frozen_at`, états dérivés et garanties ne sont jamais lus du fichier ; V6 les recalcule (§3.7) et pose le gel par TR-15 ; un BC historique annulé s'importe par les étapes normales (devis `accepte`, BC inséré `en_cours`, annulation du BC puis du devis), sans contournement du modèle | SVC, CK-06 | T-21 |
 | INV-170 | Deux périmètres de tests : tests du convertisseur (`TC-xx`, hors V6) et tests de validation/import V6 (T-16, T-21 à T-23) ; aucun test V6 ne lit un fichier V2 | test | T-16, T-21, T-22, T-23 |
 
 ## M. Sauvegarde, restauration, licence
@@ -189,7 +195,7 @@ Flux : sauvegarde JSON V2 → **convertisseur externe** → `import-v6.json` →
 | INV | Énoncé | Garde | Cas |
 |---|---|---|---|
 | INV-140 | Sauvegarde par API Backup SQLite ou `VACUUM INTO`, jamais copie brute en WAL ; le fichier ne contient que la base métier | SVC, test | |
-| INV-141 | Restauration : validation, `user_version` ≤ supporté (refus sinon), migrations sur copie, `integrity_check`, `foreign_key_check`, sauvegarde de sécurité, remplacement atomique, contrôles post-restauration | SVC, test | |
+| INV-141 | Restauration : validation, `user_version` ≤ supporté (refus sinon), migrations sur copie, `integrity_check`, `foreign_key_check`, sauvegarde de sécurité, remplacement atomique, contrôles post-restauration (requêtes CK, dont CK-13 devis ↔ BC) ; si un contrôle d'intégrité obligatoire échoue ou si CK-13 retourne une incohérence, la restauration est considérée comme échouée, l'état restauré ne devient pas l'état de travail validé et la sauvegarde de sécurité permet le retour à l'état précédent (détail : module Backup/Restore) | SVC, test | |
 | INV-142 | Une restauration ne modifie jamais le mot de passe local, la licence, l'identifiant d'installation, les racines ni le dossier de travail | SVC, test | T-04, T-05, T-06 |
 | INV-143 | Sauvegarde de sécurité avant restauration ; avant un changement de dossier, sauvegarde proposée dans l'ancien dossier, sans copie automatique | SVC | |
 | INV-144 | Le JSON est un export, jamais un format de restauration V6 ; une sauvegarde JSON V2 n'est pas restaurable dans V6 : elle est une entrée du convertisseur externe, qui produit `import-v6.json` ; V6 ne lit jamais le format V2 | SVC | T-21 |
@@ -236,11 +242,21 @@ Flux : sauvegarde JSON V2 → **convertisseur externe** → `import-v6.json` →
 | 2026-09-30 | D-13 à D-19 (modèle §15) | Règles de transformation V2 transférées au convertisseur (unités, `date_acceptation` estimée, statut inconnu, facture sans statut, garanties non recréées) ; côté V6 : liste fermée des unités, aucune garantie importée, mécanisme `a_verifier` | Les décisions restent valides ; leur exécution change de composant | Migration V2 externalisée (D-21, E-09) |
 | 2026-10-01 | INV-171, INV-172 | **Ajoutés** (V3.8) | Compte local obligatoire avec identifiant ; initialisation des singletons de `machine.db` par le service ; défauts de sauvegarde | D-28, D-29, D-30 (réponse de Rémy, 2026-10-01) |
 | 2026-10-01 | INV-25, INV-106 | Confirmés : garde **SVC** (aucun trigger dans `machine.db`) | Les triggers proposés dans le premier jet de `machine/001_initial.sql` sont supprimés | D-30 |
+| 2026-10-01 | INV-173, INV-174, INV-175, INV-176, INV-177, INV-178 | **Ajoutés** (V3.12) | Tranche Bons de commande : BC annulé terminal, aucune suppression physique, cohérence structurelle devis ↔ BC, dates du BC, borne d'année des dates de numérotation (périmètre corrigé le 2026-10-02), devis à 0.00 € non acceptable | D-35, D-36, D-37, D-38 (réponse de Rémy, audit BC) |
+| 2026-10-01 | INV-05 | Modifié : `CASCADE` limité à `devis_lignes`, aux garanties de ligne et à `prestation_garanties` ; `bc_lignes.bc_id` en `RESTRICT` ; aucune clause `ON UPDATE`. Ancien énoncé : « `CASCADE` uniquement pour lignes → parent avant gel, `*_ligne_garanties`, `prestation_garanties` » | Un BC n'est jamais supprimé : le CASCADE ne servirait à rien et effacerait les lignes en silence si la garde TR-19 était contournée | D-35, C-R3 |
+| 2026-10-01 | INV-06 | Modifié : « BC facturés » → tout BC | Aucune suppression physique d'un BC, quel que soit son état | D-35 |
+| 2026-10-01 | INV-07 | Modifié : `recursive_triggers=ON` ajouté ; `INSERT OR REPLACE` interdit par convention | Vérifié : avec `recursive_triggers` désactivé, un REPLACE supprime la ligne sans déclencher le trigger `BEFORE DELETE` | D-39, C-R3 |
+| 2026-10-01 | INV-31, INV-36 | Précisés : exception de rattachement de client (INV-49), colonnes modifiables d'un BC gelé (modèle §7.2), BC annulé immuable (INV-173) | L'énoncé omettait des exceptions déjà présentes au modèle §7.2 | D-35 |
+| 2026-10-01 | INV-38, INV-40, INV-45, INV-46, INV-48, INV-164 | Précisés : ordre de régénération et copie exacte (INV-38) ; état de naissance du BC (INV-40) ; ordre BC puis devis (INV-45) ; caches en un seul UPDATE, aucune contrainte `montant_deja_facture_ht <= montant_contractuel_ht`, CHECK de cohérence sûrs (INV-46, INV-164) ; cohérence du client après la création (INV-48) | Un cache écrit en deux UPDATE violerait transitoirement un CHECK (annulation d'un solde) ; INV-48 ne couvrait que l'INSERT | D-35, D-36 |
+| 2026-10-01 | INV-133, INV-134, INV-141, INV-169 | Précisés : CK-13 ajouté aux contrôles de fin d'import et de restauration (INV-133, INV-141) ; aucune garantie de ligne importée (INV-134) ; import d'un BC annulé par les étapes normales (INV-169) | Cohérence devis ↔ BC contrôlée après import et restauration ; contradiction de la V3.11 sur les garanties de ligne corrigée | D-16, D-36 |
+| 2026-10-02 | INV-07, INV-141, INV-175, INV-177 | Précisés (seconde passe V3.12) : convention REPLACE vérifiée par les tests 001–003 renforcés (INV-07) ; échec de la restauration si un contrôle obligatoire ou CK-13 échoue, retour par la sauvegarde de sécurité (INV-141) ; TR-17 sans comparaison complète avec le devis, le service construit la cohérence et CK-13 la détecte (INV-175) ; borne d'année 2001–2099 limitée aux dates de numérotation annuelle (INV-177) | La borne ne devait pas devenir une contrainte générale sur les dates ; la logique métier reste au service ; la restauration doit avoir un comportement défini en cas d'incohérence | D-36, D-38, D-39 |
+| 2026-10-02 | INV-22 | Précisé (seconde passe V3.12, application de D-39) : `tr_96_numerotation_sequences_no_delete` ajouté par la migration 004 ; avec `tr_95` il couvre UPDATE et DELETE, direct ou implicite par REPLACE | Un REPLACE ne déclenche pas les triggers `UPDATE` (vérifié) ; `001_initial.sql` est immuable ; la protection ne doit pas reposer sur la seule convention | D-39 (précision technique, sans nouvelle décision) |
 
 ## Contrôle de non-régression (à exécuter à chaque nouvelle version du modèle)
 
 1. Extraire tous les `INV-xx` cités dans le modèle ; chacun doit exister ici.
 2. Vérifier que chaque INV de ce registre est encore cité dans le modèle (sinon : ligne dans le journal).
 3. Vérifier que chaque INV a un test nommé `test_INV_xx` dans la suite de tests SQL/domaine.
-4. Rejouer les cas chiffrés C-01 à C-20.
+4. Rejouer les cas chiffrés C-01 à C-29.
 5. Vérifier qu'aucun INV de la section L ne décrit un « lecteur V2 » dans V6 : toute règle V2 vit dans le document du convertisseur.
+6. Vérifier qu'aucun motif `GLOB` n'utilise de quantificateur `{n}` (non supporté par SQLite) et qu'aucun contrôle de date réelle n'est écrit `date(x) = x` (utiliser `GLOB` + `date(x) IS x`).
