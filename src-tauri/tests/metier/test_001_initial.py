@@ -5,6 +5,7 @@ clients, prestations, prestation_garanties.
 
 Exécution : python3 src-tauri/tests/metier/test_001_initial.py
 Les méthodes portent le nom de l'invariant vérifié (test_INV_xx_…).
+Renforcé (seconde passe V3.12, D-39) : la connexion de test active explicitement PRAGMA recursive_triggers=ON, un test vérifie que le réglage est actif, un test ciblé vérifie que INSERT OR REPLACE ne contourne pas les triggers de protection applicables.
 """
 import pathlib
 import re
@@ -25,10 +26,12 @@ ATTRIBUER = ("INSERT INTO numerotation_sequences (type_objet, annee, dernier_num
              "updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') RETURNING dernier_numero")
 
 
-def migrer():
-    """Applique la migration comme le runner : une transaction, user_version après succès."""
+def migrer(recursive=True):
+    """Applique la migration comme le runner : une transaction, user_version après succès.
+    La connexion applique les réglages obligatoires (D-39) : foreign_keys=ON et recursive_triggers=ON."""
     db = sqlite3.connect(":memory:", isolation_level=None)
     db.execute("PRAGMA foreign_keys=ON")
+    db.execute("PRAGMA recursive_triggers=" + ("ON" if recursive else "OFF"))
     db.executescript("BEGIN;" + SQL + "\nCOMMIT;")
     db.execute("PRAGMA user_version = 1")
     return db
@@ -428,6 +431,34 @@ class Schema(Base):
         self.refuse(entete, "E", "", cat, "v6", None, None)                      # designation non vide
         self.refuse(entete, "", "D", cat, "v6", None, None)                      # reference non vide
         self.db.execute(entete, ("F", "D", cat, "import", "x", '{"a": 1}'))      # témoin
+
+
+class ConnexionEtReplace(Base):
+    """D-39 : recursive_triggers=ON et non-contournement des protections par INSERT OR REPLACE."""
+
+    ANOMALIE = ("INSERT OR REPLACE INTO import_anomalies (id, type_entite, ref_source, categorie, motif, donnees) "
+                "VALUES (1, 'autre', 'r2', 'non_importe', 'm2', '{}')")
+
+    def anomalie(self):
+        self.db.execute("INSERT INTO import_anomalies (type_entite, ref_source, categorie, motif, donnees) "
+                        "VALUES ('client', 'r1', 'non_importe', 'm1', '{}')")
+
+    def test_D39_recursive_triggers_actif(self):
+        self.assertEqual(self.un("PRAGMA recursive_triggers")[0], 1)
+
+    def test_INV_130_replace_ne_contourne_pas_tr_90(self):
+        # Témoin : sans recursive_triggers, REPLACE supprime la ligne sans déclencher le BEFORE DELETE.
+        temoin = migrer(recursive=False)
+        temoin.execute("INSERT INTO import_anomalies (type_entite, ref_source, categorie, motif, donnees) "
+                       "VALUES ('client', 'r1', 'non_importe', 'm1', '{}')")
+        temoin.execute(self.ANOMALIE)
+        self.assertEqual(temoin.execute("SELECT type_entite FROM import_anomalies").fetchall(), [("autre",)])
+        # Connexion conforme : REPLACE est refusé par tr_90_import_anomalies_no_delete, la ligne est intacte.
+        self.anomalie()
+        with self.assertRaisesRegex(sqlite3.IntegrityError, "INV-130"):
+            self.db.execute(self.ANOMALIE)
+        self.assertEqual(self.db.execute("SELECT type_entite, ref_source FROM import_anomalies").fetchall(),
+                         [("client", "r1")])
 
 
 if __name__ == "__main__":
