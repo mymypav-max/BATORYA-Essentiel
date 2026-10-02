@@ -32,6 +32,7 @@ ATTRIBUER = ("INSERT INTO numerotation_sequences (type_objet, annee, dernier_num
 def migrer():
     db = sqlite3.connect(":memory:", isolation_level=None)
     db.execute("PRAGMA foreign_keys=ON")
+    db.execute("PRAGMA recursive_triggers=ON")
     db.executescript("BEGIN;" + SQL_001 + "\nCOMMIT;")
     db.execute("PRAGMA user_version = 1")
     db.executescript("BEGIN;" + SQL_002 + "\nCOMMIT;")
@@ -149,6 +150,13 @@ class Invariants(Base):
         self.refuse("INSERT INTO fournisseurs (code, nom, statut, created_at) VALUES ('FOU-0003', 'X', 'actif', NULL)")
         self.refuse("UPDATE fournisseurs SET updated_at='2026-10-01' WHERE code='FOU-0001'")
         self.refuse("UPDATE fournisseurs SET updated_at=NULL WHERE code='FOU-0001'")
+    def test_D39_recursive_triggers_actif(self):
+        self.assertEqual(self.un("PRAGMA recursive_triggers")[0], 1)
+
+    def test_D39_reglages_connexion_obligatoires(self):
+        self.assertEqual(self.un("PRAGMA foreign_keys")[0], 1)
+        self.assertEqual(self.un("PRAGMA recursive_triggers")[0], 1)
+
     def test_INV_05_aucune_fk_et_suppression_sans_historique(self):
         self.assertEqual(self.db.execute("PRAGMA foreign_key_list(fournisseurs)").fetchall(), [])
         cibles={r[2] for t in TABLES_001 for r in self.db.execute(f"PRAGMA foreign_key_list({t})")}
