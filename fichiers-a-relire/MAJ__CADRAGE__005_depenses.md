@@ -1,12 +1,12 @@
 # BATORYA Essentiel V6 — Cadrage de la tranche 005 « Dépenses »
 
-> **Mise à jour documentaire du 2026-10-03 (en relecture) — ce cadrage est en partie caduc.** Les arbitrages Q1–Q27 (errata E-10 à E-19, invariants INV-179 à INV-195, modèle SQLite V3.13) remplacent les hypothèses suivantes de ce cadrage, qui restent visibles à titre d'historique :
+> **Mise à jour documentaire du 2026-10-03 (en relecture) — ce cadrage est en partie caduc.** Les arbitrages Q1–Q27 (errata E-10 à E-20, invariants INV-179 à INV-196, modèle SQLite V3.13) remplacent les hypothèses suivantes de ce cadrage, qui restent visibles à titre d'historique :
 > - **fournisseur archivé non sélectionnable** (règles R6/R7 et §3.1) : **caduc** — plus de statut ni d'archivage des fournisseurs (E-12, INV-183) ;
 > - **absence d'annulation d'une dépense** (DDL du §2.1 sans `cancelled_at`/`motif_annulation`, proposition « suppression physique » de la question Q3, INV-181 proposé) : **caduque** — une dépense est corrigeable puis **annulable**, conservée avec son numéro, exclue des totaux concernés, jamais supprimée (E-19, INV-193 ; mécanisme PT-14). La question **Q2 (dépense sur BC annulé)** est tranchée dans le même sens que sa proposition : création et rattachement possibles ;
 > - **BC annulé** : une dépense peut être créée sur un BC annulé et y rester liée (D5 de l'audit de conservation, INV-188) ; la règle des 30 jours sur un BC annulé reste une règle de service à confirmer ;
 > - **cascades et suppressions** : `ON DELETE` examiné par relation (INV-05) ; aucun objet numéroté supprimé (INV-06) ;
-> - la **numérotation de la dépense** suit INV-179 (numéro consommé au COMMIT ; mécanisme high-water non tranché, PT-1).
-> Les numéros d'invariants « INV-179 et suivants » proposés au §4.3 sont **déjà attribués** à d'autres règles (INV-179 à INV-195, section N du registre v7) : toute règle nouvelle de Dépenses prendra INV-196 et suivants. Aucun fichier officiel, aucune migration, aucun test n'a été modifié.
+> - la **numérotation de la dépense** suit INV-179 (un numéro n'est jamais attribué deux fois ; un trou est acceptable et jamais récupéré, D-54 ; mécanisme PT-1 non validé).
+> Les numéros d'invariants « INV-179 et suivants » proposés au §4.3 sont **déjà attribués** à d'autres règles (INV-179 à INV-196, section N du registre v7) : toute règle nouvelle de Dépenses prendra INV-197 et suivants (INV-196 : révisions de devis). Aucun fichier officiel, aucune migration, aucun test n'a été modifié.
 
 **Statut** : proposition de cadrage, **à valider** avant toute écriture de `005_depenses.sql` et de `test_005_depenses.py`. Aucun fichier officiel, aucune migration, aucun test et aucun code applicatif n'ont été modifiés.
 **Base de l'audit** : dépôt `mymypav-max/BATORYA-Essentiel`, branche `main`, état `548f61f` (migrations 001–004 intégrées ; `004_bons_commande.sql` et son test identiques aux fichiers relus, 150 tests).
@@ -229,7 +229,7 @@ INV-103 est **inchangé** ; ses cas C-21 et C-22 sont déjà au Modèle §13.1. 
 
 | Règle | CHECK / UNIQUE / FK | Trigger | Service | Contrôle CK |
 |---|---|---|---|---|
-| Format `DEP-nnnnn-yy`, unicité | CHECK GLOB + UNIQUE | — | attribution : upsert `RETURNING`, `annee` = yy de `date_depense`, high-water avant COMMIT | CK-01, CK-02 (à étendre à `depenses`) |
+| Format `DEP-nnnnn-yy`, unicité | CHECK GLOB + UNIQUE | — | attribution : upsert `RETURNING`, `annee` = yy de `date_depense`, high-water avant COMMIT (mécanisme PT-1 non validé) | CK-01, CK-02 (à étendre à `depenses`) |
 | Année du numéro = année de `date_depense` | CHECK `substr` | TR-01 (message INV-23) | — | CK-01 |
 | `numero` immuable, année de `date_depense` immuable | — | **TR-01** | — | — |
 | `date_depense` : date réelle | CHECK GLOB + `date(x) IS x` | — | — | — |
