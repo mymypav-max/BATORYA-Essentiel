@@ -2,17 +2,17 @@ BATORYA Essentiel V6
 
 Cahier des charges fonctionnel et architectural définitif
 
-Version : V6.2 (en relecture) — amendements E-10 à E-19 du 03/10/2026 ; base V6.1 consolidée le 01/10/2026
+Version : V6.2 (en relecture) — amendements E-10 à E-20 du 03/10/2026 ; base V6.1 consolidée le 01/10/2026
 
 Historique des versions
 
 * V6 — CDC initial gelé.
 * V6.1 — consolidation des décisions validées E-01 à E-09 et des décisions déjà actées dans les invariants, le modèle métier et le modèle de données SQLite V3.7.
-* V6.2 (en relecture, 03/10/2026) — arbitrages métier Q1–Q27 et A–D : encadrés « Amendement E-10 à E-19 » ajoutés aux sections concernées. Le texte V6.1 contredit par un amendement est **conservé visible** ; en cas de contradiction, l’amendement prévaut. Les amendements non encore intégrés au corps du texte figurent dans `cdc-errata-v6.md` (E-10 à E-19).
+* V6.2 (en relecture, 03/10/2026) — arbitrages métier Q1–Q27 et A–D : encadrés « Amendement E-10 à E-20 » ajoutés aux sections concernées. Le texte V6.1 contredit par un amendement est **conservé visible** ; en cas de contradiction, l’amendement prévaut. Les amendements non encore intégrés au corps du texte figurent dans `cdc-errata-v6.md` (E-10 à E-20).
 
 Le présent CDC V6.1 intègre les corrections E-01 à E-09. Le fichier `cdc-errata-v6.md` est conservé comme registre historique de traçabilité ; ses corrections ne constituent pas une couche corrective à appliquer séparément au CDC V6.1.
 
-Les corrections E-10 à E-19 (V6.2) sont présentées sous forme d’**encadrés « Amendement »** : elles ne sont pas encore fondues dans le texte. Elles distinguent les règles métier validées, les contraintes techniques déduites et les propositions techniques non validées (PT-1 à PT-20, modèle de données SQLite V3.13 §19). Le dépôt existant a servi de matière d’audit ; lorsqu’il contredit une décision validée, la décision prévaut.
+Les corrections E-10 à E-20 (V6.2) sont présentées sous forme d’**encadrés « Amendement »** : elles ne sont pas encore fondues dans le texte. Elles distinguent les règles métier validées, les contraintes techniques déduites et les propositions techniques non validées (PT-1 à PT-21, modèle de données SQLite V3.13 §19). Le dépôt existant a servi de matière d’audit ; lorsqu’il contredit une décision validée, la décision prévaut.
 
 ⸻
 
@@ -391,7 +391,7 @@ Les documents historiques conservent les informations nécessaires à leur propr
 
 13. Devis
 
-> **Amendement E-10 / E-11 (2026-10-03).** Le devis existe d’abord en **brouillon** persistant : sans numéro, librement modifiable, supprimable ; la **validation** lui attribue son numéro définitif (consommé au COMMIT, E-13). Un devis validé (numéroté) est **verrouillé**. Un devis **refusé peut être rouvert** (`refuse → en_attente`) ; un devis annulé est terminal. États : brouillon, en attente, accepté, refusé, annulé. Le classement PDF reste fondé sur les états hors brouillon.
+> **Amendement E-10 / E-11 / E-20 (2026-10-03, précisé par le second envoi).** Le devis existe d’abord en **brouillon** persistant : sans numéro définitif, librement modifiable, supprimable tant qu’il n’a jamais été finalisé ; la **finalisation** lui attribue son numéro définitif `DEV-xxxxx-YY` (consommé définitivement, E-13) et le passe à *en attente*. Un devis **en attente est numéroté et reste modifiable** (le client peut demander des ajustements ; le numéro ne change jamais). Les modifications d’un devis finalisé suivent un système de **révisions** : devis initial sans suffixe, puis « DEV-00042 — Révision 1 », « Révision 2 » ; une révision est une nouvelle **version complète** (jamais une par frappe ou par ligne), créée après confirmation lors d’une nouvelle phase de modification. Un devis **accepté** est **verrouillé** avec sa dernière version : la dernière révision validée est la version contractuelle. Un devis **refusé** est conservé, verrouillé, et peut être rouvert (`refuse → en_attente`, même numéro) ; un devis annulé est terminal. États : brouillon, en attente, accepté, refusé, annulé. Le classement PDF reste fondé sur les états hors brouillon. *Le stockage des révisions est une proposition technique non validée (modèle de données §4.6, PT-21).*
 
 Le devis est le document commercial préalable à l’acceptation d’une prestation.
 
@@ -432,7 +432,7 @@ Les PDF sont déplacés selon leur état :
 
 14. Modification d’un devis accepté
 
-> **Amendement E-10 / E-11 / E-16 (2026-10-03) — le texte ci-dessous est remplacé.** Il n’existe plus de « gel » progressif ni de régénération du BC ni d’annulation automatique d’acompte. Un devis validé est **verrouillé dès sa validation** ; un devis accepté n’est jamais modifié (art. 1193 du Code civil et documentation DGCCRF, vérifiés). Aucun avenant. Une évolution du périmètre passe par un **nouveau devis** : une fois accepté, il crée un nouveau BC **ou rejoint un BC existant du même client tant que la facture de solde n’a pas été rédigée/validée** (E-16). Un devis refusé peut être rouvert (E-11) ; un devis annulé est immuable.
+> **Amendement E-10 / E-11 / E-16 / E-20 (2026-10-03) — le texte ci-dessous est remplacé.** Il n’existe plus de « gel » progressif ni de régénération du BC ni d’annulation automatique d’acompte. Un devis **en attente** (numéroté) reste modifiable par révisions ; un devis **accepté** est **verrouillé** avec sa dernière version et n’est jamais modifié (art. 1193 du Code civil et documentation DGCCRF, vérifiés). Aucun avenant. Une évolution du périmètre passe par un **nouveau devis** : une fois accepté, il crée un nouveau BC **ou rejoint un BC existant du même client tant que la facture de solde n’a pas été rédigée/validée** (E-16). Un devis refusé (verrouillé) peut être rouvert (E-11) ; un devis annulé est immuable.
 
 Un devis accepté reste modifiable tant qu’il n’est pas gelé.
 
@@ -591,7 +591,7 @@ Les devis, factures, acomptes, situations, soldes, avoirs et PV importés peuven
 
 19. Séquence de facturation
 
-> **Amendement E-13 (2026-10-03).** Un numéro n’est définitivement consommé qu’au **COMMIT** de la transaction qui crée l’objet ; une transaction abandonnée ne consomme rien ; après COMMIT, un numéro n’est jamais réattribué. La facture reçoit son numéro à la validation, indépendamment de l’envoi Gmail. Le texte ci-dessous (« un numéro déjà attribué n’est jamais réutilisé ; les trous sont acceptables ») reste valable après COMMIT.
+> **Amendement E-13 (2026-10-03, précisé par le second envoi).** Un numéro définitif n’est **jamais attribué deux fois** (priorité absolue). Un numéro peut être consommé sans objet après un crash ou un rollback pendant la finalisation : ce trou est acceptable et n’est jamais récupéré ; le compteur ne revient pas en arrière. La facture reçoit son numéro à la validation, indépendamment de l’envoi Gmail. Le texte ci-dessous (« un numéro déjà attribué n’est jamais réutilisé ; les trous sont acceptables ») est conforme.
 
 La séquence fonctionnelle permet notamment :
 
@@ -1149,7 +1149,7 @@ Il n’existe pas de procédure automatique de migration de licence entre deux o
 
 42. Sauvegardes, restauration et import historique
 
-> **Amendement E-13 (2026-10-03).** Le high-water de numérotation vise toujours à ne jamais réattribuer un numéro déjà émis. **Son mécanisme actuel** (écriture avant le COMMIT de la base métier, excédent conservé comme trou au démarrage) **consomme un numéro après un rollback suivi d’un redémarrage**, contrairement à la règle E-13. Le mécanisme est à corriger conceptuellement ; **la solution n’est pas tranchée** (modèle de données SQLite V3.13 §11.4, PT-1).
+> **Amendement E-13 (2026-10-03, précisé par le second envoi).** Le high-water de numérotation vise à ne jamais réattribuer un numéro déjà émis. Le mécanisme actuel (écriture avant le COMMIT, excédent conservé comme trou au démarrage) est **conforme à cette priorité** (un trou est acceptable), sauf que l’attribution ne lit que le compteur SQL, que restaure un rollback propre : un numéro réservé peut alors être réattribué, et un high-water perdu ne protège plus. **Correction proposée (non validée) : PT-1**, modèle de données SQLite V3.13 §11.4.
 
 Sauvegardes
 
