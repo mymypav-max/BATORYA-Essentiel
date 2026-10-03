@@ -1,6 +1,6 @@
 # Audit fonctionnel V5.16 → BATORYA V6
 
-Statut : Audit clôturé (historique) — mis à jour le 2026-10-01 (alignement sur le modèle SQLite V3.9, le registre des invariants v4 et les errata E-01 à E-09). **Renvois ajoutés le 2026-10-03 (en relecture)** : plusieurs règles ci-dessous sont dépassées par les arbitrages E-10 à E-19 (modèle SQLite V3.13, invariants v7) ; l'audit historique n'est pas réécrit, les passages concernés portent une mention « Dépassé ».
+Statut : Audit clôturé (historique) — mis à jour le 2026-10-01 (alignement sur le modèle SQLite V3.9, le registre des invariants v4 et les errata E-01 à E-09). **Renvois ajoutés le 2026-10-03 (en relecture)** : plusieurs règles ci-dessous sont dépassées par les arbitrages E-10 à E-20 (modèle SQLite V3.13, invariants v7) ; l'audit historique n'est pas réécrit, les passages concernés portent une mention « Dépassé ».
 Version de référence : BATORYA V5.16 (**jamais distribuée**)
 Cible : BATORYA V6 – Essentiel
 
