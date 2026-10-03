@@ -20,13 +20,14 @@ Il n'existe pas de dossier `migration/` autonome à ce stade. La migration V2 �
 - `conception/invariants.md` — invariants fonctionnels et techniques validés
 - `conception/conventions-techniques-v6.md` — conventions techniques et de code V6
 - `conception/modèle-métier-V6.md` — modèle métier V6
-- `conception/modèle-données-sqlite-v6-v3.12.md` — modèle de données SQLite V3.12, version courante du modèle (conception de la tranche Bons de commande incluse) ; remplace la V3.11
+- `conception/modèle-données-sqlite-v6-v3.13.md` — modèle de données SQLite **V3.13 (2026-10-03, en relecture)** : intègre les arbitrages métier Q1–Q27 et A–D ; **devient la version courante après validation** ; remplace la V3.12
+- `conception/modèle-données-sqlite-v6-v3.12.md` — modèle de données SQLite V3.12, **dernière version validée** (conception de la tranche Bons de commande incluse), conservée jusqu'à la validation de la V3.13
 
 ### Décisions
-- `décisions/cdc-errata-v6.md` — errata et corrections validés au cours de la consolidation du CDC
+- `décisions/cdc-errata-v6.md` — errata et corrections validés au cours de la consolidation du CDC (E-01 à E-20 ; E-10 à E-20 du 2026-10-03 en relecture)
 
 ### Spécifications
-- `specifications/cdc-fonctionnel-architectural-v6.md` — CDC fonctionnel et architectural V6 consolidé
+- `specifications/cdc-fonctionnel-architectural-v6.md` — CDC fonctionnel et architectural V6 consolidé (V6.2 en relecture : encadrés « Amendement E-10 à E-20 »)
 
 ## Règle de cohérence documentaire
 
@@ -34,7 +35,7 @@ Le CDC V6 doit être lu conjointement avec les documents de référence ci-dessu
 
 Les décisions validées dans les invariants, le modèle métier, le modèle de données SQLite et les errata doivent être cohérentes avec le CDC. Lorsqu'une décision validée a été intégrée au CDC, le CDC présente directement la règle courante ; les documents de décisions conservent la traçabilité des corrections.
 
-Le modèle de données SQLite V3.12 est la version courante pour le schéma de données ; il remplace la V3.11, dont l'historique reste documenté dans la V3.12. Les modèles V3.6, V3.7, V3.8, V3.9, V3.10 et V3.11 ont été remplacés et ne doivent pas être réintroduits.
+Le modèle de données SQLite V3.13 (en relecture) intègre les arbitrages du 2026-10-03 ; tant qu'il n'est pas validé, la V3.12 reste la dernière version validée. Les migrations 001–004 correspondent à la V3.12 et ne sont pas réécrites : leurs écarts avec la V3.13 sont listés au §4.19 du modèle V3.13 et se corrigent par des migrations ultérieures. La V3.12 remplace la V3.11, dont l'historique reste documenté. Les modèles V3.6, V3.7, V3.8, V3.9, V3.10 et V3.11 ont été remplacés et ne doivent pas être réintroduits.
 
 ## Périmètre
 
