@@ -21,15 +21,21 @@
 | `MAJ__AUDIT__REGLE_CONSERVATION_OBJETS_NUMEROTES.md` | `fichiers-a-relire/AUDIT__…` v2 (bloc d'obsolescence) |
 | `RAPPORT__MISE_A_JOUR_V3.13.md` | ce rapport (nouveau) |
 
-Aucune migration, aucun test, aucun code. Aucun fichier existant de `fichiers-a-relire/` n'a été renommé. Le document « migration V2 » inexistant n'a pas été créé.
+**Second envoi du 2026-10-03** (cycle de vie du devis, révisions, numérotation) : addendum en tête de la section 2 ; les 10 copies `MAJ__*` sont mises à jour (le README, les conventions et l'audit fonctionnel ne changent que par les plages de renvois). Aucune migration, aucun test, aucun code. Aucun fichier existant de `fichiers-a-relire/` n'a été renommé. Le document « migration V2 » inexistant n'a pas été créé.
 
 ## 2. Résumé des modifications
 
-- **Errata** : E-10 à E-19 ajoutés (E-01 et E-07 annotés « remplacé »). Statut explicite de chaque point (validé / déduit / à concevoir).
-- **Invariants (v7)** : INV-179 à INV-195 ajoutés (section N) ; INV-05, 06, 22, 23, 25, 31, 32, 36, 38–40, 42–48, 52, 53, 56–58, 60, 62, 76, 86, 87, 100, 110, 169, 173, 175, 176 modifiés ; INV-33, 34, 35, 49, 61, 77, 79 retirés ou réduits, énoncé d'origine conservé au journal.
-- **Modèle SQLite V3.13** : règles ci-dessus traduites ; **nouveaux** §3.8 (exécution et remise), §4.19 (écarts 001–004 → migrations), §11.4 restructuré (PT-1 sans choix), §19 (catalogue PT-1 à PT-20) ; D-40 à D-52 ; cas C-30 à C-40 ; tests T-30 à T-41 ; triggers proposés TR-97 à TR-99 ; migrations correctives proposées M-A et M-B.
+**Addendum — second envoi (2026-10-03)** :
+- **Cycle de vie du devis [validé]** : brouillon (sans numéro, supprimable tant que jamais finalisé) → finalisation (numéro définitif consommé) → `en_attente` **numéroté et modifiable** → `accepte` (verrouillé, dernière version) / `refuse` (verrouillé, rouvrable, même numéro). E-10 corrigé ; E-20 ajouté ; INV-31, 36, 38, 175, 180, 181, 182 réécrits ; INV-196 ajouté.
+- **Révisions [règle validée]** : devis initial sans suffixe, puis « Révision 1 », « Révision 2 » ; numéro identique ; une révision = une version complète ; confirmation avant d'ouvrir une révision ; dernière révision validée = version contractuelle. **Stockage [proposition PT-21, non validée]** : version courante dans les tables vivantes + table append-only `devis_revisions` (copie JSON complète de chaque version validée), colonnes `devis.revision` / `revision_en_cours`, `bc_devis.revision_acceptee`, TR-100, CK-15.
+- **Numérotation [règle validée]** : un numéro n'est jamais attribué deux fois ; un trou est acceptable, jamais récupéré ; le compteur ne revient pas en arrière. Lecture du premier envoi (« rollback ne consomme rien », alternatives α/ρ) **abandonnée**. INV-22, 25, 179 réécrits ; D-40 remplacée par D-54. **Analyse** : failles F1 (réattribution après rollback propre), F2 (`machine.db` perdue), F3 (écriture du high-water non bloquante). **Mécanisme [proposition PT-1 révisée, non validée]** : `max(compteur, high-water)+1`, réservation durable avant création, fail-closed.
+
+
+- **Errata** : E-10 à E-20 ajoutés (E-01 et E-07 annotés « remplacé »). Statut explicite de chaque point (validé / déduit / à concevoir).
+- **Invariants (v7)** : INV-179 à INV-196 ajoutés (section N) ; INV-05, 06, 22, 23, 25, 31, 32, 36, 38–40, 42–48, 52, 53, 56–58, 60, 62, 76, 86, 87, 100, 110, 169, 173, 175, 176 modifiés ; INV-33, 34, 35, 49, 61, 77, 79 retirés ou réduits, énoncé d'origine conservé au journal.
+- **Modèle SQLite V3.13** : règles ci-dessus traduites ; **nouveaux** §3.8 (exécution et remise), §4.19 (écarts 001–004 → migrations), §11.4 restructuré (PT-1 sans choix), §19 (catalogue PT-1 à PT-21) ; D-40 à D-54 ; cas C-30 à C-40 ; tests T-30 à T-41 ; triggers proposés TR-97 à TR-99 ; migrations correctives proposées M-A et M-B.
 - **Modèle métier** : Client sans statut ; Devis brouillon/verrouillé/rouvrable ; BC multi-devis, annulation sans cascade ; fin du « gel » ; facture validée immuable, avoir ; situation globale ; exécution et remise (principes) ; dépense annulable ; fournisseur conservé ; historique.
-- **CDC V6.2** : encadrés « Amendement E-10 à E-19 » (texte V6.1 contredit conservé, l'amendement prévaut) aux §12, 13, 14, 16, 17, 18, 19, 21, 22, 24, 28, 33, 42 et en fin de document.
+- **CDC V6.2** : encadrés « Amendement E-10 à E-20 » (texte V6.1 contredit conservé, l'amendement prévaut) aux §12, 13, 14, 16, 17, 18, 19, 21, 22, 24, 28, 33, 42 et en fin de document.
 - **Conventions (0.5)** : modèle V3.13 en référence, 004 ajoutée à l'arborescence, correction structurelle par migration ultérieure, `ON DELETE` examiné par relation, conservation.
 - **Audit / README / CADRAGE / AUDIT** : renvois et blocs d'obsolescence, sans réécrire l'historique.
 
@@ -39,11 +45,11 @@ Statut : **V** = règle métier validée · **PT** = mécanisme en proposition t
 
 | Q | Décision | Statut | Documents impactés | Tables | Migrations | Tests |
 |---|---|---|---|---|---|---|
-| Q1 | Numéro consommé au COMMIT ; rollback ne consomme rien ; jamais réattribué après COMMIT | **V** ; mécanisme high-water **NT** (PT-1) | INV-22/23/25/179, E-13, modèle §5/§6/§11.4, métier §2.2/§36, CDC §19/§42 | `numerotation_sequences` (inchangée), `sequence_high_water` (machine.db) | aucun DDL | T-24 (à adapter), T-30 |
+| Q1 | ~~Numéro consommé au COMMIT~~ → **corrigé (second envoi)** : un numéro n'est jamais attribué deux fois ; trou après crash/rollback acceptable, jamais récupéré | **V** ; mécanisme **NT** (PT-1 révisée) | INV-22/25/179, E-13, D-54, modèle §11.4 | `numerotation_sequences`, `machine.db` | aucun DDL | T-24, T-30, C-42 |
 | Q2 | Clients/fournisseurs conservés, `a_rattacher` supprimé | **V** ; PT-3, PT-4 | INV-183, E-12, modèle §4.4, métier §3/§19, CDC §12 | `clients`, `fournisseurs` | M-A | T-27, T-33, C-32 |
-| Q3 | Devis accepté verrouillé ; aucun avenant | **V** ; PT-2 | INV-181, E-10, métier §5, CDC §14 | `devis`, lignes | M-A | T-32, C-30 |
+| Q3 | Devis accepté verrouillé ; `en_attente` numéroté **modifiable** (second envoi) ; aucun avenant | **V** ; PT-2, PT-21 | INV-181, INV-196, E-10, E-20, métier §5, CDC §14 | `devis`, lignes | M-A | T-32, C-30 |
 | Q4 | Contenu contractuel du BC stable | **V** ; PT-6, PT-8 | INV-186, E-16, modèle §4.7/§7 | `bons_commande`, `bc_lignes` | M-B | T-29 (adapter), T-34 |
-| Q5 | Devis brouillon (sans numéro, supprimable) | **V** ; PT-2 | INV-180, E-10, modèle §4.6 | `devis` (`statut`, `numero` nullable) | M-A | T-32, C-30 |
+| Q5 | Devis brouillon (sans numéro, supprimable tant que jamais finalisé) ; finalisation = numéro définitif + `en_attente` | **V** ; PT-2 | INV-180, E-10, modèle §4.6 | `devis` (`statut`, `numero` nullable) | M-A | T-32, C-30 |
 | Q6 | Numéro de facture attribué à la validation | **V** | INV-179, INV-185, E-13/E-14 | `factures` (tranche à venir) | Facturation | T-30, T-36 |
 | Q7 | Dépense corrigeable puis annulable | **V** ; PT-14 | INV-193, E-19, modèle §4.12 | `depenses` | Dépenses | T-40, C-40 |
 | Q8 | Pas de facture brouillon ; correction par avoir ; nouvelle facture après avoir total | **V** ; PT-9 | INV-185, E-14, modèle §4.8, CDC §18/21/22 | `factures` sans `cancelled_at` | Facturation | T-36, C-33 |
@@ -52,7 +58,7 @@ Statut : **V** = règle métier validée · **PT** = mécanisme en proposition t
 | Q11 | Objet sans numéro supprimable (brouillon) | **V** ; PT-5 | INV-06, INV-180 | `devis`, lignes | M-A (TR-98) | T-32, T-37 |
 | Q12 | `ON DELETE` examiné relation par relation | **V** ; PT-5 | INV-05, D-44, modèle §4.19 | FK devis/BC/garanties | M-A, M-B | T-37 |
 | Q13 | Archive ≠ suppression ; non appliqué aux clients/fournisseurs | **V** | INV-183, E-12 | `clients`, `fournisseurs` | M-A | T-33 |
-| Q14 | Devis refusé rouvrable | **V** ; PT-17 | INV-182, E-11, modèle §4.6/§8 | `devis` | M-A (TR-10) | T-31, C-31 |
+| Q14 | Devis refusé verrouillé et rouvrable (même numéro) | **V** ; PT-17 | INV-182, E-11, modèle §4.6/§8 | `devis` | M-A (TR-10) | T-31, C-31 |
 | Q15 | Historique métier utile | **V** ; PT-15 | INV-194, modèle §2.5/§4.14 | `historique` (tranche à venir) | Historique | T-41 |
 | Q16 | Références historiques stables | **V** | INV-184 | FK / relations | — | T-37 |
 | Q17 | Travail supplémentaire = nouveau devis, rattachable au BC | **V** ; PT-6, PT-7 | INV-187, E-16 | `bc_devis`, `devis.devis_origine_id` | M-B | T-34, C-34 |
@@ -103,24 +109,26 @@ Statut : **V** = règle métier validée · **PT** = mécanisme en proposition t
 
 ## 7. Tests à ajouter ou modifier
 
-- **Ajouter** (propositions, modèle §13.3) : T-30 à T-41 ; cas C-30 à C-40. T-39 (exécution, remise) seulement après conception de PT-12 et PT-13.
+- **Ajouter** (propositions, modèle §13.3) : T-30 à T-42 ; cas C-30 à C-42. T-39 (exécution, remise) seulement après conception de PT-12 et PT-13.
 - **Modifier** : T-24 (selon PT-1), T-27 (statut fournisseur), T-28 (`a_rattacher`, suppression en CASCADE, TR-10/TR-11, `frozen_at`), T-29 (second BC pour un devis, `devis_id`, régénération, liste blanche et gel, exception du rattachement, CASCADE des garanties), T-01/T-02/T-03, T-14 ; obsolètes : T-08, T-09, T-10, T-11, T-13, C-01, C-19, C-20.
 - Les tests 001–004 décrivent chaque migration isolément ; les comportements V3.13 se testent sur la chaîne avec M-A/M-B ; nouvelle campagne de mutation sur les triggers réécrits (conventions §7.1).
 
 ## 8. Propositions techniques NON validées (liste séparée)
 
-PT-1 high-water (α/ρ, **non tranché**) · PT-2 brouillon de devis · PT-3 retrait des statuts client/fournisseur et client importé ambigu · PT-4 gardes de conservation · PT-5 `ON DELETE` par relation · PT-6 table `bc_devis` (sans cascade d'annulation) · PT-7 devis d'origine, remise/acompte par devis · PT-8 sort de `frozen_at` · PT-9 factures sans annulation, « actif », correction d'un avoir erroné (**à concevoir**) · PT-10 acompte lié à son devis · PT-11 colonnes de situation (signification de « montant » : **à concevoir**) · PT-12 modèles d'exécution A/B/C (**à concevoir**) · PT-13 formule de remise (**à concevoir**) · PT-14 annulation de dépense · PT-15 catalogue d'événements · PT-16 TR-16/INV-47 (avoir sur BC `termine` : à confirmer) · PT-17 réouverture `refuse → en_attente` · PT-18 garanties (aucun mécanisme, conséquence de la suppression de ligne) · PT-19 import d'une facture V2 « annulée » · PT-20 migrations correctives sans réécrire 001–004.
+PT-1 numérotation / high-water (`max(compteur, high-water)+1`, proposition révisée, **non validée**) · PT-21 stockage des révisions de devis (**non validé**) · PT-2 brouillon de devis · PT-3 retrait des statuts client/fournisseur et client importé ambigu · PT-4 gardes de conservation · PT-5 `ON DELETE` par relation · PT-6 table `bc_devis` (sans cascade d'annulation) · PT-7 devis d'origine, remise/acompte par devis · PT-8 sort de `frozen_at` · PT-9 factures sans annulation, « actif », correction d'un avoir erroné (**à concevoir**) · PT-10 acompte lié à son devis · PT-11 colonnes de situation (signification de « montant » : **à concevoir**) · PT-12 modèles d'exécution A/B/C (**à concevoir**) · PT-13 formule de remise (**à concevoir**) · PT-14 annulation de dépense · PT-15 catalogue d'événements · PT-16 TR-16/INV-47 (avoir sur BC `termine` : à confirmer) · PT-17 réouverture `refuse → en_attente` · PT-18 garanties (aucun mécanisme, conséquence de la suppression de ligne) · PT-19 import d'une facture V2 « annulée » · PT-20 migrations correctives sans réécrire 001–004.
 
 ## 9. Points réellement indécidés
 
 **Aucun arbitrage métier bloquant.** Restent des décisions **techniques** de Rémy :
-1. **PT-1** : choix du mécanisme high-water (α, ρ ou autre) — D-27, INV-25, §5 et T-24 en dépendent ; la règle métier est déjà fixée.
-2. **PT-8** : supprimer ou conserver `frozen_at` comme marqueur informatif.
-3. **PT-9, PT-11, PT-12, PT-13** : à concevoir avant la tranche Facturation / exécution (aucune table créée en attendant).
-4. Deux confirmations d'usage, applicables telles quelles sauf avis contraire : un devis numéroté non accepté est strictement verrouillé ; l'annulation d'un BC n'a aucune précondition de facturation (la confirmation d'interface relève du service). Et PT-16 : avoir sur un BC `termine`.
+1. **PT-1** : validation du mécanisme d'attribution (`max(compteur, high-water)+1`, réservation durable avant création, fail-closed) ; protection si `machine.db` est perdue (F2) ; instance unique ; journalisation du trou. La règle métier est fixée.
+2. **PT-21** : stockage des révisions (table `devis_revisions` JSON append-only) ; modification sans révision, abandon d'une révision, refus/annulation pendant une révision, lien avec `documents.numero_version`, devis importés.
+3. **PT-8** : supprimer ou conserver `frozen_at` comme marqueur informatif.
+4. **PT-9, PT-11, PT-12, PT-13** : à concevoir avant la tranche Facturation / exécution (aucune table créée en attendant).
+5. Une confirmation d'usage : correction sur place d'un devis `en_attente` sans révision (PT-21 propose que non) ; l'annulation d'un BC n'a aucune précondition de facturation (confirmation d'interface relevant du service) ; PT-16 : avoir sur un BC `termine`. Le point « devis `en_attente` verrouillé » est **clos** : il est modifiable.
+
 
 ---
 
 **Risque** : les copies `MAJ__*` supposent la validation de la V3.13 ; tant qu'elle n'est pas faite, `docs/` (V3.12) reste la dernière version validée et les migrations 001–004 divergent des règles (§4.19). Le fichier `AUDIT__REGLE_CONSERVATION…` de `fichiers-a-relire/` est modifié localement (v2) et le dépôt distant a un commit d'avance sur ce fichier : non aligné.
 
-**Micro-amélioration** : trancher PT-1 puis PT-8 en premier — ils débloquent M-A/M-B et T-24.
+**Micro-amélioration** : trancher PT-1 puis PT-21 puis PT-8 en premier — ils débloquent M-A/M-B et T-24.
