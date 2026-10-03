@@ -4,7 +4,7 @@
 
 Produit : BATORYA Essentiel
 Version : V6
-Statut : Modèle métier — **mis à jour le 2026-10-03 (en relecture)** : intègre les arbitrages Q1–Q27 et A–D (errata E-10 à E-19, invariants INV-179 à INV-195) ; aligné sur le modèle de données SQLite **V3.13 (en relecture)**, le registre des invariants (v7) et les errata E-01 à E-19. Les passages dont le **mécanisme technique** reste à concevoir (exécution, remise détaillée, mécanisme high-water) sont signalés comme tels et renvoient aux propositions techniques PT-1 à PT-20 du modèle de données §19.
+Statut : Modèle métier — **mis à jour le 2026-10-03 (en relecture)** : intègre les arbitrages Q1–Q27 et A–D (errata E-10 à E-20, invariants INV-179 à INV-196) ; aligné sur le modèle de données SQLite **V3.13 (en relecture)**, le registre des invariants (v7) et les errata E-01 à E-20. Les passages dont le **mécanisme technique** reste à concevoir (exécution, remise détaillée, mécanisme high-water) sont signalés comme tels et renvoient aux propositions techniques PT-1 à PT-21 du modèle de données §19.
 Périmètre : Micro-entrepreneur BTP — prestations de services — franchise en base de TVA
 
 ⸻
@@ -66,7 +66,7 @@ Convention uniforme `TRI-00001-yy` (trigramme, compteur sur 5 chiffres, année s
 
 * Les situations et les soldes partagent la même séquence `FAC`. Les codes client et fournisseur n'ont pas d'année.
 * L'année d'un numéro est celle de la date métier du document (**validation** du devis, création du BC, émission de la facture, réception du PV, date de la dépense) et ne change jamais.
-* **Un numéro n'est définitivement consommé qu'au COMMIT de la transaction qui crée l'objet.** Une transaction entièrement abandonnée ne consomme aucun numéro ; **après COMMIT, un numéro n'est jamais réattribué**, même après annulation de l'objet ; un trou résultant d'un objet annulé, refusé ou rejeté après COMMIT est acceptable. Le dernier numéro attribué est mémorisé hors de la base métier pour qu'une restauration ou un incident ne ramène pas un compteur en arrière ; **le mécanisme exact de cette mémorisation est à corriger conceptuellement et n'est pas tranché** (modèle de données §11.4, PT-1).
+* **Un numéro définitif n'est jamais attribué deux fois (priorité absolue).** Un numéro peut être consommé sans objet si un crash ou un rollback survient pendant la finalisation (exemple : `DEV-00041` existe, `DEV-00042` n'existe pas, `DEV-00043` est attribué ensuite) : ce trou est acceptable et **n'est jamais récupéré**. Est interdit : `DEV-00042` attribué à un premier objet puis réattribué à un autre. Après attribution, un numéro n'est jamais réattribué, même après annulation de l'objet, restauration ou incident. Le dernier numéro attribué est mémorisé hors de la base métier pour qu'une restauration ou un incident ne ramène pas un compteur en arrière ; **le mécanisme technique exact est une proposition non validée** (modèle de données §11.4, PT-1).
 * Un **devis brouillon** n'a pas de numéro et n'en consomme pas ; il le reçoit à sa validation. Il n'existe pas de facture brouillon.
 * Factures, acomptes et avoirs suivent une chronologie continue : la date d'émission n'est jamais antérieure à la dernière date de la séquence.
 * Les numéros ne sont pas configurables manuellement.
@@ -182,15 +182,23 @@ L'expiration de la validité est un état dérivé, jamais stocké.
 
 **Règles (validées)**
 
-* **Brouillon** : devis persistant, **sans numéro**, librement modifiable (lignes, garanties de ligne, remises, snapshots), **supprimable**. La suppression d'un brouillon ne consomme aucun numéro et emporte ses lignes. C'est le seul devis supprimable.
-* **Validation** : le devis reçoit son numéro définitif (consommé au COMMIT) et entre dans le cycle contractuel (En attente).
-* **Devis validé (numéroté)** : conservé et **verrouillé** — aucune modification directe de son contenu (lignes, garanties de ligne, remises, acompte prévu, client, chantier, snapshots, total). Seuls évoluent son statut, les dates et motifs liés au statut. Un devis accepté engage les parties (art. 1193 du Code civil et documentation DGCCRF, vérifiés par Rémy) ; **il n'existe aucun module « avenant »** : une évolution du périmètre passe par un **nouveau devis**, accepté puis rattachable au même BC (§ 7).
-* **Refusé** : peut être **rouvert** (`refuse → en_attente`) ; le contenu reste verrouillé, le numéro ne change pas, le refus et la réouverture sont tracés dans l'historique. **Annulé** : terminal.
-* La **date de création** est distincte de la **date d'acceptation** ; la date de validité reste modifiable tant que cela est compatible avec le verrouillage du contenu contractuel.
+* **Brouillon** : devis persistant, **sans numéro définitif**, librement modifiable (lignes, garanties de ligne, remises, snapshots), **supprimable physiquement tant qu'il n'a jamais été finalisé**. La suppression d'un brouillon ne consomme aucun numéro et emporte ses lignes. C'est le seul devis supprimable.
+* **Finalisation du brouillon** : le devis reçoit son numéro définitif `DEV-xxxxx-YY`, consommé définitivement, et passe à **En attente**.
+* **En attente** : le devis est **numéroté et reste modifiable** (le client peut demander des ajustements). Son numéro ne change jamais ; une modification ne crée pas de nouveau numéro de devis. Les modifications passent par le système de **révisions** (ci-dessous).
+* **Accepté** : le devis et sa dernière version sont **verrouillés** — aucune modification directe (lignes, garanties de ligne, remises, acompte prévu, client, chantier, snapshots, total). Seuls évoluent son statut, les dates et motifs liés au statut. Un devis accepté engage les parties (art. 1193 du Code civil et documentation DGCCRF, vérifiés par Rémy) ; **il n'existe aucun module « avenant »** : une évolution du périmètre passe par un **nouveau devis**, accepté puis rattachable au même BC (§ 7).
+* **Refusé** : conservé avec son numéro et **verrouillé** ; peut être **rouvert** (`refuse → en_attente`), le numéro restant identique ; une fois En attente, il est de nouveau modifiable. Le refus et la réouverture sont tracés dans l'historique. **Annulé** : terminal.
+
+**Révisions de devis** *(règle validée le 2026-10-03, second envoi ; stockage : proposition technique non validée, PT-21)*
+* Le devis initial ne porte pas de numéro de révision (`DEV-00042`). Les versions suivantes s'affichent « `DEV-00042` — Révision 1 », « Révision 2 ». Le numéro `DEV-00042` reste strictement identique pendant toute la vie du devis.
+* Une révision est une **nouvelle version complète** du devis, et non chaque modification élémentaire : aucune révision par frappe ni par modification de ligne.
+* Lorsqu'une nouvelle phase de modification est engagée sur un devis En attente, BATORYA peut demander confirmation de la création d'une nouvelle révision : modifier → confirmer → travailler sur la révision → valider la nouvelle version.
+* À l'acceptation, la **dernière révision validée** devient la version contractuelle de référence. Le contenu exact de chaque révision validée reste retrouvable.
+
+* La **date de création** est distincte de la **date d'acceptation** ; la date de validité reste modifiable tant que le devis n'est pas accepté, puis suit le verrouillage du contenu contractuel.
 * Un devis accepté peut créer un nouveau BC ou rejoindre un BC existant éligible (§ 7), de façon idempotente (un devis n'appartient qu'à un seul BC).
 * Un devis rattaché à un BC ne peut quitter « Accepté » que si ce BC est annulé ; **l'annulation d'un BC n'annule pas automatiquement ses devis**.
 * Un devis à 0,00 € ne peut pas être accepté.
-* Aucune notion de suppression d'un devis numéroté : un devis validé reste en base, quel que soit son statut.
+* Aucune notion de suppression d'un devis numéroté : un devis finalisé reste en base, quel que soit son statut.
 
 **Relations**
 
@@ -274,7 +282,7 @@ Les lignes du BC sont une copie des lignes des devis rattachés (mêmes données
 
 **Plus de « gel commercial »**
 
-L'ancien mécanisme de gel (devis et BC modifiables jusqu'au premier encaissement d'acompte, à la première situation ou au solde, avec annulation automatique de l'acompte non réglé) est **supprimé** : le devis validé est verrouillé dès sa validation et le contenu contractuel du BC est stable dès sa création. Le sort technique de la colonne `frozen_at` est une proposition (PT-8).
+L'ancien mécanisme de gel (devis et BC modifiables jusqu'au premier encaissement d'acompte, à la première situation ou au solde, avec annulation automatique de l'acompte non réglé) est **supprimé** : le devis accepté est verrouillé (le devis En attente reste modifiable par révisions) et le contenu contractuel du BC est stable dès sa création. Le sort technique de la colonne `frozen_at` est une proposition (PT-8).
 
 **Exécution (couche distincte du contractuel) — principes validés, schéma À CONCEVOIR**
 
@@ -294,7 +302,7 @@ La remise globale est attachée au contrat initial et n'est jamais recalculée s
 
 Aucun document n'évolue par un « gel » progressif :
 
-* le **devis validé** est verrouillé dès sa validation (§ 5) ;
+* le **devis accepté** est verrouillé (§ 5) ;
 * le **contenu contractuel du BC** est stable dès sa création (§ 7, § 8) ;
 * la **facture validée** est immuable (§ 10) ;
 * seuls évoluent les statuts, annulations et recalculs de caches prévus par chaque section.
@@ -304,7 +312,7 @@ Aucun document n'évolue par un « gel » progressif :
 
 ## 10. Facture
 
-La Facture représente un document de facturation **validé** : il n'existe **pas de brouillon persistant**. La facture est créée, numérotée et validée en une seule opération ; l'abandon d'une préparation avant validation ne crée aucun objet et ne consomme aucun numéro.
+La Facture représente un document de facturation **validé** : il n'existe **pas de brouillon persistant**. La facture est créée, numérotée et validée en une seule opération ; l'abandon d'une préparation avant validation ne crée aucun objet ; le numéro n'est attribué qu'à la validation.
 
 **Types**
 
@@ -651,7 +659,7 @@ Le Document représente la matérialisation PDF d'un objet métier.
 
 L'Historique représente les événements métier significatifs ; il est **append-only** et indépendant de l'interface.
 
-Événements tracés (historique métier utile : quoi, quand, avant/après lorsque pertinent, pourquoi lorsque nécessaire, qui lorsque l'information existe ; aucune journalisation de chaque frappe) : création, **validation**, modification (devis brouillon), acceptation, refus, **réouverture d'un devis**, annulation (devis, BC, dépense), **rattachement d'un devis à un BC**, événements d'exécution significatifs, émission, règlement et annulation de règlement, remboursement, avoir, passage à Terminé et retour à En cours, déclenchement de garantie, déclaration et correction URSSAF, import de données historiques, restauration. *(Supprimés : gel, annulation automatique d'un acompte, rattachement d'un client. Liste exacte : PT-15.)*
+Événements tracés (historique métier utile : quoi, quand, avant/après lorsque pertinent, pourquoi lorsque nécessaire, qui lorsque l'information existe ; aucune journalisation de chaque frappe) : création, **validation** (finalisation du devis), modification (devis brouillon), **révisions de devis** (création, validation, abandon), acceptation, refus, **réouverture d'un devis**, annulation (devis, BC, dépense), **rattachement d'un devis à un BC**, événements d'exécution significatifs, émission, règlement et annulation de règlement, remboursement, avoir, passage à Terminé et retour à En cours, déclenchement de garantie, déclaration et correction URSSAF, import de données historiques, restauration. *(Supprimés : gel, annulation automatique d'un acompte, rattachement d'un client. Liste exacte : PT-15.)*
 
 L'acteur d'un événement est l'utilisateur, le système ou l'import.
 
@@ -830,7 +838,7 @@ Le modèle V6 garantit notamment que :
 1. un document conserve son historique après modification du catalogue, des paramètres ou du référentiel (snapshots) ;
 2. un devis accepté crée un BC ou rejoint un BC existant éligible, et n'appartient qu'à un seul BC ; un BC peut regrouper plusieurs devis tant que sa facture de solde n'a pas été rédigée/validée ;
 3. un BC est Terminé seulement si un solde actif existe et que le reste dû des factures actives (hors avoirs) est nul ;
-4. un devis validé est verrouillé ; le contenu contractuel du BC est stable ; un devis brouillon est le seul devis supprimable ;
+4. un devis accepté est verrouillé (le devis En attente reste modifiable par révisions) ; le contenu contractuel du BC est stable ; un devis brouillon, jamais finalisé, est le seul devis supprimable ;
 5. une facture validée n'est ni supprimée, ni annulée, ni éditée : l'avoir corrige ; il n'y a pas de facture brouillon ;
 6. un BC peut être annulé quel que soit l'état de la facturation ; il est alors conservé avec ses devis (non annulés automatiquement), factures, règlements, dépenses et historique, et ne reçoit plus de nouveau document commercial ;
 7. le solde est toujours la facture finale ; un solde à 0 € est autorisé ; aucune situation, aucun acompte et aucun nouveau devis après un solde actif ;
@@ -844,7 +852,7 @@ Le modèle V6 garantit notamment que :
 14. les calculs URSSAF utilisent les encaissements réels ; une période verrouillée n'est corrigée que par le mécanisme de correction ;
 15. les versions réglementaires historiques restent reproductibles ;
 16. les montants sont manipulés avec une précision décimale exacte, arrondis HALF_UP une fois par ligne ;
-17. un numéro n'est définitivement consommé qu'au COMMIT de la transaction qui crée l'objet ; après COMMIT, il n'est jamais réattribué, même après annulation, restauration ou incident ; clients et fournisseurs sont conservés définitivement ;
+17. un numéro définitif n'est jamais attribué deux fois ; un trou après crash ou rollback est acceptable et n'est jamais récupéré ; clients et fournisseurs sont conservés définitivement ;
 18. les données métier restent locales ; aucune fonctionnalité distante n'est nécessaire au fonctionnement normal ;
 19. SQLite est la source de vérité ; les PDF, exports et sauvegardes en sont dérivés ;
 20. la seule reprise de données historiques passe par un `import-v6.json` conforme, sur base vide, en transaction unique.
@@ -857,8 +865,8 @@ Ce document est le modèle métier de BATORYA Essentiel V6. Il est aligné sur :
 
 * le modèle de données SQLite V6 (V3.13, en relecture) ;
 * le registre des invariants (`invariants.md`, version 7) ;
-* les errata au CDC gelé (`cdc-errata-v6.md`, E-01 à E-19).
+* les errata au CDC gelé (`cdc-errata-v6.md`, E-01 à E-20).
 
-**Hors périmètre d'Essentiel V6** : le **pointage salarié** relève de BATORYA Entreprise et n'est ni conçu ni préparé ici (INV-195). **Non tranchés (propositions techniques)** : mécanisme du numéro et du high-water (PT-1), schéma d'exécution et formule de remise (PT-12, PT-13), définition technique de « facture active » (PT-9).
+**Hors périmètre d'Essentiel V6** : le **pointage salarié** relève de BATORYA Entreprise et n'est ni conçu ni préparé ici (INV-195). **Non tranchés (propositions techniques)** : mécanisme du numéro et du high-water (PT-1), stockage des révisions de devis (PT-21), schéma d'exécution et formule de remise (PT-12, PT-13), définition technique de « facture active » (PT-9).
 
 Il ne définit pas les tables SQLite, les types SQL, les index, les repositories, les services TypeScript, les composants React ni les commandes Tauri : ces éléments relèvent des documents techniques correspondants.
