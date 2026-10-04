@@ -4,7 +4,7 @@
 
 Produit : BATORYA Essentiel
 Version : V6
-Statut : Modèle métier — **mis à jour le 2026-10-03 (en relecture)** : intègre les arbitrages Q1–Q27 et A–D (errata E-10 à E-20, invariants INV-179 à INV-196) ; aligné sur le modèle de données SQLite **V3.13 (en relecture)**, le registre des invariants (v7) et les errata E-01 à E-20. Les passages dont le **mécanisme technique** reste à concevoir (exécution, remise détaillée, mécanisme high-water) sont signalés comme tels et renvoient aux propositions techniques PT-1 à PT-21 du modèle de données §19.
+Statut : Modèle métier — **mis à jour le 2026-10-03, alignements Dépenses du 2026-10-04 (en relecture)** : intègre les arbitrages Q1–Q27 et A–D (errata E-10 à E-20, invariants INV-179 à INV-196) et les règles de la tranche Dépenses (cadrage 005, invariants INV-197 à INV-201) ; aligné sur le modèle de données SQLite **V3.13 (en relecture)**, le registre des invariants (v9) et les errata E-01 à E-20. Les passages dont le **mécanisme technique** reste à concevoir (exécution, remise détaillée) sont signalés comme tels et renvoient aux propositions techniques PT-xx du modèle de données §19 (PT-1 est tranché, PT-21 validé sur le principe).
 Périmètre : Micro-entrepreneur BTP — prestations de services — franchise en base de TVA
 
 ⸻
@@ -66,7 +66,7 @@ Convention uniforme `TRI-00001-yy` (trigramme, compteur sur 5 chiffres, année s
 
 * Les situations et les soldes partagent la même séquence `FAC`. Les codes client et fournisseur n'ont pas d'année.
 * L'année d'un numéro est celle de la date métier du document (**validation** du devis, création du BC, émission de la facture, réception du PV, date de la dépense) et ne change jamais.
-* **Un numéro définitif n'est jamais attribué deux fois (priorité absolue).** Un numéro peut être consommé sans objet si un crash ou un rollback survient pendant la finalisation (exemple : `DEV-00041` existe, `DEV-00042` n'existe pas, `DEV-00043` est attribué ensuite) : ce trou est acceptable et **n'est jamais récupéré**. Est interdit : `DEV-00042` attribué à un premier objet puis réattribué à un autre. Après attribution, un numéro n'est jamais réattribué, même après annulation de l'objet, restauration ou incident. Le dernier numéro attribué est mémorisé hors de la base métier pour qu'une restauration ou un incident ne ramène pas un compteur en arrière ; **le mécanisme technique exact est une proposition non validée** (modèle de données §11.4, PT-1).
+* **Un numéro définitif n'est jamais attribué deux fois (priorité absolue).** Un numéro peut être consommé sans objet si un crash ou un rollback survient pendant la finalisation (exemple : `DEV-00041` existe, `DEV-00042` n'existe pas, `DEV-00043` est attribué ensuite) : ce trou est acceptable et **n'est jamais récupéré**. Est interdit : `DEV-00042` attribué à un premier objet puis réattribué à un autre. Après attribution, un numéro n'est jamais réattribué, même après annulation de l'objet, restauration ou incident. Le dernier numéro attribué est mémorisé hors de la base métier pour qu'une restauration ou un incident ne ramène pas un compteur en arrière ; **le mécanisme technique (réservation du numéro committée avant la création de l'objet, double garde compteur + mémoire hors base métier) est tranché le 2026-10-03** (modèle de données §11.4, PT-1) ; sa seule limite est la restauration d'une base ancienne combinée à la perte de la mémoire des numéros.
 * Un **devis brouillon** n'a pas de numéro et n'en consomme pas ; il le reçoit à sa validation. Il n'existe pas de facture brouillon.
 * Factures, acomptes et avoirs suivent une chronologie continue : la date d'émission n'est jamais antérieure à la dernière date de la séquence.
 * Les numéros ne sont pas configurables manuellement.
@@ -188,11 +188,14 @@ L'expiration de la validité est un état dérivé, jamais stocké.
 * **Accepté** : le devis et sa dernière version sont **verrouillés** — aucune modification directe (lignes, garanties de ligne, remises, acompte prévu, client, chantier, snapshots, total). Seuls évoluent son statut, les dates et motifs liés au statut. Un devis accepté engage les parties (art. 1193 du Code civil et documentation DGCCRF, vérifiés par Rémy) ; **il n'existe aucun module « avenant »** : une évolution du périmètre passe par un **nouveau devis**, accepté puis rattachable au même BC (§ 7).
 * **Refusé** : conservé avec son numéro et **verrouillé** ; peut être **rouvert** (`refuse → en_attente`), le numéro restant identique ; une fois En attente, il est de nouveau modifiable. Le refus et la réouverture sont tracés dans l'historique. **Annulé** : terminal.
 
-**Révisions de devis** *(règle validée le 2026-10-03, second envoi ; stockage : proposition technique non validée, PT-21)*
-* Le devis initial ne porte pas de numéro de révision (`DEV-00042`). Les versions suivantes s'affichent « `DEV-00042` — Révision 1 », « Révision 2 ». Le numéro `DEV-00042` reste strictement identique pendant toute la vie du devis.
+**Révisions de devis** *(règles validées le 2026-10-03 ; stockage : PT-21, validé sur le principe)*
+* Le devis initial est la **version initiale** : ce n'est **pas** une « révision 0 » et aucune « Révision 0 » n'apparaît dans l'interface ni dans les documents. Les révisions commencent à **Révision 1** : version initiale → Révision 1 → Révision 2 → Révision 3… Elles s'affichent « `DEV-00042` — Révision 1 » ; le numéro `DEV-00042` reste strictement identique pendant toute la vie du devis.
 * Une révision est une **nouvelle version complète** du devis, et non chaque modification élémentaire : aucune révision par frappe ni par modification de ligne.
-* Lorsqu'une nouvelle phase de modification est engagée sur un devis En attente, BATORYA peut demander confirmation de la création d'une nouvelle révision : modifier → confirmer → travailler sur la révision → valider la nouvelle version.
-* À l'acceptation, la **dernière révision validée** devient la version contractuelle de référence. Le contenu exact de chaque révision validée reste retrouvable.
+* **Toute modification du contenu présenté au client ou ayant un impact quantitatif ou financier** (lignes, quantités, prix, remises, descriptions, prestations, garanties présentées, notes imprimées…) engage une phase de révision : BATORYA demande confirmation, l'utilisateur travaille sur la révision, puis valide la nouvelle version. Une modification purement technique, sans impact sur le contenu présenté, ne crée pas artificiellement de révision. Les **notes** présentées au client font partie de la révision.
+* **Révision abandonnée** : une révision commencée mais jamais validée ne devient pas une version historique ; aucun numéro de révision n'est consommé ; le devis revient exactement à sa dernière version validée. Une phase de révision **sans modification significative** est refusée ou abandonnée. Un **refus ou une annulation** du devis pendant une révision abandonne la révision non validée.
+* Une nouvelle révision part **toujours de la dernière version validée** ; reprendre une ancienne révision comme base n'est pas prévu à ce stade.
+* À l'acceptation, la **dernière version validée** devient la version contractuelle de référence. Pendant une révision en cours, elle reste la référence : les documents et restitutions représentant le devis validé l'utilisent, et l'interface distingue clairement la version validée de la version en cours de modification.
+* Après la finalisation, le **client du devis ne change plus** : changer de client exige un nouveau devis.
 
 * La **date de création** est distincte de la **date d'acceptation** ; la date de validité reste modifiable tant que le devis n'est pas accepté, puis suit le verrouillage du contenu contractuel.
 * Un devis accepté peut créer un nouveau BC ou rejoindre un BC existant éligible (§ 7), de façon idempotente (un devis n'appartient qu'à un seul BC).
@@ -507,7 +510,7 @@ La Dépense représente une charge enregistrée par l'entreprise.
 * identifiant ;
 * numéro (`DEP-00001-26`) ;
 * date de la dépense (`date_depense`) : date métier attribuée à la dépense par l'utilisateur ; proposée par défaut avec la date du jour, elle peut être une date antérieure correspondant à la date métier réelle de la dépense ; distincte de la date de création technique ;
-* montant HT de la dépense (montant économique unique ; sans TVA ni montant TTC) ;
+* montant HT de la dépense : montant économique unique, **strictement positif** (supérieur à zéro), exact au centime ; sans TVA ni montant TTC ;
 * catégorie (liste de référence) ;
 * description ;
 * fournisseur éventuel ;
@@ -520,7 +523,7 @@ La Dépense représente une charge enregistrée par l'entreprise.
 
 * Une dépense est **globale** ou rattachée à un BC.
 * Aucune gestion du paiement fournisseur en V6 : ni statut payé / non payé, ni échéance, ni règlement fournisseur.
-* **Correction et annulation** : une dépense active peut être corrigée (erreur de saisie) ; elle peut être **annulée** lorsqu'elle ne doit plus participer aux calculs métier. Une dépense annulée reste en base avec son numéro, son historique et ses relations (BC, fournisseur, catégorie) ; elle est exclue des totaux et calculs opérationnels concernés (liste à définir, PT-14). Une dépense numérotée n'est jamais supprimée. L'annulation n'est pas un statut de paiement.
+* **Correction et annulation** : une dépense active peut être corrigée (erreur de saisie) ; elle peut être **annulée** lorsqu'elle ne doit plus participer aux calculs métier. Une dépense annulée reste en base avec son numéro, son historique et ses relations (BC, fournisseur, catégorie) ; elle est exclue des **calculs actifs** — totaux de dépenses, marges, analyses économiques et indicateurs actifs (principe validé, INV-200) — et reste consultable dans l'historique. Les formules détaillées de chaque analyse ne sont pas spécifiées ici (PT-14). Une dépense numérotée n'est jamais supprimée. L'annulation n'est pas un statut de paiement.
 * Une dépense peut être créée sur un BC annulé, lui être rattachée ultérieurement ou y rester liée : aucun délai ni confirmation de rattachement tardif pour un BC annulé.
 * `date_depense` est la seule date métier de la dépense : ni date de facture, ni échéance, ni date de paiement. Sa correction ne peut pas changer l'année du numéro ; si c'était nécessaire, la dépense est annulée puis ressaisie sous un nouveau numéro (jamais de renumérotation).
 
@@ -868,6 +871,6 @@ Ce document est le modèle métier de BATORYA Essentiel V6. Il est aligné sur :
 * le registre des invariants (`invariants.md`, version 7) ;
 * les errata au CDC gelé (`cdc-errata-v6.md`, E-01 à E-20).
 
-**Hors périmètre d'Essentiel V6** : le **pointage salarié** relève de BATORYA Entreprise et n'est ni conçu ni préparé ici (INV-195). **Non tranchés (propositions techniques)** : mécanisme du numéro et du high-water (PT-1), stockage des révisions de devis (PT-21), schéma d'exécution et formule de remise (PT-12, PT-13), définition technique de « facture active » (PT-9).
+**Hors périmètre d'Essentiel V6** : le **pointage salarié** relève de BATORYA Entreprise et n'est ni conçu ni préparé ici (INV-195). **Non tranchés (propositions techniques)** : schéma d'exécution et formule de remise (PT-12, PT-13), définition technique de « facture active » (PT-9). Le mécanisme du numéro et du high-water (PT-1) est tranché le 2026-10-03 et le stockage des révisions de devis (PT-21) est validé sur le principe.
 
 Il ne définit pas les tables SQLite, les types SQL, les index, les repositories, les services TypeScript, les composants React ni les commandes Tauri : ces éléments relèvent des documents techniques correspondants.
