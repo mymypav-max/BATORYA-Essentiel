@@ -813,7 +813,7 @@ Il n’existe pas dans V6 de moteur de tâches ou de workflow de rappel associé
 
 28. Dépenses
 
-> **Amendement E-19 (2026-10-03).** Une dépense active peut être **corrigée** (erreur de saisie) ou **annulée** lorsqu’elle ne doit plus participer aux calculs métier ; elle reste en base avec son numéro, son historique et ses relations, et est exclue des totaux et calculs opérationnels concernés (liste : PT-14). Aucune suppression d’une dépense numérotée. Une dépense peut être créée sur un BC annulé ou lui être rattachée ultérieurement (aucun délai ni confirmation de rattachement tardif). Il n’existe plus de fournisseur archivé.
+> **Amendement E-19 (2026-10-03).** Une dépense active peut être **corrigée** (erreur de saisie) ou **annulée** lorsqu’elle ne doit plus participer aux calculs métier ; elle reste en base avec son numéro, son historique et ses relations, et est exclue des totaux et calculs opérationnels concernés (principe : INV-200 ; formules détaillées des analyses : PT-14). Aucune suppression d’une dépense numérotée. Une dépense peut être créée sur un BC annulé ou lui être rattachée ultérieurement (aucun délai ni confirmation de rattachement tardif). Il n’existe plus de fournisseur archivé.
 
 BATORYA permet d’enregistrer des dépenses afin d’alimenter les analyses de gestion.
 
