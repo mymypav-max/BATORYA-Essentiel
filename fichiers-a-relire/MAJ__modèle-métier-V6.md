@@ -494,7 +494,7 @@ Les dépenses servent à l'analyse de marge ; elles ne réduisent jamais le CA s
 
 Il n'existe plus de fournisseur archivé : tout fournisseur reste sélectionnable pour une nouvelle dépense.
 
-Lorsqu'un BC atteint 100 % facturé, les dépenses peuvent encore lui être rattachées normalement pendant 30 jours calendaires à compter de `date_100_facture`. Après ce délai, le BC est considéré comme clôturé pour les nouvelles dépenses. BATORYA affiche alors une confirmation simple indiquant depuis combien de jours le BC est clôturé ; si l'utilisateur confirme, la dépense est rattachée. Il n'existe ni procédure de déblocage, ni autorisation supplémentaire, ni délai maximal de rattachement tardif.
+Lorsqu'un BC atteint 100 % facturé, les dépenses peuvent encore lui être rattachées normalement pendant 30 jours calendaires à compter de `date_100_facture`. Après ce délai, le BC est considéré comme clôturé pour les nouvelles dépenses. BATORYA affiche alors une confirmation simple indiquant depuis combien de jours le BC est clôturé ; si l'utilisateur confirme, la dépense est rattachée. Il n'existe ni procédure de déblocage, ni autorisation supplémentaire, ni délai maximal de rattachement tardif. Cette règle ne s'applique pas à un BC annulé : aucun délai ni confirmation, même si `date_100_facture` est renseignée. Une modification de dépense qui conserve le même BC n'est pas un nouveau rattachement.
 
 ⸻
 
@@ -506,8 +506,8 @@ La Dépense représente une charge enregistrée par l'entreprise.
 
 * identifiant ;
 * numéro (`DEP-00001-26`) ;
-* date ;
-* montant réellement payé (franchise de TVA) ;
+* date de la dépense (`date_depense`) : date métier attribuée à la dépense par l'utilisateur ; proposée par défaut avec la date du jour, elle peut être une date antérieure correspondant à la date métier réelle de la dépense ; distincte de la date de création technique ;
+* montant HT de la dépense (montant économique unique ; sans TVA ni montant TTC) ;
 * catégorie (liste de référence) ;
 * description ;
 * fournisseur éventuel ;
@@ -521,7 +521,8 @@ La Dépense représente une charge enregistrée par l'entreprise.
 * Une dépense est **globale** ou rattachée à un BC.
 * Aucune gestion du paiement fournisseur en V6 : ni statut payé / non payé, ni échéance, ni règlement fournisseur.
 * **Correction et annulation** : une dépense active peut être corrigée (erreur de saisie) ; elle peut être **annulée** lorsqu'elle ne doit plus participer aux calculs métier. Une dépense annulée reste en base avec son numéro, son historique et ses relations (BC, fournisseur, catégorie) ; elle est exclue des totaux et calculs opérationnels concernés (liste à définir, PT-14). Une dépense numérotée n'est jamais supprimée. L'annulation n'est pas un statut de paiement.
-* Une dépense peut être créée sur un BC annulé et y rester liée.
+* Une dépense peut être créée sur un BC annulé, lui être rattachée ultérieurement ou y rester liée : aucun délai ni confirmation de rattachement tardif pour un BC annulé.
+* `date_depense` est la seule date métier de la dépense : ni date de facture, ni échéance, ni date de paiement. Sa correction ne peut pas changer l'année du numéro ; si c'était nécessaire, la dépense est annulée puis ressaisie sous un nouveau numéro (jamais de renumérotation).
 
 ⸻
 
