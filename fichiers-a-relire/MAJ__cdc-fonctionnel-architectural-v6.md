@@ -484,7 +484,7 @@ Le BC relie notamment :
 
 Les dépenses peuvent être globales ou rattachées à un BC.
 
-Lorsqu'un BC atteint 100 % facturé, les nouvelles dépenses peuvent encore être rattachées normalement pendant 30 jours calendaires à compter de la date de facturation à 100 %. Après ce délai, le BC est considéré comme clôturé pour les nouvelles dépenses. Une tentative de rattachement affiche simplement : « Ce BC est clôturé depuis X jours. Êtes-vous sûr de vouloir ajouter cette dépense sur ce BC ? ». Une confirmation positive permet le rattachement. Aucun système de déblocage, d'autorisation supplémentaire ou de délai maximal n'est prévu.
+Lorsqu'un BC atteint 100 % facturé, les nouvelles dépenses peuvent encore être rattachées normalement pendant 30 jours calendaires à compter de la date de facturation à 100 %. Après ce délai, le BC est considéré comme clôturé pour les nouvelles dépenses. Une tentative de rattachement affiche simplement : « Ce BC est clôturé depuis X jours. Êtes-vous sûr de vouloir ajouter cette dépense sur ce BC ? ». Une confirmation positive permet le rattachement. Aucun système de déblocage, d'autorisation supplémentaire ou de délai maximal n'est prévu. Cette règle ne s'applique pas à un BC annulé : une dépense peut y être créée ou lui être rattachée ultérieurement, sans délai ni confirmation. Une modification de dépense qui conserve le même BC n'est pas un nouveau rattachement.
 
 ⸻
 
@@ -813,7 +813,7 @@ Il n’existe pas dans V6 de moteur de tâches ou de workflow de rappel associé
 
 28. Dépenses
 
-> **Amendement E-19 (2026-10-03).** Une dépense active peut être **corrigée** (erreur de saisie) ou **annulée** lorsqu’elle ne doit plus participer aux calculs métier ; elle reste en base avec son numéro, son historique et ses relations, et est exclue des totaux et calculs opérationnels concernés (liste : PT-14). Aucune suppression d’une dépense numérotée. Une dépense peut être créée sur un BC annulé. Il n’existe plus de fournisseur archivé.
+> **Amendement E-19 (2026-10-03).** Une dépense active peut être **corrigée** (erreur de saisie) ou **annulée** lorsqu’elle ne doit plus participer aux calculs métier ; elle reste en base avec son numéro, son historique et ses relations, et est exclue des totaux et calculs opérationnels concernés (liste : PT-14). Aucune suppression d’une dépense numérotée. Une dépense peut être créée sur un BC annulé ou lui être rattachée ultérieurement (aucun délai ni confirmation de rattachement tardif). Il n’existe plus de fournisseur archivé.
 
 BATORYA permet d’enregistrer des dépenses afin d’alimenter les analyses de gestion.
 
