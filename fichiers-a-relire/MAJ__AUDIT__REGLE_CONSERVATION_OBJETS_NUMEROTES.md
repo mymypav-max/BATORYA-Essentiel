@@ -6,7 +6,7 @@
 > - **D2 (archivage des clients/fournisseurs, § 3.1, § 3.2, § 4.5)** : **remplacé** — conservation permanente, aucun archivage, aucun statut, `a_rattacher` supprimé (E-12, INV-183) ; Q-4 (immutabilité du code) et Q-5 (cycle de vie `a_rattacher`) sont traitées par cette décision (mécanismes : PT-3, PT-4).
 > - **D3 (« aucune suppression, même d'un brouillon », § 3.3)** : **précisé** — un devis brouillon, sans numéro, est supprimable ; tout objet numéroté est conservé (E-10, INV-180, Q5/Q11) ; Q-6 est traitée (annulation d'un devis : statut, motif, historique).
 > - **§ 3.6 (factures `cancelled_at`)** : **remplacé** — une facture validée n'est plus annulée ; correction par avoir (E-14, INV-185) ; mécanisme : PT-9.
-> - **Q-1 (numéro attribué dans une transaction rollbackée)** : **tranchée (second envoi du 2026-10-03)** — un numéro définitif n'est jamais attribué deux fois ; un trou après crash ou rollback est acceptable et n'est jamais récupéré (E-13, INV-179, D-54). Le mécanisme actuel est conforme sauf sur deux points (réattribution après rollback propre, high-water perdu) : **correction proposée, non validée** (modèle §11.4, PT-1).
+> - **Q-1 (numéro attribué dans une transaction rollbackée)** : **tranchée (second envoi du 2026-10-03)** — un numéro définitif n'est jamais attribué deux fois ; un trou après crash ou rollback est acceptable et n'est jamais récupéré (E-13, INV-179, D-54). Le mécanisme actuel est conforme sauf sur deux points (réattribution après rollback propre, high-water perdu) : **mécanisme tranché le 2026-10-03** : réservation committée avant la création de l'objet, `max(compteur, high-water) + 1` (modèle §11.4, PT-1).
 > - **Q-3 (numéros importés)** : inchangée. **Q-7 (annulation des dépenses)** : tranchée sur le principe (E-19, INV-193 ; mécanisme PT-14). **Q-8 (numéro de situation)** : voir INV-190, PT-11.
 > - **§ 3.4 (BC)** : conformité maintenue pour la suppression ; l'annulation du BC n'annule plus les devis (E-15) et un BC peut regrouper plusieurs devis (E-16).
 > Les anomalies techniques du § 4 (suppressions possibles, codes modifiables, `INSERT OR REPLACE`) restent exactes sur 001–004 ; leurs corrections passent par des migrations ultérieures (modèle §4.19, PT-20), jamais en réécrivant 001–004.
@@ -353,7 +353,7 @@ La **migration d'intégration n'est pas décidée** (D4). Chaque correction est 
 | Véhicule | Impacts constatés |
 |---|---|
 | Dans 005 | précédent : 004 ajoute `tr_96` sur une table de 001 « pour compléter tr_95 » ; la tranche 005 contient alors des gardes sur des tables de 001–003 ; sa campagne de mutation les couvre ; l'ordre officiel 001–010 est conservé |
-| Migration corrective dédiée | un numéro de migration supplémentaire ; l'**ordre officiel 005–010 est à renuméroter** ou à compléter (conventions §4, §5, Modèle §17.1) |
+| Migration corrective dédiée | une migration de plus dans la chaîne (**corrective** `NNNx_<objet>.sql`, rang supplémentaire) ; **aucune tranche n'est renumérotée** : l'ordre métier réservé 005–010 est inchangé (D-55, conventions §5, Modèle §17.1) |
 | Autre organisation | non décrite par D4 |
 
 ---
