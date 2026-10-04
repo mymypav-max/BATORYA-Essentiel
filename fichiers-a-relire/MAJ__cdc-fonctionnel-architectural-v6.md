@@ -12,7 +12,7 @@ Historique des versions
 
 Le présent CDC V6.1 intègre les corrections E-01 à E-09. Le fichier `cdc-errata-v6.md` est conservé comme registre historique de traçabilité ; ses corrections ne constituent pas une couche corrective à appliquer séparément au CDC V6.1.
 
-Les corrections E-10 à E-20 (V6.2) sont présentées sous forme d’**encadrés « Amendement »** : elles ne sont pas encore fondues dans le texte. Elles distinguent les règles métier validées, les contraintes techniques déduites et les propositions techniques non validées (PT-1 à PT-21, modèle de données SQLite V3.13 §19). Le dépôt existant a servi de matière d’audit ; lorsqu’il contredit une décision validée, la décision prévaut.
+Les corrections E-10 à E-20 (V6.2) sont présentées sous forme d’**encadrés « Amendement »** : elles ne sont pas encore fondues dans le texte. Elles distinguent les règles métier validées, les contraintes techniques déduites et les propositions techniques (PT-1 à PT-21, modèle de données SQLite V3.13 §19 ; PT-1 tranché et PT-21 validé sur le principe le 2026-10-03, les autres non validées). Le dépôt existant a servi de matière d’audit ; lorsqu’il contredit une décision validée, la décision prévaut.
 
 ⸻
 
@@ -391,7 +391,7 @@ Les documents historiques conservent les informations nécessaires à leur propr
 
 13. Devis
 
-> **Amendement E-10 / E-11 / E-20 (2026-10-03, précisé par le second envoi).** Le devis existe d’abord en **brouillon** persistant : sans numéro définitif, librement modifiable, supprimable tant qu’il n’a jamais été finalisé ; la **finalisation** lui attribue son numéro définitif `DEV-xxxxx-YY` (consommé définitivement, E-13) et le passe à *en attente*. Un devis **en attente est numéroté et reste modifiable** (le client peut demander des ajustements ; le numéro ne change jamais). Les modifications d’un devis finalisé suivent un système de **révisions** : devis initial sans suffixe, puis « DEV-00042 — Révision 1 », « Révision 2 » ; une révision est une nouvelle **version complète** (jamais une par frappe ou par ligne), créée après confirmation lors d’une nouvelle phase de modification. Un devis **accepté** est **verrouillé** avec sa dernière version : la dernière révision validée est la version contractuelle. Un devis **refusé** est conservé, verrouillé, et peut être rouvert (`refuse → en_attente`, même numéro) ; un devis annulé est terminal. États : brouillon, en attente, accepté, refusé, annulé. Le classement PDF reste fondé sur les états hors brouillon. *Le stockage des révisions est une proposition technique non validée (modèle de données §4.6, PT-21).*
+> **Amendement E-10 / E-11 / E-20 (2026-10-03, précisé par les second et troisième envois).** Le devis existe d’abord en **brouillon** persistant : sans numéro définitif, librement modifiable, supprimable tant qu’il n’a jamais été finalisé ; la **finalisation** lui attribue son numéro définitif `DEV-xxxxx-YY` (consommé définitivement, E-13) et le passe à *en attente*. Un devis **en attente est numéroté et reste modifiable** (le client peut demander des ajustements ; le numéro ne change jamais). Le devis initial est la **version initiale** — jamais une « révision 0 » ; les modifications suivent un système de **révisions** : version initiale → « DEV-00042 — Révision 1 » → « Révision 2 » → « Révision 3 »… Une révision est une nouvelle **version complète** (jamais une par frappe ou par ligne). Toute modification du contenu présenté au client ou à impact quantitatif/financier (lignes, quantités, prix, remises, descriptions, prestations, garanties présentées, notes imprimées…) engage, après confirmation, une phase de révision qui se termine par validation ou abandon ; une révision abandonnée ne devient jamais historique et ne consomme aucun numéro. Après la finalisation, le client du devis est immuable. Un devis **accepté** est **verrouillé** avec sa dernière version validée, qui est la version contractuelle. Un devis **refusé** est conservé, verrouillé, et peut être rouvert (`refuse → en_attente`, même numéro) ; un devis annulé est terminal. Un refus ou une annulation pendant une révision abandonne la révision non validée. États : brouillon, en attente, accepté, refusé, annulé. Le classement PDF reste fondé sur les états hors brouillon. *Stockage des versions : PT-21, validé sur le principe (modèle de données §4.6) ; détails de représentation : propositions techniques.*
 
 Le devis est le document commercial préalable à l’acceptation d’une prestation.
 
@@ -1149,7 +1149,7 @@ Il n’existe pas de procédure automatique de migration de licence entre deux o
 
 42. Sauvegardes, restauration et import historique
 
-> **Amendement E-13 (2026-10-03, précisé par le second envoi).** Le high-water de numérotation vise à ne jamais réattribuer un numéro déjà émis. Le mécanisme actuel (écriture avant le COMMIT, excédent conservé comme trou au démarrage) est **conforme à cette priorité** (un trou est acceptable), sauf que l’attribution ne lit que le compteur SQL, que restaure un rollback propre : un numéro réservé peut alors être réattribué, et un high-water perdu ne protège plus. **Correction proposée (non validée) : PT-1**, modèle de données SQLite V3.13 §11.4.
+> **Amendement E-13 (2026-10-03, précisé par le second envoi).** Le high-water de numérotation vise à ne jamais réattribuer un numéro déjà émis. **Mécanisme tranché le 2026-10-03 (PT-1, modèle de données SQLite V3.13 §11.4)** : la réservation du numéro (`max(compteur, high-water) + 1`) est committée dans la base métier et écrite durablement dans `machine.db` **avant** la création de l’objet ; un rollback ou un crash laisse un trou, jamais un doublon. Limite acceptée : base métier restaurée plus ancienne et `machine.db` perdue en même temps (avertissement et relèvement prudent du high-water).
 
 Sauvegardes
 
@@ -1247,7 +1247,7 @@ Le rapport peut notamment contenir :
 * erreur et informations techniques associées ;
 * version BATORYA ;
 * version de Tauri/Rust lorsque pertinente ;
-* version du schéma SQLite ;
+* version du schéma SQLite (rang de la dernière migration appliquée, `PRAGMA user_version`) ;
 * version de Windows ;
 * état des migrations ;
 * état technique des bases ;
