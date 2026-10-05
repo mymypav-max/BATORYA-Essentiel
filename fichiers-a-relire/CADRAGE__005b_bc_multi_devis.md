@@ -1,3 +1,68 @@
+Skip to content
+mymypav-max
+BATORYA-Essentiel
+Repository navigation
+Code
+Issues
+Pull requests
+Agents
+Actions
+Projects
+Wiki
+BATORYA-Essentiel/fichiers-a-relire
+/
+CADRAGE__005b_bc_multi_devis.md
+in
+main
+
+Edit
+
+Preview
+Indent mode
+
+Spaces
+Indent size
+
+2
+Line wrap mode
+
+Soft wrap
+Editing CADRAGE__005b_bc_multi_devis.md file contents
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
 # CADRAGE — 005b_bc_multi_devis (M-B, rang 7)
 
 Statut : **décisions Q-A à Q-D arbitrées par Rémy (2026-10-05)** — voir section 9. Le SQL est écrit conformément à ces arbitrages.
@@ -33,144 +98,7 @@ Relation : **1 devis → 1 BC**, portée par `bons_commande.devis_id INTEGER NOT
 | O2 | `tr_13_bc_lignes_insert/update` : `dl.devis_id <> b.devis_id` ⇒ une ligne de BC ne peut venir que **du** devis du BC. | 004 | essai : ligne d'un autre devis refusée (INV-175) |
 | O3 | `tr_13_bc_lignes_insert` (et garanties) : INSERT refusé si `frozen_at IS NOT NULL OR statut='annule'` ⇒ aucun rattachement après gel. | 004 | essai : BC gelé refuse la ligne |
 | O4 | `tr_12_bons_commande_gele` : `montant_contractuel_ht` immuable après gel ⇒ le contractuel ne peut pas augmenter au rattachement. | 004/005a | essai : refus |
-| O5 | `tr_17_bons_commande_insert` lit `d.id = NEW.devis_id` (devis accepté, même client). | 004/005a | — |
-| O6 | `tr_18_devis_statut_avec_bc` lit `b.devis_id = OLD.id`. | 004/005a | — |
-| O7 | `remise_*`, `acompte_*` + 8 CHECK sur `bons_commande` : une seule remise/un seul acompte par BC. | 004 | — |
-| O8 | `tr_12_*` (3 triggers) référencent `devis_id`, `remise_*`, `acompte_*`. | 004/005a | — |
-
-**Non-obstacles (vérifiés, aucune modification)** : `bc_lignes.devis_ligne_id UNIQUE` (une ligne de devis n'apparaît qu'une fois : règle voulue, INV-175) ; `bc_lignes UNIQUE(bc_id, ordre)` (le service numérote à la suite, §4.19 l.18) ; `devis` (accepté donc verrouillé, INV-181) ; `devis_revisions` (FK vers `devis` seulement) ; `depenses.bc_id` (FK `RESTRICT` vers `bons_commande(id)`, 005, conservée par le renommage) ; `bc_ligne_garanties` (lien par `ligne_id` seulement).
-
-Comportement devis : après acceptation, le devis est verrouillé (005a `tr_10_devis_verrouille`) ; il ne quitte `accepte` que si son BC est annulé (`tr_18`). Les révisions (`devis.revision`, `devis_revisions`) concernent **le même devis** et ne sont possibles qu'en `en_attente` (INV-196) : sans rapport avec le multi-devis.
-
----
-
-## 2. Modèle cible minimal
-
-**[DOC] modèle §4.7 (PT-6, proposition) + [VAL] E-16/INV-187.** Une seule table nouvelle :
-
-`bc_devis` : `id` PK AUTOINCREMENT · `bc_id` NN FK→`bons_commande` RESTRICT · `devis_id` NN **UNIQUE** FK→`devis` RESTRICT · `rang` INTEGER NN `>= 1` · `created_at` TS NN · `UNIQUE(bc_id, rang)`. STRICT. Jamais modifiée ni supprimée.
-
-Pourquoi une table et pas `devis.bc_id` **[DED]** : le devis accepté est verrouillé (INV-181) ; le lien est posé *après* l'acceptation, donc une colonne de `devis` obligerait à rouvrir le verrou. Pourquoi pas plus : pas de table générique, pas d'avenant ; chaque devis garde son numéro, son statut, ses révisions, ses dates (aucune colonne de `devis` touchée). `rang` : 1 = devis d'origine (§4.7).
-
-`bons_commande` reconstruite : retrait de `devis_id` ; retrait de `remise_*`/`acompte_*` **si Q-A = retirer**. Tout le reste inchangé (dont `frozen_at` et ses deux CHECK, PT-8 resté « Conservateur »).
-
-Aucune colonne ajoutée à `bc_lignes` (voir §5).
-
----
-
-## 3. Règle de rattachement et « solde rédigé/validé »
-
-**[VAL] INV-187, E-16, Q17, Q23 corrigé.** Un devis accepté crée un BC ou rejoint un BC existant du même client, tant que le solde n'est pas rédigé/validé ; un avoir sur le solde ne rouvre pas ; un BC annulé ne reçoit rien.
-
-Matérialisation dans le schéma actuel — **aucun champ existant n'est un marqueur fiable** :
-- `date_100_facture` : cache « date d'émission du premier solde actif », **sort en cas d'avoir total** (INV-43, PT-9) ; INV-43 dit expressément qu'elle « n'intervient pas dans la règle de rattachement ».
-- `statut = 'termine'` : cache, revient à `en_cours` après avoir (« retour_en_cours », modèle §4.7).
-- `frozen_at` : gel progressif **retiré** (INV-33/34 retirés le 2026-10-03) ; sort non tranché (PT-8) ; aucune règle V3.13 ne dit quand il est posé.
-- Les factures n'existent pas avant 006.
-
-⇒ **[DED]** La règle « tant que le solde n'est pas rédigé/validé » est une **règle de service** (porte du rattachement) contrôlée par **CK-14** ; elle ne peut pas être garantie par le schéma 005b (modèle §4.7, tableau : « — (tranche Facturation) ; un trigger ne pourra être ajouté qu'avec la tranche Facturation »). Ne pas inventer de champ. 006 devra la poser (index/trigger sur les factures de solde).
-
-Ce que le SQL 005b garantit (TR-99, **[DOC]** modèle §8) : à l'INSERT du lien, devis `accepte`, même `client_id` que le BC, BC non annulé ; UPDATE et DELETE du lien refusés ; un devis dans un seul BC (UNIQUE).
-**[VAL] Q-D** : le `rang` est un ordre d'association, pas un invariant métier : `rang >= 1` et `UNIQUE(bc_id, rang)` seulement ; **aucune contiguïté, aucune valeur imposée** (rang 1 non exigé), aucune renumérotation des données existantes.
-
----
-
-## 4. Compatibilité avec le BC verrouillé (004 + 005a)
-
-Distinction du brief : **ajouter un devis** (permis) / **modifier le contenu d'un devis intégré** (interdit : le devis est `accepte`, verrouillé par 005a ; 005b ne touche à aucun trigger de `devis` sauf `tr_18`, recréé).
-
-Triggers de `bons_commande` (tous perdus avec la table, à recréer) :
-
-| Trigger 004/005a | Sort 005b | Nature |
-|---|---|---|
-| `tr_01_bons_commande_numero_immuable` | recréé identique (G-3) | [DOC] |
-| `tr_12_bons_commande_modifiable` | **supprimé** : fusionné dans le trigger de contenu contractuel ci-dessous | [VAL] Q4/INV-186 |
-| `tr_12_bons_commande_gele` | **remplacé** par `tr_12_bons_commande_contrat` : BC **non annulé**, gelé ou non — immuables : `id`, `client_id`, snapshots (6 colonnes), `date_acceptation`, `created_at`, `origine`, `legacy_*` ; **modifiable** : `montant_contractuel_ht` (rattachement), caches, `date_debut`, `date_fin`, annulation, `frozen_at`, `updated_at` ; plus de `devis_id`/`remise_*`/`acompte_*` | [VAL] Q4 ; [DOC] modèle TR-12 |
-| `tr_12_bons_commande_annule` | recréé sans `devis_id` (+ sans `remise_*`/`acompte_*` si Q-A) ; PT-16 (caches) reporté à 006 (Q-C) | [DOC] / [VAL] Q-A, Q-C |
-| `tr_14_bons_commande_frozen_at` | recréé identique (PT-8 conservateur) | [VAL] |
-| `tr_17_bons_commande_insert` | **réduit** à l'état de naissance (les deux contrôles sur le devis passent à TR-99, C5) | [DOC] modèle TR-17/TR-99 |
-| `tr_19_bons_commande_no_delete` | recréé identique (G-3) | [DOC] |
-
-Triggers hors `bons_commande` à retirer puis recréer (référencent `bons_commande`) :
-- `tr_18_devis_statut_avec_bc` (sur `devis`) : réécrit via `bc_devis` (« devis rattaché ne quitte `accepte` que si son BC est annulé », aucune cascade) — [DOC] TR-18.
-- `tr_13_bc_lignes_insert/update/delete` : INSERT seulement si BC non annulé **et** ligne de devis appartenant à un devis lié à ce BC ; **UPDATE et DELETE toujours refusés** — [DOC] modèle TR-13 ; [VAL] Q4.
-- `tr_13_bc_ligne_garanties_insert/update/delete` : INSERT seulement si BC non annulé ; UPDATE/DELETE toujours refusés.
-- Le test de gel dans INSERT de lignes/garanties (`frozen_at IS NOT NULL`) : **[VAL] Q-B** : seul un BC annulé refuse l'INSERT.
-
-Nouveau : `tr_99_bc_devis_insert`, `tr_99_bc_devis_no_update`, `tr_99_bc_devis_no_delete` (BEFORE, convention du dépôt ; avec `recursive_triggers=ON`, le DELETE implicite d'un `INSERT OR REPLACE` est refusé).
-
-Non-régression 005a : G-1 (clients : `tr_12_*` sans clause `a_rattacher`) — la clause n'est pas réintroduite ; G-2 (`tr_17`, `tr_18` lisent des colonnes existantes) — recréés avec le schéma 005b ; G-3 (`tr_01`, `tr_14`, `tr_19`) — recréés. Les 28 triggers de 005a hors BC ne sont pas touchés, hormis `tr_18` qui n'est pas un trigger de 005a mais de 004 recréé par 005a.
-
----
-
-## 5. Lignes de BC
-
-- **Aucune colonne nouvelle** sur `bc_lignes` **[DED]** : le devis d'une ligne s'obtient par `devis_ligne_id → devis_lignes.devis_id` (UNIQUE, RESTRICT) ; l'appartenance au BC par `bc_devis`. Ajouter `devis_id` dupliquerait une information déjà portée (risque d'incohérence) — pas de « justification documentaire ou technique précise » (brief §5).
-- Plusieurs devis contribuent aux lignes d'un BC : `UNIQUE(bc_id, ordre)` ne l'empêche pas (numérotation à la suite par le service, §4.19 l.18).
-- **Garanties** : `bc_ligne_garanties.ligne_id ON DELETE CASCADE` → `RESTRICT` (PT-5, §4.19 l.17, dans le contenu M-B) exige de reconstruire `bc_ligne_garanties`. Effet de comportement nul (DELETE de ligne/garantie toujours refusé après 005b). **[VAL] Q-C : inclus.**
-- Miroir ligne à ligne : jamais en trigger (INV-175, modèle §4.7) ; CK-13.
-
----
-
-## 6. Devis, révisions, `devis_origine_id`
-
-- Révision = même devis, même numéro, `revision >= 1` ; devis supplémentaire = **nouvel objet** avec son propre numéro DEV, statut, historique, révisions, acompte. Aucune colonne de `devis` ni de `devis_revisions` n'est modifiée par 005b ; aucune unicité de `devis` n'est touchée.
-- Un devis supplémentaire est un devis comme un autre (numéro unique DEV) ; son lien au BC est **exclusivement** `bc_devis`.
-- `devis_origine_id` (PT-7, « peut référencer le devis initial, sans diff stocké », INV-187) : **non validé** en tant que mécanisme, **absent** du rang 6 (C2). Avec `bc_devis.rang = 1`, l'origine *dans le BC* est déjà déterminée. L'ajouter obligerait à modifier des triggers de `devis` posés par 005a (listes d'immutabilité de `tr_10_devis_*`) : risque de régression G-1/G-2/G-3. **Proposition : non créé en 005b** (à ouvrir par une décision séparée). **[À VALIDER]**
-
----
-
-## 7. Compatibilité avec 006 (Facturation) — sans l'implémenter
-
-006 doit distinguer les devis d'un BC, leurs acomptes (INV-189 : « lié à son devis d'origine »), les situations et le solde. 005b préserve : l'identité de chaque devis (numéro, acompte prévu `devis.acompte_*`, remise `devis.remise_*`) ; le lien devis ↔ BC et l'ordre de rattachement (`bc_devis`) ; les lignes de BC reliées à leur ligne de devis ; `bons_commande.id` inchangé (FK `depenses.bc_id`). Rien de 006 n'est créé.
-
----
-
-## 8. Classement de chaque règle (SQL / trigger / service / CK)
-
-| Règle | Mécanisme | Source |
-|---|---|---|
-| Un devis dans un seul BC | **SQL** `UNIQUE(devis_id)` | PT-6 |
-| Lien jamais modifié/supprimé | **trigger** TR-99 | PT-6 |
-| Devis `accepte`, même client, BC non annulé, à l'INSERT du lien | **trigger** TR-99 | modèle §8 |
-| `rang` ≥ 1, `UNIQUE(bc_id, rang)` (pas de contiguïté : Q-D) | **SQL** | PT-6 ; Q-D |
-| Solde rédigé/validé ⇒ plus de devis ; avoir ne rouvre pas | **service** + **CK-14** (+ SQL en 006) | INV-187 |
-| Contractuel = Σ `total_ht` des devis liés | **service** + **CK-13/14** | INV-39 |
-| Copie 1:1 lignes/garanties, miroir de S | **service** + **CK-13** | INV-175 |
-| BC sans devis de rang 1 | **CK-14** (à ajouter) | C5 |
-| Contenu contractuel du BC immuable ; lignes/garanties immuables | **triggers** TR-12, TR-13 | Q4, INV-186 |
-| Devis lié ne quitte `accepte` que si BC annulé | **trigger** TR-18 | INV-175 |
-| Naissance du BC (`en_cours`, caches à zéro) | **trigger** TR-17 + CHECK | INV-40 |
-| BC jamais supprimé | **trigger** TR-19 + FK RESTRICT | INV-174 |
-
----
-
-## 9. Protocole de reconstruction (conventions §5) et décisions
-
-Étapes SQL du fichier (gardes `foreign_keys = 0` et `user_version = 6`, comme 005a ; aucun BEGIN/COMMIT/PRAGMA d'écriture ; `user_version = 7` posé par le runner dans la transaction) :
-1. `DROP TRIGGER` : tous ceux qui référencent `bons_commande` (tr_18 sur `devis` ; tr_13 ×6 sur lignes/garanties ; ceux de `bons_commande` partent avec la table).
-2. `CREATE TABLE bc_devis`.
-3. `CREATE TABLE bons_commande_new` (structure cible) ; copie `INSERT … SELECT` en conservant `id`, numéros, dates, caches, `created_at`/`updated_at` ; `sqlite_sequence` monotone ; reprise des liens : `INSERT INTO bc_devis (bc_id, devis_id, rang, created_at) SELECT id, devis_id, 1, created_at FROM bons_commande ORDER BY id` (**[VAL] Q-D** : migration de données volontaire, conventions §5).
-4. `DROP TABLE bons_commande` ; `RENAME` ; recréation des index (`idx_bons_commande_client_id`, `idx_bons_commande_statut`) ; (si Q-C : même chose pour `bc_ligne_garanties`).
-5. Recréation des triggers. Contrôles du runner : `foreign_key_check` vide, `integrity_check` ok, `user_version = 7`.
-6. **Garde anti-perte [VAL] Q-A** : si Q-A = retirer, refus (CHECK de table temporaire, lecture seule) de la migration si un BC existant a `remise_*`/`acompte_*` différents de ceux de son devis, car l'information ne serait plus récupérable.
-
-Aucune ligne métier n'est insérée en dehors de la reprise des liens existants (1 ligne `bc_devis` par BC existant).
-
-### Décisions arbitrées (2026-10-05)
-
-| Id | Sujet | Décision |
-|---|---|---|
-| Q-A | `remise_*`/`acompte_*` de `bons_commande` | **Retirer**, avec garde anti-perte (la migration refuse de s'exécuter si un BC existant diffère de son devis) |
-| Q-B | Gel et rattachement | `frozen_at` ne ferme pas le rattachement : INSERT de lignes/garanties refusé **seulement** si le BC est annulé |
-| Q-C | Périmètre | **PT-5 inclus** (`bc_ligne_garanties` en RESTRICT) ; **PT-16 reporté** (006) : `tr_12_bons_commande_annule` garde la liste actuelle, moins les colonnes retirées |
-| Q-D | Reprise des liens | Oui, 1 ligne `bc_devis` par BC existant (`rang >= 1`, `created_at` du BC) ; `UNIQUE(bc_id, rang)` ; **pas** de rang contigu ni imposé |
-| — | `devis_origine_id` | Non créé (proposition retenue par défaut, aucune objection) |
-
----
-
-## 10. Vérification (2026-10-05)
-
-- `test_005b_bc_multi_devis.py` : 137 tests verts (Migration 30, Structure 18, lien `bc_devis` 14, TR-18 6, multi-devis 12, contrat du BC 19, lignes et garanties 13, révisions 7, compatibilité 11, isolation par trigger 7). Cumul 001–005b : 678 tests verts.
-- Campagne de mutation : 703 mutants du SQL (+ 7 du runner de test, + 11 manuels). 88 survivants au premier passage ; 50 tués par les tests ajoutés ensuite (égalité de la définition de `bons_commande` et `bc_ligne_garanties` avec 004 hors colonnes retirées, STRICT par `pragma_table_list`, valeurs non uniformes et trou d'identifiants dans la base peuplée) ; 38 restants, tous équivalents ou non testables (voir rapport de livraison).
-- Limite connue, commune à 003 et 004 : la condition « solde rédigé/validé » (INV-187, Q23) n'est portée par aucune donnée avant 006 ; elle reste une règle de service contrôlée par CK-14.
+Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
+Aucun fichier choisi
+Attach files by dragging & dropping, selecting or pasting them.
+ 
