@@ -134,6 +134,7 @@
     transition:
       width 950ms cubic-bezier(0.22, 1, 0.36, 1),
       padding 950ms cubic-bezier(0.22, 1, 0.36, 1),
+      height 950ms cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 950ms ease,
       border-radius 950ms ease;
   }
@@ -198,6 +199,19 @@
   .welcome {
     text-align: center;
     margin-bottom: 28px;
+  }
+
+  .welcome h1,
+  .welcome p {
+    transition:
+      opacity 220ms ease,
+      transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .welcome.is-switching h1,
+  .welcome.is-switching p {
+    opacity: 0;
+    transform: translateY(7px);
   }
 
   .welcome h1 {
@@ -487,6 +501,11 @@
     .login-panel.is-register .section-heading {
       margin-top: 4px;
     }
+
+    .login-panel {
+      max-height: calc(100vh - 24px);
+      overflow-y: auto;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -634,6 +653,7 @@
     const modeBtns = document.querySelectorAll('.mode-btn');
     const title = document.getElementById('welcome-title');
     const subtitle = document.getElementById('welcome-subtitle');
+    const welcome = document.querySelector('.welcome');
     const confirmGroup = document.getElementById('confirm-group');
     const submitBtn = document.getElementById('submit-btn');
     const rememberGroup = document.getElementById('remember-group');
@@ -655,6 +675,42 @@
       submitBtn.textContent = mode === 'login' ? 'Se connecter' : 'Créer mon espace';
     }
 
+    function switchMode(nextMode) {
+      const startHeight = loginPanel.offsetHeight;
+      loginPanel.style.height = startHeight + 'px';
+
+      welcome.classList.add('is-switching');
+
+      if (nextMode === 'register') {
+        loginPanel.classList.add('is-register');
+        confirmGroup.style.display = 'block';
+        rememberGroup.style.display = 'none';
+        avatarField.style.display = 'block';
+      } else {
+        loginPanel.classList.remove('is-register');
+        confirmGroup.style.display = 'none';
+        rememberGroup.style.display = 'block';
+        avatarField.style.display = 'none';
+      }
+
+      setWelcome(nextMode);
+
+      requestAnimationFrame(() => {
+        const targetHeight = loginPanel.scrollHeight;
+        loginPanel.style.height = targetHeight + 'px';
+
+        requestAnimationFrame(() => {
+          welcome.classList.remove('is-switching');
+        });
+      });
+
+      clearTimeout(transitionTimer);
+      transitionTimer = setTimeout(() => {
+        planStage.classList.remove('is-transitioning');
+        loginPanel.style.height = '';
+      }, 980);
+    }
+
     modeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const nextMode = btn.dataset.mode;
@@ -666,23 +722,7 @@
         clearTimeout(transitionTimer);
         planStage.classList.add('is-transitioning');
 
-        if (nextMode === 'register') {
-          loginPanel.classList.add('is-register');
-          confirmGroup.style.display = 'block';
-          rememberGroup.style.display = 'none';
-          avatarField.style.display = 'block';
-          setWelcome('register');
-        } else {
-          loginPanel.classList.remove('is-register');
-          confirmGroup.style.display = 'none';
-          rememberGroup.style.display = 'block';
-          avatarField.style.display = 'none';
-          setWelcome('login');
-        }
-
-        transitionTimer = setTimeout(() => {
-          planStage.classList.remove('is-transitioning');
-        }, 800);
+        switchMode(nextMode);
       });
     });
 
