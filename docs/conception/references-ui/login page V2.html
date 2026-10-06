@@ -6,10 +6,10 @@
 <title>BATORYA Essentiel V6 — Plan Technique</title>
 <style>
   :root {
-    --blue: #35699E;
+    --orange: #dc6e29;
     --blue-soft: #5B86AE;
     --blue-deep: #2E5D8C;
-    --orange: #C9823A;
+    --orange-soft2: #C9823A;
     --text: #1B1C1E;
     --text-sec: #595C61;
     --bg: #E9EEF4;
@@ -123,11 +123,10 @@
     border-radius: 20px;
     border: 1px solid rgba(255,255,255,.78);
     box-shadow:
-      0 4px 10px -2px rgba(31, 45, 61, 0.06),
-      0 14px 32px -8px rgba(31, 45, 61, 0.12),
-      0 28px 60px -16px rgba(31, 45, 61, 0.14),
+      0 4px 10px -2px var(--blue-soft),
+      0 14px 32px -8px var(--blue-soft),
+      0 28px 60px -16px var(--blue-soft), 
       0 0 0 1px rgba(53, 105, 158, 0.04),
-      inset 0 1px 0 rgba(255, 255, 255, 0.92),
       inset 0 -1px 0 rgba(53,105,158,0.04);
     padding: 40px 36px 36px;
     position: relative;
@@ -183,7 +182,7 @@
 
   .mode-btn.active {
     background: white;
-    color: var(--blue);
+    color: var(--orange);
     box-shadow: 0 3px 10px rgba(31,45,61,.08), inset 0 0 0 1px rgba(53,105,158,.06);
   }
 
@@ -199,7 +198,7 @@
   .welcome h1 {
     font-size: 24px;
     font-weight: 650;
-    color: var(--blue);
+    color: var(--orange);
     letter-spacing: -0.035em;
     margin-bottom: 8px;
     position: relative;
@@ -212,7 +211,7 @@
     height: 2px;
     margin: 10px auto 0;
     border-radius: 2px;
-    background: linear-gradient(90deg, var(--blue), var(--orange));
+    background: linear-gradient(90deg, var(--orange), var(--orange-soft2));
     opacity: .75;
   }
 
@@ -260,6 +259,28 @@
   .form-group input::placeholder {
     color: #a0a4ab;
   }
+  .remember-me {
+  margin: -4px 0 2px;
+}
+
+.remember-me__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-sec);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-me__label input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--orange);
+  cursor: pointer;
+}
 
   .btn {
     width: 100%;
@@ -267,7 +288,7 @@
     margin-top: 10px;
     border: none;
     border-radius: 13px;
-    background: linear-gradient(160deg, var(--blue) 0%, var(--blue-deep) 100%);
+    background: linear-gradient(160deg, var(--orange) 0%, var(--orange) 100%);
     color: white;
     font-size: 15.5px;
     font-weight: 600;
@@ -398,6 +419,12 @@
         <label for="pwd">Mot de passe</label>
         <input type="password" id="pwd" placeholder="••••••••" autocomplete="current-password">
       </div>
+      <div class="remember-me" id="remember-group">
+        <label class="remember-me__label">
+        <input type="checkbox" id="remember-me">
+          <span>Se souvenir de moi</span>
+          </label>
+      </div>
 
       <!-- Champ confirmation (caché par défaut) -->
       <div class="form-group" id="confirm-group" style="display: none;">
@@ -415,6 +442,7 @@
     const subtitle = document.getElementById('welcome-subtitle');
     const confirmGroup = document.getElementById('confirm-group');
     const submitBtn = document.getElementById('submit-btn');
+    const rememberGroup = document.getElementById('remember-group');
 
     modeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -428,11 +456,13 @@
           subtitle.textContent = 'Connectez-vous à BATORYA Essentiel';
           confirmGroup.style.display = 'none';
           submitBtn.textContent = 'Se connecter';
+          rememberGroup.style.display = 'block';
         } else {
           title.textContent = 'Créer mon espace';
           subtitle.textContent = 'Configurez votre espace local BATORYA';
           confirmGroup.style.display = 'block';
           submitBtn.textContent = 'Créer mon espace';
+          rememberGroup.style.display = 'none';
         }
       });
     });
