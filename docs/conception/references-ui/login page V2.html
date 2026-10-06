@@ -6,13 +6,13 @@
 <title>BATORYA Essentiel V6 — Plan Technique</title>
 <style>
   :root {
-    --blue: rgba(212, 85, 7, 0.95);
-    --blue-soft: #4a7fb3;
-    --blue-deep: rgba(212, 85, 7, 0.35);
+    --blue: #35699E;
+    --blue-soft: #5B86AE;
+    --blue-deep: #2E5D8C;
     --orange: #C9823A;
     --text: #1B1C1E;
     --text-sec: #595C61;
-    --bg: #f4f6f9;
+    --bg: #F3F5F8;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -90,10 +90,10 @@
     border-radius: 22px;
     border: 1px solid rgba(74, 127, 179, 0.3);
     box-shadow:
-      0 4px 6px -1px rgba(212, 85, 7, 0.20),
-      0 12px 24px -4px rgba(212, 85, 7, 0.30),
-      0 28px 55px -12px rgba(212, 85, 7, 0.42),
-      0 0 0 1px rgba(212, 85, 7, 0.06),
+      0 4px 10px -2px rgba(31, 45, 61, 0.06),
+      0 14px 32px -8px rgba(31, 45, 61, 0.12),
+      0 28px 60px -16px rgba(31, 45, 61, 0.14),
+      0 0 0 1px rgba(53, 105, 158, 0.04),
       inset 0 1px 0 rgba(255, 255, 255, 0.85);
     padding: 40px 36px 36px;
     position: relative;
@@ -119,13 +119,13 @@
   .logo img {
     height: 44px;
     width: auto;
-    filter: drop-shadow(0 2px 6px rgba(212, 85, 7, 0.15));
+    filter: drop-shadow(0 2px 6px rgba(53, 105, 158, 0.12));
   }
 
   /* Mode switch */
   .mode-switch {
     display: flex;
-    background: rgba(212, 85, 7, 0.08);
+    background: rgba(53, 105, 158, 0.07);
     border-radius: 12px;
     padding: 4px;
     margin-bottom: 28px;
@@ -148,7 +148,7 @@
   .mode-btn.active {
     background: white;
     color: var(--blue);
-    box-shadow: 0 2px 8px rgba(212, 85, 7, 0.12);
+    box-shadow: 0 2px 8px rgba(31, 45, 61, 0.08);
   }
 
   .mode-btn:hover:not(.active) {
@@ -163,7 +163,7 @@
   .welcome h1 {
     font-size: 24px;
     font-weight: 650;
-    color: rgba(238, 112, 28, 0.91);
+    color: var(--blue);
     letter-spacing: -0.03em;
     margin-bottom: 8px;
   }
@@ -199,14 +199,14 @@
   }
 
   .form-group input:hover {
-    border-color: rgba(212, 85, 7, 0.55);
+    border-color: rgba(53, 105, 158, 0.45);
     background: rgba(255, 255, 255, 0.85);
   }
 
   .form-group input:focus {
-    border-color: rgba(212, 85, 7, 0.35);
+    border-color: rgba(53, 105, 158, 0.55);
     background: #fff;
-    box-shadow: 0 0 0 4px rgba(212, 85, 7, 0.12);
+    box-shadow: 0 0 0 4px rgba(53, 105, 158, 0.12);
   }
 
   .form-group input::placeholder {
@@ -224,7 +224,7 @@
     font-size: 15.5px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 8px 22px -6px rgba(212, 85, 7, 0.45);
+    box-shadow: 0 8px 22px -6px rgba(53, 105, 158, 0.28);
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
@@ -240,7 +240,7 @@
 
   .btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 12px 28px -6px rgba(233, 237, 240, 0.5);
+    box-shadow: 0 12px 28px -6px rgba(31, 45, 61, 0.18);
   }
 
   .btn:active {
@@ -314,13 +314,13 @@
   <div class="panel-wrapper">
     <div class="login-panel">
       <div class="logo">
-        <img src="icon.png" alt="BATORYA" onerror="this.style.display='none'">
+        <img src="../../assets/icon.png" alt="BATORYA" onerror="this.style.display='none'">
       </div>
 
       <!-- Mode switch -->
       <div class="mode-switch">
         <button type="button" class="mode-btn active" data-mode="login">Se connecter</button>
-        <button type="button" class="mode-btn" data-mode="register">Créer un compte</button>
+        <button type="button" class="mode-btn" data-mode="register">Créer mon espace</button>
       </div>
 
       <div class="welcome">
@@ -368,10 +368,10 @@
           confirmGroup.style.display = 'none';
           submitBtn.textContent = 'Se connecter';
         } else {
-          title.textContent = 'Créer un compte';
-          subtitle.textContent = 'Rejoignez BATORYA Essentiel';
+          title.textContent = 'Créer mon espace';
+          subtitle.textContent = 'Configurez votre espace local BATORYA';
           confirmGroup.style.display = 'block';
-          submitBtn.textContent = 'Créer mon compte';
+          submitBtn.textContent = 'Créer mon espace';
         }
       });
     });
