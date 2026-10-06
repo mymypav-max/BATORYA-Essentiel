@@ -133,7 +133,8 @@
     overflow: hidden;
     transition:
       width 950ms cubic-bezier(0.22, 1, 0.36, 1),
-      padding 950ms cubic-bezier(0.22, 1, 0.36, 1),
+      padding-left 950ms cubic-bezier(0.22, 1, 0.36, 1),
+      padding-right 950ms cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 950ms ease,
       border-radius 950ms ease;
   }
@@ -236,9 +237,6 @@
 
   .workspace-section {
     min-width: 0;
-    transition:
-      opacity 260ms ease,
-      transform 950ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .workspace-section--security {
@@ -247,8 +245,6 @@
 
   .section-heading {
     display: block;
-    max-height: 0;
-    margin-bottom: 0;
     opacity: 0;
     transform: translateY(-8px);
     overflow: hidden;
@@ -466,15 +462,11 @@
   }
 
   .login-panel.is-register .section-heading {
-    max-height: 24px;
-    margin-bottom: 14px;
     opacity: 1;
     transform: translateY(0);
   }
 
   .login-panel.is-register .avatar-field {
-    max-height: 170px;
-    margin: 2px 0 18px;
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
@@ -489,17 +481,12 @@
   }
 
   .login-panel.is-register .remember-me {
-    max-height: 0;
-    margin-top: 0;
-    margin-bottom: 0;
     opacity: 0;
     transform: translateY(-8px);
     pointer-events: none;
   }
 
   #confirm-group {
-    max-height: 0;
-    margin-bottom: 0;
     opacity: 0;
     transform: translateY(-10px);
     overflow: hidden;
@@ -512,15 +499,13 @@
   }
 
   .login-panel.is-register #confirm-group {
-    max-height: 90px;
-    margin-bottom: 18px;
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
   }
 
   .plan-stage {
-    transition: transform 950ms cubic-bezier(0.22, 1, 0.36, 1), opacity 460ms ease;
+    transition: transform 950ms cubic-bezier(0.22, 1, 0.36, 1), opacity 950ms ease;
   }
 
   .plan-stage.is-transitioning {
