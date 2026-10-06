@@ -131,6 +131,11 @@
     padding: 40px 36px 36px;
     position: relative;
     overflow: hidden;
+    transition:
+      width 460ms cubic-bezier(0.22, 1, 0.36, 1),
+      padding 460ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 460ms ease,
+      border-radius 460ms ease;
   }
 
   .login-panel::before {
@@ -220,6 +225,36 @@
     color: var(--text-sec);
   }
 
+  .workspace-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    transition:
+      grid-template-columns 460ms cubic-bezier(0.22, 1, 0.36, 1),
+      column-gap 460ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .workspace-section {
+    min-width: 0;
+    transition:
+      opacity 260ms ease,
+      transform 460ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .workspace-section--security {
+    padding-top: 0;
+  }
+
+  .section-heading {
+    display: none;
+    margin-bottom: 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-sec);
+  }
+
   .form-group {
     margin-bottom: 18px;
   }
@@ -259,6 +294,69 @@
   .form-group input::placeholder {
     color: #a0a4ab;
   }
+
+  .avatar-field {
+    display: none;
+    margin: 2px 0 18px;
+    text-align: center;
+  }
+
+  .avatar-button {
+    width: 104px;
+    height: 104px;
+    margin: 0 auto 10px;
+    padding: 0;
+    border: 1px solid rgba(53,105,158,.20);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 28%, rgba(255,255,255,.95), rgba(236,241,246,.82));
+    color: var(--blue-deep);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow:
+      0 8px 20px rgba(53,105,158,.10),
+      inset 0 0 0 5px rgba(255,255,255,.45);
+    transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+  }
+
+  .avatar-button:hover {
+    transform: translateY(-1px);
+    border-color: rgba(201,130,58,.55);
+    box-shadow:
+      0 10px 24px rgba(53,105,158,.12),
+      0 0 0 4px rgba(201,130,58,.08),
+      inset 0 0 0 5px rgba(255,255,255,.45);
+  }
+
+  .avatar-placeholder {
+    display: grid;
+    gap: 4px;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-sec);
+  }
+
+  .avatar-placeholder svg {
+    width: 22px;
+    height: 22px;
+    opacity: .72;
+  }
+
+  .avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  .avatar-caption {
+    font-size: 12px;
+    color: var(--text-sec);
+  }
+
   .remember-me {
   margin: -4px 0 2px;
 }
@@ -323,9 +421,79 @@
     transform: translateY(0);
   }
 
+  .login-panel.is-register {
+    width: min(800px, 94vw);
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .login-panel.is-register .workspace-form {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 34px;
+  }
+
+  .login-panel.is-register .workspace-section--security {
+    padding-left: 34px;
+    border-left: 1px solid rgba(53,105,158,.12);
+  }
+
+  .login-panel.is-register .section-heading,
+  .login-panel.is-register .avatar-field {
+    display: block;
+  }
+
+  .login-panel.is-register .workspace-section--identity {
+    transform: translateX(0);
+  }
+
+  .login-panel.is-register .workspace-section--security {
+    transform: translateX(0);
+  }
+
+  .login-panel.is-register .remember-me {
+    display: none !important;
+  }
+
+  .plan-stage {
+    transition: transform 460ms cubic-bezier(0.22, 1, 0.36, 1), opacity 460ms ease;
+  }
+
+  .plan-stage.is-transitioning {
+    transform: scale(1.012);
+  }
+
+  .plan-stage.is-transitioning::after {
+    opacity: 1.12;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+
+  @media (max-width: 700px) {
+    .login-panel.is-register {
+      width: min(94vw, 520px);
+      padding: 32px 26px 28px;
+    }
+
+    .login-panel.is-register .workspace-form {
+      grid-template-columns: 1fr;
+      column-gap: 0;
+    }
+
+    .login-panel.is-register .workspace-section--security {
+      padding-left: 0;
+      border-left: none;
+      padding-top: 4px;
+    }
+
+    .login-panel.is-register .section-heading {
+      margin-top: 4px;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .draw, .fade-in, .panel-wrapper, .technical-pulse, .plan-stage::after, .btn::after {
+    .draw, .fade-in, .panel-wrapper, .technical-pulse, .plan-stage::after, .btn::after,
+    .login-panel, .workspace-form, .workspace-section, .plan-stage, .avatar-button {
       animation: none !important;
+      transition: none !important;
       opacity: 1 !important;
       stroke-dashoffset: 0 !important;
       transform: none !important;
@@ -394,12 +562,11 @@
 
   <!-- LOGIN PANEL -->
   <div class="panel-wrapper">
-    <div class="login-panel">
+    <div class="login-panel" id="login-panel">
       <div class="logo">
         <img src="../../assets/icon.png" alt="BATORYA" onerror="this.style.display='none'">
       </div>
 
-      <!-- Mode switch -->
       <div class="mode-switch">
         <button type="button" class="mode-btn active" data-mode="login">Se connecter</button>
         <button type="button" class="mode-btn" data-mode="register">Créer mon espace</button>
@@ -410,61 +577,129 @@
         <p id="welcome-subtitle">Connectez-vous à BATORYA Essentiel</p>
       </div>
 
-      <div class="form-group">
-        <label for="id">Identifiant</label>
-        <input type="text" id="id" placeholder="Identifiant" autocomplete="username">
-      </div>
+      <div class="workspace-form" id="workspace-form">
+        <section class="workspace-section workspace-section--identity">
+          <div class="section-heading">Identité</div>
 
-      <div class="form-group">
-        <label for="pwd">Mot de passe</label>
-        <input type="password" id="pwd" placeholder="••••••••" autocomplete="current-password">
-      </div>
-      <div class="remember-me" id="remember-group">
-        <label class="remember-me__label">
-        <input type="checkbox" id="remember-me">
-          <span>Se souvenir de moi</span>
-          </label>
-      </div>
+          <div class="form-group">
+            <label for="id">Identifiant</label>
+            <input type="text" id="id" placeholder="Identifiant" autocomplete="username">
+          </div>
 
-      <!-- Champ confirmation (caché par défaut) -->
-      <div class="form-group" id="confirm-group" style="display: none;">
-        <label for="pwd2">Confirmer le mot de passe</label>
-        <input type="password" id="pwd2" placeholder="••••••••" autocomplete="new-password">
-      </div>
+          <div class="avatar-field" id="avatar-field">
+            <input type="file" id="avatar-input" accept="image/*" hidden>
+            <button type="button" class="avatar-button" id="avatar-button" aria-label="Ajouter une photo de profil">
+              <span class="avatar-placeholder" id="avatar-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 13.2a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Z" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M4.8 20.2c.9-3.1 3.4-4.7 7.2-4.7s6.3 1.6 7.2 4.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span>Photo</span>
+              </span>
+              <img class="avatar-image" id="avatar-image" alt="Aperçu de la photo de profil">
+            </button>
+            <div class="avatar-caption" id="avatar-caption">Ajouter une photo de profil</div>
+          </div>
+        </section>
 
-      <button class="btn" type="button" id="submit-btn">Se connecter</button>
+        <section class="workspace-section workspace-section--security">
+          <div class="section-heading">Sécurité</div>
+
+          <div class="form-group">
+            <label for="pwd">Mot de passe</label>
+            <input type="password" id="pwd" placeholder="••••••••" autocomplete="current-password">
+          </div>
+
+          <div class="form-group" id="confirm-group" style="display: none;">
+            <label for="pwd2">Confirmer le mot de passe</label>
+            <input type="password" id="pwd2" placeholder="••••••••" autocomplete="new-password">
+          </div>
+
+          <div class="remember-me" id="remember-group">
+            <label class="remember-me__label">
+              <input type="checkbox" id="remember-me">
+              <span>Se souvenir de moi</span>
+            </label>
+          </div>
+
+          <button class="btn" type="button" id="submit-btn">Se connecter</button>
+        </section>
+      </div>
     </div>
   </div>
 
   <script>
+    const loginPanel = document.getElementById('login-panel');
+    const planStage = document.querySelector('.plan-stage');
     const modeBtns = document.querySelectorAll('.mode-btn');
     const title = document.getElementById('welcome-title');
     const subtitle = document.getElementById('welcome-subtitle');
     const confirmGroup = document.getElementById('confirm-group');
     const submitBtn = document.getElementById('submit-btn');
     const rememberGroup = document.getElementById('remember-group');
+    const avatarField = document.getElementById('avatar-field');
+    const avatarInput = document.getElementById('avatar-input');
+    const avatarButton = document.getElementById('avatar-button');
+    const avatarPlaceholder = document.getElementById('avatar-placeholder');
+    const avatarImage = document.getElementById('avatar-image');
+    const avatarCaption = document.getElementById('avatar-caption');
+
+    let currentMode = 'login';
+    let transitionTimer = null;
+
+    function setWelcome(mode) {
+      title.textContent = mode === 'login' ? 'Bienvenue' : 'Créons votre espace';
+      subtitle.textContent = mode === 'login'
+        ? 'Connectez-vous à BATORYA Essentiel'
+        : 'Votre accès personnel à BATORYA Essentiel';
+      submitBtn.textContent = mode === 'login' ? 'Se connecter' : 'Créer mon espace';
+    }
 
     modeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        modeBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        const nextMode = btn.dataset.mode;
+        if (nextMode === currentMode) return;
 
-        const mode = btn.dataset.mode;
+        modeBtns.forEach(b => b.classList.toggle('active', b === btn));
+        currentMode = nextMode;
 
-        if (mode === 'login') {
-          title.textContent = 'Bienvenue';
-          subtitle.textContent = 'Connectez-vous à BATORYA Essentiel';
-          confirmGroup.style.display = 'none';
-          submitBtn.textContent = 'Se connecter';
-          rememberGroup.style.display = 'block';
-        } else {
-          title.textContent = 'Créer mon espace';
-          subtitle.textContent = 'Configurez votre espace local BATORYA';
+        clearTimeout(transitionTimer);
+        planStage.classList.add('is-transitioning');
+
+        if (nextMode === 'register') {
+          loginPanel.classList.add('is-register');
           confirmGroup.style.display = 'block';
-          submitBtn.textContent = 'Créer mon espace';
           rememberGroup.style.display = 'none';
+          avatarField.style.display = 'block';
+          setWelcome('register');
+        } else {
+          loginPanel.classList.remove('is-register');
+          confirmGroup.style.display = 'none';
+          rememberGroup.style.display = 'block';
+          avatarField.style.display = 'none';
+          setWelcome('login');
         }
+
+        transitionTimer = setTimeout(() => {
+          planStage.classList.remove('is-transitioning');
+        }, 520);
       });
+    });
+
+    avatarButton.addEventListener('click', () => avatarInput.click());
+
+    avatarInput.addEventListener('change', () => {
+      const [file] = avatarInput.files || [];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        avatarImage.src = reader.result;
+        avatarImage.style.display = 'block';
+        avatarPlaceholder.style.display = 'none';
+        avatarCaption.textContent = 'Modifier la photo';
+      });
+      reader.readAsDataURL(file);
     });
   </script>
 
