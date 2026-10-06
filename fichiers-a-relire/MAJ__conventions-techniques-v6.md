@@ -107,7 +107,7 @@ Règles :
 - une migration correspond à une tranche du schéma définie dans le suivi des migrations du modèle de données SQLite ; elle contient les tables de la tranche, avec leurs triggers et leurs index ;
 - la première migration métier s’appelle `001_initial.sql`. Il n'existe que **deux catégories** de migrations métier, distinguées par leur nom (décision V-2) :
   - une **tranche métier** : `NNN_<objet>.sql` (trois chiffres, objet en minuscules sans accent) ; elle porte les tables d'un objet métier ; son préfixe `NNN` est son **étiquette de tranche** dans l'ordre métier réservé (001 → 010) ;
-  - une **migration corrective** : `NNNx_<objet>.sql` (trois chiffres suivis d'**une lettre minuscule**, objet en minuscules sans accent) ; elle corrige ou fait évoluer le schéma déjà livré sans être une tranche métier. Le préfixe `NNN` est celui de la **dernière tranche exécutée avant elle** ; la lettre ordonne les correctives rattachées à la même tranche (`005a` avant `005b`). Exemples prévus : `005a_corrections_v313.sql` et `005b_bc_multi_devis.sql` (M-A et M-B) ne sont **pas** des tranches supplémentaires : elles ne consomment aucun numéro de tranche et ne décalent aucune tranche ;
+  - une **migration corrective** : `NNNx_<objet>.sql` (trois chiffres suivis d'**une lettre minuscule**, objet en minuscules sans accent) ; elle corrige ou fait évoluer le schéma déjà livré sans être une tranche métier. Le préfixe `NNN` est celui de la **dernière tranche exécutée avant elle** ; la lettre ordonne les correctives rattachées à la même tranche (`005a` avant `005b`, `005b` avant `005c`). Exemples prévus : `005a_corrections_v313.sql`, `005b_bc_multi_devis.sql` (M-A et M-B) et `005c_bc_annule_caches_financiers.sql` (D-56) ne sont **pas** des tranches supplémentaires : elles ne consomment aucun numéro de tranche et ne décalent aucune tranche ;
   - aucune autre catégorie de nom n'existe (pas de « migration technique » nommée à part, pas de suffixe libre) ;
 - le modèle de données SQLite passe à la version suivante et est mis à jour **avant** la création ou la modification d’une migration ; l’en-tête de la migration cite la version du modèle ;
 - une migration n’insère **aucune donnée métier initiale** : listes de référence, catalogue par défaut et singletons relèvent du jeu de données d’installation ou du service d’initialisation (l’emplacement du jeu de données sera défini dans ce document lorsqu’il sera introduit). La **copie technique** de données existantes lors d'une reconstruction de table est distincte et permise (voir « Données dans une migration ») ;
@@ -130,19 +130,20 @@ Règles :
 | 5 | `005_depenses.sql` | tranche (Dépenses) | prévue, non créée |
 | 6 | `005a_corrections_v313.sql` | corrective (M-A) | prévue, non créée ; contenu en proposition (modèle §17.1, PT-20) |
 | 7 | `005b_bc_multi_devis.sql` | corrective (M-B) | prévue, non créée ; contenu en proposition |
-| 8 | `006_facturation.sql` | tranche (Facturation) | prévue |
-| 9 | `007_reglements.sql` | tranche (Règlements) | prévue |
-| 10 | `008_garanties.sql` | tranche (Garanties) | prévue |
-| 11 | `009_pv.sql` | tranche (PV) | prévue |
-| 12 | `010_planification.sql` | tranche (Planification) | prévue |
+| 8 | `005c_bc_annule_caches_financiers.sql` | corrective (D-56) | livrée (test T-47) ; adaptation de `tr_12_bons_commande_annule` (modèle §17.1, PT-16) |
+| 9 | `006_facturation.sql` | tranche (Facturation) | prévue |
+| 10 | `007_reglements.sql` | tranche (Règlements) | prévue |
+| 11 | `008_garanties.sql` | tranche (Garanties) | prévue |
+| 12 | `009_pv.sql` | tranche (PV) | prévue |
+| 13 | `010_planification.sql` | tranche (Planification) | prévue |
 
 - L'**ordre métier réservé** des tranches est 001 Initial → 002 Fournisseurs → 003 Devis → 004 Bons de commande → 005 Dépenses → 006 Facturation → 007 Règlements → 008 Garanties → 009 PV → 010 Planification (V-1). Les noms des tranches 006 à 010 sont des **réservations** d'ordre ; l'intitulé exact du fichier sera fixé à sa création, avec le modèle (§17.1).
-- Les correctives M-A et M-B s'exécutent **après 005 et avant 006** (V-4).
-- Une corrective future suit la même règle : une `010a_*` aurait le rang 13.
-- Le rang d'une migration **n'est pas son numéro de fichier** : `006_facturation.sql` a le rang 8.
+- Les correctives M-A et M-B s'exécutent **après 005 et avant 006** (V-4) ; la corrective 005c (D-56) s'exécute après 005b et avant 006.
+- Une corrective future suit la même règle : une `010a_*` aurait le rang 14.
+- Le rang d'une migration **n'est pas son numéro de fichier** : `006_facturation.sql` a le rang 9 (`005c_bc_annule_caches_financiers.sql` a le rang 8).
 - La chaîne de `machine.db` est **distincte** (son propre `user_version`, sa propre liste) ; elle ne comporte aujourd'hui que `machine/001_initial.sql` (rang 1). Les règles ci-dessous s'y appliquent de la même façon.
 
-**`PRAGMA user_version` = rang de la dernière migration appliquée** (0 = base vierge). Exemple : `user_version = 7` signifie que les **sept premières** migrations de la chaîne ont été appliquées, `005b_bc_multi_devis.sql` incluse ; la suivante à appliquer est de rang 8 (`006_facturation.sql`). Il n'existe **aucune seconde source de vérité** (pas de `schema_version` dans chaque fichier, pas de colonne de suivi) : la liste ordonnée fait foi.
+**`PRAGMA user_version` = rang de la dernière migration appliquée** (0 = base vierge). Exemple : `user_version = 7` signifie que les **sept premières** migrations de la chaîne ont été appliquées, `005b_bc_multi_devis.sql` incluse ; la suivante à appliquer est de rang 8 (`005c_bc_annule_caches_financiers.sql`). Il n'existe **aucune seconde source de vérité** (pas de `schema_version` dans chaque fichier, pas de colonne de suivi) : la liste ordonnée fait foi.
 
 **Invariants de la chaîne (append-only).** Dès qu'une migration est livrée :
 1. elle n'est jamais renommée, supprimée, ni déplacée dans la liste ; son rang est définitif ;
@@ -150,7 +151,7 @@ Règles :
 3. l'historique est immuable : les anciens contenus ne sont jamais réécrits (déjà posé ci-dessus) ;
 4. ces règles sont nécessaires au déterminisme : pour une même base à un rang donné, la même suite de migrations doit s'appliquer sur toute installation et à chaque restauration.
 
-*Conséquence documentaire* : tant qu'aucune de 005/005a/005b/006… n'est livrée, la liste du tableau ci-dessus peut encore être ajustée par décision ; **après livraison d'une migration, cette ligne est figée**.
+*Conséquence documentaire* : tant qu'aucune de 005/005a/005b/005c/006… n'est livrée, la liste du tableau ci-dessus peut encore être ajustée par décision ; **après livraison d'une migration, cette ligne est figée**. La ligne de la corrective `005c` (rang 8) est figée : la migration est livrée.
 
 **Algorithme de sélection des migrations à appliquer** (installation, mise à jour de l'application, restauration). Soit `k` = `PRAGMA user_version` de la base, `N` = rang maximal supporté par l'application (longueur de sa liste) :
 1. si `k > N` : **refus** (base produite par une version plus récente de l'application) ; aucune écriture ;
