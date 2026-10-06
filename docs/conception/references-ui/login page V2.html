@@ -133,8 +133,7 @@
     overflow: hidden;
     transition:
       width 950ms cubic-bezier(0.22, 1, 0.36, 1),
-      padding-left 950ms cubic-bezier(0.22, 1, 0.36, 1),
-      padding-right 950ms cubic-bezier(0.22, 1, 0.36, 1),
+      padding 950ms cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 950ms ease,
       border-radius 950ms ease;
   }
@@ -237,6 +236,9 @@
 
   .workspace-section {
     min-width: 0;
+    transition:
+      opacity 260ms ease,
+      transform 950ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .workspace-section--security {
@@ -244,15 +246,8 @@
   }
 
   .section-heading {
-    display: block;
-    opacity: 0;
-    transform: translateY(-8px);
-    overflow: hidden;
-    transition:
-      max-height 700ms ease,
-      margin-bottom 700ms ease,
-      opacity 500ms ease,
-      transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    display: none;
+    margin-bottom: 14px;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: .08em;
@@ -301,18 +296,8 @@
   }
 
   .avatar-field {
-    display: block;
-    max-height: 0;
-    margin: 0;
-    opacity: 0;
-    transform: translateY(-12px);
-    overflow: hidden;
-    pointer-events: none;
-    transition:
-      max-height 800ms ease,
-      margin 800ms ease,
-      opacity 550ms ease,
-      transform 800ms cubic-bezier(0.22, 1, 0.36, 1);
+    display: none;
+    margin: 2px 0 18px;
     text-align: center;
   }
 
@@ -373,17 +358,8 @@
   }
 
   .remember-me {
-    max-height: 40px;
-    margin: -4px 0 2px;
-    opacity: 1;
-    transform: translateY(0);
-    overflow: hidden;
-    transition:
-      max-height 650ms ease,
-      margin 650ms ease,
-      opacity 450ms ease,
-      transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
+  margin: -4px 0 2px;
+}
 
 .remember-me__label {
   display: inline-flex;
@@ -461,15 +437,9 @@
     border-left: 1px solid rgba(53,105,158,.12);
   }
 
-  .login-panel.is-register .section-heading {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
+  .login-panel.is-register .section-heading,
   .login-panel.is-register .avatar-field {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
+    display: block;
   }
 
   .login-panel.is-register .workspace-section--identity {
@@ -481,31 +451,11 @@
   }
 
   .login-panel.is-register .remember-me {
-    opacity: 0;
-    transform: translateY(-8px);
-    pointer-events: none;
-  }
-
-  #confirm-group {
-    opacity: 0;
-    transform: translateY(-10px);
-    overflow: hidden;
-    pointer-events: none;
-    transition:
-      max-height 750ms ease,
-      margin-bottom 750ms ease,
-      opacity 500ms ease,
-      transform 750ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .login-panel.is-register #confirm-group {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
+    display: none !important;
   }
 
   .plan-stage {
-    transition: transform 950ms cubic-bezier(0.22, 1, 0.36, 1), opacity 950ms ease;
+    transition: transform 460ms cubic-bezier(0.22, 1, 0.36, 1), opacity 460ms ease;
   }
 
   .plan-stage.is-transitioning {
@@ -515,48 +465,6 @@
   .plan-stage.is-transitioning::after {
     opacity: 1.12;
     transform: translate(-50%, -50%) scale(1.08);
-  }
-
-  /* ===== SMOOTH CONTENT TRANSITIONS ===== */
-  .welcome h1 { min-height: 31px; }
-  .welcome p { min-height: 20px; }
-
-  .welcome-text {
-    display: block;
-    transition:
-      opacity 420ms ease,
-      transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .welcome-text--register,
-  .login-panel.is-register .welcome-text--login {
-    opacity: 0;
-    transform: translateY(9px);
-  }
-
-  .welcome-text--login,
-  .login-panel.is-register .welcome-text--register {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .btn-label {
-    display: block;
-    transition:
-      opacity 350ms ease,
-      transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .btn-label--register,
-  .login-panel.is-register .btn-label--login {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  .btn-label--login,
-  .login-panel.is-register .btn-label--register {
-    opacity: 1;
-    transform: translateY(0);
   }
 
   @media (max-width: 700px) {
@@ -583,9 +491,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .draw, .fade-in, .panel-wrapper, .technical-pulse, .plan-stage::after, .btn::after,
-    .login-panel, .workspace-form, .workspace-section, .plan-stage, .avatar-button,
-    .section-heading, .avatar-field, .remember-me, #confirm-group,
-    .welcome-text, .btn-label {
+    .login-panel, .workspace-form, .workspace-section, .plan-stage, .avatar-button {
       animation: none !important;
       transition: none !important;
       opacity: 1 !important;
@@ -667,14 +573,8 @@
       </div>
 
       <div class="welcome">
-        <h1 id="welcome-title">
-          <span class="welcome-text welcome-text--login">Bienvenue</span>
-          <span class="welcome-text welcome-text--register">Créons votre espace</span>
-        </h1>
-        <p id="welcome-subtitle">
-          <span class="welcome-text welcome-text--login">Connectez-vous à BATORYA Essentiel</span>
-          <span class="welcome-text welcome-text--register">Votre accès personnel à BATORYA Essentiel</span>
-        </p>
+        <h1 id="welcome-title">Bienvenue</h1>
+        <p id="welcome-subtitle">Connectez-vous à BATORYA Essentiel</p>
       </div>
 
       <div class="workspace-form" id="workspace-form">
@@ -722,10 +622,7 @@
             </label>
           </div>
 
-          <button class="btn" type="button" id="submit-btn">
-            <span class="btn-label btn-label--login">Se connecter</span>
-            <span class="btn-label btn-label--register">Créer mon espace</span>
-          </button>
+          <button class="btn" type="button" id="submit-btn">Se connecter</button>
         </section>
       </div>
     </div>
@@ -750,6 +647,14 @@
     let currentMode = 'login';
     let transitionTimer = null;
 
+    function setWelcome(mode) {
+      title.textContent = mode === 'login' ? 'Bienvenue' : 'Créons votre espace';
+      subtitle.textContent = mode === 'login'
+        ? 'Connectez-vous à BATORYA Essentiel'
+        : 'Votre accès personnel à BATORYA Essentiel';
+      submitBtn.textContent = mode === 'login' ? 'Se connecter' : 'Créer mon espace';
+    }
+
     modeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const nextMode = btn.dataset.mode;
@@ -763,10 +668,16 @@
 
         if (nextMode === 'register') {
           loginPanel.classList.add('is-register');
-          // Les éléments restent dans le DOM : leur apparition est animée par CSS.
+          confirmGroup.style.display = 'block';
+          rememberGroup.style.display = 'none';
+          avatarField.style.display = 'block';
+          setWelcome('register');
         } else {
           loginPanel.classList.remove('is-register');
-          // Les éléments se replient progressivement vers le mode connexion.
+          confirmGroup.style.display = 'none';
+          rememberGroup.style.display = 'block';
+          avatarField.style.display = 'none';
+          setWelcome('login');
         }
 
         transitionTimer = setTimeout(() => {
