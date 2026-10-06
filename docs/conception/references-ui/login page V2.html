@@ -598,7 +598,7 @@
 
       <div class="workspace-form" id="workspace-form">
         <section class="workspace-section workspace-section--identity">
-          <div class="section-heading">Identité</div>
+          <div class="section-heading"></div>
 
           <div class="form-group">
             <label for="id">Identifiant</label>
@@ -622,7 +622,7 @@
         </section>
 
         <section class="workspace-section workspace-section--security">
-          <div class="section-heading">Sécurité</div>
+          <div class="section-heading"></div>
 
           <div class="form-group">
             <label for="pwd">Mot de passe</label>
@@ -706,9 +706,11 @@
 
       clearTimeout(transitionTimer);
       transitionTimer = setTimeout(() => {
-        planStage.classList.remove('is-transitioning');
-        loginPanel.style.height = '';
-      }, 980);
+      planStage.classList.remove('is-transitioning');
+
+  // Conserver la hauteur calculée pendant le rendu final
+  // pour éviter le léger "saut" provoqué par le passage à height:auto.
+}, 980);
     }
 
     modeBtns.forEach(btn => {
