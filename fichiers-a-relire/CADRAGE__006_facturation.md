@@ -2,12 +2,274 @@
 
 | | |
 |---|---|
-| **Statut** | Cadrage et audit **uniquement**. Aucun SQL, aucun test, aucune source officielle modifiée. Rien n'est commité ni poussé. |
+| **Statut** | Cadrage et audit **uniquement**. Aucun SQL, aucun test, aucune source officielle modifiée. **Mis à jour le 2026-10-05** : décisions V6-01 et V6-03 verrouillées (partie M). **Mis à jour le 2026-10-06** : la corrective 005c est livrée (migration et test présents dans `main`) ; 006 reste au rang 9, non créée. |
 | **Livrable** | `fichiers-a-relire/CADRAGE__006_facturation.md` (seul fichier créé) |
 | **Date** | 2026-10-05 |
-| **Rang prévu** | 8 dans la chaîne (D-55, modèle §17.1) — **sous réserve de V6-01** (une corrective `005c` décalerait 006 au rang 9) |
-| **Test prévu** | `test_006_facturation.py` — numérotation de tests **T-47** (T-44 = 005, T-45 = 005a, T-46 = 005b) |
-| **Hiérarchie appliquée** | décisions validées / invariants / modèle SQLite validé / modèle métier / conventions → CDC (brief §29) |
+| **Rang prévu** | **9** dans la chaîne : une corrective **`005c`** (rang 8, décision verrouillée VR-06) précède 006 ; D-55 et le modèle §17.1 réservaient le rang 8 à 006 (alignés le 2026-10-05 : D-56, modèle §17.1, conventions §5) |
+| **Test prévu** | `test_006_facturation.py` — numérotation de tests **T-48** (T-44 = 005, T-45 = 005a, T-46 = 005b, T-47 = 005c, livrée) |
+| **Hiérarchie appliquée** | 1 décisions validées · 2 invariants · 3 modèle SQLite validé · 4 modèle métier · 5 errata / décisions correctives · 6 CDC · 7 migrations existantes (référence technique réelle) |
+
+---
+
+## M. Mise à jour du 2026-10-05 — décisions verrouillées (V6-01, V6-03)
+
+> **Portée.** Cette partie intègre les décisions que Rémy a **verrouillées le 2026-10-05** sur V6-01 (`frozen_at`) et V6-03 (BC annulé, avoirs, BC `termine`, caches). Elle prime sur toute formulation antérieure du document ; les §0 à §19 et les annexes ont été alignés sur elle. Les identifiants `VR-nn` (décision verrouillée), `CD-nn` (contradiction documentaire) et `QO-n` (question ouverte) sont **propres à ce cadrage** : ce ne sont **pas** des entrées du registre officiel (D-xx, E-xx, INV-xx). Le report de ces décisions dans les sources (modèle, invariants, conventions) est une étape ultérieure (§M.8), **non effectuée ici**.
+>
+> **Hiérarchie des sources appliquée** (consigne du 2026-10-05) : 1 décisions validées · 2 invariants · 3 modèle SQLite validé · 4 modèle métier · 5 errata / décisions correctives · 6 CDC · 7 migrations existantes (référence technique **réelle** : elles disent ce qui est implémenté, pas ce qui est décidé).
+>
+> **Étiquettes** : **[RD]** règle documentée · **[DT]** déduction technique · **[PR]** proposition · **[VR]** décision verrouillée (Rémy, 2026-10-05) · **[QO]** question ouverte. L'ancienne étiquette **[DV]** (« décision à valider ») subsiste dans le texte pour les points non encore tranchés ; elle équivaut à **[QO]**.
+
+### M.0 Correspondance avec les 19 contenus attendus
+
+| # | Contenu attendu | Où |
+|---|---|---|
+| 1 | Cadrage métier | §1, §M.1 |
+| 2 | Modèle de données | §2 |
+| 3 | Relations | §3 |
+| 4 | Cycle de vie | §4, §M.3 à §M.5 |
+| 5 | Règles de facturation | §6, §9, §M.6 |
+| 6 | Règles acompte / situation / solde | §4.2, §6.2 à §6.5, §9.2, §M.7 |
+| 7 | Règles avoir / correction | §4.1, §M.5, §M.7, A6-10 |
+| 8 | Comportement du BC `annule` | §M.4, §9.3 |
+| 9 | Comportement du BC `termine` après avoir | §M.5, §9.3 |
+| 10 | Définition des caches | §M.6, §6.6, §7 |
+| 11 | Distinction état financier / réouverture commerciale | §M.3 |
+| 12 | Répartition SQL / triggers / services / CK-13 | §11, §9.4, §M.8 |
+| 13 | Impact de 005c | §M.8, §14, §16 |
+| 14 | Stratégie de tests | §17, §18, §M.9 |
+| 15 | Contradictions documentaires | §M.10, §15 |
+| 16 | Décisions verrouillées | §M.1 |
+| 17 | Questions restant réellement à valider | §M.11, §19 |
+| 18 | Structure proposée de `006_facturation.sql` | §16 |
+| 19 | Structure proposée de `test_006_facturation.py` | §17 |
+
+### M.1 Décisions verrouillées
+
+| ID | Décision verrouillée **[VR]** | Remplace |
+|---|---|---|
+| **VR-01** | Le **gel progressif est abandonné**. E-10 remplace E-01 ; INV-33, INV-34, INV-35 (retirés le 2026-10-03) ne sont pas rétablis. **Aucun gel** au premier acompte ni au premier encaissement. `frozen_at` n'est **jamais** un verrou métier. | V6-01 (options a, b1, b2) |
+| **VR-02** | `bons_commande.frozen_at` (et `devis.frozen_at`) est **conservée**, pour compatibilité et pour éviter une reconstruction de table inutile. Statut **résiduel technique** : ce n'est ni une règle métier ni un état métier ; elle ne crée **aucun** blocage nouveau ; **aucune règle n'est déduite de son existence** ; **aucun événement n'est inventé** pour lui donner un sens. | V6-01 |
+| **VR-03** | Les **obligations techniques** qui découlent des CHECK et triggers du SQL actuel sont documentées (§M.2) **sans être promues en règles métier**. | V6-01 |
+| **VR-04** | BC `annule` = **état terminal commercial**. **Interdits** : nouveau devis accepté rattaché, nouvel acompte, nouvelle situation, nouveau solde, tout document commercial poursuivant l'exécution. **Autorisés** : règlements sur documents existants, corrections financières, avoirs sur documents existants, régularisation comptable ou historique. Un BC annulé **n'est pas figé financièrement**. | V6-03 (i) |
+| **VR-05** | Les caches `montant_deja_facture_ht`, `avancement`, `date_100_facture` **peuvent continuer d'évoluer** après annulation lorsqu'une opération financière légitime sur un document existant modifie la situation économique. `statut` reste `annule`. L'évolution d'un cache **n'est pas** une réouverture commerciale. | V6-03 (i), option A |
+| **VR-06** | **Corrective 005c** — « correction BC annulé / caches financiers » : remplacement ciblé de `tr_12_bons_commande_annule` (protections commerciales conservées, mises à jour financières nécessaires autorisées), **sans reconstruction de table**, sans modification d'une autre règle de 005b. Elle **précède** 006 (§M.8). Ni 005c ni son test ne sont écrits ici. | V6-03 (i) |
+| **VR-07** | Un BC `termine` **peut recevoir un avoir** sur un document existant ; ce n'est **pas** une réouverture commerciale. **Avoir partiel** : ne ramène pas automatiquement le BC à `en_cours` (il reste `termine` si les conditions de `termine` restent vraies). **Avoir total absorbant le solde actif** : le solde n'est plus actif ; `date_100_facture` peut devenir NULL s'il n'existe pas d'autre solde actif ; l'état dérivé peut passer `termine → en_cours` — **état financier dérivé**, pas réouverture commerciale : aucun rattachement de devis, aucune reprise libre de l'exécution commerciale. | V6-03 (ii), (iii) ; A6-03, A6-12 |
+| **VR-08** | **État financier dérivé ≠ réouverture commerciale** (§M.3). | V6-03 |
+| **VR-09** | Dès qu'un **solde a été émis/validé**, le BC est **fermé à tout nouveau devis**, **même si ce solde est ensuite totalement crédité**. Un avoir ne contourne jamais cette fermeture. | INV-187 précisé par la décision |
+| **VR-10** | `bons_commande.date_100_facture` = **cache financier** : date d'émission du **premier solde actif** (qui atteint 100 %). Un avoir partiel ne l'efface pas. Elle redevient NULL si le solde actif est totalement crédité et qu'aucun autre solde actif n'existe. Un nouveau solde actif donne une nouvelle valeur. | V6-11 ; A6-06 |
+| **VR-11** | `bons_commande.completed_at` = **cache technique de `termine`** : renseigné si `statut = 'termine'`, NULL sinon (NULL à nouveau au retour à `en_cours`). L'historique réel relève de la **traçabilité V6** (événements), pas de `completed_at`. Aucun rôle d'historique métier sans source. | V6-03 |
+| **VR-12** | « **Solde actif** » = solde **non totalement absorbé** par les avoirs/corrections qui lui sont rattachés selon les règles V6. Totalement crédité ⇒ plus actif ; il ne contribue plus aux caches comme solde économique restant dû. **Aucun mécanisme de statut supplémentaire** si les données suffisent. | V6-02 (définition) ; A6-04 |
+| **VR-13** | La **règle des 30 jours des dépenses** (INV-103) est une règle de **service Dépenses** qui lit `bons_commande.date_100_facture` à l'instant du rattachement (INV-199). **006 ne l'implémente pas, ne la réinitialise pas, ne la prolonge pas.** | consigne de Rémy ; **[RD]** INV-103, INV-199, métier l.500 (§17) |
+
+> **Réserve sur VR-13.** La consigne du 2026-10-05 mentionne une colonne `fournisseurs.date_100_facture`. Elle **n'existe pas** (002 : `fournisseurs` = code, nom, adresse, cpville, tel, email, notes, statut, created_at, updated_at ; cadrage 005 R28 : « Date de facture fournisseur : aucune colonne (à ne pas confondre avec `date_100_facture`, colonne du BC) »). Les sources fondent le délai de 30 jours sur **la colonne du BC**. C'est ce qui est écrit ici (CD-01, §M.10).
+
+### M.2 `frozen_at` : statut résiduel et obligations techniques (VR-01 à VR-03)
+
+**[RD]** E-10 supprime le gel progressif ; INV-33/34/35 sont retirés ; le modèle §7.1 classe la règle comme « règle métier validée » et PT-8 comme « choix non fait » ; `statut` du BC = `en_cours`, `termine`, `annule` (pas de `gele`). **[VR]** La colonne est conservée telle quelle (VR-02) : **aucune migration ne la supprime**.
+
+**Objets du rang 7 qui la mentionnent (DDL réel rejoué)** — constat **[DT]**, pas règle métier :
+
+| Objet | Ce qu'il impose | Effet pour 006 |
+|---|---|---|
+| `bons_commande.frozen_at` (TS nullable) + CHECK de format | forme canonique | aucun |
+| CHECK `statut <> 'termine' OR frozen_at IS NOT NULL` | `termine` exige `frozen_at` posé | obligation O-1 |
+| CHECK `date_100_facture IS NULL OR frozen_at IS NOT NULL` | `date_100_facture` exige `frozen_at` posé | obligation O-1 |
+| CHECK `statut <> 'termine' OR date_100_facture IS NOT NULL` (005b l.219) | `termine` exige `date_100_facture` posée ; ne mentionne pas `frozen_at`, mais forme avec les deux CHECK précédents la chaîne `termine` ⇒ `date_100_facture` ⇒ `frozen_at` (et `date_100_facture` ⇒ `avancement = '100.00'`) | complète O-1 : `termine` ne se pose que dans un `UPDATE` qui pose aussi `date_100_facture` (`avancement = '100.00'`) et `frozen_at` |
+| `tr_14_bons_commande_frozen_at` | passage NULL → valeur irréversible (le message cite encore INV-34, retiré) | obligation O-3 |
+| `tr_17_bons_commande_insert` | `frozen_at` NULL à la naissance | aucun |
+| `tr_12_bons_commande_annule` | `frozen_at` figé sur un BC annulé | **conservé** par 005c |
+| `devis.frozen_at` + CHECK `frozen_at IS NULL OR statut IN ('accepte','annule')` + `tr_14_devis_frozen_at` | marqueur technique du devis | 006 n'y touche pas |
+| `tr_12_bons_commande_contrat` | s'applique à tout BC non annulé, **que `frozen_at` soit posé ou non** (005b Q-B) | `frozen_at` ne ferme aucune édition |
+
+**Obligations techniques [DT]** (VR-03). Sondage en mémoire (lecture seule) sur la chaîne 001 → 005b :
+
+| # | Obligation | Preuve |
+|---|---|---|
+| **O-1** | Tant que les deux CHECK existent, le service financier qui pose **pour la première fois** `date_100_facture` (non NULL) ou `statut = 'termine'` sur un BC dont `frozen_at` est NULL doit poser `frozen_at` **dans le même `UPDATE`**. | `date_100_facture` + `avancement = '100.00'` sans `frozen_at` → refusé ; avec `frozen_at` dans le même `UPDATE` → accepté ; `termine` sans `frozen_at` → refusé |
+| **O-2** | La valeur posée est un horodatage canonique **sans signification métier** : ni « date de gel », ni « premier encaissement », ni « première facture ». Aucun événement n'est créé pour elle ; aucune règle ne la lit. | VR-02 |
+| **O-3** | `frozen_at` est irréversible : après `termine → en_cours` ou après avoir total (`date_100_facture` redevenue NULL), il **reste posé**. `frozen_at NOT NULL` ne dit donc **rien** de l'état courant du BC. | sondage : `termine → en_cours` avec `frozen_at` conservé accepté ; remise à NULL refusée |
+| **O-4** | Les caches `montant_deja_facture_ht` et `avancement` (sans `date_100_facture`, sans `termine`) s'écrivent **sans** `frozen_at`. Un BC jamais `termine` et sans `date_100_facture` garde `frozen_at` NULL même s'il porte des factures. | sondage : `avancement = '50.00'`, `montant_deja_facture_ht = '5.00'` accepté ; `avancement = '100.00'` sans `date_100_facture` accepté |
+| **O-5** | Personne n'écrit `frozen_at` aujourd'hui (TR-15 n'a jamais été créé). Le **contrat du service financier** (hors SQL) devra donc porter O-1. | 0 occurrence de TR-15 / `UPDATE … frozen_at` dans les migrations |
+
+**Ce que 006 n'en déduit pas** : aucun comportement conditionné à `frozen_at` (rattachement de devis, édition, avoir, annulation) ; aucun nouveau CHECK ni trigger sur `frozen_at` ; aucune colonne `frozen_at` dans `factures`.
+
+**Coût d'une suppression, pour mémoire** (non retenue) : `ALTER TABLE … DROP COLUMN` est refusé (dépendances CHECK/triggers) ; il faudrait reconstruire `bons_commande` et `devis` et recréer ≈ 30 triggers (10 autour du BC, 23 autour du devis, 3 communs) sous protocole `foreign_keys=OFF` — aucune règle validée ne l'exige.
+
+### M.3 État financier dérivé ≠ réouverture commerciale (VR-08, VR-09)
+
+Deux axes **indépendants**, que le vocabulaire « rouvrir » confondait (A6-03) :
+
+| | Axe 1 — **état financier dérivé** | Axe 2 — **clôture commerciale** |
+|---|---|---|
+| Objet | `statut ∈ {en_cours, termine}`, `completed_at`, `montant_deja_facture_ht`, `avancement`, `date_100_facture` | possibilité de rattacher un devis, d'émettre un document commercial qui poursuit l'exécution |
+| Nature | **recalculé** par le service financier unique, même transaction, un seul `UPDATE` (INV-46, INV-164) | **porté par aucune colonne** (ni `statut`, ni `date_100_facture`, ni `completed_at`, ni `frozen_at`) |
+| Détermination | formules INV-42 / INV-43 / INV-56 / §3.7 du modèle | BC `annule` (terminal) **ou** un solde a existé, même totalement crédité (VR-09) |
+| Peut revenir en arrière ? | **oui**, par recalcul (annulation d'un règlement, avoir total absorbant le solde) | **non** : un avoir ne rouvre jamais ; seule voie : un nouveau BC (E-16) |
+| Garde | service + CK-06 + CHECK de 004 | service + CK-14 ; trigger `bc_devis` optionnel (V6-10) |
+
+**Règles [VR]/[RD]** :
+
+1. Un avoir, partiel ou total, **n'est jamais** un acte de réouverture commerciale (INV-187, INV-58, VR-07, VR-09).
+2. Un avoir total qui neutralise le solde actif peut faire passer le BC de `termine` à `en_cours` **par pur recalcul** (INV-42 : `termine ⇔ solde actif ∧ Σ reste_du hors avoir = 0`). C'est un déplacement de l'axe 1 uniquement.
+3. `en_cours` est **nécessaire mais non suffisant** pour émettre : un BC redevenu `en_cours` après avoir total sur son solde n'accepte qu'un **nouveau solde** et des avoirs (§M.7) ; jamais de devis (VR-09), jamais d'acompte ni de situation (INV-58).
+4. Aucun libellé de 006 ne doit écrire qu'un avoir « rouvre » le BC : il peut **modifier l'état dérivé** ou **ne rien modifier**.
+
+### M.4 Comportement du BC `annule` (VR-04, VR-05, VR-06)
+
+| Opération sur un BC `annule` | Résultat | Qualif. / source | Couche |
+|---|---|---|---|
+| Nouvel **acompte**, nouvelle **situation**, nouveau **solde** | **refusé** | **[RD]** INV-188, E-15, INV-47 ; métier §7 l.273 | trigger TR-16 de 006 |
+| **Rattachement d'un devis** (`bc_devis`) | **refusé** | **[RD]** INV-188 ; 005b `tr_99_bc_devis_insert` (déjà en place) | 005b |
+| Tout autre document commercial poursuivant l'exécution | **refusé** | **[VR]** VR-04 ; aucun autre type n'existe (§1.2) | — |
+| **Avoir** sur une facture existante | **autorisé** | **[RD]** INV-188, INV-173, C-36 | 006 |
+| **Règlement** sur un document existant | **autorisé** | **[RD]** INV-188, E-15 ; métier §7 l.273 | 007 (non créé en 006) |
+| Correction financière / régularisation comptable ou historique | **autorisée** | **[VR]** VR-04. Aucun mécanisme n'est documenté au-delà de l'avoir et du règlement : 006 n'en invente aucun | — |
+| Recalcul des **caches** `montant_deja_facture_ht`, `avancement`, `date_100_facture` après une opération légitime | **autorisé** (un seul `UPDATE`, CHECK de 004 respectés) | **[VR]** VR-05 ; **[RD]** INV-46, INV-164, INV-173 ; modèle §7.2 | **005c** |
+| `statut` | reste `annule` | **[RD]** INV-173 (terminal) | `tr_12` remplacé (protégé) |
+| `completed_at`, `cancelled_at`, `motif_annulation`, `frozen_at` | inchangés | **[RD]** INV-173 ; **[DT]** `completed_at` est NULL (CHECK `(statut='termine') = (completed_at IS NOT NULL)`) | `tr_12` remplacé (protégé) |
+| Contrat : `id`, `client_id`, snapshots + versions, `date_acceptation`, `date_debut`, `date_fin`, `montant_contractuel_ht`, `created_at`, `origine`, `legacy_*` | inchangés | **[RD]** INV-173, INV-186 | `tr_12` remplacé (protégé) |
+| `updated_at` | libre | **[RD]** INV-173 (« seul `updated_at` … ») | inchangé |
+
+**Précisions [DT]** :
+
+- **Annulation d'un BC facturé.** L'annulation est un **acte** (INV-44), pas un recalcul : elle modifie `statut`, `cancelled_at`, `motif_annulation` (et force `completed_at = NULL` si le BC était `termine`) et **laisse les caches tels quels**, puisque leurs formules ne dépendent pas du `statut`. Sondage : un BC portant un acompte (`5.00` / `15.87`) ou un solde (`date_100_facture` posée, `avancement = 100.00`) conserve ses caches à l'annulation.
+- **`statut` et `completed_at` d'un BC annulé ne sont jamais recalculés** ; **CK-06** pour un BC annulé compare donc **seulement** `montant_deja_facture_ht`, `avancement`, `date_100_facture` au recalcul.
+- **Écriture conjointe.** Le CHECK de 004 `date_100_facture IS NULL OR avancement = '100.00'` impose que `avancement` et `date_100_facture` bougent **ensemble** dans le même `UPDATE` (un solde totalement crédité : `date_100_facture = NULL` **et** `avancement < 100.00` simultanément). Sondage : abaisser `avancement` en gardant `date_100_facture` → refusé.
+- **Limite assumée.** Une fois `tr_12` remplacé, rien n'empêche en SQL un `UPDATE` de cache **sans** avoir derrière (comme sur un BC non annulé, où `tr_12_bons_commande_contrat` laisse déjà les caches libres). La légitimité de la valeur est garantie par le **service** et diagnostiquée par **CK-06** ; elle ne peut pas être un trigger de « miroir » (conv. §9).
+- **Un BC annulé ne participe plus au CA engagé** (métier §7 l.273) : sans lien avec les caches de facturation ; 006 ne crée ni ne modifie rien à ce sujet.
+
+### M.5 Comportement du BC `termine` après avoir (VR-07)
+
+**Principe [VR]** : l'avoir est autorisé sur un BC `termine` (TR-16 n'est pas créé comme refus) ; il ne rouvre rien commercialement (§M.3).
+
+**Scénario de référence** (hypothèses : contractuel 1000.00 ; acompte 200.00 ; situation 300.00 ; solde 500.00 ; tout encaissé ; BC `termine`, `date_100_facture` = date du solde). Les encaissements relèvent de 007 : **en 006, les états `termine` des tests sont posés par un helper**, comme le fait 005b (`terminer_bc`).
+
+| Cas | Facturation nette | `statut` | `completed_at` | `avancement` | `date_100_facture` | Suite |
+|---|---|---|---|---|---|---|
+| **A** avoir **partiel** 50.00 sur l'acompte ou la situation | 950.00 | `termine` (conservé) | conservé | 100.00 (solde actif) | conservée | l'avoir sur facture entièrement payée crée un **crédit** (`absorbe = min(avoirs, max(0, M − encaissé)) = 0`, modèle §3.3) ; il ne « réduit » pas un reste dû nul |
+| **B** avoir **total** 200.00 sur l'acompte | 800.00 | `termine` (conservé) | conservé | 100.00 | conservée | remplacement de l'acompte : **QO-1** |
+| **C** avoir **partiel** 100.00 sur le solde | 900.00 | `termine` (conservé) | conservé | 100.00 (solde actif) | conservée (INV-43) | aucun nouveau solde (INV-52) |
+| **D** avoir **total** 500.00 sur le solde | 500.00 | **`en_cours`** (INV-42 : plus de solde actif) | **NULL** | **50.00** (500/1000, plus de solde actif) | **NULL** (aucun autre solde actif) | BC fermé aux devis (VR-09) ; un **nouveau solde** est permis, pas d'acompte ni de situation |
+
+- **[DT]** Cas D : les cinq caches s'écrivent **dans un seul `UPDATE`** (`montant_deja_facture_ht`, `avancement`, `date_100_facture = NULL`, `statut = 'en_cours'`, `completed_at = NULL`) ; `frozen_at` reste posé (O-3). Sondé : accepté par les CHECK de 004.
+- **[RD]** `termine → en_cours` : `completed_at` repasse à NULL et l'événement d'historique `retour_en_cours` est la trace réelle (modèle §3.5 ; la table `historique` n'existe pas encore : 006 n'écrit aucun événement, A6-22).
+- **[RD]** Garanties : un avoir ne modifie pas les garanties déjà déclenchées (métier l.645 ; `garanties.date_declenchement` peut diverger de `date_100_facture`, modèle §3.5). 008 n'est pas concerné par cette mise à jour.
+- **[DT]** Si un nouveau solde est ensuite émis, `date_100_facture` prend la date d'émission du **nouveau** solde ; `garanties.date_declenchement` garde la première date.
+- **Précision de formulation.** Il ne faut pas écrire qu'un avoir partiel « réduit le montant économique restant dû » d'une facture déjà payée : il réduit la **facturation nette** et peut créer un **crédit** ; seul un avoir sur une facture non entièrement payée réduit `reste_du` (via `absorbe`).
+
+### M.6 Définition des caches du BC (VR-05, VR-10, VR-11)
+
+| Colonne | Définition | Évolution | BC `annule` | Contrainte SQL existante | Qualif. / source |
+|---|---|---|---|---|---|
+| `montant_deja_facture_ht` | **facturation nette** du BC = Σ acomptes + Σ situations + Σ soldes − Σ avoirs (D2) | recalculée après **toute** opération y compris un avoir | évolue (VR-05) | famille D2 | **[RD]** INV-46, INV-56 ; modèle §3.2 |
+| `avancement` | P2 = nette / contractuel ; **100.00 dès qu'un solde actif existe** ; mesure la facturation, jamais l'avancement physique | idem | évolue (VR-05) | P2 ; `date_100_facture` ⇒ `'100.00'` | **[RD]** modèle §4.7, INV-46 |
+| `date_100_facture` | `date_emission` du **premier solde actif** ; conservée par avoir partiel, règlement, remboursement ; NULL si le solde actif est totalement crédité et qu'aucun autre n'est actif ; nouvelle valeur au nouveau solde actif | recalculée | évolue (VR-05) | `⇒ avancement = '100.00'` ; `⇒ frozen_at` (O-1) | **[RD]** INV-43 ; **[VR]** VR-10 |
+| `statut` | `en_cours` / `termine` : **dérivé** (INV-42) ; `annule` : **acte**, jamais recalculé | recalculé tant que non annulé | **reste `annule`** | CHECK 3 valeurs ; `termine ⇒ frozen_at` | **[RD]** INV-42, INV-44, INV-173 |
+| `completed_at` | cache technique de `termine` : TS si `termine`, NULL sinon | suit `statut` | NULL | `(statut='termine') = (completed_at IS NOT NULL)` | **[VR]** VR-11 ; **[RD]** modèle §3.5, INV-79 |
+| `frozen_at` | **n'est pas un cache** : marqueur technique résiduel | posé par le service si O-1 l'exige ; irréversible | inchangé | voir §M.2 | **[VR]** VR-02 |
+
+**`date_100_facture` — points de cohérence** :
+
+- **Ce n'est pas `garanties.date_declenchement`** (première date, immuable, 008) ; les deux peuvent diverger volontairement (modèle §3.5).
+- **Elle n'intervient pas dans le rattachement d'un devis** (INV-43, INV-187) : la fermeture commerciale (VR-09) ne dépend pas d'elle, donc ne disparaît pas quand elle redevient NULL.
+- **Premier solde actif** : si le premier solde est totalement crédité et qu'un second solde est actif, la valeur est la date du **second**.
+- **Lecture par Dépenses** (VR-13) : la règle des 30 jours évalue `bons_commande.date_100_facture` **à l'instant du rattachement** (INV-199) ; un BC annulé en est exempté (INV-103). Ce que le service Dépenses fait d'une valeur NULL ou changée n'est pas défini par 006 et **n'est pas décidé ici**. L'énoncé antérieur « la fenêtre de 30 jours repart de la nouvelle date » (A6-06 ancienne version, arbitrage du 2026-10-05) était **imprécis** et est retiré.
+
+### M.7 Réémission après avoir total, et fermeture après solde
+
+| Situation | Règle | Qualif. / source |
+|---|---|---|
+| Acompte totalement crédité, **aucun solde émis** | nouvel acompte du même devis, nouveau numéro | **[RD]** INV-185, E-14, C-33 |
+| Situation totalement créditée, **aucun solde émis** | nouvelle situation, nouveau numéro de facture ; réutilisation du `situation_numero` : V6-06 | **[RD]** INV-185, C-33 ; **[QO]** V6-06 |
+| Solde totalement crédité | **nouveau solde** uniquement (nouveau numéro) | **[RD]** E-14, C-33, métier §13 ; **[VR]** VR-12 |
+| Solde actif existant | aucun second solde ; aucun acompte ni situation | **[RD]** INV-52, INV-58 |
+| Solde émis puis totalement crédité : acompte ou situation | **refusés** (INV-58 : plus d'acompte ni de situation après solde) | **[RD]** INV-58 ; lecture « même neutralisé » : **[DT]** hiérarchie CD-07 |
+| Acompte / situation totalement crédité(e) **alors qu'un solde existe** (actif ou crédité) : remplacement par une facture du même type ? | **non couvert explicitement** : INV-58 l'interdit, INV-185 l'autorise en termes généraux | **[QO]** QO-1 (CD-08) ; lecture prudente **[PR]** : non, le montant se refacture par remplacement du solde |
+| Rattachement de devis après solde, **même totalement crédité** | **refusé** | **[VR]** VR-09 ; **[RD]** INV-187, E-16, C-35 |
+| Avoir partiel | ne rouvre rien : ni devis, ni nouveau solde, ni acompte/situation | **[RD]** INV-58, INV-187 |
+
+> Aucune règle n'est inventée ici pour combler QO-1 ; ce qui n'est pas explicitement couvert reste une question ouverte.
+
+### M.8 Impact 005c — « 005c — correction BC annulé / caches financiers » (VR-06)
+
+**Nature [VR]/[DT].** Corrective préalable à 006, selon les conventions (deux catégories : tranche `NNN_<objet>.sql` ; corrective `NNNx_<objet>.sql` rattachée à la dernière tranche exécutée avant elle). Elle est **cohérente avec le précédent 005b**, qui a lui-même remplacé `tr_12`, `tr_13`, `tr_17`, `tr_18` par `DROP TRIGGER` + `CREATE TRIGGER`.
+
+| Point | Contenu |
+|---|---|
+| Nom | **Définitif (décision du 2026-10-05)** : migration `005c_bc_annule_caches_financiers.sql` ; test `test_005c_bc_annule_caches_financiers.py`. Aucun autre nom. Les deux fichiers sont **livrés dans `main`**. |
+| Rang | **8** (`PRAGMA user_version`) ; **006 passe au rang 9**, 007 → 10, 008 → 11, 009 → 12, 010 → 13 (noms 006 → 010 = réservations d'ordre, conv. §5) |
+| Objet remplacé | un seul : `tr_12_bons_commande_annule` (`BEFORE UPDATE ON bons_commande`, `WHEN OLD.statut = 'annule'`) |
+| Nouvelle liste de colonnes gardées | l'ancienne liste **moins** `montant_deja_facture_ht`, `avancement`, `date_100_facture`. Restent protégées : `id`, `client_id`, snapshots et versions, `date_acceptation`, `date_debut`, `date_fin`, `montant_contractuel_ht`, `statut`, `completed_at`, `cancelled_at`, `motif_annulation`, `frozen_at`, `created_at`, `origine`, `legacy_*`. `updated_at` reste libre |
+| Message | **Décidé (2026-10-05)** : `INV-173: bon de commande annule terminal, seules les evolutions autorisees sont modifiables` — message générique, sans énumérer les caches ; préfixe `INV-173` conservé, aucun nouveau code d'erreur (l'ancien texte « seul `updated_at` est modifiable » n'est plus exact) |
+| Reconstruction de table | **aucune** : pas de protocole `foreign_keys=OFF` |
+| Inchangé | tables, CHECK de 004/005b (dont les deux CHECK `frozen_at`), `tr_12_bons_commande_contrat`, `tr_13_*`, `tr_14_*`, `tr_17`, `tr_18`, `tr_19`, `tr_99_*`, CK-13/14 |
+| Contrainte vérifiée | `avancement` et `date_100_facture` doivent changer ensemble (CHECK de 004) ; sondé par essai à blanc : avoir total sur solde (`date_100_facture = NULL` + `avancement = 50.00`) accepté ; abaisser `avancement` seul refusé |
+| Limite | le trigger remplacé ne peut pas juger de la légitimité financière de la nouvelle valeur (§M.4) |
+
+**Pourquoi avant 006.** Les tests de 006 doivent prouver que le recalcul des caches après un avoir sur un BC annulé est possible (G22). Le SQL de `factures` lui-même n'écrit aucun cache (le service le fait) : la dépendance est celle de la **chaîne de tests et du service**, pas du DDL de `factures`.
+
+**Tests de 005c — écrits et livrés (`test_005c_bc_annule_caches_financiers.py`).** Numérotation par analogie 005a/005b : **T-47 = 005c**, donc **T-48 = 006** **[DT]**. Périmètre couvert :
+- chaîne tronquée : rang 8 ; migration 005c sur une base de rang 7 ;
+- matrice `annule` et `annule_gele` : chacun des trois caches **autorisé** individuellement et ensemble ; chacune des autres colonnes de la liste **refusée** ; `updated_at` seul accepté ; `statut → en_cours` refusé ; CHECK de 004 toujours effectifs (`date_100_facture` sans `avancement = '100.00'` refusé ; `termine ⇒ frozen_at`) ;
+- non-régression : mêmes objets qu'au rang 7 sauf le trigger remplacé (DDL comparé octet pour octet) ; tests 001–005b inchangés (ils rejouent des chaînes tronquées à leur rang : `test_005a:604` `[:6]`, `test_005b:755` `[:7]`) ;
+- campagne de mutation **ciblée** sur le trigger remplacé (conv. §7.1) : suppression de chaque colonne de la liste, inversion du `WHEN`, `BEFORE → AFTER`, suppression du `RAISE`, ajout d'un cache dans la liste.
+
+**Réalisation de 005c (2026-10-06).** 62 tests dédiés (groupes A à L : chaîne et rang 8, scénario de base, caches autorisés, champs protégés un à un, `frozen_at`, statut, absence de table de facturation, CHECK existants et formats des caches, BC non annulés, atomicité, régressions 005b, anti-contournement) ; suites vertes : 756 tests métier et 13 tests machine ; `integrity_check` ok et `foreign_key_check` vide ; campagne de mutation : 185 mutants, 164 tués, 21 survivants justifiés (19 CHECK de 005b hors périmètre, couverts par `test_005b` ; 2 mutants du runner d'émulation, équivalents) — **aucun survivant réel dans le périmètre 005c**. Seul `tr_12_bons_commande_annule` change entre le rang 7 et le rang 8 (79 objets de part et d'autre).
+
+**Alignement documentaire préalable à 005c — réalisé le 2026-10-05** : décision D-56 ; modèle §4.19, §7.2 (ligne « BC annulé »), §8 (ligne `tr_12`), §17.1 (rangs et tableau des correctives), PT-16, PT-20 ; conventions §5 (chaîne des rangs) ; invariants INV-46/47/188 relus, aucun changement, et INV-173 précisé le 2026-10-05 (« montants » = montants contractuels) ; le présent cadrage (§M.2 : CHECK `termine` ⇒ `date_100_facture`). V6-20 (nommage de la migration et du test) : décidée le 2026-10-05. **Mise à jour du 2026-10-06** : la corrective 005c est livrée ; le modèle (D-56, §17.1), les conventions (§5) et le présent cadrage décrivent cet état.
+
+### M.9 Stratégie de tests — mises à jour (détail en §17 et §18)
+
+**Ajouts au futur `test_006_facturation.py`** (groupes G22 à G24, G15 révisé) :
+
+| Groupe | Contenu |
+|---|---|
+| **G22 BC annulé** | acompte / situation / solde sur BC annulé → refusés ; devis rattaché → refusé (`tr_99`) ; modification commerciale (colonnes du contrat) → refusée ; modification de `statut`, `completed_at`, `cancelled_at`, `motif_annulation`, `frozen_at` → refusée ; avoir sur document existant → accepté ; recalcul des trois caches après avoir (un `UPDATE`) → accepté ; `statut` reste `annule` ; aucune réouverture implicite ; règlement sur document existant : « si prévu », test porté par 007 (la table `reglements` n'existe pas en 006) |
+| **G23 BC `termine` et avoirs** | cas A à D de §M.5 (avoir partiel sur acompte, situation, solde ; avoir total sur acompte ; avoir total sur solde) ; conservation ou évolution de `termine` ; `termine → en_cours` possible dans le cas D ; `completed_at` cohérent (CHECK) ; `date_100_facture` cohérent (conservée / NULL / nouvelle valeur) ; aucun devis rattaché après un solde, **y compris crédité** (CK-14, service, trigger si V6-10) ; nouveau solde après solde crédité accepté ; acompte / situation après solde crédité refusés |
+| **G24 `frozen_at` résiduel** | obligations O-1 à O-4 (pose conjointe, irréversibilité, NULL à la naissance, absence de comportement) ; la matrice `en_cours` / `gele` donne les **mêmes** résultats de facturation (`gele` = état de test, pas un statut) ; aucune colonne `frozen_at` dans `factures` |
+| **G15 révisé** | CK-06 : pour un BC annulé, seuls les trois caches sont comparés au recalcul ; écriture conjointe `avancement` / `date_100_facture` |
+
+**Campagne de mutation approfondie** (comparable aux tranches précédentes, conv. §7.1) :
+- **006** : mêmes familles qu'en §18, plus les familles ajoutées par la mise à jour : définition de « neutralisée » (`=` ↔ `<=`, `<` ; `total_ht > 0` supprimé), clause « un solde a existé » (neutralisé ou non), `EXISTS ↔ NOT EXISTS` sur les soldes, conditions d'état du BC dans TR-16 (`annule`, `termine` autorisé pour l'avoir), requêtes CK-06 / CK-14 ;
+- **005c** : campagne ciblée (§M.8) ;
+- règle de clôture inchangée : **0 survivant non qualifié**, rapport mutant / classe / preuve / décision.
+
+### M.10 Contradictions documentaires et corrections internes
+
+Format imposé : **source (document + section)** · **règle** · **interprétation retenue** · **conséquence technique**.
+
+| ID | Sources en tension | Règle | Interprétation retenue | Conséquence technique |
+|---|---|---|---|---|
+| **CD-01** | Consigne du 2026-10-05 (« `fournisseurs.date_100_facture` pilote le délai de 30 jours ») **vs** `002_fournisseurs.sql` (colonnes), cadrage 005 R28, 005 (commentaire SQL, `test_005` l.8), INV-103, INV-199, métier l.500 (§17) | délai de 30 jours des dépenses | **[RD]** la seule colonne `date_100_facture` est celle de `bons_commande` ; la règle est une règle de service Dépenses (hiérarchie 1 à 4 > consigne non étayée par le SQL) | aucun objet de 006 ne touche `fournisseurs` ; VR-13 écrit sans la colonne fantôme ; **à signaler à Rémy** |
+| **CD-02** | Brief 006 §4, §16, §24 et rappel 005b (« gelé après le premier **encaissement actif** ») **vs** E-10, journal des invariants (INV-33/34/35 retirés le 2026-10-03), métier §9, modèle §7.1, §2.5 | gel progressif | **[VR]** VR-01 : E-10 l'emporte (niveaux 1, 2, 5) ; le brief reprenait une règle retirée | aucun gel ; `frozen_at` résiduel (§M.2) |
+| **CD-03** | `tr_12_bons_commande_annule` (004/005b) « seul `updated_at` modifiable » **vs** INV-173, INV-188, INV-46/164, modèle §7.2, TR-12 « à adapter (PT-16) » ; 005b l.26-27 et l.352 (report à la tranche Facturation) | caches d'un BC annulé après avoir | **[VR]** VR-05 : invariants (niveau 2) > implémentation (niveau 7) | corrective 005c (§M.8) |
+| **CD-04** | INV-47 et modèle §8 TR-16 (« avoir sur BC `termine` : l'existant le refuse, à confirmer ») **vs** CDC §22, C-06, C-13, arbitrage B | avoir sur BC `termine` | **[VR]** VR-07 : autorisé ; INV-47 est un énoncé « à confirmer », non décision | TR-16 n'existe pas dans le SQL (0 occurrence) : 006 le crée **sans** ce refus |
+| **CD-05** | Métier §7 l.272 et CDC §16 (texte d'origine) : « …ou si un avoir intervient » **vs** CDC §16 amendement E-14/E-16 et modèle §3.5 : « seule l'annulation d'un règlement » | `termine → en_cours` | **[VR]** VR-07 : la formule INV-42 est recalculée ; un avoir qui neutralise le solde actif peut faire passer à `en_cours` (niveaux 2 et 4 > 5 et 6 sur ce point) | A6-03 résolu ; état dérivé, pas réouverture (§M.3) |
+| **CD-06** | INV-52 (« actif » = non entièrement neutralisé par un avoir total) **vs** modèle §3.2, §3.4, §3.5, §4.8 (« proposition PT-9 ») | définition d'« actif » | **[VR]** VR-12 ; invariant (niveau 2) > modèle (niveau 3) ; seul le **mécanisme** reste proposition | `neutralisee(F)` dérivé des données, aucune colonne d'état |
+| **CD-07** | INV-58, modèle §3.2 (« solde rédigé/validé » ⇒ plus d'acompte ni de situation) **vs** modèle §8 TR-22 et métier §13 (« solde actif ») | portée de l'interdiction après solde | niveau 2 (INV-58) > niveau 3 (TR-22) : l'interdiction vaut **même si le solde est totalement crédité** **[DT]** | `tr_22_factures_acompte` / `_situation` : refus dès qu'un solde existe (neutralisé ou non) |
+| **CD-08** | INV-185, E-14, C-33 (« nouvelle facture du **même type** » après avoir total) **vs** INV-58 (plus d'acompte/situation après solde) | remplacement d'un acompte/situation crédité(e) après solde | **non tranché** : **[QO]** QO-1 ; lecture prudente **[PR]** | aucune règle SQL écrite pour ce cas avant décision |
+| **CD-09** | CHECK de 004 (`termine` et `date_100_facture` ⇒ `frozen_at`) ; INV-46 (« la condition “gelé” des CHECK actuels dépend de PT-8 ») **vs** E-10 (gel supprimé) | sens des CHECK `frozen_at` | **[VR]** VR-02/03 : conservés ; obligations techniques O-1 à O-5 | contrat de service ; aucune migration |
+| **CD-10** | Brief 006 §6 et §17 (« un avoir ne doit pas rouvrir automatiquement un BC ») **vs** métier §7 l.272 | sens de « rouvrir » | **[VR]** VR-08 : « rouvrir » = axe 2 (commercial) ; le recalcul `termine → en_cours` est l'axe 1 | libellés de 006 corrigés (§M.3 règle 4) |
+
+**Corrections internes du cadrage** (formulations de ma part, retirées) :
+1. L'arbitrage du 2026-10-05 et l'ancienne version de A6-06 écrivaient que la fenêtre de 30 jours « repart de la nouvelle date » : **faux ou imprécis** (VR-13, §M.6).
+2. Le cadrage listait V6-02 comme « actif non défini » : INV-52 le définit (**[RD]**), seul le mécanisme restait proposition.
+3. La consigne qualifie l'avoir partiel de réducteur du « montant économique restant dû » : précisé en §M.5.
+
+### M.11 Questions restant réellement ouvertes
+
+Après contrôle contre E-10, les invariants, le métier, le CDC, les errata, D-*, les migrations 001 → 005b et les tranches précédentes. **Les décisions validées ne sont pas rouvertes.**
+
+| ID | Question | Pourquoi elle reste ouverte | Lecture prudente **[PR]** (non décidée) |
+|---|---|---|---|
+| **QO-1** (ex-V6-09) | Après émission d'un solde (actif ou crédité), peut-on remplacer un **acompte** ou une **situation** totalement crédité(e) par une nouvelle facture du même type ? | INV-185 / E-14 / C-33 (même type) et INV-58 (plus d'acompte/situation après solde) ne sont pas conciliés (CD-08) | non ; le montant se refacture par remplacement du solde |
+| **QO-2** (ex-V6-02, A6-24) | Un **solde à `0.00`** émis par erreur ne peut recevoir aucun avoir (INV-55 : avoir `> 0.00`) : comment le corrige-t-on ? | conséquence directe de règles validées ; aucune règle de correction | ne rien inventer ; le dire |
+| **V6-02** (résiduel) | Mécanisme **technique** de l'unicité sans `cancelled_at` | PT-9 : proposition de triggers `EXISTS` | triggers `BEFORE INSERT` ensemblistes |
+| **V6-04**, **V6-05** | `factures.devis_id` (PT-10) ; colonnes de situation et plafond `< 100 %` (PT-11) | DDL de `factures` ; non touchés par cette mise à jour | cf. §19 |
+| **V6-06**, **V6-07**, **V6-08**, **V6-10**, **V6-12** à **V6-19** | inchangés | non touchés par V6-01/V6-03 (V6-10 : garde SQL « après solde », VR-09 en fixe la règle mais pas la couche) | cf. §19 |
+| **V6-20** (réduit) | Nom exact de la corrective 005c, de son test et des gardes d'exécution | le rang (8 / 9) et l'ordre sont **décidés** (VR-06) ; nommage **décidé le 2026-10-05** (migration `005c_bc_annule_caches_financiers.sql`, test `test_005c_bc_annule_caches_financiers.py`) ; aucune garde d'exécution dans le fichier SQL (005c ne crée aucun objet ; le runner D-55 pose le rang) | §M.8 |
+
+**Closes par cette mise à jour** : V6-01 (VR-01 à VR-03), V6-03 (VR-04 à VR-09), V6-11 (VR-10, VR-13), la définition d'« actif » de V6-02 (VR-12), A6-03, A6-06, A6-12, A6-23.
 
 ---
 
@@ -15,7 +277,7 @@
 
 ### 0.1 Légende des qualifications (brief §28)
 
-Chaque affirmation importante porte l'une de ces quatre étiquettes et une référence.
+Chaque affirmation importante porte l'une de ces étiquettes (quatre d'origine, deux ajoutées le 2026-10-05) et une référence.
 
 | Étiquette | Sens |
 |---|---|
@@ -23,8 +285,10 @@ Chaque affirmation importante porte l'une de ces quatre étiquettes et une réf�
 | **[DT]** DÉDUCTION TECHNIQUE | conséquence nécessaire d'une règle existante (la règle de départ est citée) |
 | **[PR]** PROPOSITION | solution technique proposée, **non décidée**. Jamais présentée comme règle métier |
 | **[DV]** DÉCISION À VALIDER | point que les sources ne permettent pas de trancher ; numéroté `V6-nn` (§19) |
+| **[VR]** DÉCISION VERROUILLÉE | décision prise par Rémy le 2026-10-05 (V6-01, V6-03) ; numérotée `VR-nn` (§M.1) ; propre à ce cadrage, non officielle |
+| **[QO]** QUESTION OUVERTE | point que ni les sources ni les décisions ne permettent de trancher ; numéroté `QO-n` (§M.11) ; équivaut à **[DV]** |
 
-Les contradictions et ambiguïtés sont numérotées `A6-nn` (§15). Les décisions à valider sont numérotées `V6-nn` (§19). Ces deux numérotations sont propres à ce cadrage ; **elles ne sont pas des décisions officielles** (brief §30).
+Les contradictions et ambiguïtés sont numérotées `A6-nn` (§15) et `CD-nn` (§M.10). Les décisions à valider sont numérotées `V6-nn` (§19) et les décisions verrouillées `VR-nn` (§M.1). Ces numérotations sont propres à ce cadrage ; **elles ne sont pas des décisions officielles** (brief §30).
 
 Abréviations de sources : **modèle** = `MAJ__modèle-données-sqlite-v6-v3.13.md` ; **invariants** = `MAJ__invariants.md` (INV-xx) ; **métier** = `MAJ__modèle-métier-V6.md` ; **CDC** = `MAJ__cdc-fonctionnel-architectural-v6.md` ; **errata** = `MAJ__cdc-errata-v6.md` (E-xx) ; **conv.** = `MAJ__conventions-techniques-v6.md` ; **audit conservation** = `MAJ__AUDIT__REGLE_CONSERVATION_OBJETS_NUMEROTES.md` (D1–D6) ; **audit fonctionnel** = `MAJ__audit-fonctionnel-v5.16-v6.md` ; PT-xx / D-xx / T-xx / C-xx / CK-xx / TR-xx = identifiants du modèle.
 
@@ -59,11 +323,13 @@ Modèle V3.13 (§2.3–2.5, §3.1–3.8, §4.6–4.10, §4.17–4.19, §6, §7, 
 2. **Une facture validée est un fait historique** : créée, numérotée et validée dans une seule transaction, jamais modifiée, jamais supprimée, jamais annulée ; correction par avoir ; après avoir total, nouvelle facture du même type avec nouveau numéro. **[RD]** INV-185, INV-53, E-14, D-45.
 3. **La facturation est globale au niveau du BC** ; seul l'acompte est rattaché à un devis (`devis_id`, PT-10). **[RD]** D-48, INV-189, INV-190 ; **[PR]** mécanisme `factures.devis_id`.
 4. **Pas de TVA, pas de TTC** dans Essentiel V6. **[RD]** CDC §1–§2, métier §10, modèle §4.8, INV-55. La mention légale de franchise n'est spécifiée nulle part (**[DV]** V6-16, hors SQL).
-5. **Trois points bloquent l'écriture du SQL** (§19, marqués ⛔) :
-   - **V6-01 — PT-8 / `frozen_at`** : les CHECK de `bons_commande` (`termine` et `date_100_facture` exigent `frozen_at`) sont incompatibles avec la règle du brief « un acompte émis mais non payé ne gèle pas ». Le statut `gele` **n'existe pas** (§15, A6-01).
-   - **V6-02 — PT-9** : définition d'« actif » / « entièrement créditée » et mécanisme d'unicité sans `cancelled_at`.
-   - **V6-03 — PT-16** : le trigger `tr_12_bons_commande_annule` (004/005b) interdit toute réécriture des caches d'un BC annulé, ce qui empêche le recalcul après un avoir ; et l'avoir sur BC `termine` n'est pas tranché.
+5. **Mise à jour du 2026-10-05 : deux des trois blocages d'origine sont levés** (partie M) :
+   - **V6-01 `frozen_at`** : gel progressif abandonné (E-10) ; colonne conservée à titre **résiduel technique** ; obligations techniques O-1 à O-5 documentées (VR-01 à VR-03).
+   - **V6-03 BC annulé / BC `termine` / caches** : BC annulé = terminal commercial mais **non figé financièrement** ; caches évolutifs ; avoir autorisé sur BC `termine` ; **état financier dérivé ≠ réouverture commerciale** (VR-04 à VR-09) ; corrective **005c** préalable (VR-06) ; **006 au rang 9**.
+   - **V6-02** : « actif » est défini (VR-12) ; restent le mécanisme technique et le solde `0.00` (QO-2).
+   - **Restent bloquants pour le DDL de `factures`** : V6-04 (PT-10) et V6-05 (PT-11) (§19).
 6. **Aucun nouveau CK, aucune nouvelle décision officielle, aucun nouveau type de document n'est créé.** Les CK utilisés sont les CK existants (CK-01, 02, 04, 05, 06, 13, 14) ; CK-04/05/06 deviennent exécutables avec 006, et le morceau de CK-14 « aucun devis rattaché après un solde » (que 005b n'a pas pu tester faute de factures) se complète en 006.
+7. **Une seule question métier nouvelle reste ouverte après la mise à jour** : QO-1 (remplacement d'un acompte ou d'une situation crédité(e) alors qu'un solde existe, CD-08). La règle des 30 jours des dépenses n'est ni implémentée, ni réinitialisée, ni prolongée par 006 ; la colonne `fournisseurs.date_100_facture` citée dans la consigne du 2026-10-05 n'existe pas (CD-01).
 
 ---
 
@@ -99,7 +365,7 @@ Modèle V3.13 (§2.3–2.5, §3.1–3.8, §4.6–4.10, §4.17–4.19, §6, §7, 
 | Tables | `factures`, `facture_lignes` | `reglements` (+ TR-30 → TR-33) ; `garanties` (008) ; `historique`, `documents` (contexte propre) | D-34 ; modèle §4.8–§4.10, §17.1 |
 | Facturation nette, solde, situation, acompte (montants, plafonds, unicité) | **oui** | — | modèle §3.2, TR-22, TR-23 |
 | Immuabilité, non-suppression, numérotation | **oui** | — | INV-53, TR-20, TR-21, TR-02 |
-| Caches du BC `montant_deja_facture_ht`, `avancement`, `date_100_facture` | service financier (calcul) ; **colonnes déjà en 004** | — | INV-46, modèle §3.7 |
+| Caches du BC `montant_deja_facture_ht`, `avancement`, `date_100_facture` | service financier (calcul) ; **colonnes déjà en 004** ; évoluent aussi sur un BC annulé après une opération financière légitime (VR-05, corrective **005c**) | — | INV-46, modèle §3.7 ; §M.6 |
 | `reste_du`, `absorbe`, `credit`, états de paiement, `en_retard` | — (calculs dérivés) | **007** | modèle §3.3, §3.4 ; INV-72 → 75 |
 | `statut = 'termine'`, `completed_at` | conditions : « solde actif » (006) **et** Σ `reste_du` = 0 (007) | **007** pour la partie encaissements | modèle §3.5 ; INV-42 |
 | Garanties | — | 008 | modèle §4.10 ; INV-85 → 90 |
@@ -220,7 +486,7 @@ STRICT, `id INTEGER PRIMARY KEY AUTOINCREMENT` (INV-04, conv. §9).
 | Trigger (PR) | Table / événement | Règle gardée | Source |
 |---|---|---|---|
 | `tr_02_factures_chronologie` | `factures` BEFORE INSERT | ACP/FAC/AVO : `date_emission >= derniere_date` de la clé (garde pure **[PR]** ; qui écrit `derniere_date` : V6-07) | **[RD]** TR-02, INV-24 ; détail ouvert : V6-07 |
-| `tr_16_factures_bc` | `factures` BEFORE INSERT | acompte/situation/solde : BC `en_cours` et non annulé ; toute facture : `client_id = bons_commande.client_id` ; avoir permis sur BC annulé ; avoir sur BC `termine` : V6-03 | **[RD]** TR-16, INV-47, INV-48, INV-188 ; **[DV]** PT-16 |
+| `tr_16_factures_bc` | `factures` BEFORE INSERT | acompte/situation/solde : BC `en_cours` (ni `termine`, ni annulé) ; toute facture : `client_id = bons_commande.client_id` ; **avoir permis sur BC `termine` et sur BC annulé** (VR-04, VR-07) | **[RD]** TR-16, INV-47, INV-48, INV-188 ; **[VR]** VR-04, VR-07 |
 | `tr_22_factures_acompte` | `factures` BEFORE INSERT (type acompte) | devis rattaché au BC (`bc_devis`) ; un acompte non neutralisé par devis ; `total_ht ≤ devis.total_ht` ; aucun solde existant sur le BC | **[RD]** TR-22, INV-52, INV-57, INV-189 ; **[PR]** forme (PT-10, PT-9) |
 | `tr_22_factures_situation` | idem (type situation) | aucune situation si un solde existe ; une situation non neutralisée par numéro ; `montant_deja_facture_ht` = facturation nette avant ; facturation nette après ≤ contractuel (borne : V6-05) | **[RD]** TR-22, INV-57 ; **[PR]** forme |
 | `tr_22_factures_solde` | idem (type solde) | un seul solde non neutralisé par BC ; `total_ht = contractuel − facturation nette avant` (≥ 0) | **[RD]** TR-22, INV-52, INV-58 ; tension avec modèle §14 : A6-13 |
@@ -229,7 +495,7 @@ STRICT, `id INTEGER PRIMARY KEY AUTOINCREMENT` (INV-04, conv. §9).
 | `tr_21_factures_no_delete` | `factures` BEFORE DELETE | aucune suppression (directe ou par `REPLACE`, `recursive_triggers=ON`) | **[RD]** TR-21, INV-53, INV-06 |
 | `tr_21_facture_lignes_no_update` / `_no_delete` | `facture_lignes` | aucune modification, aucune suppression | **[RD]** TR-21, INV-53 |
 | `tr_24_facture_lignes_insert` | `facture_lignes` BEFORE INSERT | composition par type de facture (acompte/situation : 1 ligne `synthese` ; avoir : lignes positives `prestation`/`synthese` ; `deduction` seulement pour un solde) ; `bc_ligne_id` appartenant au BC de la facture | **[DT]** INV-62 (« SQL, SVC ») ; **[DV]** V6-14 |
-| `tr_99_bc_devis_apres_solde` | `bc_devis` BEFORE INSERT | aucun rattachement de devis si un solde (même neutralisé) existe sur le BC | **[RD]** « trigger possible avec la tranche Facturation » (modèle §4.7, §14) ; **[DV]** V6-10 |
+| `tr_99_bc_devis_apres_solde` | `bc_devis` BEFORE INSERT | aucun rattachement de devis si un solde (même totalement crédité) existe sur le BC | **[RD]** « trigger possible avec la tranche Facturation » (modèle §4.7, §14) ; règle fixée par **[VR]** VR-09 ; couche (trigger ou service + CK-14) : **[DV]** V6-10 |
 
 > Remarque de numérotation : `TR-24` du modèle est « obsolète, jamais créé » (annulation de facture). Je ne le réutilise pas pour une autre règle : le nom `tr_24_facture_lignes_insert` est **[PR]**, un autre identifiant sera choisi à la rédaction du SQL si l'on veut éviter toute confusion avec TR-24 du modèle.
 
@@ -296,11 +562,11 @@ STRICT, `id INTEGER PRIMARY KEY AUTOINCREMENT` (INV-04, conv. §9).
 
 **[RD]** Une situation « atteignant 100 % n'existe pas : la facture finale est un Solde » (métier §12). **[RD]** « Une situation ne peut plus être émise dès qu'un solde actif existe, ni sur un BC annulé » (métier §12).
 
-**[DV] / A6-20 (V6-09)** — Après un avoir total sur le **solde** : un nouvel **acompte** ou une nouvelle **situation** sont-ils permis ? Textes en tension : modèle §3.2 « Dès qu'un solde est **rédigé/validé** : nouvel acompte interdit, nouvelle situation interdite » (lecture : « aucun solde, même neutralisé ») ; modèle §8 TR-22 « aucun acompte/situation/solde **si un solde est actif** » (lecture : « actif » seulement) ; arbitrage B : « nouvelle facture du **même type** ». **[PR]** Après neutralisation du solde, **seul un nouveau solde** est émissible (cohérent avec INV-187 : un avoir sur le solde ne rouvre pas la facturation).
+**[RD]/[DT] / A6-20 (VR-09, VR-12, CD-07, QO-1)** — Après un avoir total sur le **solde**, seul un **nouveau solde** est émissible : INV-58 interdit tout acompte et toute situation après un solde (lecture « même neutralisé » : niveau 2 > TR-22 niveau 3) ; E-14 et C-33 autorisent le nouveau solde. Le cas d'un acompte ou d'une situation totalement crédité(e) **alors qu'un solde existe** n'est pas couvert explicitement : **[QO]** QO-1 (§M.7).
 
 ### 4.3 Cycle de vie du BC vu par la facturation (rappel, 004/005b)
 
-`statut ∈ {en_cours, termine, annule}` ; naissance `en_cours` caches à zéro (tr_17) ; `annule` terminal (tr_12_bons_commande_annule) ; jamais supprimé (tr_19) ; `termine` ⇔ `completed_at` NN. **[RD]** 004/005b (DDL réel rejoué) ; modèle §4.7.
+`statut ∈ {en_cours, termine, annule}` ; naissance `en_cours` caches à zéro (tr_17) ; `annule` terminal **commercial** (`tr_12_bons_commande_annule`, remplacé par la corrective 005c (livrée) pour laisser évoluer les trois caches de facturation : VR-04 à VR-06) ; jamais supprimé (tr_19) ; `termine` ⇔ `completed_at` NN. **[RD]** 004/005b (DDL réel rejoué) ; modèle §4.7. Le cycle du BC vu de la facturation (état financier dérivé ≠ réouverture commerciale) est décrit en §M.3 à §M.5.
 
 ---
 
@@ -406,6 +672,8 @@ avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 
 **[RD]** `avancement` = facturation nette / contractuel (P2), **100.00 dès qu'un solde actif existe** ; mesure la facturation, jamais l'avancement physique (modèle §4.7, métier §7, INV-46). Colonnes et CHECK **déjà en 004** (`avancement` P2 0–10000 centièmes ; `date_100_facture ⇒ avancement = '100.00'`). **[DT]** 006 **ne crée aucune règle d'avancement** : il fournit la source (les factures) ; l'écriture du cache est une règle de service (INV-46) contrôlée par CK-06. La limite « 100 % » n'est portée que par la distinction situation/solde (§4.2).
 
+**[VR]** Après un avoir, `avancement` suit sa définition (100.00 tant qu'un solde actif subsiste ; sinon facturation nette / contractuel) et s'écrit **avec** `date_100_facture` dans le même `UPDATE` (CHECK de 004). Sur un BC annulé, il évolue de la même façon (VR-05) : voir §M.6.
+
 ### 6.7 Ce que 006 ne calcule pas (reste à 007+)
 
 `reste_du`, `absorbe`, `credit`, `etat_paiement`, `en_retard`, CA engagé, CA encaissé, URSSAF : **[RD]** modèle §3.3, §3.4, §3.6 ; aucun n'est une colonne.
@@ -423,7 +691,7 @@ avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 | date de situation / date de solde | **non** | — | portées par `date_emission` de la facture concernée | **[DT]** |
 | période facturée (du … au …) | **non documentée** | — | **ne pas créer** | **[DV]** absence documentaire — aucune source ne la prévoit |
 | date de paiement | **hors 006** | `reglements.date_evenement` | 007 | modèle §4.9 |
-| `date_100_facture` (cache du BC) | existe en 004 | = `date_emission` du **premier solde actif** | service | **[RD]** modèle §3.5, INV-43 |
+| `date_100_facture` (cache du BC) | existe en 004 | = `date_emission` du **premier solde actif** ; NULL si ce solde est totalement crédité et qu'aucun autre n'est actif | service ; ne réinitialise ni ne prolonge la règle des 30 jours des dépenses (VR-13) | **[RD]** modèle §3.5, INV-43 ; **[VR]** VR-10 |
 | `garanties.date_declenchement` | 008 | = `date_emission` du premier solde, immuable | — | **[RD]** modèle §4.10 |
 
 **[DV] / V6-17** — Aucune source ne dit si `date_emission` peut être **future** ou antérieure à la date du jour (seule la chronologie TR-02 et la borne de service existent). **[PR]** Ne rien ajouter en SQL (« ne pas transformer une absence documentaire en décision implicite »). Test : accepter le passé non chronologique est refusé uniquement par TR-02.
@@ -480,29 +748,30 @@ avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 
 ### 9.3 États du BC et facturation (brief §16, §17, §18 ; question 12)
 
-**Clarification préalable — « BC gelé » (brief §4, §16, §24) :**
+**Clarification préalable : « BC gelé » (brief §4, §16, §24). Décisions verrouillées VR-01 à VR-03 :**
 
 - **[RD]** `bons_commande.statut ∈ {en_cours, termine, annule}` : la valeur **`gele` n'existe pas** (modèle §2.5 « statut BC », CHECK de 004/005b).
-- **[RD]** `frozen_at` est une colonne TS nullable, irréversible (`tr_14_bons_commande_frozen_at`), **sans rôle de clôture ni d'éditabilité** depuis V3.13 (E-10 remplace E-01 ; INV-181, INV-186 ; métier §9 « Aucun document n'évolue par un “gel” progressif » ; modèle §7.1). Son sort est **PT-8, non tranché**. 005b l'a conservé « tel quel (PT-8 conservateur) » (en-tête 005b l.30-31).
-- **[RD]** Dans les tests 004/005b, « gelé » est un **état de test** (`frozen_at` posé) : `ETATS_BC = ("en_cours","gele","termine","annule","annule_gele")` (`test_005b:78-80`, `geler_bc` l.523-525). Les tests 006 peuvent réutiliser cette matrice sans créer de statut.
-- **[DV] / A6-01** — La règle du brief « le BC est gelé après le premier **encaissement actif** d'un acompte, d'une situation ou d'un solde ; une facture émise non payée ne gèle pas » **n'est dans aucune source V3.13 en vigueur** : elle reprend, avec une nuance, **INV-33** et **INV-35, retirés le 2026-10-03** (journal des invariants : INV-33 « `frozen_at` posé … au premier de : encaissement actif (même partiel) d'un acompte, insertion d'une situation, insertion d'un solde » ; INV-35 « Un acompte émis non encaissé ne gèle pas »), c'est-à-dire le TR-15 de la V3.12 (modèle §7.1), mécanisme que le modèle déclare **obsolète** (TR-15) et dont le besoin « disparaît » (§7.1, E-10). Elle ne peut de toute façon pas relever de 006 (l'encaissement est 007). Voir §15, A6-01.
+- **[VR]** Le gel progressif est **abandonné** (E-10 remplace E-01 ; INV-33, INV-34, INV-35 retirés le 2026-10-03). `frozen_at` est **conservée** comme marqueur technique résiduel : aucun effet sur la facturation, l'édition, le rattachement de devis, l'avoir ou l'annulation ; ses obligations techniques sont en §M.2 (O-1 à O-5).
+- **[RD]** Dans les tests 004/005b, « gelé » est un **état de test** (`frozen_at` posé) : `ETATS_BC = ("en_cours","gele","termine","annule","annule_gele")` (`test_005b:78-80`, `geler_bc` l.523-525). Les tests 006 réutilisent cette matrice sans créer de statut et doivent montrer que `en_cours` et `gele` donnent les mêmes résultats (G24).
+- **[RD]** La règle du brief « le BC est gelé après le premier **encaissement actif** d'un acompte, d'une situation ou d'un solde ; une facture émise non payée ne gèle pas » reprend INV-33 et INV-35 (**retirés le 2026-10-03**) et le TR-15 de la V3.12 (obsolète, modèle §7.1) : **écartée** (CD-02). Elle ne relèverait de toute façon pas de 006 (l'encaissement est 007).
 
-**Matrice (propositions encadrées par les règles documentées) :**
+**Matrice (règles documentées et décisions verrouillées) :**
 
 | Opération | `en_cours` | `termine` | `annule` | Effet de `frozen_at` | Source / qualif. |
 |---|---|---|---|---|---|
-| Nouvel **acompte** | ✓ | ✗ (solde actif existe) | ✗ | aucun | **[RD]** TR-16, INV-47, INV-188 ; **[DT]** pour `termine` (TR-22) |
-| Nouvelle **situation** | ✓ | ✗ | ✗ | aucun | idem |
-| Nouveau **solde** | ✓ si aucun solde non neutralisé | ✗ (solde actif) | ✗ | aucun | **[RD]** INV-58, TR-22, INV-188 |
-| **Avoir** sur facture existante | ✓ | **[DV]** V6-03 (**[PR]** ✓) | ✓ | aucun | **[RD]** INV-188 (annulé) ; **[DV]** PT-16 (termine) |
+| Nouvel **acompte** | ✓ si aucun solde n'a été émis | ✗ (solde actif existe) | ✗ | aucun | **[RD]** TR-16, INV-47, INV-58, INV-188 ; **[DT]** pour `termine` (TR-22) |
+| Nouvelle **situation** | ✓ si aucun solde n'a été émis | ✗ | ✗ | aucun | idem |
+| Nouveau **solde** | ✓ si aucun solde actif | ✗ (solde actif) | ✗ | aucun | **[RD]** INV-58, TR-22, INV-188 |
+| **Avoir** sur facture existante | ✓ | ✓ **[VR]** VR-07 | ✓ **[RD]** INV-188 | aucun | **[RD]** INV-188 ; **[VR]** VR-04, VR-07 |
 | Modification / suppression / annulation d'une facture | ✗ | ✗ | ✗ | aucun | **[RD]** INV-53, INV-185 |
-| Rattachement d'un devis (005b) | ✓ si aucun solde | ✗ (solde existe) | ✗ (tr_99) | aucun (le brief 005b confirme : « un BC gelé peut recevoir un nouveau devis ») | **[RD]** INV-187 ; **[PR]** garde SQL après solde (V6-10) |
-| Nouvelle facture du **même type** après avoir total | ✓ | via retour `en_cours` du cache (A6-03) | ✗ (pas de nouveau cycle) | aucun | **[RD]** arbitrage B ; INV-188 |
-| Réouverture automatique du BC | — | **jamais créée** par 006 (brief §17) ; seul le service financier recalcule `statut` selon INV-42 | — | — | **[RD]** INV-41, modèle §3.5 |
+| Rattachement d'un devis (005b) | ✓ si aucun solde n'a été émis (**même crédité** : VR-09) | ✗ (solde existe) | ✗ (`tr_99`) | aucun (005b : « un BC gelé peut recevoir un nouveau devis ») | **[RD]** INV-187 ; **[VR]** VR-09 ; garde SQL : V6-10 |
+| Nouvelle facture du **même type** après avoir total | ✓ selon §M.7 | sans objet : un BC `termine` a un solde actif ; si l'avoir neutralise le solde, le BC est redevenu `en_cours` | ✗ (pas de nouveau cycle) | aucun | **[RD]** arbitrage B, INV-188 ; **[QO]** QO-1 |
+| Recalcul des caches de facturation après avoir | ✓ | ✓ | ✓ (trois caches ; `statut` reste `annule`) | aucun | **[VR]** VR-05, VR-07 |
+| Réouverture commerciale | — | **jamais créée** par 006 (brief §17) ; seul le service financier recalcule l'état dérivé (INV-42) | — | — | **[RD]** INV-41, modèle §3.5 ; **[VR]** VR-08 |
 
-**[DT] BC annulé** : les factures existantes restent intactes (immuables), conservent leurs caches **de facturation** à la date d'annulation, et ne se rouvrent pas ; un avoir sur un document existant est permis (INV-188, C-36). **[DV]** Reste le sort des caches (`tr_12_bons_commande_annule` les verrouille) : V6-03.
+**[VR] BC annulé** : voir §M.4. Les factures existantes restent intactes (immuables) ; un avoir sur un document existant est permis (INV-188, C-36) ; les trois caches de facturation continuent d'évoluer (VR-05, corrective 005c) ; `statut` reste `annule`.
 
-**[DT] BC terminé** : un solde actif existe nécessairement (modèle §3.5, INV-42) — donc aucun nouveau document hors avoir ; aucune « réouverture » n'est *créée* : le seul mouvement `termine → en_cours` documenté est le recalcul du service après annulation d'un règlement (modèle §3.5, CDC §16 amendement E-14/E-16) ; l'effet d'un avoir total sur le solde est l'objet de A6-03.
+**[VR] BC terminé** : voir §M.5. Un avoir est permis ; il ne rouvre pas commercialement le BC ; un avoir total qui neutralise le solde actif peut faire repasser l'**état dérivé** à `en_cours` par recalcul (INV-42), sans rattachement de devis possible (VR-09).
 
 ### 9.4 Rôle de CK-13 et CK-14 (brief §22)
 
@@ -534,9 +803,9 @@ avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 | INV-30 | snapshots versionnés ; le catalogue, la fiche client et les paramètres n'altèrent jamais un document existant | CHECK `json_valid` + service | **[RD]** |
 | INV-32 | factures figées dès l'INSERT ; aucun brouillon persistant | trigger (TR-20) | **[RD]** |
 | INV-46, INV-164 | caches du BC par un service financier unique, en un seul `UPDATE` ; ordre de recalcul | service + CK-06 + CHECK de 004 | **[RD]** |
-| INV-47 | nouvel acompte/situation/solde seulement sur BC `en_cours` ; avoirs possibles sur BC annulé ; avoir sur BC `termine` à confirmer | trigger TR-16 | **[RD]** / **[DV]** PT-16 |
+| INV-47 | nouvel acompte/situation/solde seulement sur BC `en_cours` ; avoirs possibles sur BC annulé ; avoir sur BC `termine` **autorisé** (l'« à confirmer » est levé par VR-07) | trigger TR-16 | **[RD]** / **[VR]** |
 | INV-48 | `client_id` cohérent devis / BC / factures à l'INSERT | trigger | **[RD]** |
-| INV-52 | un acompte actif par devis, un solde actif par BC, une situation active par numéro ; « actif » = non entièrement neutralisé par un avoir total | trigger | **[RD]** principe / **[DV]** mécanisme PT-9 |
+| INV-52 | un acompte actif par devis, un solde actif par BC, une situation active par numéro ; « actif » = non entièrement neutralisé par un avoir total (VR-12) | trigger | **[RD]** principe et définition / **[PR]** mécanisme PT-9 |
 | INV-53 | facture immuable, jamais supprimée ni annulée ; correction par avoir | trigger | **[RD]** |
 | INV-54 | `Σ facture_lignes.montant_ht = total_ht`, sans exemption | service + CK-05 | **[RD]** |
 | INV-55 | `total_ht` : acompte, situation, avoir `> 0.00` ; solde `≥ 0.00` ; aucun TTC ; pas de type `complete` | CHECK | **[RD]** |
@@ -555,11 +824,14 @@ avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 | INV-187 | rattachement d'un devis tant qu'aucun solde n'est rédigé/validé ; un avoir sur le solde ne rouvre pas | service + CK-14 (+ trigger PR) | **[RD]** |
 | INV-188 | BC annulé : factures, avoirs conservés ; pas de nouvel acompte/situation/solde/devis ; avoirs possibles | trigger TR-16 | **[RD]** |
 | INV-189 | acompte : prévu / facture / règlement ; chaque devis peut avoir son acompte | CHECK + trigger (PT-10) | **[RD]** / **[PR]** |
+| INV-42, INV-43 | `termine` ⇔ solde actif ∧ Σ reste dû hors avoir = 0 ; `date_100_facture` = date d'émission du premier solde actif, conservée par avoir partiel | service + CK-06 | **[RD]** ; sort après avoir total : **[VR]** VR-10 |
+| INV-44, INV-173 | annulation possible quel que soit l'état de facturation ; BC annulé terminal : `updated_at` et corrections de documents existants (avoirs) seulement | trigger `tr_12_bons_commande_annule` (remplacé par 005c) | **[RD]** ; **[VR]** VR-04 à VR-06 |
 
 ### 10.2 Invariants hors 006 (portés par 007+) ou retirés
 
 - **007** : INV-70 → INV-75, INV-79, INV-80 (règlements, reste dû, crédit) ; TR-30 → TR-33. **008** : INV-85 → INV-90 (garanties). **Dérivés** : INV-60 (états), INV-72–74.
 - **Retirés le 2026-10-03** (journal des invariants) : INV-33, INV-34, INV-35 (gel progressif, E-10), INV-49 (rattachement de client, E-12), INV-61 (annulation de facture, E-14), INV-77 (annulation d'avoir, E-14). **006 ne doit en reprendre aucun.**
+- **`frozen_at`** : conservée à titre résiduel technique (VR-02) ; son maintien ne rétablit aucun des invariants retirés ci-dessus (§M.2).
 - **Exécution / remise au prorata** : INV-191, INV-192 — « À CONCEVOIR » (PT-12, PT-13) : **rien n'est créé** en 006.
 
 ---
@@ -592,7 +864,7 @@ Principe appliqué (conv. §9, §8) : *structure → SQL ; protection d'immuabil
 | 20 | `bc_ligne_id` appartient au BC de la facture | ✓ FK | ✓ **[PR]** | | |
 | 21 | BC `en_cours`/non annulé pour acompte/situation/solde | | ✓ TR-16 | ✓ | |
 | 22 | `client_id` = client du BC | | ✓ TR-16 | | CK-13 (côté devis) |
-| 23 | avoir autorisé sur BC annulé / sur BC `termine` | | ✓ TR-16 **[DV]** V6-03 | | |
+| 23 | avoir autorisé sur BC annulé **et** sur BC `termine` (acompte/situation/solde : BC `en_cours`) | | ✓ TR-16 (VR-04, VR-07) | | |
 | 24 | acompte : devis rattaché au BC, plafond `devis.total_ht`, un acompte non neutralisé par devis | ✓ FK `devis_id` | ✓ TR-22 **[PR]** | ✓ | |
 | 25 | un solde non neutralisé par BC ; pas d'acompte/situation si un solde existe | | ✓ TR-22 | ✓ | |
 | 26 | une situation non neutralisée par `situation_numero` | | ✓ TR-22 | ✓ | |
@@ -601,8 +873,8 @@ Principe appliqué (conv. §9, §8) : *structure → SQL ; protection d'immuabil
 | 29 | solde : `total_ht = contractuel − nette avant` | | ✓ TR-22 **[DV]** V6-13 | ✓ | |
 | 30 | avoir : origine non avoir, même BC, Σ avoirs ≤ origine | ✓ F2 | ✓ TR-23 | | |
 | 31 | avoir total → nouvelle facture du même type | | ✓ (via 24–26) | ✓ | |
-| 32 | caches du BC (`montant_deja_facture_ht`, `avancement`, `date_100_facture`, `statut`, `completed_at`) | ✓ CHECK 004 | | ✓ un seul `UPDATE` | CK-06 |
-| 33 | `date_100_facture` = date du premier solde actif | | | ✓ | CK-06 |
+| 32 | caches du BC (`montant_deja_facture_ht`, `avancement`, `date_100_facture`, `statut`, `completed_at`) ; **sur BC annulé : trois caches évolutifs, `statut` et `completed_at` figés** (VR-05) | ✓ CHECK 004 | ✓ `tr_12_bons_commande_annule` **remplacé par 005c** | ✓ un seul `UPDATE` | CK-06 |
+| 33 | `date_100_facture` = date du premier solde actif (NULL si ce solde est totalement crédité et qu'aucun autre n'est actif : VR-10) | | | ✓ | CK-06 |
 | 34 | création des garanties au solde | | | ✓ (008) | CK-07 (008) |
 | 35 | aucun devis rattaché après un solde | | ✓ **[PR]** V6-10 | ✓ | CK-14 |
 | 36 | cohérence devis ↔ BC | | triggers 005b | ✓ | CK-13 |
@@ -612,6 +884,8 @@ Principe appliqué (conv. §9, §8) : *structure → SQL ; protection d'immuabil
 | 40 | absence de TVA / TTC / statut / annulation | structure (aucune colonne) | | | |
 | 41 | reste dû, absorbe, crédit, états de paiement, `en_retard` | | | dérivé | (007) |
 | 42 | événements d'historique | | | `historique` n'existe pas | |
+| 43 | `frozen_at` : pose conjointe avec la première `date_100_facture` ou le premier `termine` (O-1), irréversible, sans effet métier | ✓ CHECK 004 | ✓ `tr_14` (existant) | ✓ contrat du service | |
+| 44 | règle des 30 jours des dépenses (lit `bons_commande.date_100_facture`) | | | ✓ Dépenses (INV-103) ; **non** 006 | |
 
 **Ce qui n'est volontairement pas un trigger** (brief : « ne pas transformer une règle complexe en trigger uniquement parce que SQLite le permet ») : reste dû et `termine` (dérivés, dépendent de 007) ; création des garanties ; recalcul des caches ; contrôle `Σ lignes = total` (impossible en fin de transaction) ; délai d'échéance ; borne d'année ; attribution du numéro.
 
@@ -630,7 +904,7 @@ Principe appliqué (conv. §9, §8) : *structure → SQL ; protection d'immuabil
 | `migration_rapports`, `migration_id` | n'existent plus ; trace = événement `import` de `historique` (table future) et `import_anomalies` | **[RD]** | D-22, D-23 |
 | Champs importables | faits saisis : type, `numero` historique, références (BC, client, devis d'un acompte, facture d'origine d'un avoir) par `ref`, snapshots complets (obligatoires), objet, `date_emission`, `date_echeance`, `total_ht`, champs de situation, `motif_avoir`, lignes | **[RD]** (principe) ; détail = **P-04 non écrit** | modèle §10.3 |
 | Champs obligatoires | toutes les colonnes `NOT NULL` ; BLOC-SNAP obligatoire | **[RD]** | modèle §10.3 |
-| Champs **jamais lus** (recalculés) | caches du BC (`statut`, `avancement`, `montant_deja_facture_ht`, `date_100_facture`, `completed_at`), `frozen_at` s'il subsiste, états dérivés, garanties | **[RD]** | modèle §10.1, INV-169 |
+| Champs **jamais lus** (recalculés) | caches du BC (`statut`, `avancement`, `montant_deja_facture_ht`, `date_100_facture`, `completed_at`), `frozen_at` (résiduel, VR-02), états dérivés, garanties | **[RD]** | modèle §10.1, INV-169 |
 | Exemption de règle pour l'import | **une seule** : format/préfixe/année du `numero` historique ; tout le reste est appliqué (échéance, Σ lignes, plafonds, chronologie, unicités) | **[RD]** | modèle §10.4, D-24, INV-131 |
 | Ordre d'insertion | BC (inséré `en_cours`) → factures par `date_emission` puis `ref` croissants (TR-02 actif) → règlements ; un BC annulé s'insère `en_cours`, reçoit ses factures, puis est annulé | **[RD]** | modèle §10.5 |
 | Anomalies | facture V2 sans statut : importée **non réglée**, comptée dans la facturation, le reste dû, le CA engagé ; listée « À vérifier » (`import_anomalies` `a_verifier`) ; donnée non représentable : `non_importe` | **[RD]** | D-19, modèle §10.7 |
@@ -682,47 +956,48 @@ Chaîne rejouée (§0.2) ; DDL réel des 79 objets de rang 7 lu ; tests T-44/T-4
 |---|---|---|---|
 | **001** | `numerotation_sequences` (types `ACP`/`FAC`/`AVO`, `tr_95`, `tr_96` [posé en 004]), `clients` (FK) | aucune modification ; aucune ligne de séquence insérée | ✓ compatible |
 | **002** | — | aucun | ✓ |
-| **003** | `devis` (FK `devis_id` d'un acompte ; `acompte_*`, `total_ht`) ; `tr_14_devis_frozen_at` | aucune modification | ✓ ; `frozen_at` : voir V6-01 |
-| **004 / 005b** | `bons_commande` (FK, caches, CHECK `frozen_at`), `bc_lignes` (FK `bc_ligne_id`), `bc_devis`, triggers `tr_12_*`, `tr_13_*`, `tr_14_*`, `tr_17`, `tr_18`, `tr_19`, `tr_99_*` | lecture des caches ; écriture des caches par le **service** | ⚠ **trois points** (ci-dessous) |
+| **003** | `devis` (FK `devis_id` d'un acompte ; `acompte_*`, `total_ht`) ; `tr_14_devis_frozen_at` | aucune modification | ✓ ; `frozen_at` : voir VR-02, §M.2 |
+| **004 / 005b** | `bons_commande` (FK, caches, CHECK `frozen_at`), `bc_lignes` (FK `bc_ligne_id`), `bc_devis`, triggers `tr_12_*`, `tr_13_*`, `tr_14_*`, `tr_17`, `tr_18`, `tr_19`, `tr_99_*` | lecture des caches ; écriture des caches par le **service** | ⚠ **un remplacement de trigger (005c) et des constats** (ci-dessous) |
 | **005** | `depenses.bc_id` | aucun lien avec les factures ; numérotation DEP indépendante | ✓ |
 | **005a** | `devis_revisions` | aucun | ✓ |
+| **005c** *(corrective livrée, rang 8)* | remplace `tr_12_bons_commande_annule` ; ne crée ni ne supprime aucun objet nommé | 006 passe au rang 9 | ✓ prérequis de 006 (§M.8) |
 
 ### 14.3 Incompatibilités ou blocages réels (format imposé : identifier / migration / règle / correction séparée)
 
-**I-1 — CHECK `frozen_at` de `bons_commande` ⇒ service impossible à écrire sans PT-8** ⛔
+**I-1 — CHECK `frozen_at` de `bons_commande` : obligation de service, pas de blocage SQL (VR-01 à VR-03)**
 1. *Identification* : `CHECK (statut <> 'termine' OR frozen_at IS NOT NULL)` et `CHECK (date_100_facture IS NULL OR frozen_at IS NOT NULL)` (DDL de `bons_commande`, rang 7).
 2. *Migration responsable* : `004_bons_commande.sql`, conservés « tels quels » par `005b` (en-tête l.30-31, PT-8 conservateur ; 005a l.205, l.419 : « PT-8 ouvert »).
-3. *Règle concernée* : INV-46 (« la condition “gelé” des CHECK actuels dépend de PT-8 »), modèle §4.7 l.437, §7.1.
-4. *Effet* : tout solde émis (même à `0.00`, même impayé) doit pouvoir poser `date_100_facture` ; or `frozen_at` n'est posé par aucun trigger (`TR-15` n'a jamais été créé). Si la règle du brief (« une facture émise non payée ne gèle pas ») était appliquée, ces CHECK interdiraient d'écrire `date_100_facture` à l'émission d'un solde non payé. Le service ne pourrait donc écrire les caches d'un BC facturé que s'il pose lui-même `frozen_at` (ce que rien ne documente) ou si les CHECK sont retirés.
-5. *Correction séparée proposée* **[PR]** : voir V6-01 (options a / b1 / b2 ; une corrective `005c` avant 006 si les CHECK sont retirés).
+3. *Règle concernée* : INV-46 (« la condition “gelé” des CHECK actuels dépend de PT-8 »), modèle §4.7 l.437, §7.1 ; E-10 ; **[VR]** VR-01 à VR-03.
+4. *Effet* : le service financier doit poser `frozen_at` dans le **même** `UPDATE` que la première `date_100_facture` ou le premier `termine` (O-1) ; rien d'autre n'écrit `frozen_at` (TR-15 n'a jamais été créé). Aucun objet de 006 n'est bloqué.
+5. *Correction* : **aucune migration** (VR-02). Les obligations O-1 à O-5 (§M.2) sont consignées au contrat du service ; ce ne sont pas des règles métier.
 
-**I-2 — `tr_12_bons_commande_annule` verrouille les caches d'un BC annulé** ⛔
+**I-2 — `tr_12_bons_commande_annule` verrouille les caches d'un BC annulé : corrigé par la corrective 005c (VR-05, VR-06)**
 1. *Identification* : trigger `BEFORE UPDATE` à `WHEN OLD.statut = 'annule'` refusant toute modification de `montant_deja_facture_ht`, `avancement`, `date_100_facture`, `statut`, `completed_at`, etc. (`INV-173: bon de commande annule terminal, seul updated_at est modifiable`).
 2. *Migration responsable* : `004`, réécrit par `005b`.
-3. *Règle concernée* : INV-188 (avoirs possibles sur un BC annulé) + PT-16 (« adaptation de TR-12 : caches après avoir ») ; modèle §7.2 (« caches recalculables après avoir sur document existant ») ; **005b a explicitement reporté PT-16 à la tranche Facturation** (`005b_bc_multi_devis.sql` l.26-27, Q-C : « PT-16 (caches d'un BC annulé après avoir) reporté à la tranche Facturation » ; l.352).
-4. *Effet* : après un avoir sur un BC annulé, le recalcul de `montant_deja_facture_ht`/`avancement` est impossible ; CK-06 signalerait un écart permanent.
-5. *Correction séparée proposée* **[PR]** : V6-03 (option A : remplacer le trigger par une version qui laisse passer les seules colonnes de cache de facturation ; option B : caches d'un BC annulé figés à la date d'annulation et exclus de CK-06).
+3. *Règle concernée* : INV-173, INV-188 (avoirs possibles sur un BC annulé) + PT-16 ; modèle §7.2 (« caches recalculables après avoir sur document existant ») ; **005b a explicitement reporté PT-16 à la tranche Facturation** (`005b_bc_multi_devis.sql` l.26-27, Q-C ; l.352).
+4. *Effet* : sans correction, le recalcul de `montant_deja_facture_ht`/`avancement`/`date_100_facture` après un avoir sur un BC annulé est impossible ; CK-06 signalerait un écart permanent.
+5. *Correction séparée* **[VR]** : corrective **005c**, remplacement ciblé du trigger (§M.8), sans reconstruction de table.
 
-**I-3 — Avoir sur BC `termine` non tranché (TR-16 / PT-16)** ⛔ (décision, pas défaut de SQL)
-Règle d'origine : INV-47 « l'existant le refuse (TR-16), à confirmer au regard du CDC §22 ». Voir A6-12 / V6-03.
+**I-3 — Avoir sur BC `termine` (TR-16 / PT-16) : levé (VR-07)** (décision, pas défaut de SQL)
+Règle d'origine : INV-47 « l'existant le refuse (TR-16), à confirmer au regard du CDC §22 ». Résolution : avoir autorisé ; TR-16 n'existe pas dans le SQL et est créé sans ce refus (A6-12, CD-04).
 
-**I-4 — Ajout d'un trigger sur `bc_devis` (CK-14 « après solde »)** (optionnel)
-`tr_99_bc_devis_insert` (005b) ne connaît pas les factures ; **[PR]** ajouter un **nouveau** trigger `BEFORE INSERT ON bc_devis` plutôt que réécrire celui de 005b (aucune modification des objets existants). V6-10.
+**I-4 — Ajout d'un trigger sur `bc_devis` (CK-14 « après solde ») : règle fixée, couche ouverte** (optionnel)
+`tr_99_bc_devis_insert` (005b) ne connaît pas les factures ; **[PR]** ajouter un **nouveau** trigger `BEFORE INSERT ON bc_devis` plutôt que réécrire celui de 005b (aucune modification des objets existants). La règle (aucun devis après un solde, même crédité) est **verrouillée** (VR-09) ; seule la couche reste ouverte : V6-10.
 
-### 14.4 Assertions de tests existants sensibles à un rang 8
+### 14.4 Assertions de tests existants sensibles à l'ajout des rangs 8 (005c) et 9 (006)
 
 | Test | Assertion | Verdict avec 006 |
 |---|---|---|
-| `test_005a:604`, `test_005b:755` | `sorted(MIGRATIONS.glob("*.sql"))[:6]` / `[:7]` == `NOMS` | ✓ — tranche volontaire ; `006_facturation.sql` se trie **après** `005b_…` (`'5' < '6'`), hors des 6/7 premiers |
+| `test_005a:604`, `test_005b:755` | `sorted(MIGRATIONS.glob("*.sql"))[:6]` / `[:7]` == `NOMS` | ✓ — tranche volontaire ; `005c_…` se trie **après** `005b_…` (`'5b' < '5c'`) et `006_facturation.sql` après `005c_…` (`'5' < '6'`), hors des 6/7 premiers |
 | `test_003:273`, `test_004:480,1702`, `test_005:374` | `factures`, `facture_lignes`, `reglements`… absents | ✓ — ces tests rejouent des chaînes **tronquées à leur rang** (`SQL_001…SQL_004`, `NOMS` de 7 fichiers) |
 | `test_005b` (`TABLES_RANG7`, `TRIGGERS_*`, comptes exacts d'objets) | égalité d'ensembles sur la chaîne de 7 fichiers | ✓ — chaîne tronquée à 7 |
 | `test_005:372-377` (`SQL_005` sans référence aux tranches suivantes) | analyse du texte de `005_depenses.sql` | ✓ — le fichier 005 n'est pas modifié |
 
-**[DT]** La suite cumulative (694 tests) reste verte par construction tant que **aucun fichier 001–005b n'est modifié** ; 006 ne doit réécrire ni migration ni test existants (brief §25). Si V6-01 retient une corrective `005c` (rang 8), **006 passerait au rang 9** et ces assertions ne changent pas, mais le tableau de rangs du modèle (§17.1) devrait être mis à jour.
+**[DT]** La suite cumulative (694 tests) reste verte par construction tant qu'**aucun fichier 001–005b n'est modifié** ; 005c (rang 8) et 006 (rang 9) ne réécrivent ni migration ni test existants (brief §25). Le passage de 006 au rang 9 ne change pas ces assertions (les tests 005a/005b tronquent la chaîne à leur rang) ; le tableau de rangs du modèle (§17.1), D-55 et les conventions devront être alignés (§M.8).
 
 ### 14.5 Ce que le futur test 006 doit prouver (non-régression)
 
-Chaîne 001 → 006 : `integrity_check = ok`, `foreign_key_check` vide ; ensembles de tables/triggers/index du rang 7 inchangés + objets de 006 ; DDL des tables existantes identique octet pour octet (sauf trigger(s) remplacé(s) par décision V6-03, listés explicitement) ; 004/005b (`tr_12_*`, `tr_13_*`, `tr_17`, `tr_18`, `tr_19`, `tr_99_*`) toujours effectifs ; CK-13 et CK-14 (clauses de 005b) toujours vides sur des données cohérentes, y compris avec factures.
+Chaîne 001 → 006 (rang 9, 005c incluse) : `integrity_check = ok`, `foreign_key_check` vide ; ensembles de tables/triggers/index du **rang 8** (rang 7 + 005c, qui ne crée ni ne supprime aucun objet nommé) inchangés + objets de 006 ; DDL des tables existantes identique octet pour octet ; seul `tr_12_bons_commande_annule` diffère de son DDL de rang 7 (remplacé par 005c, testé en 005c) ; 004/005b (`tr_12_contrat`, `tr_13_*`, `tr_17`, `tr_18`, `tr_19`, `tr_99_*`) toujours effectifs ; CK-13 et CK-14 (clauses de 005b) toujours vides sur des données cohérentes, y compris avec factures.
 
 ---
 
@@ -736,41 +1011,44 @@ Format de chaque point : **sources en tension** (document + section) → **natur
 - *Hiérarchie* : les décisions D-40 → D-55 et les errata E-10 → E-20 sont celles que 005a/005b ont implémentées ; le présent cadrage les suit.
 - *Résolution [PR]* : intégrer ou confirmer la V3.13 comme référence avant de figer le SQL 006. *Statut* : **ouvert (V6-18)**.
 
-### A6-01 — « BC gelé » : le brief, le modèle V3.13 et les CHECK de 004 ne disent pas la même chose ⛔
-- *Sources en tension* : brief §4 (« Le BC est gelé après le premier **encaissement actif** d'un acompte, d'une situation ou d'un solde ; une facture d'acompte émise mais non payée ne gèle pas »), brief §16, §24, rappel 005b (« Un BC gelé peut recevoir un nouveau devis ») **vs** journal des invariants (INV-33 et INV-35 **retirés le 2026-10-03**, E-10), métier §9 (« Aucun document n'évolue par un “gel” progressif »), modèle §7.1 (PT-8 : suppression ou conservation informative de `frozen_at`, « choix non fait »), modèle §2.5 (`statut` BC = 3 valeurs, **pas de `gele`**), DDL de 004/005b (`frozen_at` conservé, CHECK `termine ⇒ frozen_at`, `date_100_facture ⇒ frozen_at`), 005b l.30-31 et Q-B (« frozen_at ne ferme pas le rattachement »).
-- *Nature* : le brief reprend une règle **retirée** (variante de l'ancien TR-15), sans décision postérieure qui la rétablisse ; et elle est **incompatible** avec les CHECK de `bons_commande` : sous la règle du brief, un solde **émis non encaissé** (cas C-08 : solde `0.00` ; ou impayé) ne peut pas poser `date_100_facture` (le CHECK exige `frozen_at`), ni un BC passer `termine` par pur absorption d'avoir (C-10) sans aucun encaissement.
-- *Hiérarchie* : décisions validées et invariants (E-10, journal) priment sur un énoncé de brief non repris dans le registre ; mais le brief émane du propriétaire du produit : seule une décision peut trancher.
-- *Résolutions [PR]* (V6-01) : **(a)** supprimer `frozen_at`, TR-14 (×2) et les CHECK qui l'utilisent (migration corrective avant 006, reconstruction de `bons_commande`, protocole conv. §5) ; **(b1)** conserver `frozen_at` comme marqueur informatif « premier événement financier » posé par le service **à l'émission de la première facture** (les CHECK de 004 restent satisfaits) ; **(b2)** conserver `frozen_at` posé au **premier encaissement** (règle du brief) — alors les deux CHECK doivent être retirés (reconstruction) et la pose relève de **007**.
-- *Statut* : **bloquant, ouvert**. Aucun objet de 006 ne dépend de `frozen_at` hors I-1 (§14.3).
+### A6-01 — « BC gelé » : le brief, le modèle V3.13 et les CHECK de 004 ne disaient pas la même chose — **résolu (VR-01 à VR-03)**
+- *Sources en tension* : brief §4 (« Le BC est gelé après le premier **encaissement actif** d'un acompte, d'une situation ou d'un solde ; une facture d'acompte émise mais non payée ne gèle pas »), brief §16, §24, rappel 005b (« Un BC gelé peut recevoir un nouveau devis ») **vs** journal des invariants (INV-33 et INV-35 **retirés le 2026-10-03**, E-10), métier §9 (« Aucun document n'évolue par un “gel” progressif »), modèle §7.1 (PT-8 : « choix non fait »), modèle §2.5 (`statut` BC = 3 valeurs, **pas de `gele`**), DDL de 004/005b (`frozen_at` conservé, CHECK `termine ⇒ frozen_at`, `date_100_facture ⇒ frozen_at`), 005b l.30-31 et Q-B (« frozen_at ne ferme pas le rattachement »).
+- *Nature* : le brief reprenait une règle **retirée** (variante de l'ancien TR-15), sans décision postérieure qui la rétablisse ; elle était de plus **incompatible** avec les CHECK de `bons_commande` (un solde émis non encaissé, cas C-08, ne pourrait pas poser `date_100_facture`).
+- *Hiérarchie* : décisions validées et invariants (E-10, journal) > énoncé de brief non repris dans le registre (niveaux 1, 2, 5).
+- *Résolution [VR]* : **gel progressif abandonné ; `frozen_at` conservée à titre résiduel technique ; obligations O-1 à O-5 documentées** (§M.2). Écartées : (a) suppression de la colonne (reconstruction de `bons_commande` et `devis` non exigée par une règle validée) ; (b1) pose à l'émission de la première facture et (b2) pose au premier encaissement (elles donneraient à la colonne un sens métier que VR-02 interdit).
+- *Statut* : **verrouillé**. Aucun objet de 006 ne dépend de `frozen_at`.
 
-### A6-02 — Caches d'un BC annulé : le trigger SQL est plus strict que l'invariant ⛔
+### A6-02 — Caches d'un BC annulé : le trigger SQL était plus strict que l'invariant — **résolu (VR-04 à VR-06)**
 - *Sources* : `tr_12_bons_commande_annule` (004/005b : « seul updated_at est modifiable ») **vs** INV-173 (« seules évolutions : `updated_at` et les opérations de correction de documents existants (avoirs) »), INV-188, modèle §7.2 (ligne BC annulé : « caches recalculables après avoir sur document existant (PT-16) »), TR-12 « à adapter (PT-6, PT-16) ».
-- *Nature* : contradiction **SQL vs invariant** (le texte d'INV-173 prévoit l'effet des avoirs ; le trigger l'interdit).
-- *Hiérarchie* : invariant et décision (INV-173, INV-188) > implémentation SQL. Mais **quelles colonnes** évoluent précisément est la PROPOSITION PT-16, non validée.
-- *Résolution [PR]* (V6-03) : option **A** — remplacer `tr_12_bons_commande_annule` par une version qui autorise la seule modification des colonnes de cache de facturation (`montant_deja_facture_ht`, `avancement`, et `date_100_facture` selon V6-11) tout en gardant `statut`, `cancelled_at`, `motif_annulation`, `completed_at`, contrat et snapshots immuables ; option **B** — caches figés à la date d'annulation, exclus de CK-06 pour les BC annulés. L'option A est la seule qui respecte à la lettre le modèle §7.2 ; elle suppose de redéfinir un trigger de 005b par `DROP TRIGGER` + `CREATE TRIGGER` dans une migration (précédent : 005b l'a fait pour `tr_12`, `tr_13`, `tr_17`, `tr_18`).
-- *Statut* : **bloquant, ouvert**.
+- *Nature* : contradiction **SQL vs invariant** (CD-03).
+- *Hiérarchie* : invariant et décision (INV-173, INV-188) > implémentation SQL (niveau 7).
+- *Résolution [VR]* : option A retenue, portée par la corrective **005c** : remplacement de `tr_12_bons_commande_annule` qui autorise `montant_deja_facture_ht`, `avancement`, `date_100_facture` et garde `statut`, `completed_at`, `cancelled_at`, `motif_annulation`, `frozen_at`, contrat et snapshots immuables (§M.8). Option B (caches figés à la date d'annulation) écartée : un BC annulé n'est pas figé financièrement.
+- *Statut* : **verrouillé**.
 
-### A6-03 — Un avoir peut-il ramener un BC de `termine` à `en_cours` ?
-- *Sources* : métier §7 (« Le BC repasse En cours si un règlement est annulé **ou si un avoir intervient** et que la condition n'est plus remplie ») ; CDC §16 texte d'origine (« Une annulation de règlement ou d'avoir peut faire revenir le BC à En cours ») **vs** CDC §16 amendement E-14/E-16 (« Un avoir n'étant pas annulable, **seule l'annulation d'un règlement** peut ramener le BC à En cours ») ; modèle §3.5 (« Passage `termine → en_cours` (annulation d'un règlement) ») ; 005b en-tête l.37-40 (« statut : cache qui revient à en_cours après avoir ») ; brief §6 (« Un avoir ne doit pas rouvrir automatiquement un BC »), §17 (« Ne pas créer de règle de réouverture automatique »).
-- *Nature* : vocabulaire ambigu — « rouvrir » vise tantôt le **rattachement de devis** (INV-187 : un avoir ne rouvre jamais), tantôt le **statut** `termine → en_cours`.
-- *Analyse [DT]* : `termine ⇔ solde actif ∧ Σ reste_du = 0` (INV-42). Un avoir ne peut que *réduire* un `reste_du` ; il ne peut ramener le BC à `en_cours` **que s'il neutralise le solde** (avoir total sur le solde), car alors « solde actif » devient faux. Un avoir partiel, ou sur un acompte/une situation, ne change jamais `termine`.
-- *Hiérarchie* : INV-42 (formule validée) et modèle §3.5 > texte du CDC ; métier §7 et CDC §16 amendement se contredisent entre eux (métier > CDC dans la hiérarchie du projet, mais l'amendement CDC est postérieur et rattaché à E-14).
-- *Résolution [PR]* : ne **créer aucune règle de réouverture** ; le statut est toujours le résultat de la formule INV-42 recalculée par le service. Si l'on veut interdire qu'un avoir total sur un solde d'un BC `termine` repasse le BC `en_cours`, il faut une décision explicite (cela empêcherait d'ailleurs le remplacement du solde par arbitrage B). *Statut* : **ouvert (V6-03)**.
+### A6-03 — Un avoir peut-il ramener un BC de `termine` à `en_cours` ? — **résolu (VR-07, VR-08)**
+- *Sources* : métier §7 l.272 (« Le BC repasse En cours si un règlement est annulé **ou si un avoir intervient** et que la condition n'est plus remplie ») ; CDC §16 texte d'origine (« Une annulation de règlement ou d'avoir peut faire revenir le BC à En cours ») **vs** CDC §16 amendement E-14/E-16 (« Un avoir n'étant pas annulable, **seule l'annulation d'un règlement** peut ramener le BC à En cours ») ; modèle §3.5 (« Passage `termine → en_cours` (annulation d'un règlement) ») ; 005b en-tête l.37-40 ; brief §6 et §17 (« Un avoir ne doit pas rouvrir automatiquement un BC »).
+- *Nature* : vocabulaire ambigu : « rouvrir » vise tantôt le **rattachement de devis** (INV-187), tantôt le **statut** `termine → en_cours` (CD-05, CD-10).
+- *Analyse [DT]* : `termine ⇔ solde actif ∧ Σ reste_du = 0` (INV-42). Un avoir ne peut ramener le BC à `en_cours` **que s'il neutralise le solde actif** ; un avoir partiel, ou sur un acompte ou une situation, ne change pas `termine`.
+- *Hiérarchie* : INV-42 (niveau 2) et modèle §3.5 > texte du CDC ; métier §7 (niveau 4) > CDC §16 sur ce point.
+- *Résolution [VR]* : aucune règle de **réouverture commerciale** ; le statut est le résultat de la formule INV-42 recalculée par le service ; un avoir total qui neutralise le solde actif peut faire passer l'**état dérivé** à `en_cours`, sans rattachement de devis possible (axes 1 et 2 : §M.3 ; cas A à D : §M.5).
+- *Statut* : **verrouillé**.
 
-### A6-04 — « Actif » / « entièrement créditée » (PT-9) : trois endroits seulement
-- *Sources* : INV-52 (« “actif” = non entièrement neutralisé par un avoir total (E-14) », énoncé comme règle) **vs** modèle §3.2, §3.4, §3.5, §4.8 (« la notion d'“actif” éventuellement conservée … est une **proposition** (PT-9) ; l'état d'une facture entièrement créditée est à définir »), INV-42, INV-43, INV-56, INV-72 (même terme), modèle §19 intro (« aucune n'est une décision de Rémy »).
-- *Nature* : un invariant énonce une définition que le modèle déclare encore proposition.
+### A6-04 — « Actif » / « entièrement créditée » (PT-9) — **définition verrouillée (VR-12)**
+- *Sources* : INV-52 (« “actif” = non entièrement neutralisé par un avoir total (E-14) », énoncé comme règle) **vs** modèle §3.2, §3.4, §3.5, §4.8 (« la notion d'“actif” éventuellement conservée … est une **proposition** (PT-9) »), INV-42, INV-43, INV-56, INV-72, modèle §19 intro.
+- *Nature* : un invariant énonce la définition que le modèle déclare encore proposition (CD-06).
 - *Analyse [DT]* : la **facturation nette n'en dépend pas** (§6.2). « Actif » ne sert qu'à (i) l'**unicité** d'acompte/solde/situation, (ii) `date_100_facture`/`termine`, (iii) `reste_du` (007).
-- *Résolution [PR]* : `neutralisee(F)` ⇔ `F.type <> 'avoir'` ∧ `F.total_ht > 0.00` ∧ `Σ avoirs(F) = F.total_ht` ; `actif` = non neutralisée. *Statut* : **ouvert (V6-02)**.
+- *Résolution* : **[VR]** « actif » = non totalement absorbé par les avoirs rattachés (lecture **cumulative** : plusieurs avoirs partiels peuvent neutraliser une facture), sans mécanisme de statut supplémentaire ; **[PR]** formule dérivée des données `neutralisee(F)` ⇔ `F.type <> 'avoir'` ∧ `F.total_ht > 0.00` ∧ `Σ avoirs(F) = F.total_ht`.
+- *Statut* : définition **verrouillée** ; mécanisme technique : V6-02 (résiduel) ; solde `0.00` : QO-2.
 
 ### A6-05 — Mécanisme d'unicité sans `cancelled_at`
 - *Sources* : modèle §4.8 « Unicité » et §8 « index uniques » (obsolètes, remplacement : PT-9) ; INV-52 (couche « SVC, TRG (PT-9) »).
 - *Résolution [PR]* : triggers `BEFORE INSERT` ensembliste (`EXISTS` sur les factures du même BC / même `devis_id` / même `situation_numero` non neutralisées) ; un index partiel ne peut pas exprimer un état dérivé. Aucune concurrence à craindre : une écriture SQLite est sérialisée et le numéro est réservé sous `BEGIN IMMEDIATE`. *Statut* : suit V6-02.
 
-### A6-06 — Sort de `date_100_facture` après avoir total sur le solde puis nouveau solde
-- *Sources* : modèle §3.5 (« sort … À CONCEVOIR (PT-9) ») ; INV-43 (« sort en cas d'avoir total sur le solde : PT-9 ») ; DDL de 004 (`CHECK (date_100_facture IS NULL OR avancement = '100.00')`) ; modèle §3.5 (« `date_100_facture` ≠ `garanties.date_declenchement` … peuvent diverger volontairement »).
-- *Analyse [DT]* : tant que le solde est neutralisé, il n'y a plus de « solde actif », donc `avancement` < 100.00 ; le CHECK de 004 **impose alors** `date_100_facture = NULL`. À l'émission du nouveau solde, la formule documentée (« date d'émission du premier solde **actif** ») donne la date du *nouveau* solde — ce qui explique que le modèle prévoit la divergence avec `garanties.date_declenchement` (première date, conservée).
-- *Conséquence à noter* : la clôture à 30 jours des dépenses (D-31, INV-103) se mesure depuis `date_100_facture` ; un nouveau solde **redémarre** donc cette fenêtre. *Résolution [PR]* : appliquer la formule telle quelle. *Statut* : ouvert (V6-11).
+### A6-06 — Sort de `date_100_facture` après avoir total sur le solde puis nouveau solde — **résolu (VR-10, VR-13)**
+- *Sources* : modèle §3.5 (« sort … À CONCEVOIR (PT-9) ») ; INV-43 (« sort en cas d'avoir total sur le solde : PT-9 ») ; DDL de 004 (`CHECK (date_100_facture IS NULL OR avancement = '100.00')`) ; modèle §3.5 (`date_100_facture` ≠ `garanties.date_declenchement`, divergence voulue).
+- *Analyse [DT]* : tant que le solde est totalement crédité, il n'y a plus de « solde actif », donc `avancement` < 100.00 ; le CHECK de 004 **impose** alors `date_100_facture = NULL` (dans le même `UPDATE`). À l'émission du nouveau solde, la formule documentée (« date d'émission du premier solde **actif** ») donne la date du *nouveau* solde ; `garanties.date_declenchement` garde la première date.
+- *Conséquence, rectifiée* : la règle des 30 jours des dépenses (D-31, INV-103, INV-199) est une règle de **service Dépenses** qui lit `bons_commande.date_100_facture` à l'instant du rattachement. 006 **ne l'implémente pas, ne la réinitialise pas, ne la prolonge pas.** La version antérieure de ce paragraphe écrivait qu'un nouveau solde « redémarre » la fenêtre : formulation retirée (CD-01, §M.10). Aucune colonne `fournisseurs.date_100_facture` n'existe.
+- *Résolution [VR]* : appliquer la formule telle quelle (VR-10). *Statut* : **verrouillé**.
 
 ### A6-07 — TR-02 : clé, ligne de séquence absente, cross-année, qui écrit `derniere_date`
 Voir §5.3 (quatre points). *Statut* : ouvert (V6-07).
@@ -783,15 +1061,16 @@ Voir §1.2. *Statut* : ouvert (V6-08). *[PR]* l'avoir est le seul document corre
 
 ### A6-10 — Correction d'un avoir erroné ; « avoir total » = un avoir ou un cumul ?
 - *Sources* : métier §14 (« la correction d'un avoir erroné est à concevoir (PT-9) ») ; INV-76 et modèle §3.3 (« Σ avoirs actifs ≤ M ») ; arbitrage B et INV-185 (« un **avoir total** … ») ; TR-23 (« avoir sur avoir interdit »).
-- *Analyse [DT]* : plusieurs avoirs partiels peuvent s'additionner jusqu'à `M` ; le texte parle d'« un avoir total » au singulier. Les deux lectures (avoir unique = montant de l'origine ; ou Σ avoirs = montant) ne diffèrent que si l'on cumule des partiels. *[PR]* retenir la lecture **cumulative** (`Σ avoirs = total_ht`) : la lecture « avoir unique » laisserait une facture entièrement créditée par trois avoirs *non remplaçable*, sans raison documentée. Pour l'avoir erroné : aucun mécanisme n'existe (pas d'annulation d'avoir, pas d'avoir sur avoir) ; si l'avoir était total, la nouvelle facture du même type en reproduit l'effet ; **s'il était partiel, aucune correction n'est documentée**. Ne pas inventer de chaîne de correction (brief §7). *Statut* : ouvert (V6-02, V6-08).
+- *Analyse [DT]* : plusieurs avoirs partiels peuvent s'additionner jusqu'à `M` ; le texte parle d'« un avoir total » au singulier. Les deux lectures (avoir unique = montant de l'origine ; ou Σ avoirs = montant) ne diffèrent que si l'on cumule des partiels. *[PR]* retenir la lecture **cumulative** (`Σ avoirs = total_ht`) : la lecture « avoir unique » laisserait une facture entièrement créditée par trois avoirs *non remplaçable*, sans raison documentée. Pour l'avoir erroné : aucun mécanisme n'existe (pas d'annulation d'avoir, pas d'avoir sur avoir) ; si l'avoir était total, la nouvelle facture du même type en reproduit l'effet ; **s'il était partiel, aucune correction n'est documentée**. Ne pas inventer de chaîne de correction (brief §7). *Statut* : lecture cumulative **verrouillée** (VR-12, « avoirs … qui lui sont rattachés ») ; correction d'un avoir partiel erroné : **non conçue**, aucune règle inventée (V6-08).
 
 ### A6-11 — Frontière 006 / 007 pour `termine` et CK-06
 CK-06 (« caches BC = recalcul ») n'est complet qu'avec 007 pour `statut`/`completed_at` (dépendent des encaissements). En 006, il ne peut contrôler que `montant_deja_facture_ht`, `avancement`, `date_100_facture` et le cas particulier `termine` par absorption d'avoirs (C-10). *[DT]* *Statut* : à confirmer (V6-12).
 
-### A6-12 — Avoir sur BC `termine` (TR-16 / PT-16)
-- *Sources* : INV-47 (« Avoir sur BC `termine` : l'existant le refuse (TR-16), ce qui est à confirmer au regard de CDC §22 ») ; modèle §8 TR-16 (« sur BC `termine` : à confirmer ») ; PT-16 ; **vs** CDC §22 (l'avoir est « le mécanisme de correction ou de restitution après facturation lorsque cela est nécessaire », sans condition d'état), C-06 et C-13 (facture payée, avoir, remboursement), arbitrage B (remplacer un solde par avoir total).
-- *Hiérarchie* : INV-47 = énoncé « à confirmer », non décision ; CDC §22 et C-xx indiquent que refuser l'avoir sur BC `termine` empêcherait les cas de remboursement après règlement complet.
-- *Résolution [PR]* : autoriser l'avoir sur BC `termine` (TR-16 ne le refuse pas). *Statut* : ouvert (V6-03).
+### A6-12 — Avoir sur BC `termine` (TR-16 / PT-16) — **résolu (VR-07)**
+- *Sources* : INV-47 (« Avoir sur BC `termine` : l'existant le refuse (TR-16), ce qui est à confirmer au regard de CDC §22 ») ; modèle §8 TR-16 (« sur BC `termine` : à confirmer ») ; PT-16 ; **vs** CDC §22 (l'avoir est « le mécanisme de correction ou de restitution après facturation lorsque cela est nécessaire », sans condition d'état), C-06 et C-13 (facture payée, avoir, remboursement), arbitrage B.
+- *Hiérarchie* : INV-47 = énoncé « à confirmer », non décision ; CDC §22 et C-xx indiquent que refuser l'avoir sur BC `termine` empêcherait les cas de remboursement après règlement complet (CD-04).
+- *Résolution [VR]* : l'avoir est **autorisé** sur un BC `termine` ; ce n'est pas une réouverture commerciale. TR-16 n'existe pas dans le SQL (0 occurrence) : 006 le crée sans ce refus.
+- *Statut* : **verrouillé**.
 
 ### A6-13 — TR-22 « solde = formule 3.2 » vs modèle §14 « montants exacts de situation et de solde : service »
 - *Sources* : modèle §8 TR-22 et INV-57/INV-58 (couche TRG) **vs** modèle §14 (« Montants exacts de situation et de solde | service (formules §3) + tests C-03/C-04 »).
@@ -821,7 +1100,7 @@ Voir §12. Le modèle accepte le bloc mais ne détaille ni champs ni anomalies. 
 Modèle §4.8 : « lignes `deduction` (facturation nette antérieure, et remise globale de chaque devis rattaché) ». Seule la remise est « par devis ». *[PR]* ne rien imposer en SQL ; le service documente une ligne par facture antérieure ou une ligne de cumul. *Statut* : ouvert (V6-14).
 
 ### A6-20 — Types émissibles après neutralisation du solde
-Voir §4.2. *Statut* : ouvert (V6-09).
+Voir §4.2 et §M.7. *Statut* : réduit à **QO-1** (le reste est tranché : VR-09, VR-12, CD-07).
 
 ### A6-21 — `date_emission` : passée, future, période facturée
 Aucune source n'encadre `date_emission` autrement que par TR-02 et la borne de service ; aucune date de période facturée n'est documentée. *[PR]* ne rien ajouter. *Statut* : ouvert (V6-17).
@@ -830,11 +1109,11 @@ Aucune source n'encadre `date_emission` autrement que par TR-02 et la borne de s
 - *Sources* : INV-194 (historique métier utile), modèle §2.5 (`historique.type_evenement` : `emission`, `avoir`), §4.13–§4.15, D-34 (traités « dans leur contexte propre ») **vs** chaîne réelle 001 → 005b (aucune de ces tables).
 - *Résolution [PR]* : 006 n'écrit aucun événement et ne référence aucune de ces tables (précédent : 005 « pas d'historique propre aux dépenses » ; 005b ne crée pas d'événement `rattachement_devis`). Le service journalisera lorsque la table existera. *Statut* : ouvert (V6-19).
 
-### A6-23 — Rang de 006 si une corrective `005c` est décidée
-D-55 : rang = position dans la chaîne ordonnée ; `006` est réservé au rang 8 (modèle §17.1). Une corrective `005c` (PT-8 option a) s'insérerait avant 006 et la décalerait au rang 9 ; conv. §5 précise que les noms 006 → 010 sont des **réservations d'ordre**. *Statut* : ouvert (V6-01, V6-20).
+### A6-23 — Rang de 006 et corrective `005c` — **décidé (VR-06)**
+D-55 : rang = position dans la chaîne ordonnée ; `006` était réservé au rang 8 (modèle §17.1). La corrective `005c` (rang 8) précède 006, qui passe au **rang 9** ; conv. §5 précise que les noms 006 → 010 sont des **réservations d'ordre**. Les sources (D-55 complétée par D-56, modèle §17.1, conventions §5) ont été alignées le 2026-10-05, avant l'écriture de 005c (§M.8). *Statut* : **verrouillé** ; nommage : V6-20.
 
 ### A6-24 — Un solde à `0.00` ne peut pas être corrigé par avoir
-INV-55 impose `avoir.total_ht > 0.00` et INV-76 `Σ avoirs ≤ montant de l'origine` : un solde à `0.00` ne peut recevoir aucun avoir, donc n'est jamais « neutralisé » et ne peut être remplacé (arbitrage B). *[DT]* conséquence directe de règles validées ; aucune règle n'organise la correction d'un solde `0.00` émis par erreur. *Statut* : à confirmer (V6-02).
+INV-55 impose `avoir.total_ht > 0.00` et INV-76 `Σ avoirs ≤ montant de l'origine` : un solde à `0.00` ne peut recevoir aucun avoir, donc n'est jamais « neutralisé » et ne peut être remplacé (arbitrage B). *[DT]* conséquence directe de règles validées ; aucune règle n'organise la correction d'un solde `0.00` émis par erreur. *Statut* : à confirmer (**QO-2**).
 
 ### A6-26 — Caractère bloquant de CK-04/05/06 à la restauration
 Voir §13. *Statut* : ouvert (V6-12).
@@ -843,33 +1122,33 @@ Voir §13. *Statut* : ouvert (V6-12).
 
 ## 16. Proposition de structure de `006_facturation.sql` (brief §23, question 19)
 
-> **PROPOSITION**, rédigée avant toute décision de §19. Aucun SQL n'est écrit ici. Le contenu dépend de V6-01, V6-02, V6-03 (⛔). Le rang et la place dans la chaîne sont ceux de D-55 (rang 8), sous réserve de V6-01/V6-20.
+> **PROPOSITION**, rédigée avant les décisions de §19 et **alignée le 2026-10-05 sur VR-01 à VR-13**. Aucun SQL n'est écrit ici. V6-01 et V6-03 sont verrouillées ; le contenu dépend encore de V6-04 et V6-05 (⛔). Le rang de 006 est **9** (corrective 005c au rang 8, §M.8).
 
 ### 16.1 En-tête de fichier (comme 005 et 005b)
 
-Références (modèle §4.8, §6, §8, §9, §14, §17.1 ; conv. §5, §9 ; cadrage 006 et décisions V6-xx validées), invariants cités, décisions, propositions techniques mises en œuvre (PT-9, PT-10, PT-11, PT-16 selon décisions), **liste explicite de ce qui n'est pas créé** (`reglements`, `garanties`, `historique`, `documents`, TVA/TTC, statut, annulation, brouillon, structure d'import au-delà de BLOC-IMP, exécution/remise au prorata PT-12/13, aucune donnée initiale), description d'exécution par le runner (une transaction, `user_version = 8` posé par le runner avant COMMIT, aucun `BEGIN`/`COMMIT`/`PRAGMA` dans le fichier, `foreign_keys=ON`, `recursive_triggers=ON`).
+Références (modèle §4.8, §6, §8, §9, §14, §17.1 ; conv. §5, §9 ; cadrage 006 et décisions V6-xx validées), invariants cités, décisions, propositions techniques mises en œuvre (PT-9, PT-10, PT-11, PT-16 selon décisions), **liste explicite de ce qui n'est pas créé** (`reglements`, `garanties`, `historique`, `documents`, TVA/TTC, statut, annulation, brouillon, structure d'import au-delà de BLOC-IMP, exécution/remise au prorata PT-12/13, aucune donnée initiale), description d'exécution par le runner (une transaction, `user_version = 9` posé par le runner avant COMMIT, aucun `BEGIN`/`COMMIT`/`PRAGMA` dans le fichier, `foreign_keys=ON`, `recursive_triggers=ON`).
 
 ### 16.2 Contenu minimal et suffisant (ordre d'écriture)
 
 | # | Bloc | Contenu | Remarques |
 |---|---|---|---|
-| 1 | Gardes d'exécution (optionnelles) | `user_version = 7` (chaîne 005b → 006) ; au besoin, vérification que la base n'a ni `factures` ni `facture_lignes` | précédent 005b (tables temporaires `CHECK`) ; 005 n'en a pas — **[DV]** simple choix de style |
+| 1 | Gardes d'exécution (optionnelles) | `user_version = 8` (chaîne 005c → 006) ; au besoin, vérification que la base n'a ni `factures` ni `facture_lignes` | précédent 005b (tables temporaires `CHECK`) ; 005 n'en a pas — **[DV]** simple choix de style |
 | 2 | `CREATE TABLE factures` (STRICT) | colonnes et CHECK §2.2 | aucune ligne insérée |
 | 3 | `CREATE TABLE facture_lignes` (STRICT) | colonnes et CHECK §2.3 | |
 | 4 | Index | §2.2, §2.3 | un par FK + recherche (modèle §9) |
 | 5 | Triggers d'immuabilité | `tr_20_factures_no_update`, `tr_21_factures_no_delete`, `tr_21_facture_lignes_no_update`, `tr_21_facture_lignes_no_delete` | messages `INV-53: …`, `INV-06: …` |
 | 6 | Triggers d'insertion de `factures` | `tr_02_…`, `tr_16_…`, `tr_22_…` (×3), `tr_23_…` | gardes pures, ASCII sans accents (style 005b : `SELECT RAISE(ABORT, 'INV-xx: …') WHERE …`) |
 | 7 | Trigger d'insertion de `facture_lignes` | selon V6-14 | |
-| 8 | (selon décisions) | trigger `bc_devis` « après solde » (V6-10) ; **remplacement** de `tr_12_bons_commande_annule` (V6-03 option A) ; reconstruction ou retrait liés à `frozen_at` (V6-01 : plutôt dans une corrective `005c`) | tout remplacement d'un objet existant est listé et testé comme tel |
+| 8 | (selon décisions) | trigger `bc_devis` « après solde » (V6-10 ; règle fixée par VR-09) | **aucun remplacement d'objet existant dans 006** : le remplacement de `tr_12_bons_commande_annule` est porté par la corrective **005c** (rang 8) ; `frozen_at` : aucune action (VR-02) |
 | 9 | Pied de fichier | aucun `INSERT` de donnée métier ; `sqlite_sequence` non touchée | |
 
 ### 16.3 Ce que le fichier ne doit pas contenir (garde-fous)
 
-`reglements`, `garanties`, colonnes TVA/TTC, `statut`, `cancelled_at`, `updated_at`, drapeau « brouillon », triggers qui **écrivent** dans une autre table (sauf décision V6-07), CHECK inter-tables, borne d'année, ligne de `numerotation_sequences`, objet référencé inexistant (`historique`, `documents`), `DROP`/`ALTER` de 001–005b hors décisions V6-01/V6-03.
+`reglements`, `garanties`, colonnes TVA/TTC, `statut`, `cancelled_at`, `updated_at`, drapeau « brouillon », triggers qui **écrivent** dans une autre table (sauf décision V6-07), CHECK inter-tables, borne d'année, ligne de `numerotation_sequences`, objet référencé inexistant (`historique`, `documents`), `DROP`/`ALTER` de 001–005c (le remplacement de `tr_12_bons_commande_annule` appartient à 005c), toute colonne ou règle `frozen_at`.
 
 ### 16.4 Volumétrie attendue (indicative, hors décisions de remplacement)
 
-2 tables ; ≈ 7 index ; ≈ 11 à 14 triggers (4 d'immuabilité, 1 chronologie, 1 BC/client, 3 TR-22, 1 TR-23, 1 lignes, 1 `bc_devis` optionnel) ; 0 vue ; 0 ligne de donnée. Soit un rang 8 de ≈ 99 à 103 objets nommés (79 + ≈ 20–24) — à recalculer à l'écriture.
+2 tables ; ≈ 7 index ; ≈ 11 à 14 triggers (4 d'immuabilité, 1 chronologie, 1 BC/client, 3 TR-22, 1 TR-23, 1 lignes, 1 `bc_devis` optionnel) ; 0 vue ; 0 ligne de donnée. Soit un **rang 9** de ≈ 99 à 103 objets nommés (79 au rang 7, 005c n'ajoutant aucun objet net, + ≈ 20–24) — à recalculer à l'écriture.
 
 ---
 
@@ -877,17 +1156,17 @@ Références (modèle §4.8, §6, §8, §9, §14, §17.1 ; conv. §5, §9 ; cadr
 
 ### 17.1 Conventions (conv. §7, tests 004/005/005b)
 
-- Fichier `src-tauri/tests/metier/test_006_facturation.py` ; en-tête décrivant l'objet, les sources et la numérotation **T-47** ; méthodes nommées `test_INV_xx_…` / `test_T47_…`.
-- Chaîne **001 → 006** rejouée avec un runner émulé (comme `test_005b` : `executescript`, `user_version = rang`) ; connexion de test avec `foreign_keys=ON` et `recursive_triggers=ON`, un test de contrôle de ces réglages ; helpers d'état BC `en_cours / gele / termine / annule / annule_gele` réutilisés de 005b (`test_005b:78-80`, `geler_bc`).
+- Fichier `src-tauri/tests/metier/test_006_facturation.py` ; en-tête décrivant l'objet, les sources et la numérotation **T-48** (T-47 = 005c) ; méthodes nommées `test_INV_xx_…` / `test_T48_…`.
+- Chaîne **001 → 006** (rang 9, 005c incluse) rejouée avec un runner émulé (comme `test_005b` : `executescript`, `user_version = rang`) ; connexion de test avec `foreign_keys=ON` et `recursive_triggers=ON`, un test de contrôle de ces réglages ; helpers d'état BC `en_cours / gele / termine / annule / annule_gele` réutilisés de 005b (`gele` = état de test sans statut ni effet : VR-02) (`test_005b:78-80`, `geler_bc`).
 - Contrôles CK écrits en constantes SQL (`CK01_…`, `CK04_…`, `CK05_…`, `CK06_…`, `CK13_…`, `CK14_…`) comme dans 005b — **aucun nouveau CK**.
 - Messages de triggers asserts par identifiant d'invariant (`refuse_inv("INV-53", …)`), comme dans 005.
-- Effectif indicatif : **180 à 230 tests** (004 : 150 ; 005 : 158 ; 005a : 119 ; 005b : 153).
+- Effectif indicatif : **220 à 290 tests** (180 à 230 avant les groupes G22 à G24) (004 : 150 ; 005 : 158 ; 005a : 119 ; 005b : 153).
 
 ### 17.2 Groupes de tests (brief §24 + cadrage)
 
 | Groupe | Contenu (liste non exhaustive) | Source |
 |---|---|---|
-| **G1 Migration et chaîne** | migration sur base issue de 001–005b ; rang et `user_version` posé par le runner ; atomicité (échec au milieu → aucun objet partiel, `user_version` inchangé) ; non-rejeu ; objets exacts créés (tables, index, triggers) et rien d'autre ; tables/triggers/index du rang 7 inchangés ; `integrity_check`, `foreign_key_check` | conv. §5 ; `test_T44_*`, `test_T46_*` |
+| **G1 Migration et chaîne** | migration sur base issue de 001–005c ; rang et `user_version` posé par le runner ; atomicité (échec au milieu → aucun objet partiel, `user_version` inchangé) ; non-rejeu ; objets exacts créés (tables, index, triggers) et rien d'autre ; tables/triggers/index du rang 8 (005c) inchangés ; `integrity_check`, `foreign_key_check` | conv. §5 ; `test_T44_*`, `test_T46_*` |
 | **G2 Structure** | tables STRICT, AUTOINCREMENT, colonnes exactes et types, NOT NULL, défauts `created_at`, FK et `ON DELETE` (RESTRICT), index, UNIQUE, absence de `updated_at`/`statut`/`cancelled_at`/TVA/TTC/`frozen_at`/`date_validation`, absence de BLOC-IMP+ et de `legacy_numero`, aucun BLOC-IMP sur `facture_lignes` | modèle §4.8 ; `test_T44_colonnes_exactes` |
 | **G3 CHECK de `factures`** | F1 → F12 une par une, avec valeurs limites : type inconnu ; avoir sans origine / origine sans avoir ; motif vide ; échéance présente/absente selon type ; échéance < émission ; situation incomplète (chacune des 6 colonnes) ; `total_ht` `0.00` pour acompte/situation/avoir refusé, pour solde accepté ; négatif refusé ; préfixe/format/année du numéro (v6) ; `origine='import'` numéro libre mais non vide ; `legacy_*` interdits pour `v6` ; dates mal formées et dates inexistantes (`2026-02-30`) ; **absence de borne d'année** (`2100-01-01` accepté en SQL) | INV-55, INV-59, INV-131, D-38 |
 | **G4 CHECK de `facture_lignes`** | `ordre ≥ 1`, `UNIQUE(facture_id, ordre)`, désignation vide, unités, `remise_*` cohérents, familles DL/D2S, `deduction ⇔ négatif`, `-0.00` refusé, `deduction ⇒ quantite='1'` | modèle §4.8, §2.3 |
@@ -898,16 +1177,19 @@ Références (modèle §4.8, §6, §8, §9, §14, §17.1 ; conv. §5, §9 ; cadr
 | **G9 Types : acompte** | acompte prévu vs facture vs (absence de) règlement ; acompte sans paiement possible ; un acompte non neutralisé par devis ; devis hors BC refusé ; plafond ≤ `devis.total_ht` ; acompte après solde refusé ; deux devis → deux acomptes ; nouvel acompte après avoir total accepté, après avoir partiel refusé | INV-189, INV-57, C-34 |
 | **G10 Types : situation** | pourcentage et montant ; cumul ; `montant_deja_facture_ht` = nette avant ; nette après ≤ (ou <) contractuel ; situation après solde refusée ; numéro unique par BC non neutralisé ; après avoir : C-09 ; 6 colonnes figées ; vecteurs C-03, C-37 | INV-57, INV-190, C-03, C-09, C-37 |
 | **G11 Types : solde** | final obligatoire ; `0.00` accepté (C-08) ; formule `contractuel − nette` (vecteurs C-04) ; deuxième solde refusé ; solde après avoir partiel de l'ancien refusé ; solde après avoir total accepté (nouveau numéro) ; acompte/situation après solde refusés | INV-58, C-04, C-07, C-08, C-33 |
-| **G12 Types : avoir** | origine obligatoire, non avoir, même BC ; Σ ≤ origine (dernier centime) ; avoir sur avoir refusé ; avoir sur BC annulé accepté ; sur BC `termine` selon V6-03 ; motif ; échéance NULL ; avoir partiel ne rouvre pas ; avoir total puis nouvelle facture ; avoir sur solde `0.00` refusé | INV-76, INV-78, INV-188, C-33, C-35, C-36 |
+| **G12 Types : avoir** | origine obligatoire, non avoir, même BC ; Σ ≤ origine (dernier centime) ; avoir sur avoir refusé ; avoir sur BC annulé accepté ; sur BC `termine` **accepté** (VR-07) ; motif ; échéance NULL ; avoir partiel ne rouvre pas ; avoir total puis nouvelle facture ; avoir sur solde `0.00` refusé | INV-76, INV-78, INV-188, C-33, C-35, C-36 |
 | **G13 BC multi-devis** | matrice des états `en_cours`, `gele` (marqueur), `termine`, `annule`, `annule_gele` × {acompte, situation, solde, avoir} ; BC à 1, 2, 3 devis ; contractuel = Σ ; solde reprend les lignes de tous les devis ; remise globale par devis (lignes `deduction`) ; rattachement refusé après solde (y compris neutralisé) | INV-187, INV-188, C-34, C-35 |
 | **G14 Lignes et composition** | par type (synthèse/prestation/déduction) ; `bc_ligne_id` d'un autre BC refusé ; `bc_ligne_id` NULL accepté ; `Σ lignes = total_ht` : CK-05 vide sur données cohérentes, **non vide** sur incohérence fabriquée ; facture sans ligne : CK-04 | INV-54, INV-62 |
-| **G15 Caches du BC** | CK-06 : égalité caches/recalcul sur scénarios (C-03 → C-10) ; écriture en un seul `UPDATE` (aucun état intermédiaire refusé par les CHECK de 004) ; BC annulé : selon V6-03 ; `date_100_facture` selon V6-11 | INV-46, INV-164 |
+| **G15 Caches du BC** | CK-06 : égalité caches/recalcul sur scénarios (C-03 → C-10) ; écriture en un seul `UPDATE` (aucun état intermédiaire refusé par les CHECK de 004) ; BC annulé : trois caches évolutifs, `statut` et `completed_at` figés (VR-05 ; G22) ; `date_100_facture` selon VR-10 | INV-46, INV-164 |
 | **G16 Dates** | `date_emission` / `date_echeance` / `created_at` ; échéance = émission acceptée ; chronologie TR-02 ; fin d'année / bissextile (`2028-02-29`) | INV-10, INV-24, INV-59 |
 | **G17 Import** | `origine='import'` : numéro libre non vide ; unicité ; immutabilité ; mêmes triggers que `v6` (acompte en double refusé, Σ échéance, chronologie) ; ordre d'insertion `date_emission` puis `ref` ; BC historique annulé (factures insérées `en_cours` puis BC annulé) ; absence de `legacy_numero` | INV-131, modèle §10.4–10.5 |
-| **G18 Sauvegarde/restauration** | migration d'une base de rang 5, 6 et 7 vers 8 (tables vides, ids conservés, `sqlite_sequence`) ; restauration + CK-13/CK-14 ; séquences après restauration d'une base plus ancienne (C-18 côté base : `dernier_numero` jamais diminué) | modèle §11.2 |
+| **G18 Sauvegarde/restauration** | migration d'une base de rang 5, 6, 7 et 8 vers 9 (tables vides, ids conservés, `sqlite_sequence`) ; restauration + CK-13/CK-14 ; séquences après restauration d'une base plus ancienne (C-18 côté base : `dernier_numero` jamais diminué) | modèle §11.2 |
 | **G19 TVA et absences** | aucune colonne `tva`/`ttc`/`taux`/`exoneration`/`statut`/`cancelled_at`/`motif_annulation`/`updated_at`/`frozen_at` ; aucune table `reglements`/`garanties`/`historique`/`documents`/`parametres_entreprise` ; aucune référence aux tranches suivantes dans le texte du SQL | `test_T44_aucune_dependance_aux_tranches_suivantes`, `test_T44_aucune_structure_…ni_de_tva…` |
-| **G20 Non-régression 001–005b** | pour **chaque** objet de rang 7 (hors remplacements décidés) : même DDL ; les suites 001–005b rejouées ; invariants rappelés (tr_12 contrat, tr_13, tr_17, tr_18, tr_19, tr_99, tr_95/96, tr_97, tr_98, tr_101/102) ; CK-13 et CK-14 inchangés | brief §25 |
+| **G20 Non-régression 001–005c** | pour **chaque** objet de rang 8 (sauf `tr_12_bons_commande_annule`, remplacé par 005c et testé en 005c) : même DDL ; les suites 001–005b rejouées ; invariants rappelés (tr_12 contrat, tr_13, tr_17, tr_18, tr_19, tr_99, tr_95/96, tr_97, tr_98, tr_101/102) ; CK-13 et CK-14 inchangés | brief §25 |
 | **G21 Triggers = gardiens** | aucun trigger de 006 ne modifie une donnée (selon V6-07) ; aucun CHECK/trigger inter-tables de « miroir » | `test_T29_*`, `test_T44_triggers_ne_font_que_garder` |
+| **G22 BC annulé** (VR-04, VR-05) | acompte / situation / solde sur BC annulé refusés ; rattachement de devis refusé (`tr_99`) ; modification commerciale (colonnes du contrat) refusée ; modification de `statut`, `completed_at`, `cancelled_at`, `motif_annulation`, `frozen_at` refusée ; avoir sur document existant accepté ; recalcul des trois caches après avoir (un seul `UPDATE`) accepté ; `statut` reste `annule` ; aucune réouverture implicite ; règlement sur document existant : test porté par 007 (`reglements` n'existe pas en 006) | INV-173, INV-188, C-36, §M.4 |
+| **G23 BC `termine` et avoirs** (VR-07, VR-09, VR-10, VR-11) | cas A à D de §M.5 (avoir partiel sur acompte, situation, solde ; avoir total sur acompte ; avoir total sur solde) ; conservation ou évolution de `termine` ; `termine → en_cours` dans le cas D ; `completed_at` cohérent (CHECK) ; `date_100_facture` conservée / NULL / nouvelle valeur ; aucun devis après un solde **y compris crédité** (CK-14, service, trigger si V6-10) ; nouveau solde après solde crédité accepté ; acompte / situation après solde crédité refusés | INV-42, INV-43, INV-58, INV-187, C-07, C-33, C-35 |
+| **G24 `frozen_at` résiduel** (VR-02, VR-03) | O-1 à O-4 (pose conjointe, irréversibilité, NULL à la naissance, absence de comportement) ; les états de test `en_cours` et `gele` donnent les **mêmes** résultats de facturation ; aucune colonne `frozen_at` dans `factures` | §M.2 |
 
 ### 17.3 Cas chiffrés à traduire (modèle §13) : C-02 (à l'avoir près), C-03, C-04, C-07, C-08, C-09, C-14 → C-17, C-33 → C-37 ; C-05, C-06, C-10 → C-13 sont des cas de 007 *(sauf C-10 pour la partie « absorbé par avoir », vérifiable avec 006 seul)*.
 
@@ -932,7 +1214,7 @@ Références (modèle §4.8, §6, §8, §9, §14, §17.1 ; conv. §5, §9 ; cadr
 | **Triggers d'immuabilité** | `tr_20_*`, `tr_21_*` | suppression du trigger ; `BEFORE → AFTER` ; restriction de `UPDATE OF col` ; `WHEN` ajouté ; message modifié |
 | **Triggers d'insertion** | `tr_02`, `tr_16`, `tr_22_*`, `tr_23`, `tr_24`, `tr_99_bc_devis_*` | suppression de chaque `RAISE` d'un trigger multi-règles ; `WHERE` : `AND ↔ OR`, `= ↔ <>`, `< ↔ <=`, `IS NOT ↔ <>` (cas NULL), `EXISTS ↔ NOT EXISTS` ; `bc_id ↔ id` dans les jointures ; types ; conversion en centimes (`REPLACE(x,'.','')` retiré) ; signe d'un avoir dans la nette ; `+` ↔ `−` ; `SUM` sans `COALESCE` |
 | **Règles de calcul** | nette, solde, plafond d'acompte, nette après situation, Σ avoirs ≤ origine, définition de « neutralisée » | altération de la formule d'un chiffre ; inversion d'une comparaison ; omission d'un terme (avoirs, soldes, situations) |
-| **Règles de verrouillage** | états BC (`en_cours`, `termine`, `annule`) ; client du BC ; BC annulé accepte l'avoir ; interdictions après solde | inversion de la condition d'état ; retrait d'un état de la liste |
+| **Règles de verrouillage** | états BC (`en_cours`, `termine`, `annule`) ; client du BC ; BC annulé **et BC `termine`** acceptent l'avoir ; interdictions après solde (y compris crédité) | inversion de la condition d'état ; retrait d'un état de la liste |
 | **Index** | un par FK + recherche | suppression (détectée par la structure, §17.2 G2) |
 | **Requêtes CK** | CK-04, CK-05, CK-06, CK-13, CK-14 (clause après solde) | jointure modifiée, filtre inversé, colonne comparée altérée |
 
@@ -968,29 +1250,33 @@ Références (modèle §4.8, §6, §8, §9, §14, §17.1 ; conv. §5, §9 ; cadr
 3. Passe triggers d'insertion (TR-02, 16, 22, 23, lignes, `bc_devis`).
 4. Passe calculs/verrouillages (cas chiffrés C-xx).
 5. Passe CK et helpers de test.
-6. Rejeu complet de 001–005b sur la chaîne 001 → 006 (non-régression) ; si un trigger de 005b est remplacé (V6-03), **réévaluer la campagne de 005b** pour l'objet remplacé (conv. §7.1 : « Lorsqu'une correction est apportée à une migration déjà existante… »).
+6. Rejeu complet de 001–005c sur la chaîne 001 → 006 (non-régression). Le trigger de 005b remplacé par 005c (VR-06) est couvert par la **campagne ciblée de 005c** (conv. §7.1 : « Lorsqu'une correction est apportée à une migration déjà existante… ») ; 006 ne mute ni 005b ni 005c.
 
 Volumétrie indicative (**[PR]**, non documentée) : de l'ordre de **plusieurs centaines** de mutants (≈ 500 à 900), plus nombreux que pour 004 du fait des triggers multi-règles.
+
+### 18.6 Compléments du 2026-10-05
+
+Familles ajoutées à la campagne de 006 : définition de « neutralisée » (`=` ↔ `<=`/`<`, `total_ht > 0` supprimé), clause « un solde a existé » (neutralisé ou non), `EXISTS ↔ NOT EXISTS` sur les soldes, conditions d'état du BC dans TR-16 (`termine` accepté pour l'avoir), requêtes CK-06 (BC annulé : trois caches seulement) et CK-14. Campagne **ciblée** de 005c : ≈ 40 à 80 mutants **[PR]** (un trigger, ≈ 25 colonnes ; détail en §M.8, §M.9). Règle de clôture inchangée : **0 survivant non qualifié**.
 
 ---
 
 ## 19. Liste des décisions nécessitant notre validation (brief §27, question 18)
 
-Légende : ⛔ = bloque l'écriture du SQL (DDL ou trigger dont la forme en dépend) ; ◐ = à trancher avant le SQL mais avec une proposition par défaut raisonnable ; ○ = indépendant du SQL. « Recommandation » = **PROPOSITION**, jamais une décision. Aucune décision n'est prise ici.
+Légende : ⛔ = bloque l'écriture du SQL (DDL ou trigger dont la forme en dépend) ; ◐ = à trancher avant le SQL mais avec une proposition par défaut raisonnable ; ○ = indépendant du SQL ; ✔ = **verrouillée le 2026-10-05** (§M.1). « Recommandation » = **PROPOSITION**, jamais une décision. Les lignes marquées ✔ sont des décisions de Rémy ; les autres restent des propositions.
 
 | ID | Question | Options (la 1ʳᵉ = proposition) | Réf. | Prio |
 |---|---|---|---|---|
-| **V6-01** | **Sort de `frozen_at` (PT-8) et règle du brief « gel au premier encaissement »** : que devient la colonne et ses CHECK `termine ⇒ frozen_at`, `date_100_facture ⇒ frozen_at` ? | **(b1)** conserver comme marqueur informatif posé à l'émission de la 1ʳᵉ facture (CHECK de 004 satisfaits, aucune reconstruction) ; **(a)** supprimer colonne, TR-14, CHECK (corrective `005c`, reconstruction de `bons_commande` et `devis`) ; **(b2)** règle du brief : posé au 1ᵉʳ encaissement (retrait des CHECK, pose en 007) | A6-01, A6-23, modèle §7.1, INV-46, journal INV-33/35 | ⛔ |
-| **V6-02** | **PT-9** : définition d'« actif » / « entièrement créditée » ; « avoir total » = un avoir ou un cumul ; mécanisme d'unicité ; solde `0.00` non corrigeable | `neutralisee(F)` ⇔ `Σ avoirs(F) = F.total_ht > 0` ; unicité par triggers ; lecture cumulative ; maintenir le constat A6-24 sans règle nouvelle | A6-04, A6-05, A6-10, A6-24, INV-52 | ⛔ |
-| **V6-03** | **PT-16** : (i) caches d'un BC annulé après avoir ; (ii) avoir sur BC `termine` ; (iii) un avoir total sur le solde d'un BC `termine` peut-il ramener le BC à `en_cours` (par la formule INV-42) ? | (i) option A : remplacer `tr_12_…_annule` (colonnes de cache seulement) ; (ii) autoriser ; (iii) oui, par pur recalcul, sans règle de réouverture ; sinon option B pour (i) | A6-02, A6-03, A6-12, INV-47, INV-173, INV-188, 005b l.26-27 | ⛔ |
+| **V6-01** ✔ | **Sort de `frozen_at` (PT-8) et règle du brief « gel au premier encaissement »** | **Verrouillée (VR-01 à VR-03)** : gel progressif abandonné (E-10) ; colonne conservée, statut résiduel technique ; obligations techniques O-1 à O-5 ; aucune corrective pour `frozen_at` | A6-01, §M.2, modèle §7.1, INV-46, journal INV-33/35 | ✔ |
+| **V6-02** | **PT-9** : « actif » / « entièrement créditée » ; « avoir total » = un avoir ou un cumul ; mécanisme d'unicité ; solde `0.00` non corrigeable | **Définition verrouillée (VR-12)**, lecture cumulative incluse ; reste **[PR]** : unicité par triggers `EXISTS` ; solde `0.00` : QO-2 (aucune règle inventée) | A6-04, A6-05, A6-10, A6-24, INV-52 | ◐ |
+| **V6-03** ✔ | **PT-16** : caches d'un BC annulé après avoir ; avoir sur BC `termine` ; avoir total sur le solde d'un BC `termine` | **Verrouillée (VR-04 à VR-09)** : caches évolutifs sur BC annulé (`statut` reste `annule`) via la corrective **005c** ; avoir autorisé sur BC `termine` ; `termine → en_cours` possible par recalcul (état dérivé ≠ réouverture commerciale) | A6-02, A6-03, A6-12, INV-47, INV-173, INV-188, 005b l.26-27, §M.4, §M.5 | ✔ |
 | **V6-04** | **PT-10** : `factures.devis_id` (acompte seulement) ; un acompte non neutralisé par devis ; plafond = `devis.total_ht` ; acompte facturé = prévu ou seulement ≤ plafond ? | colonne `devis_id` + CHECK F8 ; plafond seulement | §6.4, §9.2, INV-189, D-48 | ⛔ |
 | **V6-05** | **PT-11** : colonnes de situation (`situation_mode`, `situation_valeur_saisie`) ; sens du « montant » (valeur cumulée visée) ; plafond strict `< 100 %` | cumulée ; strict | A6-17, A6-18, INV-57, INV-190, E-17 | ⛔ |
 | **V6-06** | **D6** : `situation_numero` réutilisable après avoir total d'une situation ? | non réutilisable (ordinal = max global + 1) | A6-18, audit conservation §4.6 | ◐ |
 | **V6-07** | **TR-02** : clé `(type, année de date_emission)` ; ligne de séquence absente ; qui écrit `derniere_date` (service ou trigger) | clé par type+date ; pas de création de ligne par trigger ; écriture par le service ; trigger garde pure | A6-07, §5.3, modèle §8, §10.5–10.6 | ◐ |
 | **V6-08** | **« Document correctif »** = avoir uniquement ? **Correction d'un avoir erroné** (partiel) : rien n'est documenté | aucun 5ᵉ type ; laisser la correction d'un avoir partiel erroné non conçue et le dire | A6-09, A6-10, E-14, INV-185 | ◐ |
-| **V6-09** | Après avoir total sur le **solde**, quels types peuvent être émis ? | uniquement un nouveau solde | A6-20, modèle §3.2 vs TR-22 | ◐ |
-| **V6-10** | Garde SQL « aucun devis rattaché après un solde » (même neutralisé) : nouveau trigger sur `bc_devis`, ou service + CK-14 seulement ? | nouveau trigger (aucune réécriture de 005b) ; CK-14 reste le diagnostic | modèle §4.7, §14 ; INV-187 | ◐ |
-| **V6-11** | **`date_100_facture`** après avoir total du solde puis nouveau solde ; effet sur la fenêtre de 30 jours des dépenses | NULL pendant la neutralisation (CHECK de 004) ; date du nouveau solde | A6-06, INV-43, INV-103, D-31 | ◐ |
+| **V6-09** | Après avoir total sur le **solde**, quels types peuvent être émis ? | **Réduite à QO-1** : nouveau solde seulement (INV-58, E-14, C-33) ; reste le remplacement d'un acompte/d'une situation crédité(e) alors qu'un solde existe | A6-20, §M.7, CD-08 | ◐ |
+| **V6-10** | Garde SQL « aucun devis rattaché après un solde » (même crédité) : la **règle est fixée** (VR-09) ; **couche** : nouveau trigger sur `bc_devis`, ou service + CK-14 seulement ? | nouveau trigger (aucune réécriture de 005b) ; CK-14 reste le diagnostic | modèle §4.7, §14 ; INV-187 | ◐ |
+| **V6-11** ✔ | **`date_100_facture`** après avoir total du solde puis nouveau solde ; lien avec la règle des 30 jours | **Verrouillée (VR-10, VR-13)** : NULL si le solde actif est totalement crédité et qu'aucun autre n'est actif ; date du nouveau solde actif ; 006 n'agit pas sur la règle des 30 jours | A6-06, INV-43, INV-103, D-31 | ✔ |
 | **V6-12** | **Frontière 006 / 007** : parts de `termine`, CK-06, CK-04/05/06 bloquants ou non à la restauration | 006 : formules de facturation et gardes ; 007 : `reste_du`, `termine` par encaissements ; échec de CK-04/05/06 non bloquant tant que rien n'est décidé | A6-11, A6-26, §1.3, §13 | ◐ |
 | **V6-13** | **Triggers vs service** pour l'exactitude du solde et de la situation (TR-22 vs modèle §14) | trigger pour sommes/bornes ; service pour l'arrondi % | A6-13, §6.2 | ◐ |
 | **V6-14** | **Lignes** : composition par type en trigger ; `bc_ligne_id` du même BC ; lignes `deduction` de facturation antérieure (nombre) ; aucune garde heuristique d'insertion tardive | trigger de gardes locales ; rien d'autre | A6-14, A6-19, INV-62 | ◐ |
@@ -999,9 +1285,9 @@ Légende : ⛔ = bloque l'écriture du SQL (DDL ou trigger dont la forme en dép
 | **V6-17** | **`date_emission`** : dates futures/passées, période facturée | rien en SQL | A6-21, §7 | ○ |
 | **V6-18** | **Documentation** : intégration de la V3.13 dans `docs/` avant le gel du SQL | intégrer / confirmer | A6-00, §0.3 | ○ |
 | **V6-19** | **`historique` / `documents`** absents : 006 n'écrit aucun événement et ne référence pas ces tables | oui | A6-22 | ○ |
-| **V6-20** | **Rang et nom** : `006_facturation.sql` rang 8 (ou 9 si `005c`) ; test **T-47** ; gardes d'exécution (style 005b ou 005) | rang 8, T-47, sans garde ou garde `user_version = 7` | D-55, A6-23, §16 | ○ |
+| **V6-20** ✔ | **Nom exact** de la corrective 005c et de son test ; gardes d'exécution (style 005b ou 005) | **Décidée (2026-10-05)** : `005c_bc_annule_caches_financiers.sql` et `test_005c_bc_annule_caches_financiers.py` ; aucune garde d'exécution dans le SQL ; rang **9** pour 006 et **T-48** (décidés par VR-06) | D-55, A6-23, §16, §M.8 | ○ |
 
-**Ordre de décision recommandé** : V6-01, V6-03, V6-02 (déterminent le périmètre exact et la nécessité d'une corrective `005c`), puis V6-04 et V6-05 (DDL de `factures`), puis V6-07, V6-09, V6-10, V6-11, V6-13, V6-14, puis les points ○.
+**Ordre de décision recommandé** (V6-01, V6-03 et V6-11 étant verrouillées, V6-02 réduite) : V6-04 et V6-05 (DDL de `factures`), puis QO-1, V6-07, V6-10, V6-13, V6-14, puis les points ○.
 
 ---
 
@@ -1018,21 +1304,22 @@ Légende : ⛔ = bloque l'écriture du SQL (DDL ou trigger dont la forme en dép
 9. **Avoirs ?** Seul mécanisme de correction : origine obligatoire, même BC, non avoir, motif, Σ ≤ origine, jamais annulable ; avant solde il libère un montant refacturable ; après solde il ne rouvre rien ; avoir total ⇒ nouvelle facture du même type, nouveau numéro. Correction d'un avoir erroné : non conçue. *(métier §14, INV-76, INV-185 ; A6-10)*
 10. **Immuabilité ?** **Dès l'INSERT**, pour tout : numéro, BC, client, type, dates, montants, lignes, snapshots, relations. *(§4 ; INV-53, TR-20, TR-21, INV-184)*
 11. **Documents supprimables ?** **Aucun** (facture, acompte, situation, solde, avoir, lignes, relations). Seule une *préparation non validée* disparaît parce qu'elle n'a jamais existé en base. *(INV-06, INV-53, INV-185)*
-12. **Règles par état du BC ?** `en_cours` : tous types ; `termine` : aucun nouveau document hors avoir (**à confirmer**, V6-03) ; `annule` : avoirs sur documents existants seulement ; `frozen_at` : marqueur sans effet ; `gele` n'est pas un statut (A6-01). *(§9.3 ; INV-47, INV-188)*
+12. **Règles par état du BC ?** `en_cours` : tous types tant qu'aucun solde n'a été émis (après un solde, même crédité : nouveau solde et avoirs seulement) ; `termine` : aucun nouveau document hors avoir, **avoir autorisé** (VR-07) ; `annule` : terminal commercial, avoirs et règlements sur documents existants, caches financiers évolutifs, `statut` reste `annule` (VR-04, VR-05) ; `frozen_at` : marqueur technique résiduel sans effet ; `gele` n'est pas un statut. *(§9.3, §M.3 à §M.5 ; INV-47, INV-188)*
 13. **006 vs 007 ?** 006 : tables `factures`/`facture_lignes`, formules de facturation, unicités, plafonds, immuabilité, numérotation (garde). 007 : règlements, `reste_du`, `absorbe`, crédit, états de paiement, `termine` par encaissements. *(§1.3)*
 14. **Données historiques à conserver ?** Toute facture et toute ligne (contenu, snapshots, numéro, relations BC/avoir/devis), jamais modifiées ; les caches du BC, eux, sont recalculables. *(INV-184, INV-30)*
 15. **Garanties SQLite ?** Formes et types, unicités, FK RESTRICT, immuabilité, non-suppression (y compris `REPLACE`), plafonds locaux, chronologie, conditions d'état du BC. *(§11)*
 16. **Règles de service ?** Attribution du numéro (PT-1), calcul des montants et arrondis, Σ lignes, caches du BC, échéance, borne d'année, garanties, rattachement de devis (porte), événements d'historique. *(§11)*
 17. **CK nécessaires ?** Aucun nouveau. Existants rendus exécutables ou complétés : CK-01, CK-02, CK-04, CK-05, CK-06, CK-13, CK-14 (clause « après solde »). *(§9.4, §11)*
-18. **Décisions à valider ?** V6-01 → V6-20 ; **bloquantes** : V6-01 (frozen_at), V6-02 (actif), V6-03 (BC annulé/terminé), V6-04 (devis_id), V6-05 (situation). *(§19)*
-19. **Structure minimale de `006_facturation.sql` ?** 2 tables STRICT (`factures`, `facture_lignes`), ≈ 7 index, ≈ 11–14 triggers gardiens, 0 donnée, sans TVA/statut/annulation/historique ; remplacements éventuels d'objets existants strictement listés. *(§16)*
-20. **Campagne de tests ?** 21 groupes (G1 → G21), 180–230 tests, matrice des états du BC, contournements `DELETE`/`REPLACE`/parent/FK, non-régression 001–005b, CK écrits en constantes, mutation à 0 survivant non qualifié. *(§17, §18)*
+18. **Décisions à valider ?** V6-01, V6-03 et V6-11 **verrouillées** (VR-01 à VR-13) ; **bloquantes restantes** : V6-04 (devis_id), V6-05 (situation) ; questions ouvertes : QO-1, QO-2 ; autres : V6-02 (mécanisme), V6-06 à V6-08, V6-10, V6-12 à V6-19 (V6-20 décidée le 2026-10-05). *(§M.11, §19)*
+19. **Structure minimale de `006_facturation.sql` ?** 2 tables STRICT (`factures`, `facture_lignes`), ≈ 7 index, ≈ 11–14 triggers gardiens, 0 donnée, sans TVA/statut/annulation/historique ; **rang 9, après la corrective 005c** ; aucun remplacement d'objet existant dans 006. *(§16, §M.8)*
+20. **Campagne de tests ?** 24 groupes (G1 → G24), 220–290 tests, matrice des états du BC (dont annulé, et `termine` avec avoirs), contournements `DELETE`/`REPLACE`/parent/FK, non-régression 001–005c, CK écrits en constantes, mutation à 0 survivant non qualifié (006, plus campagne ciblée 005c). *(§17, §18, §M.9)*
 
 ---
 
 ## Annexe B — Vérification d'intégrité du dépôt (fin de phase)
 
-- Fichiers créés dans le dépôt : **uniquement** `fichiers-a-relire/CADRAGE__006_facturation.md`.
-- Aucun fichier existant modifié ; aucune migration ni test 006 créé ; aucun CK, aucune décision officielle créé.
-- Les trois fichiers 005b (`005b_bc_multi_devis.sql`, `test_005b_bc_multi_devis.py`, `CADRAGE__005b_bc_multi_devis.md`) apparaissent encore comme non suivis dans le clone local (déjà poussés par ailleurs) : non touchés.
-- Aucun commit, aucun push.
+- Fichier modifié lors de la mise à jour du 2026-10-05 (V6-01, V6-03) : **uniquement** `fichiers-a-relire/CADRAGE__006_facturation.md`.
+- Aucun autre fichier du dépôt modifié ; **aucune migration ni aucun test de 006 créé** ; aucun CK, aucune décision officielle créé par ce cadrage.
+- Les trois fichiers 005b (`005b_bc_multi_devis.sql`, `test_005b_bc_multi_devis.py`, `CADRAGE__005b_bc_multi_devis.md`) sont présents dans `main` : non touchés.
+- Mise à jour du 2026-10-06 : la corrective 005c (`005c_bc_annule_caches_financiers.sql` et `test_005c_bc_annule_caches_financiers.py`) est livrée dans `main` ; elle n'est pas modifiée par ce cadrage, qui n'en reprend que l'état (rang 8, 006 au rang 9).
+- Ce cadrage ne commite ni ne pousse rien ; l'intégration dans le dépôt est manuelle.
