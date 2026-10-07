@@ -522,7 +522,7 @@
   .panel-face--back {
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: 3;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -547,7 +547,9 @@
 
   .login-panel.is-splash .panel-face--back {
     visibility: visible;
+    opacity: 1;
     pointer-events: auto;
+    z-index: 3;
   }
 
   .splash-logo {
@@ -605,7 +607,10 @@
     transform: translate(-50%, -50%) rotate(-45deg);
   }
 
+  /* The real application will replace the splash directly.
+     No separate placeholder screen is used in this prototype. */
   .app-placeholder {
+    display: none;
     position: fixed;
     inset: 0;
     z-index: 30;
@@ -855,7 +860,6 @@
     const avatarImage = document.getElementById('avatar-image');
     const avatarCaption = document.getElementById('avatar-caption');
     const splashStatus = document.getElementById('splash-status');
-    const appPlaceholder = document.getElementById('app-placeholder');
 
     let currentMode = 'login';
     let transitionTimer = null;
@@ -937,9 +941,9 @@
         splashStatus.textContent = 'Espace prêt';
       }, 1540);
 
-      setTimeout(() => {
-        appPlaceholder.classList.add('is-visible');
-      }, 1880);
+      // Prototype end state: keep the splash visible.
+      // In the real app, this is where the dashboard transition will begin.
+
     }
 
     modeBtns.forEach(btn => {
