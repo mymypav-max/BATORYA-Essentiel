@@ -688,11 +688,12 @@
   }
 
   .splash-ring.splash-complete {
-    background: conic-gradient(
-      from 0deg,
-      var(--orange) 0deg,
-      var(--orange-soft2) 180deg,
-      var(--orange) 360deg
+    -webkit-mask: none;
+    mask: none;
+    background: radial-gradient(
+      circle,
+      transparent 0 56%,
+      var(--orange) 57% 100%
     );
   }
 
@@ -716,11 +717,13 @@
   }
 
   .splash-complete .splash-ring {
+    -webkit-mask: none;
+    mask: none;
     animation: splashComplete .5s cubic-bezier(.22,1,.36,1) forwards;
-    background: conic-gradient(
-      from 0deg,
-      var(--orange) 0deg,
-      var(--orange-soft2) 360deg
+    background: radial-gradient(
+      circle,
+      transparent 0 56%,
+      var(--orange) 57% 100%
     );
   }
 
