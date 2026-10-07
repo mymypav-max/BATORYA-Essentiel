@@ -663,21 +663,28 @@
   }
 
   .splash-ring.splash-complete::after {
-    content: '✓';
+    content: '';
     position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    color: #4FA56A;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    font-size: 30px;
-    font-weight: 700;
-    line-height: 1;
-    background: transparent;
-    box-shadow: none;
-    transform: none;
+    inset: 14px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.78);
+    box-shadow:
+      inset 0 0 10px rgba(53,105,158,.05),
+      0 0 14px rgba(201,130,58,.10);
     -webkit-mask: none;
     mask: none;
+  }
+
+  .splash-ring.splash-complete::before {
+    display: none;
+  }
+
+  .splash-ring.splash-complete::after {
+    clip-path: polygon(22% 48%, 30% 40%, 43% 53%, 72% 24%, 79% 31%, 43% 68%);
+    background: #4FA56A;
+    inset: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .splash-ring.splash-complete {
@@ -722,15 +729,11 @@
   }
 
   .splash-complete .splash-ring::after {
-    inset: 14px;
-    background: rgba(255,255,255,.78);
-    box-shadow:
-      inset 0 0 10px rgba(53,105,158,.05),
-      0 0 14px rgba(201,130,58,.10);
-  }
-
-  .splash-complete .splash-ring::after {
-    content: '';
+    clip-path: polygon(22% 48%, 30% 40%, 43% 53%, 72% 24%, 79% 31%, 43% 68%);
+    background: #4FA56A;
+    inset: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   @keyframes splashComplete {
