@@ -41,7 +41,7 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background: url("../../assets/icon.png") center / contain no-repeat;
+    background: url("../../../assets/icon.png") center / contain no-repeat;
     opacity: 0.055;
     filter: blur(0.2px);
     pointer-events: none;
@@ -532,12 +532,14 @@
     transform: rotateY(180deg);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    visibility: hidden;
+    opacity: 0;
   }
 
   .login-panel.is-splash {
     transform: rotateY(180deg);
-    min-height: 390px;
     width: min(420px, 92vw);
+    overflow: hidden;
   }
 
   .login-panel.is-splash .panel-face--front {
@@ -765,7 +767,7 @@
     <div class="login-panel" id="login-panel">
       <div class="panel-face panel-face--front">
       <div class="logo">
-        <img src="../../assets/icon.png" alt="BATORYA" onerror="this.style.display='none'">
+        <img src="../../../assets/icon.png" alt="BATORYA" onerror="this.style.display='none'">
       </div>
 
       <div class="mode-switch">
@@ -914,6 +916,10 @@
       if (currentMode !== 'login') return;
 
       submitBtn.disabled = true;
+
+      // Freeze the card height before the 3D flip.
+      const splashHeight = loginPanel.offsetHeight;
+      loginPanel.style.height = splashHeight + 'px';
       loginPanel.classList.add('is-splash');
       planStage.classList.add('is-transitioning');
 
