@@ -556,23 +556,71 @@
   .splash-logo {
     height: 44px;
     width: auto;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
     filter: drop-shadow(0 3px 8px rgba(53,105,158,.16));
   }
 
+  .splash-welcome {
+    font-size: 24px;
+    font-weight: 650;
+    color: var(--orange);
+    letter-spacing: -0.035em;
+    margin-bottom: 18px;
+  }
+
+  .splash-welcome::after {
+    content: '';
+    display: block;
+    width: 42px;
+    height: 2px;
+    margin: 10px auto 0;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--orange), var(--orange-soft2));
+    opacity: .75;
+  }
+
   .splash-ring {
-    width: 58px;
-    height: 58px;
-    margin: 4px 0 22px;
+    width: 66px;
+    height: 66px;
+    margin: 2px 0 22px;
     border-radius: 50%;
-    border: 3px solid rgba(53,105,158,.13);
+    border: 2px solid rgba(53,105,158,.11);
+    position: relative;
+    animation: splashSpin 1.15s linear infinite;
+    background:
+      radial-gradient(circle, rgba(255,255,255,.34) 0 58%, transparent 59%);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.34),
+      0 8px 22px rgba(53,105,158,.10);
+  }
+
+  .splash-ring::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 2px solid transparent;
     border-top-color: var(--orange);
     border-right-color: var(--blue-soft);
-    animation: splashSpin 1s linear infinite;
+    filter: drop-shadow(0 0 5px rgba(201,130,58,.20));
+  }
+
+  .splash-ring::after {
+    content: '';
+    position: absolute;
+    inset: 9px;
+    border-radius: 50%;
+    border: 1px solid rgba(53,105,158,.12);
+    border-left-color: rgba(201,130,58,.65);
+    animation: splashSpinReverse 1.8s linear infinite;
   }
 
   @keyframes splashSpin {
     to { transform: rotate(360deg); }
+  }
+
+  @keyframes splashSpinReverse {
+    to { transform: rotate(-360deg); }
   }
 
   .splash-status {
@@ -592,20 +640,175 @@
 
   .splash-complete .splash-ring {
     animation: none;
+    border-color: rgba(201,130,58,.28);
+  }
+
+  .splash-complete .splash-ring::before,
+  .splash-complete .splash-ring::after {
+    animation: none;
+    border-color: transparent;
+  }
+
+  .splash-complete .splash-ring::before {
+    inset: -2px;
     border-color: var(--orange);
-    position: relative;
+    opacity: .9;
   }
 
   .splash-complete .splash-ring::after {
-    content: '';
-    position: absolute;
+    inset: 15px;
+    border: none;
     width: 18px;
     height: 9px;
     left: 50%;
-    top: 46%;
+    top: 50%;
     border-left: 2px solid var(--orange);
     border-bottom: 2px solid var(--orange);
-    transform: translate(-50%, -50%) rotate(-45deg);
+    transform: translate(-50%, -62%) rotate(-45deg);
+  }
+
+  /* ===== SPLASH → BATORYA ===== */
+  .batorya-home {
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    padding: 28px;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(53,105,158,.09), transparent 28%),
+      linear-gradient(135deg, #EEF2F6 0%, #F7F8FA 48%, #E5EBF2 100%);
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(1.025);
+    transition:
+      opacity 720ms ease,
+      transform 900ms cubic-bezier(0.22,1,0.36,1),
+      visibility 0s linear 900ms;
+  }
+
+  .batorya-home.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+    transition:
+      opacity 720ms ease,
+      transform 900ms cubic-bezier(0.22,1,0.36,1),
+      visibility 0s;
+  }
+
+  .batorya-shell {
+    width: min(1180px, 100%);
+    height: 100%;
+    margin: auto;
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.82);
+    border-radius: 20px;
+    background: rgba(255,255,255,.52);
+    box-shadow: 0 24px 70px rgba(53,105,158,.12);
+    backdrop-filter: blur(18px);
+  }
+
+  .batorya-sidebar {
+    padding: 24px 16px;
+    background: linear-gradient(180deg, rgba(46,93,140,.96), rgba(53,105,158,.92));
+    color: white;
+  }
+
+  .batorya-brand {
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -.02em;
+    margin: 2px 10px 30px;
+  }
+
+  .batorya-nav {
+    display: grid;
+    gap: 7px;
+  }
+
+  .batorya-nav span {
+    padding: 10px 11px;
+    border-radius: 9px;
+    font-size: 12.5px;
+    opacity: .78;
+  }
+
+  .batorya-nav span.active {
+    background: rgba(255,255,255,.14);
+    opacity: 1;
+  }
+
+  .batorya-main {
+    min-width: 0;
+    padding: 22px 26px 28px;
+  }
+
+  .batorya-topbar {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 26px;
+  }
+
+  .batorya-topbar strong {
+    font-size: 18px;
+    color: var(--text);
+  }
+
+  .batorya-profile {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #fff, #DCE5EF);
+    border: 1px solid rgba(53,105,158,.15);
+    box-shadow: 0 4px 12px rgba(53,105,158,.10);
+  }
+
+  .batorya-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .batorya-card {
+    background: rgba(255,255,255,.82);
+    border: 1px solid rgba(255,255,255,.9);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 8px 24px rgba(53,105,158,.06);
+  }
+
+  .batorya-card small {
+    color: var(--text-sec);
+    font-size: 11.5px;
+  }
+
+  .batorya-card strong {
+    display: block;
+    margin-top: 8px;
+    color: var(--text);
+    font-size: 23px;
+  }
+
+  .batorya-welcome {
+    margin-bottom: 16px;
+    color: var(--text-sec);
+    font-size: 13px;
+  }
+
+  .batorya-welcome b {
+    color: var(--orange);
+    font-weight: 650;
+  }
+
+  @media (max-width: 760px) {
+    .batorya-home { padding: 12px; }
+    .batorya-shell { grid-template-columns: 1fr; }
+    .batorya-sidebar { display: none; }
+    .batorya-kpis { grid-template-columns: 1fr; }
   }
 
   /* The real application will replace the splash directly.
@@ -830,10 +1033,40 @@
       </div>
       <div class="panel-face panel-face--back">
         <img class="splash-logo" src="../../../assets/icon.png" alt="BATORYA" onerror="this.style.display='none'">
+        <div class="splash-welcome">Bienvenue</div>
         <div class="splash-ring" id="splash-ring" aria-hidden="true"></div>
         <div class="splash-status" id="splash-status">Initialisation…</div>
         <div class="splash-version">BATORYA Essentiel · V6.0.1.4</div>
       </div>
+    </div>
+  </div>
+
+  <div class="batorya-home" id="batorya-home">
+    <div class="batorya-shell">
+      <aside class="batorya-sidebar">
+        <div class="batorya-brand">BATORYA Essentiel</div>
+        <nav class="batorya-nav">
+          <span class="active">Accueil</span>
+          <span>Clients</span>
+          <span>Devis</span>
+          <span>Factures</span>
+          <span>Chantiers</span>
+          <span>Catalogue</span>
+        </nav>
+      </aside>
+      <main class="batorya-main">
+        <header class="batorya-topbar">
+          <strong>Accueil</strong>
+          <div class="batorya-profile"></div>
+        </header>
+        <div class="batorya-welcome">Bienvenue dans <b>BATORYA Essentiel</b></div>
+        <section class="batorya-kpis">
+          <div class="batorya-card"><small>Chiffre d’affaires</small><strong>—</strong></div>
+          <div class="batorya-card"><small>Devis en cours</small><strong>—</strong></div>
+          <div class="batorya-card"><small>Chantiers actifs</small><strong>—</strong></div>
+        </section>
+        <div class="batorya-card" style="min-height:260px;"><small>Votre activité</small></div>
+      </main>
     </div>
   </div>
 
@@ -861,6 +1094,7 @@
     const avatarImage = document.getElementById('avatar-image');
     const avatarCaption = document.getElementById('avatar-caption');
     const splashStatus = document.getElementById('splash-status');
+    const batoryaHome = document.getElementById('batorya-home');
 
     let currentMode = 'login';
     let transitionTimer = null;
@@ -944,10 +1178,22 @@
       setTimeout(() => {
         document.getElementById('splash-ring').classList.add('splash-complete');
         splashStatus.textContent = 'Espace prêt';
-      }, 1540);
 
-      // Prototype end state: keep the splash visible.
-      // In the real app, this is where the dashboard transition will begin.
+        // Transition prototype vers BATORYA.
+        setTimeout(() => {
+          batoryaHome.classList.add('is-visible');
+          loginPanel.style.opacity = '0';
+          loginPanel.style.transform = 'rotateY(180deg) scale(.94)';
+          planStage.style.opacity = '0';
+          planStage.style.transform = 'scale(1.035)';
+          planStage.style.transition = 'opacity 650ms ease, transform 900ms cubic-bezier(0.22,1,0.36,1)';
+
+          setTimeout(() => {
+            loginPanel.style.visibility = 'hidden';
+            planStage.style.visibility = 'hidden';
+          }, 760);
+        }, 850);
+      }, 1540);
 
     }
 
