@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Statut** | Cadrage et audit **uniquement**. Aucun SQL, aucun test, aucune source officielle modifiée. **Mis à jour le 2026-10-05** : décisions V6-01 et V6-03 verrouillées (partie M). **Mis à jour le 2026-10-06** : la corrective 005c est livrée (migration et test présents dans `main`) ; 006 reste au rang 9, non créée. |
+| **Statut** | Cadrage et audit **uniquement**. Aucun SQL, aucun test, aucune source officielle modifiée. **Mis à jour le 2026-10-05** : décisions V6-01 et V6-03 verrouillées (partie M). **Mis à jour le 2026-10-06** : la corrective 005c est livrée (migration et test présents dans `main`) ; 006 reste au rang 9, non créée. **Mis à jour le 2026-10-07** : les décisions V6-04 et V6-05 sont validées (**DV-1 à DV-10**, partie N) ; aucun SQL, aucun test, aucun CK n'est écrit ni décidé. |
 | **Livrable** | `fichiers-a-relire/CADRAGE__006_facturation.md` (seul fichier créé) |
 | **Date** | 2026-10-05 |
 | **Rang prévu** | **9** dans la chaîne : une corrective **`005c`** (rang 8, décision verrouillée VR-06) précède 006 ; D-55 et le modèle §17.1 réservaient le rang 8 à 006 (alignés le 2026-10-05 : D-56, modèle §17.1, conventions §5) |
@@ -17,7 +17,7 @@
 >
 > **Hiérarchie des sources appliquée** (consigne du 2026-10-05) : 1 décisions validées · 2 invariants · 3 modèle SQLite validé · 4 modèle métier · 5 errata / décisions correctives · 6 CDC · 7 migrations existantes (référence technique **réelle** : elles disent ce qui est implémenté, pas ce qui est décidé).
 >
-> **Étiquettes** : **[RD]** règle documentée · **[DT]** déduction technique · **[PR]** proposition · **[VR]** décision verrouillée (Rémy, 2026-10-05) · **[QO]** question ouverte. L'ancienne étiquette **[DV]** (« décision à valider ») subsiste dans le texte pour les points non encore tranchés ; elle équivaut à **[QO]**.
+> **Étiquettes** : **[RD]** règle documentée · **[DT]** déduction technique · **[PR]** proposition · **[VR]** décision verrouillée (Rémy, 2026-10-05) · **[QO]** question ouverte · **[DV]** décision validée (Rémy, 2026-10-07 ; partie N). Depuis le 2026-10-07, l'ancienne étiquette « [DV] = décision à valider » est **renommée [À VALIDER]** (elle équivaut à **[QO]**) : **[DV]** désigne désormais une décision **validée**.
 
 ### M.0 Correspondance avec les 19 contenus attendus
 
@@ -28,7 +28,7 @@
 | 3 | Relations | §3 |
 | 4 | Cycle de vie | §4, §M.3 à §M.5 |
 | 5 | Règles de facturation | §6, §9, §M.6 |
-| 6 | Règles acompte / situation / solde | §4.2, §6.2 à §6.5, §9.2, §M.7 |
+| 6 | Règles acompte / situation / solde | §4.2, §6.2 à §6.5, §9.2, §M.7, §N |
 | 7 | Règles avoir / correction | §4.1, §M.5, §M.7, A6-10 |
 | 8 | Comportement du BC `annule` | §M.4, §9.3 |
 | 9 | Comportement du BC `termine` après avoir | §M.5, §9.3 |
@@ -38,8 +38,8 @@
 | 13 | Impact de 005c | §M.8, §14, §16 |
 | 14 | Stratégie de tests | §17, §18, §M.9 |
 | 15 | Contradictions documentaires | §M.10, §15 |
-| 16 | Décisions verrouillées | §M.1 |
-| 17 | Questions restant réellement à valider | §M.11, §19 |
+| 16 | Décisions verrouillées | §M.1, §N.1 |
+| 17 | Questions restant réellement à valider | §M.11, §N.4, §19 |
 | 18 | Structure proposée de `006_facturation.sql` | §16 |
 | 19 | Structure proposée de `test_006_facturation.py` | §17 |
 
@@ -111,7 +111,7 @@ Deux axes **indépendants**, que le vocabulaire « rouvrir » confondait (A6-03)
 
 1. Un avoir, partiel ou total, **n'est jamais** un acte de réouverture commerciale (INV-187, INV-58, VR-07, VR-09).
 2. Un avoir total qui neutralise le solde actif peut faire passer le BC de `termine` à `en_cours` **par pur recalcul** (INV-42 : `termine ⇔ solde actif ∧ Σ reste_du hors avoir = 0`). C'est un déplacement de l'axe 1 uniquement.
-3. `en_cours` est **nécessaire mais non suffisant** pour émettre : un BC redevenu `en_cours` après avoir total sur son solde n'accepte qu'un **nouveau solde** et des avoirs (§M.7) ; jamais de devis (VR-09), jamais d'acompte ni de situation (INV-58).
+3. `en_cours` est **nécessaire mais non suffisant** pour émettre : un BC redevenu `en_cours` après avoir total sur son solde n'accepte qu'un **nouveau solde** et des avoirs (§M.7) ; jamais de devis (VR-09), jamais d'acompte ni de situation (INV-58 ; **[DV]** DV-7, DV-8).
 4. Aucun libellé de 006 ne doit écrire qu'un avoir « rouvre » le BC : il peut **modifier l'état dérivé** ou **ne rien modifier**.
 
 ### M.4 Comportement du BC `annule` (VR-04, VR-05, VR-06)
@@ -147,9 +147,9 @@ Deux axes **indépendants**, que le vocabulaire « rouvrir » confondait (A6-03)
 | Cas | Facturation nette | `statut` | `completed_at` | `avancement` | `date_100_facture` | Suite |
 |---|---|---|---|---|---|---|
 | **A** avoir **partiel** 50.00 sur l'acompte ou la situation | 950.00 | `termine` (conservé) | conservé | 100.00 (solde actif) | conservée | l'avoir sur facture entièrement payée crée un **crédit** (`absorbe = min(avoirs, max(0, M − encaissé)) = 0`, modèle §3.3) ; il ne « réduit » pas un reste dû nul |
-| **B** avoir **total** 200.00 sur l'acompte | 800.00 | `termine` (conservé) | conservé | 100.00 | conservée | remplacement de l'acompte : **QO-1** |
+| **B** avoir **total** 200.00 sur l'acompte | 800.00 | `termine` (conservé) | conservé | 100.00 | conservée | remplacement de l'acompte **refusé** tant qu'un solde existe (**[DV]** DV-7 ; ex-QO-1) |
 | **C** avoir **partiel** 100.00 sur le solde | 900.00 | `termine` (conservé) | conservé | 100.00 (solde actif) | conservée (INV-43) | aucun nouveau solde (INV-52) |
-| **D** avoir **total** 500.00 sur le solde | 500.00 | **`en_cours`** (INV-42 : plus de solde actif) | **NULL** | **50.00** (500/1000, plus de solde actif) | **NULL** (aucun autre solde actif) | BC fermé aux devis (VR-09) ; un **nouveau solde** est permis, pas d'acompte ni de situation |
+| **D** avoir **total** 500.00 sur le solde | 500.00 | **`en_cours`** (INV-42 : plus de solde actif) | **NULL** | **50.00** (500/1000, plus de solde actif) | **NULL** (aucun autre solde actif) | BC fermé aux devis (VR-09) ; un **nouveau solde** est permis, pas d'acompte ni de situation (**[DV]** DV-8) |
 
 - **[DT]** Cas D : les cinq caches s'écrivent **dans un seul `UPDATE`** (`montant_deja_facture_ht`, `avancement`, `date_100_facture = NULL`, `statut = 'en_cours'`, `completed_at = NULL`) ; `frozen_at` reste posé (O-3). Sondé : accepté par les CHECK de 004.
 - **[RD]** `termine → en_cours` : `completed_at` repasse à NULL et l'événement d'historique `retour_en_cours` est la trace réelle (modèle §3.5 ; la table `historique` n'existe pas encore : 006 n'écrit aucun événement, A6-22).
@@ -162,7 +162,7 @@ Deux axes **indépendants**, que le vocabulaire « rouvrir » confondait (A6-03)
 | Colonne | Définition | Évolution | BC `annule` | Contrainte SQL existante | Qualif. / source |
 |---|---|---|---|---|---|
 | `montant_deja_facture_ht` | **facturation nette** du BC = Σ acomptes + Σ situations + Σ soldes − Σ avoirs (D2) | recalculée après **toute** opération y compris un avoir | évolue (VR-05) | famille D2 | **[RD]** INV-46, INV-56 ; modèle §3.2 |
-| `avancement` | P2 = nette / contractuel ; **100.00 dès qu'un solde actif existe** ; mesure la facturation, jamais l'avancement physique | idem | évolue (VR-05) | P2 ; `date_100_facture` ⇒ `'100.00'` | **[RD]** modèle §4.7, INV-46 |
+| `avancement` | P2 = nette / contractuel ; **100.00 dès qu'un solde actif existe** ; mesure la facturation, jamais l'avancement physique | idem | évolue (VR-05) | P2 ; `date_100_facture` ⇒ `'100.00'` | **[RD]** modèle §4.7, INV-46 ; **[DV]** DV-5 : formule pure, 100.00 atteignable par une situation sans solde ; `date_100_facture` reste liée au solde |
 | `date_100_facture` | `date_emission` du **premier solde actif** ; conservée par avoir partiel, règlement, remboursement ; NULL si le solde actif est totalement crédité et qu'aucun autre n'est actif ; nouvelle valeur au nouveau solde actif | recalculée | évolue (VR-05) | `⇒ avancement = '100.00'` ; `⇒ frozen_at` (O-1) | **[RD]** INV-43 ; **[VR]** VR-10 |
 | `statut` | `en_cours` / `termine` : **dérivé** (INV-42) ; `annule` : **acte**, jamais recalculé | recalculé tant que non annulé | **reste `annule`** | CHECK 3 valeurs ; `termine ⇒ frozen_at` | **[RD]** INV-42, INV-44, INV-173 |
 | `completed_at` | cache technique de `termine` : TS si `termine`, NULL sinon | suit `statut` | NULL | `(statut='termine') = (completed_at IS NOT NULL)` | **[VR]** VR-11 ; **[RD]** modèle §3.5, INV-79 |
@@ -183,12 +183,12 @@ Deux axes **indépendants**, que le vocabulaire « rouvrir » confondait (A6-03)
 | Situation totalement créditée, **aucun solde émis** | nouvelle situation, nouveau numéro de facture ; réutilisation du `situation_numero` : V6-06 | **[RD]** INV-185, C-33 ; **[QO]** V6-06 |
 | Solde totalement crédité | **nouveau solde** uniquement (nouveau numéro) | **[RD]** E-14, C-33, métier §13 ; **[VR]** VR-12 |
 | Solde actif existant | aucun second solde ; aucun acompte ni situation | **[RD]** INV-52, INV-58 |
-| Solde émis puis totalement crédité : acompte ou situation | **refusés** (INV-58 : plus d'acompte ni de situation après solde) | **[RD]** INV-58 ; lecture « même neutralisé » : **[DT]** hiérarchie CD-07 |
-| Acompte / situation totalement crédité(e) **alors qu'un solde existe** (actif ou crédité) : remplacement par une facture du même type ? | **non couvert explicitement** : INV-58 l'interdit, INV-185 l'autorise en termes généraux | **[QO]** QO-1 (CD-08) ; lecture prudente **[PR]** : non, le montant se refacture par remplacement du solde |
+| Solde émis puis totalement crédité : acompte ou situation | **refusés** (INV-58 : plus d'acompte ni de situation après solde) | **[RD]** INV-58 ; **[DV]** DV-8 (lecture « même neutralisé » ; ex-CD-07) |
+| Acompte / situation totalement crédité(e) **alors qu'un solde existe** (actif ou crédité) : remplacement par une facture du même type ? | **refusé** : aucun nouvel acompte ni nouvelle situation après un solde, actif ou totalement neutralisé ; le montant ne se refacture que par un **nouveau solde** (possible seulement si le solde précédent est totalement crédité) | **[DV]** DV-7, DV-8 (ex-QO-1, CD-08) ; INV-185, E-14 et C-33 s'entendent « avant tout solde » pour l'acompte et la situation |
 | Rattachement de devis après solde, **même totalement crédité** | **refusé** | **[VR]** VR-09 ; **[RD]** INV-187, E-16, C-35 |
 | Avoir partiel | ne rouvre rien : ni devis, ni nouveau solde, ni acompte/situation | **[RD]** INV-58, INV-187 |
 
-> Aucune règle n'est inventée ici pour combler QO-1 ; ce qui n'est pas explicitement couvert reste une question ouverte.
+> QO-1 est **close** par DV-7 et DV-8 (partie N). Aucune autre règle n'est inventée ici ; ce qui n'est pas explicitement couvert reste une question ouverte (§M.11, §N.4).
 
 ### M.8 Impact 005c — « 005c — correction BC annulé / caches financiers » (VR-06)
 
@@ -220,19 +220,22 @@ Deux axes **indépendants**, que le vocabulaire « rouvrir » confondait (A6-03)
 
 ### M.9 Stratégie de tests — mises à jour (détail en §17 et §18)
 
-**Ajouts au futur `test_006_facturation.py`** (groupes G22 à G24, G15 révisé) :
+**Ajouts au futur `test_006_facturation.py`** (groupes G22 à G24, G15 révisé ; **G25** ajouté le 2026-10-07) :
 
 | Groupe | Contenu |
 |---|---|
 | **G22 BC annulé** | acompte / situation / solde sur BC annulé → refusés ; devis rattaché → refusé (`tr_99`) ; modification commerciale (colonnes du contrat) → refusée ; modification de `statut`, `completed_at`, `cancelled_at`, `motif_annulation`, `frozen_at` → refusée ; avoir sur document existant → accepté ; recalcul des trois caches après avoir (un `UPDATE`) → accepté ; `statut` reste `annule` ; aucune réouverture implicite ; règlement sur document existant : « si prévu », test porté par 007 (la table `reglements` n'existe pas en 006) |
 | **G23 BC `termine` et avoirs** | cas A à D de §M.5 (avoir partiel sur acompte, situation, solde ; avoir total sur acompte ; avoir total sur solde) ; conservation ou évolution de `termine` ; `termine → en_cours` possible dans le cas D ; `completed_at` cohérent (CHECK) ; `date_100_facture` cohérent (conservée / NULL / nouvelle valeur) ; aucun devis rattaché après un solde, **y compris crédité** (CK-14, service, trigger si V6-10) ; nouveau solde après solde crédité accepté ; acompte / situation après solde crédité refusés |
 | **G24 `frozen_at` résiduel** | obligations O-1 à O-4 (pose conjointe, irréversibilité, NULL à la naissance, absence de comportement) ; la matrice `en_cours` / `gele` donne les **mêmes** résultats de facturation (`gele` = état de test, pas un statut) ; aucune colonne `frozen_at` dans `factures` |
+| **G25 Décisions V6-04 / V6-05** (2026-10-07) | 14 scénarios des dix décisions DV-1 à DV-10 + 4 complémentaires (§17.2 bis) ; **aucun test créé** ; mutation approfondie (§18.7) |
 | **G15 révisé** | CK-06 : pour un BC annulé, seuls les trois caches sont comparés au recalcul ; écriture conjointe `avancement` / `date_100_facture` |
 
 **Campagne de mutation approfondie** (comparable aux tranches précédentes, conv. §7.1) :
 - **006** : mêmes familles qu'en §18, plus les familles ajoutées par la mise à jour : définition de « neutralisée » (`=` ↔ `<=`, `<` ; `total_ht > 0` supprimé), clause « un solde a existé » (neutralisé ou non), `EXISTS ↔ NOT EXISTS` sur les soldes, conditions d'état du BC dans TR-16 (`annule`, `termine` autorisé pour l'avoir), requêtes CK-06 / CK-14 ;
 - **005c** : campagne ciblée (§M.8) ;
 - règle de clôture inchangée : **0 survivant non qualifié**, rapport mutant / classe / preuve / décision.
+
+**Mise à jour du 2026-10-07** : groupe **G25** (scénarios des décisions DV-1 à DV-10, §17.2 bis) et familles de mutation supplémentaires (§18.7). Aucun test n'est créé.
 
 ### M.10 Contradictions documentaires et corrections internes
 
@@ -246,15 +249,19 @@ Format imposé : **source (document + section)** · **règle** · **interprétat
 | **CD-04** | INV-47 et modèle §8 TR-16 (« avoir sur BC `termine` : l'existant le refuse, à confirmer ») **vs** CDC §22, C-06, C-13, arbitrage B | avoir sur BC `termine` | **[VR]** VR-07 : autorisé ; INV-47 est un énoncé « à confirmer », non décision | TR-16 n'existe pas dans le SQL (0 occurrence) : 006 le crée **sans** ce refus |
 | **CD-05** | Métier §7 l.272 et CDC §16 (texte d'origine) : « …ou si un avoir intervient » **vs** CDC §16 amendement E-14/E-16 et modèle §3.5 : « seule l'annulation d'un règlement » | `termine → en_cours` | **[VR]** VR-07 : la formule INV-42 est recalculée ; un avoir qui neutralise le solde actif peut faire passer à `en_cours` (niveaux 2 et 4 > 5 et 6 sur ce point) | A6-03 résolu ; état dérivé, pas réouverture (§M.3) |
 | **CD-06** | INV-52 (« actif » = non entièrement neutralisé par un avoir total) **vs** modèle §3.2, §3.4, §3.5, §4.8 (« proposition PT-9 ») | définition d'« actif » | **[VR]** VR-12 ; invariant (niveau 2) > modèle (niveau 3) ; seul le **mécanisme** reste proposition | `neutralisee(F)` dérivé des données, aucune colonne d'état |
-| **CD-07** | INV-58, modèle §3.2 (« solde rédigé/validé » ⇒ plus d'acompte ni de situation) **vs** modèle §8 TR-22 et métier §13 (« solde actif ») | portée de l'interdiction après solde | niveau 2 (INV-58) > niveau 3 (TR-22) : l'interdiction vaut **même si le solde est totalement crédité** **[DT]** | `tr_22_factures_acompte` / `_situation` : refus dès qu'un solde existe (neutralisé ou non) |
-| **CD-08** | INV-185, E-14, C-33 (« nouvelle facture du **même type** » après avoir total) **vs** INV-58 (plus d'acompte/situation après solde) | remplacement d'un acompte/situation crédité(e) après solde | **non tranché** : **[QO]** QO-1 ; lecture prudente **[PR]** | aucune règle SQL écrite pour ce cas avant décision |
+| **CD-07** | INV-58, modèle §3.2 (« solde rédigé/validé » ⇒ plus d'acompte ni de situation) **vs** modèle §8 TR-22 et métier §13 (« solde actif ») | portée de l'interdiction après solde | niveau 2 (INV-58) > niveau 3 (TR-22) : l'interdiction vaut **même si le solde est totalement crédité** **[DT]**, **validé le 2026-10-07 : [DV] DV-8** | `tr_22_factures_acompte` / `_situation` : refus dès qu'un solde existe (neutralisé ou non) |
+| **CD-08** | INV-185, E-14, C-33 (« nouvelle facture du **même type** » après avoir total) **vs** INV-58 (plus d'acompte/situation après solde) | remplacement d'un acompte/situation crédité(e) après solde | **[DV]** DV-7, DV-8 : après tout solde (actif ou neutralisé), aucun acompte ni situation ; INV-185, E-14 et C-33 (« même type ») valent **avant tout solde** pour ces deux types ; un nouveau solde reste permis après neutralisation du précédent | refus par les gardes « un solde existe » (§11 #25) ; aucun remplacement d'acompte ou de situation après solde |
 | **CD-09** | CHECK de 004 (`termine` et `date_100_facture` ⇒ `frozen_at`) ; INV-46 (« la condition “gelé” des CHECK actuels dépend de PT-8 ») **vs** E-10 (gel supprimé) | sens des CHECK `frozen_at` | **[VR]** VR-02/03 : conservés ; obligations techniques O-1 à O-5 | contrat de service ; aucune migration |
 | **CD-10** | Brief 006 §6 et §17 (« un avoir ne doit pas rouvrir automatiquement un BC ») **vs** métier §7 l.272 | sens de « rouvrir » | **[VR]** VR-08 : « rouvrir » = axe 2 (commercial) ; le recalcul `termine → en_cours` est l'axe 1 | libellés de 006 corrigés (§M.3 règle 4) |
+| **CD-11** | Métier §12 (« Une situation atteignant 100 % n'existe pas : la facture finale est un Solde ») ; cadrage A6-17 (ancienne résolution **[PR]** : borne stricte) **vs** modèle §3.2 (« Un solde à 0.00 est autorisé (100 % déjà couvert par acomptes et situations) »), C-08, INV-57 (« nette après ≤ contractuel ») | plafond d'une situation | **[DV]** DV-4 : une situation peut porter la nette à 100 % du contractuel ; ce qui « n'existe pas », c'est une situation qui **tient lieu de facture finale** : seul le solde l'est | borne `≤` ; aucun effet de clôture attaché à nette = contractuel ; reformulation de métier §12 dans la source : étape ultérieure |
+| **CD-12** | INV-175 et modèle §4.7 (« liste S » : copie de `acompte_*` du devis dans le BC) ; formulations antérieures du cadrage **vs** INV-189, INV-192, modèle §4.7 (retraits par rapport à 004), `005b_bc_multi_devis.sql` (`bons_commande` reconstruite **sans** `acompte_*` ni `remise_*`) | où vit l'acompte prévu | niveau 2 (INV-189, INV-192) et migration 005b exécutée (niveau 7, référence réelle) : l'acompte prévu appartient au **devis** | aucun objet de 006 ne lit `bons_commande.acompte_*` (colonnes inexistantes) ; le prévu se lit sur `devis` (via `bc_devis` ou `factures.devis_id`) |
 
 **Corrections internes du cadrage** (formulations de ma part, retirées) :
 1. L'arbitrage du 2026-10-05 et l'ancienne version de A6-06 écrivaient que la fenêtre de 30 jours « repart de la nouvelle date » : **faux ou imprécis** (VR-13, §M.6).
 2. Le cadrage listait V6-02 comme « actif non défini » : INV-52 le définit (**[RD]**), seul le mécanisme restait proposition.
 3. La consigne qualifie l'avoir partiel de réducteur du « montant économique restant dû » : précisé en §M.5.
+4. (2026-10-07) §6.4 écrivait que les sources donnent le « prévu » comme « valeur proposée » : **non établi par les sources**, formulation retirée. Le prévu est un contenu contractuel **verrouillé** du devis accepté (INV-36, INV-181) ; sa portée sur la facture est la décision DV-2, non une règle antérieure.
+5. (2026-10-07) `acompte_type` / `acompte_valeur` ne sont présentés que comme colonnes de `devis` (depuis 005b, `bons_commande` n'en porte plus) : CD-12.
 
 ### M.11 Questions restant réellement ouvertes
 
@@ -262,14 +269,87 @@ Après contrôle contre E-10, les invariants, le métier, le CDC, les errata, D-
 
 | ID | Question | Pourquoi elle reste ouverte | Lecture prudente **[PR]** (non décidée) |
 |---|---|---|---|
-| **QO-1** (ex-V6-09) | Après émission d'un solde (actif ou crédité), peut-on remplacer un **acompte** ou une **situation** totalement crédité(e) par une nouvelle facture du même type ? | INV-185 / E-14 / C-33 (même type) et INV-58 (plus d'acompte/situation après solde) ne sont pas conciliés (CD-08) | non ; le montant se refacture par remplacement du solde |
-| **QO-2** (ex-V6-02, A6-24) | Un **solde à `0.00`** émis par erreur ne peut recevoir aucun avoir (INV-55 : avoir `> 0.00`) : comment le corrige-t-on ? | conséquence directe de règles validées ; aucune règle de correction | ne rien inventer ; le dire |
+| **QO-1** (ex-V6-09) — **close (DV-7, DV-8)** | Après émission d'un solde (actif ou crédité), peut-on remplacer un **acompte** ou une **situation** totalement crédité(e) par une nouvelle facture du même type ? | **Tranchée le 2026-10-07** (CD-08 résolu) | **[DV]** non : aucun acompte ni situation après un solde, même neutralisé ; le montant se refacture par un nouveau solde |
+| **QO-2** (ex-V6-02, A6-24) — **réduite** | Un **solde à `0.00`** émis par erreur ne peut recevoir aucun avoir (INV-55 : avoir `> 0.00`) : comment le corrige-t-on ? | la **prévention** est décidée (DV-9 : confirmation explicite côté service avant émission) ; la **correction** après émission reste sans règle documentée, DV-9 n'en crée aucune | ne rien inventer ; le dire |
+| **QO-3** (nouvelle, 2026-10-07) | **Base de calcul** du montant prévu d'un acompte en mode `pourcentage` | modèle §3.1 écrit `arrondi(contractuel × pct / 100)`, « contractuel » = Σ `total_ht` des devis rattachés (INV-39), qui varie à chaque rattachement (INV-187) ; or le prévu d'un devis accepté est verrouillé (INV-36, INV-181), porté par chaque devis (INV-189, INV-192) et n'est plus une colonne du BC (005b). DV-2 dit « calculé selon le pourcentage du devis » sans préciser la base | lecture prudente **[PR]** (non décidée) : `devis.total_ht` du devis concerné (identique au contractuel pour un BC à un seul devis) |
 | **V6-02** (résiduel) | Mécanisme **technique** de l'unicité sans `cancelled_at` | PT-9 : proposition de triggers `EXISTS` | triggers `BEFORE INSERT` ensemblistes |
-| **V6-04**, **V6-05** | `factures.devis_id` (PT-10) ; colonnes de situation et plafond `< 100 %` (PT-11) | DDL de `factures` ; non touchés par cette mise à jour | cf. §19 |
-| **V6-06**, **V6-07**, **V6-08**, **V6-10**, **V6-12** à **V6-19** | inchangés | non touchés par V6-01/V6-03 (V6-10 : garde SQL « après solde », VR-09 en fixe la règle mais pas la couche) | cf. §19 |
+| **V6-04**, **V6-05** — **règles validées (DV-1 à DV-6)** | `factures.devis_id` (PT-10) ; colonnes de situation (PT-11) | restent la **conception des mécanismes** (PT-10, PT-11) et la couche des plafonds (V6-13) ; non figés ici | cf. §19, §N.4 |
+| **V6-06**, **V6-07**, **V6-08**, **V6-10**, **V6-12** à **V6-19** | inchangés (V6-15 : l'application de DV-2 aux acomptes importés n'est pas décidée, §12) | non touchés par V6-01/V6-03 (V6-10 : garde SQL « après solde », VR-09 en fixe la règle mais pas la couche) | cf. §19 |
 | **V6-20** (réduit) | Nom exact de la corrective 005c, de son test et des gardes d'exécution | le rang (8 / 9) et l'ordre sont **décidés** (VR-06) ; nommage **décidé le 2026-10-05** (migration `005c_bc_annule_caches_financiers.sql`, test `test_005c_bc_annule_caches_financiers.py`) ; aucune garde d'exécution dans le fichier SQL (005c ne crée aucun objet ; le runner D-55 pose le rang) | §M.8 |
 
 **Closes par cette mise à jour** : V6-01 (VR-01 à VR-03), V6-03 (VR-04 à VR-09), V6-11 (VR-10, VR-13), la définition d'« actif » de V6-02 (VR-12), A6-03, A6-06, A6-12, A6-23.
+
+**Closes par la mise à jour du 2026-10-07** : V6-04 et V6-05 (règles : DV-1 à DV-6 ; mécanismes PT-10 et PT-11 non figés), V6-09 et QO-1 (DV-7, DV-8), CD-07 et CD-08, A6-17, A6-18 (sens de PT-11 ; D6 reste ouverte : V6-06), A6-20 ; **réduite** : QO-2 ; **nouvelle** : QO-3.
+
+---
+
+## N. Mise à jour du 2026-10-07 — décisions validées V6-04 / V6-05 (DV-1 à DV-10)
+
+### N.0 Portée et méthode
+
+- Rémy a arrêté le 2026-10-07 dix décisions métier sur V6-04 et V6-05. Elles sont notées **[DV]** (décision validée) et numérotées **DV-1 à DV-10**, comme les `VR-nn` (§M.1) : identifiants **propres à ce cadrage**, qui ne sont pas des entrées officielles du registre (D-xx, E-xx, INV-xx). Leur report dans les documents sources (invariants, modèle métier, modèle de données, errata) est une **étape ultérieure**, non faite ici.
+- Cette mise à jour est **documentaire**. Elle n'écrit aucun SQL, aucun test, aucun CK, et ne modifie aucun autre fichier. Lorsqu'une décision dit « règle de service », aucun trigger, CHECK ou CK n'est ajouté ou décidé.
+- Une [DV] **ne rend pas rétroactivement** « documentée » une relation que les sources n'écrivaient pas : DV-2 en particulier est une décision, pas une [RD] (CD-12, §M.10 point 4).
+- Les mécanismes techniques (PT-10 colonne `devis_id`, PT-11 colonnes de situation, couche des plafonds V6-13) **restent à concevoir** avec le SQL et les services : ils ne sont pas figés ici.
+
+### N.1 Les dix décisions
+
+| # | Décision validée | Références conservées / liées | Couche (§N.3) |
+|---|---|---|---|
+| **DV-1** | Toute facture d'**acompte** est rattachée à son **devis d'origine** : `devis_id` **obligatoire** pour le type `acompte` ; le devis appartient au BC. Le mécanisme précis relève de la conception SQL/services. | INV-189, D-48, E-16, métier §10, TR-22 | SQL + service selon la conception retenue |
+| **DV-2** | Le devis accepté est **contractuel et verrouillé** ; un acompte n'est facturable que si le devis en prévoit un : `aucun` → aucun acompte ; `pourcentage` → plafond = montant prévu calculé selon le pourcentage du devis ; `montant` → plafond = `acompte_valeur`. L'acompte facturé peut être **inférieur** au prévu, n'est **jamais obligatoire**, ne peut **pas dépasser** le prévu, et reste soumis aux plafonds généraux (INV-57). | INV-36, INV-181, INV-189, INV-57 ; modèle §3.1 | **service** (aucun trigger, CHECK ni CK nouveau) |
+| **DV-3** | Pour tout nouvel acompte, **après émission** : facturation nette du BC ≤ montant contractuel du BC. L'acompte respecte **simultanément** le plafond du devis concerné et le plafond global du BC. | INV-57, INV-56 (définition de la nette) | SQL/service selon le mécanisme retenu |
+| **DV-4** | Une situation peut porter la nette à **exactement 100 %** du contractuel (nette après ≤ contractuel, **non** `< 100 %`). Elle ne crée **ni** `date_100_facture`, **ni** garantie ; ne rend pas le BC `termine` ; n'est **pas** un solde. Seul le **solde** est la facture finale. | INV-57, modèle §3.2, métier §12 (CD-11) | SQL/service selon le mécanisme retenu |
+| **DV-5** | `avancement` = **formule financière pure** nette / contractuel ; il peut atteindre 100 % ; **aucune limite artificielle à 99,99 %**. `date_100_facture` reste liée au **solde** ; la clôture commerciale reste liée au solde et aux règles du BC. `avancement = 100 %` n'est pas l'émission d'un solde. | modèle §4.7, INV-46, INV-43 | service (caches) |
+| **DV-6** | Le montant saisi pour une situation est une **valeur cumulée visée** (cible) ; le montant facturé est **cible cumulée − nette avant**. La cible respecte les limites documentées ; une cible ≤ nette existante ne produit **pas** une situation positive incohérente (le montant calculé n'est pas `> 0.00` : INV-55 le refuse). Aucun détail SQL n'est fixé ici. | INV-57, INV-190, E-17, C-37 (PT-11) | service |
+| **DV-7** | Après un **solde actif** : aucun nouvel acompte, aucune nouvelle situation ; seul un **nouveau solde** peut être créé, selon les règles de correction déjà définies. Les **avoirs** sur les factures existantes restent possibles ; un avoir **ne rouvre pas** commercialement le BC. | INV-58, INV-185, E-14, C-33 | service / SQL selon les règles déjà prévues |
+| **DV-8** | Même règle après un solde **totalement neutralisé** : aucun acompte, aucune situation ; seul un nouveau solde est possible. La neutralisation **financière** n'est pas une **réouverture commerciale**. Distinct des textes antérieurs laissant entendre qu'une facture neutralisée permet de recréer une facture **du même type** (INV-185, E-14, C-33 : valables avant tout solde, CD-08). | INV-58, VR-09, VR-12 | service / SQL selon les règles déjà prévues |
+| **DV-9** | Un **solde `0.00`** est autorisé et reste une **facture finale** réelle. Il n'est **jamais « neutralisé »** du seul fait que `total_ht = Σ avoirs = 0` : il faut un montant **strictement positif** pour être neutralisé (`neutralisee(F)` exige `total_ht > 0.00`). Le solde `0.00` est final, peut établir `date_100_facture`, peut déclencher les conséquences métier du solde, et exige une **confirmation explicite côté service avant émission**. | INV-55, INV-58, modèle §3.2, C-08, A6-04 | **service** (la confirmation n'est pas une contrainte SQL) |
+| **DV-10** | Le cadrage présente **trois niveaux** (§N.2) : acompte, situation, solde. | INV-52, INV-189, INV-190 | — |
+
+### N.2 Les trois niveaux (DV-10)
+
+| Niveau | Rattachement | Plafonds | Particularités | Clôture |
+|---|---|---|---|---|
+| **Acompte** | **lié à un devis** (DV-1) | plafond **propre au devis** : prévu (DV-2) et total du devis (INV-57) ; plafond **global du BC** (DV-3) ; une seule facture d'acompte **active par devis** (INV-52) | jamais obligatoire ; peut être inférieur au prévu ; devis `aucun` → aucun acompte | ne clôt rien |
+| **Situation** | **globale au BC** (INV-190) | nette après ≤ contractuel (DV-4) | **cible cumulée** (DV-6) ; peut atteindre 100 % ; `avancement` suit la formule pure (DV-5) | **ne constitue pas** la clôture du BC |
+| **Solde** | globale au BC | `contractuel − nette avant`, `≥ 0.00` (INV-58) | **facture finale** ; peut être `0.00` après confirmation de service (DV-9) ; jamais neutralisé s'il est à `0.00` | **référence de clôture** financière et commerciale ; **aucune** nouvelle situation ni aucun acompte après son émission, **même s'il est ensuite totalement neutralisé** (DV-7, DV-8) |
+
+### N.3 Répartition des règles entre SQL, service et CK (révisée)
+
+| Règle | Niveau | Remarque |
+|---|---|---|
+| rattachement acompte → devis (DV-1) | SQL + service, selon la conception retenue | colonne/CHECK/FK ou garde : PT-10, non figé |
+| plafond de l'acompte par le **prévu** du devis (DV-2) | **service** | pas de trigger, CHECK ni CK nouveau |
+| plafond **global** du BC (DV-3) | SQL/service, selon le mécanisme retenu | TR-22 ou service (V6-13) |
+| situation ≤ 100 % (DV-4) | SQL/service, selon le mécanisme retenu | borne `≤` |
+| situation cumulée : cible → montant (DV-6) | **service** | calcul et saisie ; forme des colonnes : PT-11 |
+| `avancement` et `date_100_facture` (DV-5) | service (caches, un seul `UPDATE`) | CK-06 existant |
+| interdiction acompte / situation après solde (DV-7, DV-8) | service / SQL selon les règles déjà prévues | INV-58, TR-22 : garde « un solde existe », même neutralisé |
+| solde `0.00` : confirmation avant émission (DV-9) | **service** | non SQL |
+| neutralisation d'une facture (DV-9) | règles SQL/service existantes | `total_ht > 0.00` ∧ Σ avoirs = `total_ht` |
+| diagnostics inter-tables | **uniquement** CK existants ou explicitement proposés | jamais inventés comme décision |
+
+Principe : **aucun nouveau mécanisme SQL n'est créé** au motif qu'une règle pourrait s'exprimer dans SQLite (conv. §9).
+
+### N.4 Points restant ouverts après la mise à jour
+
+| Point | Contenu | Références | Statut |
+|---|---|---|---|
+| **QO-3** (nouvelle) | **Base de calcul du pourcentage** de l'acompte prévu : « contractuel » du BC (modèle §3.1 : `arrondi(contractuel × pct / 100)`), `devis.total_ht` du devis concerné, ou autre | modèle §3.1 ; INV-39, INV-187 (contractuel = Σ des devis, variable au rattachement) ; INV-36, INV-181, INV-189, INV-192 (prévu verrouillé, porté par le devis) ; 005b (`bons_commande` sans `acompte_*`) ; DV-2 | **ouvert**, aucune décision inventée ; lecture prudente **[PR]** non décidée : `devis.total_ht` |
+| **QO-2** (réduite) | correction **après émission** d'un solde `0.00` émis par erreur (aucun avoir possible, INV-55) | A6-24, INV-55, INV-76, arbitrage B | la **prévention** est décidée (DV-9) ; la correction reste **sans règle documentée** |
+| **PT-10** | forme de `devis_id` (colonne, CHECK F8, FK, un acompte actif par devis) | §2.2, §9.2, INV-52, INV-189 | mécanisme **non figé** (règle : DV-1) |
+| **PT-11** | colonnes de la situation (`situation_mode`, `situation_valeur_saisie`, forme de la cible en mode montant) | §2.2, A6-18 | mécanisme **non figé** (règle : DV-6) |
+| **V6-13** | couche exacte des plafonds (TR-22 ou service) | A6-13 | ouvert |
+| **V6-06** | D6 : réutilisation de `situation_numero` après avoir total | A6-18 | ouvert |
+| **V6-15** | application de **DV-2 aux acomptes importés** (règle de service vs données historiques) | §12, A6-15 | **non décidé** (INV-131 : les triggers traversent l'import ; une règle de service n'est pas forcément appliquée par l'importeur) |
+| **Piste CK** | diagnostic « acompte facturé supérieur au prévu de son devis » | conv. §9 | **piste éventuelle, non décidée** ; aucun CK créé |
+| **Autres** | V6-02 (mécanisme d'unicité), V6-07, V6-08, V6-10, V6-12, V6-14, V6-16 à V6-19 | §19 | inchangés |
+| **Sources** | report des DV dans invariants / modèle métier (§12 « situation atteignant 100 % ») / modèle de données (§3.1, §3.2, §4.7) / errata | CD-11 | étape **ultérieure**, hors de ce fichier |
+
+### N.5 Tests
+
+Les scénarios de test des dix décisions sont ajoutés à la stratégie : **groupe G25** (§17.2 bis) ; familles de mutation correspondantes en §18.7. Aucun test n'est créé.
 
 ---
 
@@ -277,18 +357,19 @@ Après contrôle contre E-10, les invariants, le métier, le CDC, les errata, D-
 
 ### 0.1 Légende des qualifications (brief §28)
 
-Chaque affirmation importante porte l'une de ces étiquettes (quatre d'origine, deux ajoutées le 2026-10-05) et une référence.
+Chaque affirmation importante porte l'une de ces étiquettes (quatre d'origine — dont **[À VALIDER]**, ancienne **[DV]** —, deux ajoutées le 2026-10-05, une ajoutée le 2026-10-07) et une référence.
 
 | Étiquette | Sens |
 |---|---|
 | **[RD]** RÈGLE DOCUMENTÉE | écrite explicitement dans une source V6 (référence donnée) |
 | **[DT]** DÉDUCTION TECHNIQUE | conséquence nécessaire d'une règle existante (la règle de départ est citée) |
 | **[PR]** PROPOSITION | solution technique proposée, **non décidée**. Jamais présentée comme règle métier |
-| **[DV]** DÉCISION À VALIDER | point que les sources ne permettent pas de trancher ; numéroté `V6-nn` (§19) |
+| **[À VALIDER]** DÉCISION À VALIDER | point que les sources ne permettent pas de trancher ; numéroté `V6-nn` (§19) ; **ancienne étiquette [DV], renommée le 2026-10-07** |
 | **[VR]** DÉCISION VERROUILLÉE | décision prise par Rémy le 2026-10-05 (V6-01, V6-03) ; numérotée `VR-nn` (§M.1) ; propre à ce cadrage, non officielle |
-| **[QO]** QUESTION OUVERTE | point que ni les sources ni les décisions ne permettent de trancher ; numéroté `QO-n` (§M.11) ; équivaut à **[DV]** |
+| **[QO]** QUESTION OUVERTE | point que ni les sources ni les décisions ne permettent de trancher ; numéroté `QO-n` (§M.11) ; équivaut à **[À VALIDER]** |
+| **[DV]** DÉCISION VALIDÉE | décision prise par Rémy le 2026-10-07 (V6-04, V6-05) ; numérotée `DV-n` (§N.1) ; propre à ce cadrage, **non officielle** (ce n'est pas une entrée D-xx / E-xx / INV-xx) |
 
-Les contradictions et ambiguïtés sont numérotées `A6-nn` (§15) et `CD-nn` (§M.10). Les décisions à valider sont numérotées `V6-nn` (§19) et les décisions verrouillées `VR-nn` (§M.1). Ces numérotations sont propres à ce cadrage ; **elles ne sont pas des décisions officielles** (brief §30).
+Les contradictions et ambiguïtés sont numérotées `A6-nn` (§15) et `CD-nn` (§M.10). Les décisions à valider sont numérotées `V6-nn` (§19), les décisions verrouillées `VR-nn` (§M.1) et les décisions validées `DV-n` (§N.1). Ces numérotations sont propres à ce cadrage ; **elles ne sont pas des décisions officielles** (brief §30).
 
 Abréviations de sources : **modèle** = `MAJ__modèle-données-sqlite-v6-v3.13.md` ; **invariants** = `MAJ__invariants.md` (INV-xx) ; **métier** = `MAJ__modèle-métier-V6.md` ; **CDC** = `MAJ__cdc-fonctionnel-architectural-v6.md` ; **errata** = `MAJ__cdc-errata-v6.md` (E-xx) ; **conv.** = `MAJ__conventions-techniques-v6.md` ; **audit conservation** = `MAJ__AUDIT__REGLE_CONSERVATION_OBJETS_NUMEROTES.md` (D1–D6) ; **audit fonctionnel** = `MAJ__audit-fonctionnel-v5.16-v6.md` ; PT-xx / D-xx / T-xx / C-xx / CK-xx / TR-xx = identifiants du modèle.
 
@@ -321,15 +402,16 @@ Modèle V3.13 (§2.3–2.5, §3.1–3.8, §4.6–4.10, §4.17–4.19, §6, §7, 
 
 1. **006 = deux tables** : `factures` (4 types dans une seule table) et `facture_lignes`. Rien d'autre n'est nécessaire (§2). **[RD]** modèle §4.8 ; **[PR]** pour les colonnes de PT-10/PT-11.
 2. **Une facture validée est un fait historique** : créée, numérotée et validée dans une seule transaction, jamais modifiée, jamais supprimée, jamais annulée ; correction par avoir ; après avoir total, nouvelle facture du même type avec nouveau numéro. **[RD]** INV-185, INV-53, E-14, D-45.
-3. **La facturation est globale au niveau du BC** ; seul l'acompte est rattaché à un devis (`devis_id`, PT-10). **[RD]** D-48, INV-189, INV-190 ; **[PR]** mécanisme `factures.devis_id`.
-4. **Pas de TVA, pas de TTC** dans Essentiel V6. **[RD]** CDC §1–§2, métier §10, modèle §4.8, INV-55. La mention légale de franchise n'est spécifiée nulle part (**[DV]** V6-16, hors SQL).
+3. **La facturation est globale au niveau du BC** ; seul l'acompte est rattaché à un devis (`devis_id`, PT-10). **[RD]** D-48, INV-189, INV-190 ; **[DV]** DV-1 : `devis_id` obligatoire pour tout acompte ; **[PR]** mécanisme `factures.devis_id` (PT-10).
+4. **Pas de TVA, pas de TTC** dans Essentiel V6. **[RD]** CDC §1–§2, métier §10, modèle §4.8, INV-55. La mention légale de franchise n'est spécifiée nulle part (**[À VALIDER]** V6-16, hors SQL).
 5. **Mise à jour du 2026-10-05 : deux des trois blocages d'origine sont levés** (partie M) :
    - **V6-01 `frozen_at`** : gel progressif abandonné (E-10) ; colonne conservée à titre **résiduel technique** ; obligations techniques O-1 à O-5 documentées (VR-01 à VR-03).
    - **V6-03 BC annulé / BC `termine` / caches** : BC annulé = terminal commercial mais **non figé financièrement** ; caches évolutifs ; avoir autorisé sur BC `termine` ; **état financier dérivé ≠ réouverture commerciale** (VR-04 à VR-09) ; corrective **005c** préalable (VR-06) ; **006 au rang 9**.
    - **V6-02** : « actif » est défini (VR-12) ; restent le mécanisme technique et le solde `0.00` (QO-2).
-   - **Restent bloquants pour le DDL de `factures`** : V6-04 (PT-10) et V6-05 (PT-11) (§19).
+   - **V6-04 et V6-05 : règles validées le 2026-10-07** (DV-1 à DV-10, partie N) ; reste la **conception des mécanismes** (PT-10 `devis_id`, PT-11 colonnes de situation, couche des plafonds : V6-13), non figée ici.
 6. **Aucun nouveau CK, aucune nouvelle décision officielle, aucun nouveau type de document n'est créé.** Les CK utilisés sont les CK existants (CK-01, 02, 04, 05, 06, 13, 14) ; CK-04/05/06 deviennent exécutables avec 006, et le morceau de CK-14 « aucun devis rattaché après un solde » (que 005b n'a pas pu tester faute de factures) se complète en 006.
-7. **Une seule question métier nouvelle reste ouverte après la mise à jour** : QO-1 (remplacement d'un acompte ou d'une situation crédité(e) alors qu'un solde existe, CD-08). La règle des 30 jours des dépenses n'est ni implémentée, ni réinitialisée, ni prolongée par 006 ; la colonne `fournisseurs.date_100_facture` citée dans la consigne du 2026-10-05 n'existe pas (CD-01).
+7. **Questions métier restant ouvertes après la mise à jour du 2026-10-07** : QO-2 (réduite : correction d'un solde `0.00` émis par erreur) et QO-3 (base de calcul du pourcentage de l'acompte prévu) ; QO-1 est close (DV-7, DV-8). La règle des 30 jours des dépenses n'est ni implémentée, ni réinitialisée, ni prolongée par 006 ; la colonne `fournisseurs.date_100_facture` citée dans la consigne du 2026-10-05 n'existe pas (CD-01).
+8. **Mise à jour du 2026-10-07 : dix décisions validées sur V6-04 / V6-05** (DV-1 à DV-10, partie N) : acompte rattaché à son devis, plafonné par l'acompte prévu du devis (règle de service) et par le contractuel du BC ; situation = cible cumulée pouvant atteindre exactement 100 % ; `avancement` = formule financière pure ; après un solde (actif ou neutralisé) seul un nouveau solde est possible ; un solde `0.00` est final, jamais « neutralisé », avec confirmation de service avant émission. **[DV]**
 
 ---
 
@@ -349,14 +431,14 @@ Modèle V3.13 (§2.3–2.5, §3.1–3.8, §4.6–4.10, §4.17–4.19, §6, §7, 
 
 | Type | Préfixe / séquence | Montant `total_ht` | Rattachement | Lignes (`facture_lignes`) | Sources |
 |---|---|---|---|---|---|
-| `acompte` | `ACP-nnnnn-yy` / ACP | `> 0.00`, ≤ contractuel du devis concerné | BC **et** devis d'origine (PT-10) | 1 ligne `synthese` = `total_ht` | métier §10 ; modèle §4.8 ; INV-57, INV-62, INV-189 |
-| `situation` | `FAC-nnnnn-yy` / FAC (partagée avec solde) | `> 0.00` ; cumul net après ≤ contractuel | BC (globale, tous devis) | 1 ligne `synthese` = montant de la situation | métier §12 ; modèle §3.2, §4.8 ; INV-57, INV-62, INV-190 |
-| `solde` | `FAC-nnnnn-yy` / FAC | `≥ 0.00` (le `0.00` est autorisé) ; = contractuel − facturation nette avant | BC (global) | lignes `prestation` copiées des lignes du BC, puis lignes `deduction` ; Σ = `total_ht`, y compris `0.00` | métier §13 ; modèle §3.2, §4.8 ; INV-55, INV-58, INV-62 |
+| `acompte` | `ACP-nnnnn-yy` / ACP | `> 0.00`, ≤ contractuel du devis concerné (INV-57), ≤ acompte **prévu** du devis (**[DV]** DV-2, service), nette après ≤ contractuel du BC (**[DV]** DV-3) | BC **et** devis d'origine (PT-10) | 1 ligne `synthese` = `total_ht` | métier §10 ; modèle §4.8 ; INV-57, INV-62, INV-189 |
+| `situation` | `FAC-nnnnn-yy` / FAC (partagée avec solde) | `> 0.00` ; montant = cible cumulée − nette avant (**[DV]** DV-6) ; nette après ≤ contractuel, 100 % atteignable (**[DV]** DV-4) | BC (globale, tous devis) | 1 ligne `synthese` = montant de la situation | métier §12 ; modèle §3.2, §4.8 ; INV-57, INV-62, INV-190 |
+| `solde` | `FAC-nnnnn-yy` / FAC | `≥ 0.00` (le `0.00` est autorisé, avec confirmation de service avant émission : **[DV]** DV-9) ; = contractuel − facturation nette avant | BC (global) | lignes `prestation` copiées des lignes du BC, puis lignes `deduction` ; Σ = `total_ht`, y compris `0.00` | métier §13 ; modèle §3.2, §4.8 ; INV-55, INV-58, INV-62 |
 | `avoir` | `AVO-nnnnn-yy` / AVO | `> 0.00`, Σ avoirs d'une origine ≤ montant de l'origine | BC de la facture d'origine ; `origine_facture_id` obligatoire | lignes positives (`prestation` ou `synthese`) | métier §14 ; modèle §4.8 ; INV-76, INV-62 |
 
 **[RD]** « La facture finale est toujours un solde », y compris sans acompte ni situation préalable et y compris à `0.00` (CDC §18 « Solde » ; métier §13 ; INV-55, INV-58).
 
-**[DV] / A6-09** — « facture corrective » et « document correctif » : le brief et plusieurs sources (E-14, INV-185, métier §10 : « ou, selon le cas, un document correctif ») les citent, mais **aucune source ne définit un cinquième type** ; l'énumération `factures.type` est fermée à quatre valeurs (modèle §2.5). **[PR]** Considérer que l'avoir est le seul document correctif ; ne créer aucun type supplémentaire. À confirmer (V6-08).
+**[À VALIDER] / A6-09** — « facture corrective » et « document correctif » : le brief et plusieurs sources (E-14, INV-185, métier §10 : « ou, selon le cas, un document correctif ») les citent, mais **aucune source ne définit un cinquième type** ; l'énumération `factures.type` est fermée à quatre valeurs (modèle §2.5). **[PR]** Considérer que l'avoir est le seul document correctif ; ne créer aucun type supplémentaire. À confirmer (V6-08).
 
 ### 1.3 Ce qui relève de 006, ce qui attend 007 (question 13)
 
@@ -415,7 +497,7 @@ STRICT, `id INTEGER PRIMARY KEY AUTOINCREMENT` (INV-04, conv. §9).
 | `type` | TEXT CHECK IN (`acompte`,`situation`,`solde`,`avoir`) | NN | **[RD]** §2.5 | |
 | `bc_id` | INTEGER FK → `bons_commande(id)` **ON DELETE RESTRICT** | NN | **[RD]** §4.8 | |
 | `client_id` | INTEGER FK → `clients(id)` **ON DELETE RESTRICT** | NN | **[RD]** §4.8, INV-48 | = `client_id` du BC (trigger) |
-| `devis_id` | INTEGER FK → `devis(id)` **ON DELETE RESTRICT** | NULL | **[PR]** PT-10 | acompte seulement ; voir §9.2 |
+| `devis_id` | INTEGER FK → `devis(id)` **ON DELETE RESTRICT** | NULL | **[DV]** DV-1 (règle : obligatoire pour un acompte) ; **[PR]** PT-10 (mécanisme) | acompte seulement ; le devis appartient au BC ; voir §9.2 |
 | `client_snapshot`, `entreprise_snapshot`, `chantier_snapshot` | TEXT `json_valid` | NN | **[RD]** BLOC-SNAP | |
 | `client_snapshot_version`, `entreprise_snapshot_version`, `chantier_snapshot_version` | INTEGER | NN | **[RD]** BLOC-SNAP | même forme que `bons_commande` |
 | `objet` | TEXT | NULL | **[RD]** §4.8 | |
@@ -424,7 +506,7 @@ STRICT, `id INTEGER PRIMARY KEY AUTOINCREMENT` (INV-04, conv. §9).
 | `total_ht` | D2 | NN | **[RD]** §4.8, INV-55 | |
 | `situation_numero` | INTEGER ≥ 1 | NULL | **[RD]** §4.8 | situation seulement ; D6 ouverte |
 | `situation_mode` | TEXT IN (`pourcentage`,`montant`) | NULL | **[PR]** PT-11 | situation seulement |
-| `situation_valeur_saisie` | TEXT (P2 si pourcentage, D2 si montant) | NULL | **[PR]** PT-11 | situation seulement ; sens du « montant » : V6-05 |
+| `situation_valeur_saisie` | TEXT (P2 si pourcentage, D2 si montant) | NULL | **[PR]** PT-11 | situation seulement ; en mode `montant`, la valeur est une **cible cumulée** (**[DV]** DV-6) ; forme de la colonne : **[PR]** |
 | `avancement_cumule_pct` | P2 | NULL | **[RD]** §4.8 | situation seulement |
 | `montant_deja_facture_ht` | D2 | NULL | **[RD]** §4.8, §3.2 | situation seulement : facturation nette **avant** la situation |
 | `origine_facture_id` | INTEGER FK → `factures(id)` **ON DELETE RESTRICT** | NULL | **[RD]** §4.8 | avoir seulement |
@@ -445,13 +527,13 @@ STRICT, `id INTEGER PRIMARY KEY AUTOINCREMENT` (INV-04, conv. §9).
 | F5 | `(type = 'situation') = (situation_numero IS NOT NULL) = (situation_mode IS NOT NULL) = (situation_valeur_saisie IS NOT NULL) = (avancement_cumule_pct IS NOT NULL) = (montant_deja_facture_ht IS NOT NULL)` | **[RD]** §4.8 pour 3 des 6 termes ; **[PR]** PT-11 pour mode/valeur |
 | F6 | `total_ht` D2 ; `total_ht <> '0.00'` sauf `type = 'solde'` | **[RD]** INV-55, §4.8 |
 | F7 | `origine = 'v6'` ⇒ préfixe (`acompte→ACP-`, `avoir→AVO-`, `situation|solde→FAC-`), format `xxx-nnnnn-yy`, `yy = substr(date_emission, 3, 2)` ; `origine = 'import'` ⇒ `numero` non vide (seule exemption) | **[RD]** §4.8, §10.4, INV-131, D-24 |
-| F8 | `(type = 'acompte') = (devis_id IS NOT NULL)` | **[PR]** PT-10 |
+| F8 | `(type = 'acompte') = (devis_id IS NOT NULL)` | **[DV]** DV-1 (règle) ; **[PR]** PT-10 (forme du CHECK) |
 | F9 | `origine = 'v6'` ⇒ `legacy_id`, `legacy_data` NULL | **[RD]** §2.4 |
 | F10 | dates : `GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'` ET `date(x) IS x` — **aucune borne d'année** | **[RD]** §2.2, D-38, INV-10 |
 | F11 | `situation_mode = 'pourcentage'` ⇒ `situation_valeur_saisie` P2 ; `= 'montant'` ⇒ D2 `> 0.00` ; `situation_numero >= 1` ; `avancement_cumule_pct` P2 ; `montant_deja_facture_ht` D2 | **[RD]** familles §2.3 ; **[PR]** pour la forme de la valeur |
 | F12 | `created_at` au format canonique | **[RD]** §2.2 |
 
-**[DV] / V6-05** : faut-il borner `avancement_cumule_pct` strictement sous `100.00` (« une situation atteignant 100 % n'existe pas », métier §12) ou le laisser jusqu'à `100.00` (« nette après ≤ contractuel », modèle §3.2) ? Voir A6-17.
+**[DV]** DV-4 / DV-5 (ex-V6-05) : `avancement_cumule_pct` peut atteindre `100.00` (nette après situation ≤ contractuel) ; aucune borne stricte sous 100 % ; une situation à 100 % n'est pas un solde et ne crée ni `date_100_facture` ni garantie (§N.1, A6-17).
 
 **Index** (modèle §9, un par FK + recherche) : `factures(bc_id)`, `factures(client_id)`, `factures(origine_facture_id)`, `factures(type, date_echeance)`, `factures(date_emission)`, `factures(devis_id)` **[PR]** PT-10. `numero` est déjà indexé par son `UNIQUE`. **[PR]** Aucun index supplémentaire (ex. `(bc_id, type)`) n'est proposé : non documenté, à justifier par une mesure si besoin plus tard.
 
@@ -487,15 +569,15 @@ STRICT, `id INTEGER PRIMARY KEY AUTOINCREMENT` (INV-04, conv. §9).
 |---|---|---|---|
 | `tr_02_factures_chronologie` | `factures` BEFORE INSERT | ACP/FAC/AVO : `date_emission >= derniere_date` de la clé (garde pure **[PR]** ; qui écrit `derniere_date` : V6-07) | **[RD]** TR-02, INV-24 ; détail ouvert : V6-07 |
 | `tr_16_factures_bc` | `factures` BEFORE INSERT | acompte/situation/solde : BC `en_cours` (ni `termine`, ni annulé) ; toute facture : `client_id = bons_commande.client_id` ; **avoir permis sur BC `termine` et sur BC annulé** (VR-04, VR-07) | **[RD]** TR-16, INV-47, INV-48, INV-188 ; **[VR]** VR-04, VR-07 |
-| `tr_22_factures_acompte` | `factures` BEFORE INSERT (type acompte) | devis rattaché au BC (`bc_devis`) ; un acompte non neutralisé par devis ; `total_ht ≤ devis.total_ht` ; aucun solde existant sur le BC | **[RD]** TR-22, INV-52, INV-57, INV-189 ; **[PR]** forme (PT-10, PT-9) |
-| `tr_22_factures_situation` | idem (type situation) | aucune situation si un solde existe ; une situation non neutralisée par numéro ; `montant_deja_facture_ht` = facturation nette avant ; facturation nette après ≤ contractuel (borne : V6-05) | **[RD]** TR-22, INV-57 ; **[PR]** forme |
-| `tr_22_factures_solde` | idem (type solde) | un seul solde non neutralisé par BC ; `total_ht = contractuel − facturation nette avant` (≥ 0) | **[RD]** TR-22, INV-52, INV-58 ; tension avec modèle §14 : A6-13 |
+| `tr_22_factures_acompte` | `factures` BEFORE INSERT (type acompte) | devis rattaché au BC (`bc_devis`) ; un acompte non neutralisé par devis ; `total_ht ≤ devis.total_ht` ; aucun solde existant sur le BC (même neutralisé : **[DV]** DV-8) ; **[DV]** DV-3 : nette avant + `total_ht` ≤ contractuel du BC (couche non figée : ce trigger ou le service). **[DV]** DV-2 (`acompte_type <> 'aucun'`, `total_ht` ≤ acompte prévu) : **service, absent de ce trigger** | **[RD]** TR-22, INV-52, INV-57, INV-189 ; **[DV]** DV-2, DV-3 ; **[PR]** forme (PT-10, PT-9) |
+| `tr_22_factures_situation` | idem (type situation) | aucune situation si un solde existe ; une situation non neutralisée par numéro ; `montant_deja_facture_ht` = facturation nette avant ; facturation nette après ≤ contractuel (borne `≤`, 100 % atteignable : **[DV]** DV-4 ; mode `montant` = cible cumulée − nette avant : **[DV]** DV-6 ; couche : V6-13) | **[RD]** TR-22, INV-57 ; **[PR]** forme |
+| `tr_22_factures_solde` | idem (type solde) | un seul solde non neutralisé par BC (un solde `0.00` n'est jamais neutralisé : **[DV]** DV-9) ; `total_ht = contractuel − facturation nette avant` (≥ 0) | **[RD]** TR-22, INV-52, INV-58 ; tension avec modèle §14 : A6-13 |
 | `tr_23_factures_avoir` | idem (type avoir) | origine existante, non avoir, même BC ; Σ avoirs de l'origine + `total_ht` ≤ `total_ht` de l'origine ; avoir sur avoir interdit | **[RD]** TR-23, INV-76 |
 | `tr_20_factures_no_update` | `factures` BEFORE UPDATE | aucun UPDATE (couvre `numero` immuable, `client_id`, etc.) | **[RD]** TR-20, INV-53, INV-185 |
 | `tr_21_factures_no_delete` | `factures` BEFORE DELETE | aucune suppression (directe ou par `REPLACE`, `recursive_triggers=ON`) | **[RD]** TR-21, INV-53, INV-06 |
 | `tr_21_facture_lignes_no_update` / `_no_delete` | `facture_lignes` | aucune modification, aucune suppression | **[RD]** TR-21, INV-53 |
-| `tr_24_facture_lignes_insert` | `facture_lignes` BEFORE INSERT | composition par type de facture (acompte/situation : 1 ligne `synthese` ; avoir : lignes positives `prestation`/`synthese` ; `deduction` seulement pour un solde) ; `bc_ligne_id` appartenant au BC de la facture | **[DT]** INV-62 (« SQL, SVC ») ; **[DV]** V6-14 |
-| `tr_99_bc_devis_apres_solde` | `bc_devis` BEFORE INSERT | aucun rattachement de devis si un solde (même totalement crédité) existe sur le BC | **[RD]** « trigger possible avec la tranche Facturation » (modèle §4.7, §14) ; règle fixée par **[VR]** VR-09 ; couche (trigger ou service + CK-14) : **[DV]** V6-10 |
+| `tr_24_facture_lignes_insert` | `facture_lignes` BEFORE INSERT | composition par type de facture (acompte/situation : 1 ligne `synthese` ; avoir : lignes positives `prestation`/`synthese` ; `deduction` seulement pour un solde) ; `bc_ligne_id` appartenant au BC de la facture | **[DT]** INV-62 (« SQL, SVC ») ; **[À VALIDER]** V6-14 |
+| `tr_99_bc_devis_apres_solde` | `bc_devis` BEFORE INSERT | aucun rattachement de devis si un solde (même totalement crédité) existe sur le BC | **[RD]** « trigger possible avec la tranche Facturation » (modèle §4.7, §14) ; règle fixée par **[VR]** VR-09 ; couche (trigger ou service + CK-14) : **[À VALIDER]** V6-10 |
 
 > Remarque de numérotation : `TR-24` du modèle est « obsolète, jamais créé » (annulation de facture). Je ne le réutilise pas pour une autre règle : le nom `tr_24_facture_lignes_insert` est **[PR]**, un autre identifiant sera choisi à la rédaction du SQL si l'on veut éviter toute confusion avec TR-24 du modèle.
 
@@ -511,7 +593,7 @@ STRICT, `id INTEGER PRIMARY KEY AUTOINCREMENT` (INV-04, conv. §9).
 |---|---|---|---|---|
 | BC → factures | 1 → N | `factures.bc_id` | RESTRICT | **[RD]** §4.8 |
 | BC ↔ devis | 1 ↔ N (un devis dans un seul BC) | `bc_devis(bc_id, devis_id UNIQUE, rang)` — **existe depuis 005b** | RESTRICT | **[RD]** 005b, INV-187 |
-| devis → facture d'acompte | 1 → 0..1 non neutralisé (« un acompte par devis ») | `factures.devis_id` | RESTRICT | **[RD]** D-48, INV-189 ; **[PR]** mécanisme PT-10 |
+| devis → facture d'acompte | 1 → 0..1 non neutralisé (« un acompte par devis ») | `factures.devis_id` | RESTRICT | **[RD]** D-48, INV-189 ; **[DV]** DV-1 ; **[PR]** mécanisme PT-10 |
 | facture → lignes | 1 → N | `facture_lignes.facture_id` | RESTRICT | **[RD]** §4.8 |
 | ligne de facture → ligne de BC | N → 0..1 | `facture_lignes.bc_ligne_id` | RESTRICT | **[RD]** §4.8, métier §11 |
 | facture → avoir | 1 → N (plusieurs avoirs partiels possibles) | `factures.origine_facture_id` | RESTRICT | **[RD]** INV-76 (« Σ avoirs ≤ montant de l'origine »), métier §14 |
@@ -547,22 +629,22 @@ STRICT, `id INTEGER PRIMARY KEY AUTOINCREMENT` (INV-04, conv. §9).
 | Correction | **avoir** ; après avoir total, nouvelle facture du **même type**, **nouveau numéro** ; l'initiale et son avoir restent | **[RD]** | INV-185, E-14, D-45, arbitrage B, C-33 |
 | Annulation | **n'existe pas** (`cancelled_at`, `motif_annulation`, état « Annulée », TR-24 obsolètes) | **[RD]** | E-14, INV-185 |
 | Suppression | **jamais**, pour aucun type, ni pour les lignes | **[RD]** | INV-53, TR-21, INV-06, conv. §9 |
-| État | aucun statut stocké ; état de paiement dérivé (007) ; « entièrement créditée » dérivé (PT-9) | **[RD]** / **[DV]** | INV-60 ; PT-9 |
+| État | aucun statut stocké ; état de paiement dérivé (007) ; « entièrement créditée » dérivé (PT-9) | **[RD]** / **[À VALIDER]** | INV-60 ; PT-9 |
 
 ### 4.2 Par type de document (question 10 : quand devient-on immuable ? — toujours dès l'INSERT)
 
 | | Acompte | Situation | Solde | Avoir |
 |---|---|---|---|---|
-| Préalable | BC `en_cours`, devis rattaché au BC, aucun solde sur le BC | BC `en_cours`, aucun solde sur le BC | BC `en_cours`, aucun solde **non neutralisé** | facture d'origine (non avoir) du même BC ; BC annulé accepté |
-| Particularité | peut exister **sans être payé** : trois niveaux distincts (acompte prévu / facture / règlement) | globale au BC ; mode, valeur saisie, avancement, montant HT facturé **figés** | toujours le document final ; `0.00` autorisé ; clôture commerciale du BC (plus de devis) | Σ avoirs ≤ montant de l'origine ; pas d'avoir sur avoir ; pas annulable |
+| Préalable | BC `en_cours`, devis rattaché au BC **et prévoyant un acompte** (**[DV]** DV-1, DV-2), aucun solde sur le BC, même totalement crédité (**[DV]** DV-8) | BC `en_cours`, aucun solde sur le BC, même totalement crédité (**[DV]** DV-8) | BC `en_cours`, aucun solde **non neutralisé** | facture d'origine (non avoir) du même BC ; BC annulé accepté |
+| Particularité | peut exister **sans être payé** : trois niveaux distincts (acompte prévu / facture / règlement) ; jamais obligatoire ; plafonds : prévu du devis, total du devis, contractuel du BC (**[DV]** DV-2, DV-3) | globale au BC ; mode, valeur saisie, avancement, montant HT facturé **figés** ; valeur en mode montant = cible cumulée (**[DV]** DV-6) ; peut atteindre 100 % sans être un solde (**[DV]** DV-4) | toujours le document final ; `0.00` autorisé (confirmation de service avant émission, jamais neutralisé : **[DV]** DV-9) ; clôture commerciale du BC (plus de devis) | Σ avoirs ≤ montant de l'origine ; pas d'avoir sur avoir ; pas annulable |
 | Modifiable | non | non | non | non |
-| Corrigé par | avoir (total → nouvel acompte du même devis) | avoir (partiel libère un montant refacturable, C-09 ; total → nouvelle situation) | avoir (partiel : ne rouvre pas ; total → nouveau solde) | **[DV]** A6-10 (correction d'un avoir erroné non conçue, PT-9) |
+| Corrigé par | avoir (total → nouvel acompte du même devis, **tant qu'aucun solde n'a été émis** : **[DV]** DV-8) | avoir (partiel libère un montant refacturable, C-09 ; total → nouvelle situation, **tant qu'aucun solde n'a été émis** : **[DV]** DV-8) | avoir (partiel : ne rouvre pas ; total → nouveau solde) | **[À VALIDER]** A6-10 (correction d'un avoir erroné non conçue, PT-9) |
 | Supprimable | non | non | non | non |
 | Source | INV-189, INV-57, modèle §3.2 | INV-190, métier §12, E-17 | INV-58, métier §13, CDC §18 | métier §14, INV-76, E-14 |
 
-**[RD]** Une situation « atteignant 100 % n'existe pas : la facture finale est un Solde » (métier §12). **[RD]** « Une situation ne peut plus être émise dès qu'un solde actif existe, ni sur un BC annulé » (métier §12).
+**[RD]** métier §12 : « Une situation atteignant 100 % n'existe pas : la facture finale est un Solde » ; **[DV]** DV-4 (2026-10-07) en précise la portée : une situation peut porter la nette à **exactement** 100 % du contractuel (nette après ≤ contractuel) ; ce qui n'existe pas, c'est une situation qui **tient lieu de facture finale** — seul le solde l'est (CD-11). **[RD]** « Une situation ne peut plus être émise dès qu'un solde actif existe, ni sur un BC annulé » (métier §12) ; **[DV]** DV-8 : valable aussi pour un solde totalement crédité.
 
-**[RD]/[DT] / A6-20 (VR-09, VR-12, CD-07, QO-1)** — Après un avoir total sur le **solde**, seul un **nouveau solde** est émissible : INV-58 interdit tout acompte et toute situation après un solde (lecture « même neutralisé » : niveau 2 > TR-22 niveau 3) ; E-14 et C-33 autorisent le nouveau solde. Le cas d'un acompte ou d'une situation totalement crédité(e) **alors qu'un solde existe** n'est pas couvert explicitement : **[QO]** QO-1 (§M.7).
+**[DV] / A6-20 (VR-09, VR-12, DV-7, DV-8)** — Après un solde, **actif ou totalement crédité**, aucun acompte et aucune situation ne sont émissibles ; seul un **nouveau solde** peut l'être, et seulement si le solde précédent est totalement crédité (un seul solde non neutralisé par BC, INV-52). INV-58 (niveau 2) l'emporte sur la lecture « solde actif » de TR-22 et du métier §13 (CD-07). E-14, INV-185 et C-33 (« nouvelle facture du même type ») s'entendent, pour l'acompte et la situation, **avant tout solde** (CD-08).
 
 ### 4.3 Cycle de vie du BC vu par la facturation (rappel, 004/005b)
 
@@ -597,7 +679,7 @@ STRICT, `id INTEGER PRIMARY KEY AUTOINCREMENT` (INV-04, conv. §9).
 
 **[RD]** TR-02 s'applique à `factures` INSERT : `date_emission >= derniere_date`, puis mise à jour de `derniere_date` (modèle §8).
 
-**[DV] / A6-07 (V6-07)** — Quatre trous :
+**[À VALIDER] / A6-07 (V6-07)** — Quatre trous :
 1. **Quelle clé ?** `numerotation_sequences` est indexée par `(type_objet, annee)`. Pour une facture `origine = 'v6'`, la clé se lit indifféremment dans `numero` ou dans `(type, substr(date_emission,3,2))` (F7 les rend identiques). **[PR]** Dériver la clé de `(type, date_emission)` : fonctionne aussi pour les factures importées au numéro libre.
 2. **Ligne de séquence absente.** Le service (PT-1) crée toujours la ligne avant la première facture d'une clé. Mais l'import insère les factures **avant** `sequences` (modèle §10.5), tout en affirmant « TR-02 actif », puis initialise les séquences (§10.6, `derniere_date ≥ toute date_emission de la même clé`). Si le trigger crée la ligne, l'initialisation ultérieure devient un conflit sur `UNIQUE(type_objet, annee)` ; s'il ne la crée pas, TR-02 est sans effet pendant l'import. **[PR]** Option A : TR-02 ne contraint que si la ligne existe, ne crée jamais de ligne ; `derniere_date` est alors fixée par `sequences`. Option B : le trigger fait un UPSERT. À trancher avec le contrat d'import (P-04).
 3. **Cross-année.** Le trigger étant par clé `(type, année)`, une facture datée 2026-12-31 peut être émise après une datée 2027-01-02 (autre clé). **[DT]** Conséquence de la définition par clé ; rien dans les sources ne la déclare problématique. À mentionner, pas à corriger.
@@ -628,10 +710,16 @@ facturation_nette(BC) = Σ total_ht(acomptes) + Σ total_ht(situations) + Σ tot
 situation, mode pourcentage :
   montant      = arrondi_HALF_UP(contractuel × cumul% / 100) − nette_avant
   deja_facture = nette_avant                         (montant_deja_facture_ht de la situation)
-  nette_apres  = nette_avant + montant ≤ contractuel  (borne stricte ou non : V6-05)
+  nette_apres  = nette_avant + montant ≤ contractuel  (DV-4 : `≤`, 100 % atteignable)
+
+situation, mode montant (DV-6) :
+  montant      = cible_cumulee − nette_avant       (cible_cumulee = valeur saisie ; doit dépasser nette_avant : total_ht > 0.00, INV-55)
+  nette_apres  = cible_cumulee ≤ contractuel
 
 solde : total_ht = contractuel − nette_avant        (≥ 0.00 ; 0.00 autorisé)
 acompte : total_ht ≤ contractuel du devis concerné   (INV-57)
+          total_ht ≤ acompte prévu du devis             (DV-2 ; service ; interdit si acompte_type = 'aucun')
+          nette_avant + total_ht ≤ contractuel du BC    (DV-3)
 avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 ```
 
@@ -654,25 +742,32 @@ avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 | C-36 | annulation d'un BC portant acompte payé, situations, encaissements | factures conservées ; avoir possible ; aucun nouvel acompte/situation/solde | TR-16 |
 | C-37 | situation globale à deux devis, % puis montant | calcul en montants cumulés ; mode, valeur, avancement, montant HT figés | service (PT-11) |
 | C-15 / C-16 | `2.5 × 10.005` ; `±0.125` | `25.01` ; `±0.13` | service (arrondi) |
+| DV-2 | devis `pourcentage 30.00`, `total_ht` 1000.00 (BC à ce seul devis) | plafond **300.00** : 300.00 accepté, 300.01 refusé ; devis `aucun` : tout acompte refusé | service (base du %, QO-3) |
+| DV-3 | BC à deux devis A (1000.00) et B (600.00, acompte prévu `montant 600.00`, rattaché après l'acompte de A) ; acompte A 200.00 ; situation cible cumulée 1440.00 (montant 1240.00) ; puis acompte B | 600.00 **refusé** (1440.00 + 600.00 > 1600.00, bien que ≤ total de B et ≤ prévu de B) ; **160.00** accepté (nette = 1600.00) | TR-22 ou service (couche non figée) |
+| DV-4 / DV-9 | contractuel 1000.00 ; acompte 200.00 ; situation cible cumulée 1000.00 (montant 800.00) ; puis solde | nette = 1000.00, `avancement` 100.00 (formule), `date_100_facture` NULL, BC `en_cours` ; solde **0.00** accepté après confirmation, `date_100_facture` posée (C-08) | SQL + service |
 | *(à ajouter, **[PR]**)* | `100.05 × 50 %` | `50.025 → 50.03` (HALF_UP ; l'arrondi bancaire donnerait `50.02`) | discrimine HALF_UP |
 
 ### 6.4 Acompte : prévu, facturé, encaissé (brief §4)
 
-**[RD]** Trois niveaux **distincts** : acompte **prévu** dans le devis (`devis.acompte_type/valeur`, `acompte_prevu = arrondi(contractuel × pct/100)` ou montant fixe, toujours ≤ contractuel, modèle §3.1) ; **facture** d'acompte, qui peut exister sans être payée ; **règlement encaissé** (INV-189, métier §10 CDC §18). « Une facture d'acompte n'est pas un règlement » (brief) : 006 ne crée aucune notion d'encaissement.
+**[RD]** Trois niveaux **distincts** : acompte **prévu** dans le devis (`devis.acompte_type` / `acompte_valeur`, colonnes du **devis** — depuis 005b, plus du BC —, `acompte_prevu = arrondi(contractuel × pct/100)` ou montant fixe, toujours ≤ contractuel, modèle §3.1 ; **base du pourcentage : QO-3** ; contenu contractuel **verrouillé** du devis accepté, INV-36, INV-181) ; **facture** d'acompte, qui peut exister sans être payée ; **règlement encaissé** (INV-189, métier §10 CDC §18). « Une facture d'acompte n'est pas un règlement » (brief) : 006 ne crée aucune notion d'encaissement.
 
-**[DV] / V6-04** : le montant facturé doit-il être **égal** à l'acompte prévu, ou seulement **≤ `devis.total_ht`** ? Les sources donnent le plafond (INV-57, TR-22) et le « prévu » comme valeur proposée, jamais comme égalité obligatoire. **[PR]** SQL garantit seulement le plafond ; le prévu reste une proposition du service.
+**[DV] DV-2 (ex-V6-04, 2026-10-07)** : le prévu du devis est le **plafond contractuel** de l'acompte facturable. `acompte_type = 'aucun'` → aucun acompte facturable ; `'pourcentage'` → plafond = montant prévu calculé selon le pourcentage du devis ; `'montant'` → plafond = `acompte_valeur`. L'acompte facturé peut être inférieur au prévu, n'est jamais obligatoire, ne peut pas dépasser le prévu et reste soumis aux plafonds généraux (INV-57 ; DV-3). **Règle de service** : aucun trigger, aucun CHECK, aucun CK nouveau. Les documents antérieurs n'imposaient pas explicitement cette relation (INV-189 distingue seulement les trois niveaux ; INV-57 et TR-22 ne citent que le total du devis) : c'est une **décision validée**, non une [RD].
+
+**[DV] DV-3** : pour toute nouvelle facture d'acompte, après émission, facturation nette du BC ≤ montant contractuel du BC ; l'acompte respecte donc **à la fois** le plafond du devis concerné et le plafond global du BC (cohérent avec INV-57 et la définition de la nette, §6.2).
+
+**[PR]** Piste **non décidée** : un diagnostic « acompte facturé supérieur au prévu de son devis » pourrait compléter les CK existants ; **aucun CK n'est créé ni décidé** (§N.4).
 
 ### 6.5 Acomptes dans le solde (brief §13)
 
-**[RD]** Le solde ne « déduit » pas les acomptes par une règle spéciale : son `total_ht = contractuel − facturation nette avant` (modèle §3.2). Les lignes du solde conservent la trace : lignes `prestation` copiées du BC, puis lignes `deduction` « facturation nette antérieure » et « remise globale de chaque devis rattaché » (modèle §4.8, INV-62). **[DT]** Plusieurs acomptes (un par devis) sont donc pris en compte par la nette, sans traitement particulier ; les avoirs sur acompte avant solde réduisent la nette et font remonter le solde. **[DT]** Sous la lecture « solde même neutralisé » (A6-20), un avoir sur acompte émis après le solde ne permet pas de recréer d'acompte : le montant ne se refacture que par remplacement du solde.
+**[RD]** Le solde ne « déduit » pas les acomptes par une règle spéciale : son `total_ht = contractuel − facturation nette avant` (modèle §3.2). Les lignes du solde conservent la trace : lignes `prestation` copiées du BC, puis lignes `deduction` « facturation nette antérieure » et « remise globale de chaque devis rattaché » (modèle §4.8, INV-62). **[DT]** Plusieurs acomptes (un par devis) sont donc pris en compte par la nette, sans traitement particulier ; les avoirs sur acompte avant solde réduisent la nette et font remonter le solde. **[DV]** DV-8 : après un solde, même totalement neutralisé, un avoir sur acompte émis après le solde ne permet pas de recréer d'acompte : le montant ne se refacture que par un nouveau solde.
 
-**[DV] / A6-19** : les lignes `deduction` « facturation antérieure » sont-elles une seule ligne ou une par facture ? Le modèle dit « lignes `deduction` (facturation nette antérieure, et remise globale de chaque devis rattaché) » : le texte exige une ligne par remise de devis, **pas** le nombre de lignes pour la facturation antérieure. À préciser dans le contrat service (hors SQL, `Σ lignes = total_ht` reste le seul invariant, CK-05).
+**[À VALIDER] / A6-19** : les lignes `deduction` « facturation antérieure » sont-elles une seule ligne ou une par facture ? Le modèle dit « lignes `deduction` (facturation nette antérieure, et remise globale de chaque devis rattaché) » : le texte exige une ligne par remise de devis, **pas** le nombre de lignes pour la facturation antérieure. À préciser dans le contrat service (hors SQL, `Σ lignes = total_ht` reste le seul invariant, CK-05).
 
 ### 6.6 Avancement (brief §14)
 
-**[RD]** `avancement` = facturation nette / contractuel (P2), **100.00 dès qu'un solde actif existe** ; mesure la facturation, jamais l'avancement physique (modèle §4.7, métier §7, INV-46). Colonnes et CHECK **déjà en 004** (`avancement` P2 0–10000 centièmes ; `date_100_facture ⇒ avancement = '100.00'`). **[DT]** 006 **ne crée aucune règle d'avancement** : il fournit la source (les factures) ; l'écriture du cache est une règle de service (INV-46) contrôlée par CK-06. La limite « 100 % » n'est portée que par la distinction situation/solde (§4.2).
+**[RD]** `avancement` = facturation nette / contractuel (P2), **100.00 dès qu'un solde actif existe** ; mesure la facturation, jamais l'avancement physique (modèle §4.7, métier §7, INV-46). Colonnes et CHECK **déjà en 004** (`avancement` P2 0–10000 centièmes ; `date_100_facture ⇒ avancement = '100.00'`). **[DT]** 006 **ne crée aucune règle d'avancement** : il fournit la source (les factures) ; l'écriture du cache est une règle de service (INV-46) contrôlée par CK-06. **[DV]** DV-5 : `avancement` suit la formule financière pure (nette / contractuel) et peut atteindre 100.00 sans solde (situation à 100 %) ; aucun plafond artificiel à 99.99 ; la clause « 100.00 dès qu'un solde actif existe » (modèle §4.7) n'est **pas modifiée** ; `avancement = 100.00` n'est **pas** l'émission d'un solde : `date_100_facture` et la clôture restent liées au solde (§N.1).
 
-**[VR]** Après un avoir, `avancement` suit sa définition (100.00 tant qu'un solde actif subsiste ; sinon facturation nette / contractuel) et s'écrit **avec** `date_100_facture` dans le même `UPDATE` (CHECK de 004). Sur un BC annulé, il évolue de la même façon (VR-05) : voir §M.6.
+**[VR]** Après un avoir, `avancement` suit sa définition (100.00 tant qu'un solde actif subsiste ; sinon facturation nette / contractuel, qui peut elle-même valoir 100.00 sans solde : **[DV]** DV-5) et s'écrit **avec** `date_100_facture` dans le même `UPDATE` (CHECK de 004). Sur un BC annulé, il évolue de la même façon (VR-05) : voir §M.6.
 
 ### 6.7 Ce que 006 ne calcule pas (reste à 007+)
 
@@ -689,12 +784,12 @@ avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 | `created_at` | **oui** | horodatage technique | défaut `strftime` ; jamais métier | **[RD]** §2.2, INV-201 (principe : date métier ≠ `created_at`) |
 | date de validation | **non** | — | l'émission est la validation (une transaction) | **[DT]** INV-185 |
 | date de situation / date de solde | **non** | — | portées par `date_emission` de la facture concernée | **[DT]** |
-| période facturée (du … au …) | **non documentée** | — | **ne pas créer** | **[DV]** absence documentaire — aucune source ne la prévoit |
+| période facturée (du … au …) | **non documentée** | — | **ne pas créer** | **[À VALIDER]** absence documentaire — aucune source ne la prévoit |
 | date de paiement | **hors 006** | `reglements.date_evenement` | 007 | modèle §4.9 |
 | `date_100_facture` (cache du BC) | existe en 004 | = `date_emission` du **premier solde actif** ; NULL si ce solde est totalement crédité et qu'aucun autre n'est actif | service ; ne réinitialise ni ne prolonge la règle des 30 jours des dépenses (VR-13) | **[RD]** modèle §3.5, INV-43 ; **[VR]** VR-10 |
 | `garanties.date_declenchement` | 008 | = `date_emission` du premier solde, immuable | — | **[RD]** modèle §4.10 |
 
-**[DV] / V6-17** — Aucune source ne dit si `date_emission` peut être **future** ou antérieure à la date du jour (seule la chronologie TR-02 et la borne de service existent). **[PR]** Ne rien ajouter en SQL (« ne pas transformer une absence documentaire en décision implicite »). Test : accepter le passé non chronologique est refusé uniquement par TR-02.
+**[À VALIDER] / V6-17** — Aucune source ne dit si `date_emission` peut être **future** ou antérieure à la date du jour (seule la chronologie TR-02 et la borne de service existent). **[PR]** Ne rien ajouter en SQL (« ne pas transformer une absence documentaire en décision implicite »). Test : accepter le passé non chronologique est refusé uniquement par TR-02.
 
 ---
 
@@ -709,7 +804,7 @@ avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 | Taux, montant de TVA, plusieurs taux, TTC | **non documentés** (volontairement absents) | **[RD]** par absence explicite | idem ; dépenses : « sans TVA ni montant TTC » (métier §18, modèle §4.12) |
 | Exonération éventuelle | seule la franchise en base est citée ; pas de colonne d'exonération | **[RD]** | métier §10 |
 | Précision et arrondis | ceux des montants HT (D2, HALF_UP) | **[RD]** | modèle §2.3, §3.1 |
-| **Mention légale** de franchise sur la facture | **aucune source** ne dit où elle vit (le snapshot entreprise contient « mention commerciale, conditions commerciales et particulières », modèle §2.4, mais n'y affecte pas la mention de TVA) | absente | **[DV]** V6-16 — hors SQL (génération du document) |
+| **Mention légale** de franchise sur la facture | **aucune source** ne dit où elle vit (le snapshot entreprise contient « mention commerciale, conditions commerciales et particulières », modèle §2.4, mais n'y affecte pas la mention de TVA) | absente | **[À VALIDER]** V6-16 — hors SQL (génération du document) |
 
 **Modélisation retenue** — **[PR]** : *absence de colonnes* (aucune colonne `tva`, `ttc`, `taux`, `exoneration` dans `factures` ni `facture_lignes`) et un **test de structure** vérifiant cette absence, sur le modèle de `test_T44_aucune_structure_d_import_ni_de_tva_ni_de_statut` (`test_005:414`). Le brief interdit de déduire quoi que ce soit des devis ou des dépenses : les devis n'ont pas non plus de TVA, et ce n'est pas la raison invoquée ici — la source est le CDC et le modèle, pas l'analogie.
 
@@ -736,15 +831,15 @@ avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 | Niveau de facturation | **globale au niveau BC** (situation, solde) ; l'acompte seul est rattaché à son devis | **[RD]** | D-48, INV-189, INV-190, E-16, E-17 |
 | Lignes issues de plusieurs devis | le solde reprend toutes les `bc_lignes` ; chaque ligne garde `devis_ligne_id` (donc son devis) | **[DT]** | 005b `bc_lignes.devis_ligne_id UNIQUE` ; modèle §4.8 |
 | Remise globale | portée par chaque devis, jamais recalculée ; elle apparaît dans le solde en **une ligne `deduction` par devis** | **[RD]** | modèle §3.1, §4.8, INV-62, INV-192 |
-| Acompte | un acompte **par devis** (non neutralisé) ; plafond = contractuel du devis concerné | **[RD]** principe ; **[PR]** colonne `devis_id` | D-48, INV-189, INV-57 ; PT-10 |
-| Situation | globale, saisie en % ou en montant, calcul en montants cumulés, aucune double facturation | **[RD]** | E-17, INV-190, C-37 |
+| Acompte | un acompte **par devis** (non neutralisé), rattaché à son devis (`devis_id` **obligatoire** : DV-1) ; plafonds : prévu du devis (DV-2, service), contractuel du devis (INV-57), contractuel du BC (DV-3) | **[RD]** principe ; **[DV]** DV-1 à DV-3 ; **[PR]** forme de la colonne `devis_id` | D-48, INV-189, INV-57 ; PT-10 |
+| Situation | globale, saisie en % ou en montant (cible cumulée : **[DV]** DV-6), calcul en montants cumulés, aucune double facturation, 100 % atteignable (**[DV]** DV-4) | **[RD]** ; **[DV]** | E-17, INV-190, C-37 |
 | Solde | global ; `contractuel − nette avant` | **[RD]** | modèle §3.2 |
 | Ventilation par devis des situations / soldes | **non prévue** | **[RD]** par absence + INV-190 « globale » | — |
 | Rattachement tardif d'un devis | possible tant que **aucun solde n'est rédigé/validé**, même après acompte(s) et situation(s) ; un avoir sur le solde ne rouvre pas | **[RD]** | INV-187, E-16, C-34, C-35 |
 | Conservation des références historiques | `bc_devis` est immuable (`tr_99_bc_devis_no_update/no_delete`) ; `factures.devis_id` et `bc_lignes` en RESTRICT | **[RD]** 005b ; **[DT]** | INV-184 |
 | Devis ajouté après un acompte d'un autre devis | l'acompte existant reste valable ; le contractuel augmente ; la situation suivante se calcule sur le nouveau contractuel | **[DT]** | C-34, C-37 |
 
-**[DV] / V6-04** — PT-10 reste une *proposition* : colonne `factures.devis_id` (acompte seulement), un acompte non neutralisé par devis. Points non tranchés : (a) base de l'« acompte prévu » (devis `total_ht` après remise ?) ; (b) tableau d'avancement des acomptes d'un BC à plusieurs devis ; (c) rôle de `devis_id` à l'import (V2 : un seul devis par BC, rang 1).
+**[DV]** DV-1 à DV-3 (ex-V6-04) : règles validées (rattachement, plafond du devis, plafond global du BC). **[PR]** PT-10 reste une *proposition de mécanisme* : colonne `factures.devis_id` (acompte seulement), un acompte non neutralisé par devis. **[QO]** QO-3 : base de l'« acompte prévu » en mode `pourcentage` (§N.4). Non tranchés : (b) tableau d'avancement des acomptes d'un BC à plusieurs devis ; (c) rôle de `devis_id` à l'import (V2 : un seul devis par BC, rang 1) — V6-15.
 
 ### 9.3 États du BC et facturation (brief §16, §17, §18 ; question 12)
 
@@ -759,13 +854,13 @@ avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 
 | Opération | `en_cours` | `termine` | `annule` | Effet de `frozen_at` | Source / qualif. |
 |---|---|---|---|---|---|
-| Nouvel **acompte** | ✓ si aucun solde n'a été émis | ✗ (solde actif existe) | ✗ | aucun | **[RD]** TR-16, INV-47, INV-58, INV-188 ; **[DT]** pour `termine` (TR-22) |
-| Nouvelle **situation** | ✓ si aucun solde n'a été émis | ✗ | ✗ | aucun | idem |
-| Nouveau **solde** | ✓ si aucun solde actif | ✗ (solde actif) | ✗ | aucun | **[RD]** INV-58, TR-22, INV-188 |
+| Nouvel **acompte** | ✓ si aucun solde n'a été émis (même neutralisé : **[DV]** DV-8) **et** si le devis prévoit un acompte (**[DV]** DV-2) | ✗ (solde actif existe) | ✗ | aucun | **[RD]** TR-16, INV-47, INV-58, INV-188 ; **[DT]** pour `termine` (TR-22) ; **[DV]** DV-2, DV-7, DV-8 |
+| Nouvelle **situation** | ✓ si aucun solde n'a été émis (même neutralisé : **[DV]** DV-8) | ✗ | ✗ | aucun | idem ; **[DV]** DV-4, DV-7 |
+| Nouveau **solde** | ✓ si aucun solde actif (un solde `0.00` est toujours actif : **[DV]** DV-9) | ✗ (solde actif) | ✗ | aucun | **[RD]** INV-58, TR-22, INV-188 ; **[DV]** DV-9 |
 | **Avoir** sur facture existante | ✓ | ✓ **[VR]** VR-07 | ✓ **[RD]** INV-188 | aucun | **[RD]** INV-188 ; **[VR]** VR-04, VR-07 |
 | Modification / suppression / annulation d'une facture | ✗ | ✗ | ✗ | aucun | **[RD]** INV-53, INV-185 |
 | Rattachement d'un devis (005b) | ✓ si aucun solde n'a été émis (**même crédité** : VR-09) | ✗ (solde existe) | ✗ (`tr_99`) | aucun (005b : « un BC gelé peut recevoir un nouveau devis ») | **[RD]** INV-187 ; **[VR]** VR-09 ; garde SQL : V6-10 |
-| Nouvelle facture du **même type** après avoir total | ✓ selon §M.7 | sans objet : un BC `termine` a un solde actif ; si l'avoir neutralise le solde, le BC est redevenu `en_cours` | ✗ (pas de nouveau cycle) | aucun | **[RD]** arbitrage B, INV-188 ; **[QO]** QO-1 |
+| Nouvelle facture du **même type** après avoir total | ✓ selon §M.7 **avant tout solde** ; **✗ pour acompte et situation après un solde**, même neutralisé (**[DV]** DV-7, DV-8) ; nouveau solde ✓ si le précédent est totalement crédité | sans objet : un BC `termine` a un solde actif ; si l'avoir neutralise le solde, le BC est redevenu `en_cours` | ✗ (pas de nouveau cycle) | aucun | **[RD]** arbitrage B, INV-188 ; **[DV]** DV-7, DV-8 (QO-1 close) |
 | Recalcul des caches de facturation après avoir | ✓ | ✓ | ✓ (trois caches ; `statut` reste `annule`) | aucun | **[VR]** VR-05, VR-07 |
 | Réouverture commerciale | — | **jamais créée** par 006 (brief §17) ; seul le service financier recalcule l'état dérivé (INV-42) | — | — | **[RD]** INV-41, modèle §3.5 ; **[VR]** VR-08 |
 
@@ -805,25 +900,25 @@ avoir : Σ avoirs(origine) ≤ total_ht(origine)         (INV-76)
 | INV-46, INV-164 | caches du BC par un service financier unique, en un seul `UPDATE` ; ordre de recalcul | service + CK-06 + CHECK de 004 | **[RD]** |
 | INV-47 | nouvel acompte/situation/solde seulement sur BC `en_cours` ; avoirs possibles sur BC annulé ; avoir sur BC `termine` **autorisé** (l'« à confirmer » est levé par VR-07) | trigger TR-16 | **[RD]** / **[VR]** |
 | INV-48 | `client_id` cohérent devis / BC / factures à l'INSERT | trigger | **[RD]** |
-| INV-52 | un acompte actif par devis, un solde actif par BC, une situation active par numéro ; « actif » = non entièrement neutralisé par un avoir total (VR-12) | trigger | **[RD]** principe et définition / **[PR]** mécanisme PT-9 |
+| INV-52 | un acompte actif par devis, un solde actif par BC, une situation active par numéro ; « actif » = non entièrement neutralisé par un avoir total (VR-12) ; un solde `0.00` n'est jamais neutralisé (**[DV]** DV-9) | trigger | **[RD]** principe et définition / **[PR]** mécanisme PT-9 ; **[DV]** DV-9 |
 | INV-53 | facture immuable, jamais supprimée ni annulée ; correction par avoir | trigger | **[RD]** |
 | INV-54 | `Σ facture_lignes.montant_ht = total_ht`, sans exemption | service + CK-05 | **[RD]** |
 | INV-55 | `total_ht` : acompte, situation, avoir `> 0.00` ; solde `≥ 0.00` ; aucun TTC ; pas de type `complete` | CHECK | **[RD]** |
 | INV-56 | facturation nette = Σ acomptes + situations + soldes − avoirs | service (+ triggers qui la lisent) | **[RD]** |
-| INV-57, INV-190 | situation globale, % ou montant, montants cumulés ; acompte ≤ contractuel du devis | trigger (bornes) + service (calcul) | **[RD]** |
-| INV-58 | solde = contractuel − nette avant ; plus d'acompte/situation après solde ; avoir partiel ne rouvre pas | trigger | **[RD]** |
+| INV-57, INV-190 | situation globale, % ou montant, montants cumulés ; acompte ≤ contractuel du devis ; **[DV]** DV-2 (acompte ≤ prévu du devis : service), DV-3 (nette après ≤ contractuel du BC), DV-4 (100 % atteignable), DV-6 (cible cumulée) | trigger (bornes) + service (calcul, prévu du devis) | **[RD]** ; **[DV]** DV-2, DV-3, DV-4, DV-6 |
+| INV-58 | solde = contractuel − nette avant ; plus d'acompte/situation après solde (actif ou neutralisé : **[DV]** DV-7, DV-8) ; avoir partiel ne rouvre pas ; solde `0.00` : confirmation de service (**[DV]** DV-9) | trigger + service | **[RD]** ; **[DV]** DV-7, DV-8, DV-9 |
 | INV-59 | `date_echeance` NN hors avoir, NULL pour un avoir, ≥ `date_emission` | CHECK | **[RD]** |
 | INV-60 | aucun statut de facture persisté | structure | **[RD]** |
-| INV-62 | composition des lignes par type ; négatifs uniquement `deduction` | CHECK + trigger (PR) + service | **[RD]** / **[DV]** V6-14 |
+| INV-62 | composition des lignes par type ; négatifs uniquement `deduction` | CHECK + trigger (PR) + service | **[RD]** / **[À VALIDER]** V6-14 |
 | INV-76, INV-78 | avoir : origine obligatoire, non avoir, même BC, motif, Σ ≤ origine ; l'avoir ne modifie jamais l'origine | CHECK + trigger | **[RD]** |
 | INV-177 | borne 2001–2099 : service uniquement, jamais un CHECK | service | **[RD]** |
 | INV-179 | un numéro définitif n'est jamais attribué deux fois (trou accepté) | service + `UNIQUE` | **[RD]** |
 | INV-184 | une relation historique ne change jamais de cible (facture ↔ BC, avoir ↔ origine) | FK + TR-20 | **[RD]** |
-| INV-185 | facture validée : pas de brouillon, une seule transaction, immuable, correction par avoir, avoir total → nouvelle facture du même type | trigger + service | **[RD]** |
+| INV-185 | facture validée : pas de brouillon, une seule transaction, immuable, correction par avoir, avoir total → nouvelle facture du même type (**avant tout solde** pour acompte et situation : **[DV]** DV-8) | trigger + service | **[RD]** ; **[DV]** DV-8 |
 | INV-186 | le contrat du BC n'est jamais réécrit par la facturation | triggers de 005b (déjà en place) | **[RD]** |
 | INV-187 | rattachement d'un devis tant qu'aucun solde n'est rédigé/validé ; un avoir sur le solde ne rouvre pas | service + CK-14 (+ trigger PR) | **[RD]** |
 | INV-188 | BC annulé : factures, avoirs conservés ; pas de nouvel acompte/situation/solde/devis ; avoirs possibles | trigger TR-16 | **[RD]** |
-| INV-189 | acompte : prévu / facture / règlement ; chaque devis peut avoir son acompte | CHECK + trigger (PT-10) | **[RD]** / **[PR]** |
+| INV-189 | acompte : prévu / facture / règlement ; chaque devis peut avoir son acompte ; facture rattachée à son devis (**[DV]** DV-1), plafonnée par le prévu (**[DV]** DV-2) | CHECK + trigger (PT-10) + service | **[RD]** ; **[DV]** DV-1, DV-2 ; **[PR]** mécanisme |
 | INV-42, INV-43 | `termine` ⇔ solde actif ∧ Σ reste dû hors avoir = 0 ; `date_100_facture` = date d'émission du premier solde actif, conservée par avoir partiel | service + CK-06 | **[RD]** ; sort après avoir total : **[VR]** VR-10 |
 | INV-44, INV-173 | annulation possible quel que soit l'état de facturation ; BC annulé terminal : `updated_at` et corrections de documents existants (avoirs) seulement | trigger `tr_12_bons_commande_annule` (remplacé par 005c) | **[RD]** ; **[VR]** VR-04 à VR-06 |
 
@@ -865,14 +960,14 @@ Principe appliqué (conv. §9, §8) : *structure → SQL ; protection d'immuabil
 | 21 | BC `en_cours`/non annulé pour acompte/situation/solde | | ✓ TR-16 | ✓ | |
 | 22 | `client_id` = client du BC | | ✓ TR-16 | | CK-13 (côté devis) |
 | 23 | avoir autorisé sur BC annulé **et** sur BC `termine` (acompte/situation/solde : BC `en_cours`) | | ✓ TR-16 (VR-04, VR-07) | | |
-| 24 | acompte : devis rattaché au BC, plafond `devis.total_ht`, un acompte non neutralisé par devis | ✓ FK `devis_id` | ✓ TR-22 **[PR]** | ✓ | |
-| 25 | un solde non neutralisé par BC ; pas d'acompte/situation si un solde existe | | ✓ TR-22 | ✓ | |
+| 24 | acompte : `devis_id` obligatoire (DV-1), devis rattaché au BC, plafond `devis.total_ht` (INV-57), un acompte non neutralisé par devis (INV-52) | ✓ FK `devis_id` **[PR]** PT-10 | ✓ TR-22 **[PR]** | ✓ | |
+| 25 | un solde non neutralisé par BC ; pas d'acompte/situation si un solde existe, **même totalement neutralisé** (DV-7, DV-8) | | ✓ TR-22 (règles déjà prévues) | ✓ | |
 | 26 | une situation non neutralisée par `situation_numero` | | ✓ TR-22 | ✓ | |
-| 27 | situation : `montant_deja = nette avant` ; nette après ≤ contractuel | | ✓ TR-22 | ✓ | |
-| 28 | situation : montant = `arrondi(contractuel × % / 100) − nette avant` (calcul) | | ✓ ou service **[DV]** V6-13 | ✓ | |
-| 29 | solde : `total_ht = contractuel − nette avant` | | ✓ TR-22 **[DV]** V6-13 | ✓ | |
+| 27 | situation : `montant_deja = nette avant` ; nette après ≤ contractuel (**100 % atteignable**, DV-4) | | ✓ TR-22 ou service (V6-13) | ✓ | |
+| 28 | situation : montant = cible cumulée − nette avant (DV-6) ; en pourcentage `arrondi(contractuel × % / 100) − nette avant` (calcul) | | ✓ ou service **[À VALIDER]** V6-13 | ✓ | |
+| 29 | solde : `total_ht = contractuel − nette avant` ; `0.00` autorisé | | ✓ TR-22 **[À VALIDER]** V6-13 | ✓ | |
 | 30 | avoir : origine non avoir, même BC, Σ avoirs ≤ origine | ✓ F2 | ✓ TR-23 | | |
-| 31 | avoir total → nouvelle facture du même type | | ✓ (via 24–26) | ✓ | |
+| 31 | avoir total → nouvelle facture du même type, **avant tout solde** pour acompte et situation (DV-8) | | ✓ (via 24–26) | ✓ | |
 | 32 | caches du BC (`montant_deja_facture_ht`, `avancement`, `date_100_facture`, `statut`, `completed_at`) ; **sur BC annulé : trois caches évolutifs, `statut` et `completed_at` figés** (VR-05) | ✓ CHECK 004 | ✓ `tr_12_bons_commande_annule` **remplacé par 005c** | ✓ un seul `UPDATE` | CK-06 |
 | 33 | `date_100_facture` = date du premier solde actif (NULL si ce solde est totalement crédité et qu'aucun autre n'est actif : VR-10) | | | ✓ | CK-06 |
 | 34 | création des garanties au solde | | | ✓ (008) | CK-07 (008) |
@@ -886,8 +981,14 @@ Principe appliqué (conv. §9, §8) : *structure → SQL ; protection d'immuabil
 | 42 | événements d'historique | | | `historique` n'existe pas | |
 | 43 | `frozen_at` : pose conjointe avec la première `date_100_facture` ou le premier `termine` (O-1), irréversible, sans effet métier | ✓ CHECK 004 | ✓ `tr_14` (existant) | ✓ contrat du service | |
 | 44 | règle des 30 jours des dépenses (lit `bons_commande.date_100_facture`) | | | ✓ Dépenses (INV-103) ; **non** 006 | |
+| 45 | **[DV]** DV-2 : acompte facturable seulement si `acompte_type <> 'aucun'` ; `total_ht` ≤ prévu du devis (pourcentage ou montant) ; jamais obligatoire | | | ✓ **service seul** | aucun CK décidé (piste non décidée, §N.4) |
+| 46 | **[DV]** DV-3 : nette après acompte ≤ contractuel du BC | | ✓ TR-22 ou service **[À VALIDER]** V6-13 | ✓ | |
+| 47 | **[DV]** DV-6 : cible cumulée → montant facturé ; cible ≤ nette refusée (`total_ht > 0.00`, INV-55) | ✓ CHECK `total_ht > 0.00` | | ✓ calcul | |
+| 48 | **[DV]** DV-9 : confirmation explicite avant émission d'un solde `0.00` | | | ✓ **service seul** | |
+| 49 | **[DV]** DV-9 : une facture à `0.00` n'est jamais « neutralisée » (`total_ht > 0.00` requis) | | règles existantes (unicité, TR-22) | ✓ | CK-06 (existant) |
+| 50 | diagnostics inter-tables liés aux DV | | | | uniquement CK existants ou explicitement proposés ; **aucun décidé** |
 
-**Ce qui n'est volontairement pas un trigger** (brief : « ne pas transformer une règle complexe en trigger uniquement parce que SQLite le permet ») : reste dû et `termine` (dérivés, dépendent de 007) ; création des garanties ; recalcul des caches ; contrôle `Σ lignes = total` (impossible en fin de transaction) ; délai d'échéance ; borne d'année ; attribution du numéro.
+**Ce qui n'est volontairement pas un trigger** (brief : « ne pas transformer une règle complexe en trigger uniquement parce que SQLite le permet ») : plafond de l'acompte par le prévu du devis (DV-2) ; confirmation d'un solde `0.00` (DV-9) ; reste dû et `termine` (dérivés, dépendent de 007) ; création des garanties ; recalcul des caches ; contrôle `Σ lignes = total` (impossible en fin de transaction) ; délai d'échéance ; borne d'année ; attribution du numéro.
 
 **Limite structurelle documentée** : l'insertion de lignes dans une facture déjà émise, **hors transaction d'émission**, n'est pas empêchable par SQLite ; elle est détectée par CK-05 (et CK-04) (modèle §14, dernière ligne du tableau). **[RD]** Il serait possible d'ajouter une garde heuristique ; ce n'est pas proposé (V6-14).
 
@@ -908,15 +1009,15 @@ Principe appliqué (conv. §9, §8) : *structure → SQL ; protection d'immuabil
 | Exemption de règle pour l'import | **une seule** : format/préfixe/année du `numero` historique ; tout le reste est appliqué (échéance, Σ lignes, plafonds, chronologie, unicités) | **[RD]** | modèle §10.4, D-24, INV-131 |
 | Ordre d'insertion | BC (inséré `en_cours`) → factures par `date_emission` puis `ref` croissants (TR-02 actif) → règlements ; un BC annulé s'insère `en_cours`, reçoit ses factures, puis est annulé | **[RD]** | modèle §10.5 |
 | Anomalies | facture V2 sans statut : importée **non réglée**, comptée dans la facturation, le reste dû, le CA engagé ; listée « À vérifier » (`import_anomalies` `a_verifier`) ; donnée non représentable : `non_importe` | **[RD]** | D-19, modèle §10.7 |
-| Facture V2 « annulée » | représentée par la facture **et un avoir total** ; contrat à écrire | **[RD]** principe ; **[DV]** détail | PT-19 |
+| Facture V2 « annulée » | représentée par la facture **et un avoir total** ; contrat à écrire | **[RD]** principe ; **[À VALIDER]** détail | PT-19 |
 
 **Conséquences pour 006 :**
 
 - **[DT]** 006 n'ajoute ni table ni colonne d'import au-delà de BLOC-IMP ; les triggers TR-02/16/22/23/20/21 s'appliquent aux lignes importées (aucun drapeau de session).
 - **[DT]** Une facture importée au numéro libre : `UNIQUE(numero)` et non-vide seulement. Elle n'alimente **pas** les séquences (modèle §10.6).
-- **[DV] / A6-15 / V6-15** (contrat P-04 à écrire — ce sont des questions **posées au contrat**, pas des colonnes proposées) :
-  1. `devis_id` d'un acompte importé (V2 : un seul devis par BC, lien de rang 1) ;
-  2. champs de situation importés (`situation_mode`, `situation_valeur_saisie`) dépendent de PT-11 ;
+- **[À VALIDER] / A6-15 / V6-15** (contrat P-04 à écrire — ce sont des questions **posées au contrat**, pas des colonnes proposées) :
+  1. `devis_id` d'un acompte importé (V2 : un seul devis par BC, lien de rang 1) ; **DV-1** le rend obligatoire ; **DV-2** (règle de service) s'applique-t-elle aux acomptes historiques importés ? **non décidé** ;
+  2. champs de situation importés (`situation_mode`, `situation_valeur_saisie`) dépendent de PT-11 (cible cumulée : DV-6) ;
   3. `montant_deja_facture_ht` d'une situation importée : fait fourni, mais le trigger le vérifie (facture insérée dans l'ordre chronologique) ;
   4. clé TR-02 et ligne de séquence absente à l'insertion (A6-07) ;
   5. avoir total d'une facture V2 annulée : `date_emission`, `motif_avoir`, numéro (historique libre ?) ;
@@ -939,7 +1040,7 @@ Principe appliqué (conv. §9, §8) : *structure → SQL ; protection d'immuabil
 
 - **[DT]** 006 n'exige **aucun mécanisme spécifique** de sauvegarde ou de restauration (brief : « ne pas créer de mécanisme spécifique si les conventions générales suffisent »). Il ajoute seulement des tables qui participent à la copie et des triggers qui se recréent avec la chaîne de migrations.
 - **[DT]** `derniere_date` (TR-02) est restaurée avec la base : après restauration d'une base plus ancienne, la chronologie ne protège que jusqu'à la date restaurée — conséquence normale de la restauration (les factures postérieures n'existent plus).
-- **[DV] / A6-26 (V6-12)** — Les sources ne disent **pas** si un échec de CK-04, CK-05 ou CK-06 (devenus exécutables avec 006) rend la restauration « échouée » (seuls l'intégrité et CK-13 le font, modèle §11.2, conv. §9). Ne pas l'étendre sans décision.
+- **[À VALIDER] / A6-26 (V6-12)** — Les sources ne disent **pas** si un échec de CK-04, CK-05 ou CK-06 (devenus exécutables avec 006) rend la restauration « échouée » (seuls l'intégrité et CK-13 le font, modèle §11.2, conv. §9). Ne pas l'étendre sans décision.
 - **[RD]** PDF des factures = `documents` (table future) hors base : « non localisables » si la racine est inconnue (modèle §11.3) ; hors 006.
 
 ---
@@ -1087,20 +1188,20 @@ Voir §12. Le modèle accepte le bloc mais ne détaille ni champs ni anomalies. 
 - *Sources* : CDC §17 (texte d'origine sous l'encadré E-15 : annulation du BC interdite dès qu'une facture autre qu'un acompte non réglé existe ; acompte annulé automatiquement ; devis passe à Annulé), CDC §21 (liste d'états incluant « Annulée ») et CDC §16 (« annulation de règlement ou d'avoir ») **vs** encadrés d'amendement E-14/E-15/E-16 dans les mêmes sections ; errata E-14, E-15.
 - *Hiérarchie* : errata + amendements prévalent sur le texte d'origine qu'ils déclarent remplacé. *[PR]* nettoyage éditorial du CDC (non effectué ici). *Statut* : informatif.
 
-### A6-17 — Situation : plafond « 100 % » strict ou large ?
+### A6-17 — Situation : plafond « 100 % » strict ou large ? — **résolu (DV-4, DV-5)**
 - *Sources* : métier §12 (« Une situation atteignant 100 % n'existe pas : la facture finale est un Solde ») **vs** modèle §3.2 et INV-57 (« nette après situation ≤ contractuel »).
 - *Hiérarchie* : métier > modèle ? Même niveau de hiérarchie (modèle SQLite validé vs modèle métier) : le métier énonce l'intention, le modèle une borne technique non strictement équivalente.
-- *Résolution [PR]* : borne **stricte** (`nette après < contractuel`, donc cumul `< 100.00`), qui oblige à émettre un solde (même `0.00`) pour atteindre 100 %. *Statut* : ouvert (V6-05).
+- *Résolution [DV]* (DV-4, DV-5, 2026-10-07) : borne **large** `nette après ≤ contractuel` : une situation peut porter la nette à **exactement** 100 % ; elle ne crée ni `date_100_facture` ni garantie, ne rend pas le BC `termine`, n'est pas un solde ; `avancement` suit la formule pure. Ce que le métier §12 exclut (« une situation atteignant 100 % n'existe pas ») est une situation tenant lieu de **facture finale** : seul le solde l'est (CD-11). L'ancienne proposition **[PR]** (borne stricte `< 100.00`) est **abandonnée**. *Statut* : **verrouillé** ; report dans les sources : étape ultérieure.
 
 ### A6-18 — PT-11 (sens de la valeur « montant ») et D6 (réutilisation de `situation_numero`)
-- *PT-11* : modèle §3.2/§4.8 (« À CONCEVOIR ») **vs** INV-57 (« montant = valeur cumulée visée − facturation nette avant », dans les deux modes) et E-17 (« valeur réalisée exprimée en montant »). *[PR]* lire la valeur saisie en montant comme **valeur cumulée visée**, cohérent avec « montants cumulés » (INV-190, C-37).
-- *D6* : audit conservation §4.6, D6 « Ouverte » ; INV-52 « une situation active par numéro » → après avoir total d'une situation, le numéro d'ordre peut être réutilisé (la facture `FAC-` reçoit un numéro neuf). *[PR]* ne pas réutiliser (ordinal = `1 + max` sur **toutes** les situations du BC, neutralisées comprises) — mais c'est une règle absente des sources. *Statut* : ouvert (V6-05, V6-06).
+- *PT-11* : modèle §3.2/§4.8 (« À CONCEVOIR ») **vs** INV-57 (« montant = valeur cumulée visée − facturation nette avant », dans les deux modes) et E-17 (« valeur réalisée exprimée en montant »). **[DV]** DV-6 (2026-10-07) : la valeur saisie est une **cible cumulée** ; montant facturé = cible − nette avant (la forme des colonnes reste PT-11, **[PR]**).
+- *D6* : audit conservation §4.6, D6 « Ouverte » ; INV-52 « une situation active par numéro » → après avoir total d'une situation, le numéro d'ordre peut être réutilisé (la facture `FAC-` reçoit un numéro neuf). *[PR]* ne pas réutiliser (ordinal = `1 + max` sur **toutes** les situations du BC, neutralisées comprises) — mais c'est une règle absente des sources. *Statut* : PT-11 (sens du « montant ») **résolu par DV-6** (forme des colonnes : non figée) ; D6 **ouvert** (V6-06).
 
 ### A6-19 — Nombre de lignes `deduction` pour la facturation antérieure
 Modèle §4.8 : « lignes `deduction` (facturation nette antérieure, et remise globale de chaque devis rattaché) ». Seule la remise est « par devis ». *[PR]* ne rien imposer en SQL ; le service documente une ligne par facture antérieure ou une ligne de cumul. *Statut* : ouvert (V6-14).
 
 ### A6-20 — Types émissibles après neutralisation du solde
-Voir §4.2 et §M.7. *Statut* : réduit à **QO-1** (le reste est tranché : VR-09, VR-12, CD-07).
+Voir §4.2 et §M.7. *Statut* : **résolu** (VR-09, VR-12, DV-7, DV-8 ; QO-1 close, CD-07 et CD-08 résolus). Après un solde, actif ou neutralisé : aucun acompte ni aucune situation ; seul un nouveau solde est possible.
 
 ### A6-21 — `date_emission` : passée, future, période facturée
 Aucune source n'encadre `date_emission` autrement que par TR-02 et la borne de service ; aucune date de période facturée n'est documentée. *[PR]* ne rien ajouter. *Statut* : ouvert (V6-17).
@@ -1113,7 +1214,7 @@ Aucune source n'encadre `date_emission` autrement que par TR-02 et la borne de s
 D-55 : rang = position dans la chaîne ordonnée ; `006` était réservé au rang 8 (modèle §17.1). La corrective `005c` (rang 8) précède 006, qui passe au **rang 9** ; conv. §5 précise que les noms 006 → 010 sont des **réservations d'ordre**. Les sources (D-55 complétée par D-56, modèle §17.1, conventions §5) ont été alignées le 2026-10-05, avant l'écriture de 005c (§M.8). *Statut* : **verrouillé** ; nommage : V6-20.
 
 ### A6-24 — Un solde à `0.00` ne peut pas être corrigé par avoir
-INV-55 impose `avoir.total_ht > 0.00` et INV-76 `Σ avoirs ≤ montant de l'origine` : un solde à `0.00` ne peut recevoir aucun avoir, donc n'est jamais « neutralisé » et ne peut être remplacé (arbitrage B). *[DT]* conséquence directe de règles validées ; aucune règle n'organise la correction d'un solde `0.00` émis par erreur. *Statut* : à confirmer (**QO-2**).
+INV-55 impose `avoir.total_ht > 0.00` et INV-76 `Σ avoirs ≤ montant de l'origine` : un solde à `0.00` ne peut recevoir aucun avoir, donc n'est jamais « neutralisé » et ne peut être remplacé (arbitrage B). *[DT]* conséquence directe de règles validées ; aucune règle n'organise la correction d'un solde `0.00` émis par erreur. **[DV]** DV-9 : le solde `0.00` est une facture finale réelle, jamais « neutralisée » (`total_ht > 0.00` requis) ; sa **prévention** est décidée (confirmation de service avant émission). *Statut* : **QO-2 réduite** — la correction après émission reste sans règle documentée.
 
 ### A6-26 — Caractère bloquant de CK-04/05/06 à la restauration
 Voir §13. *Statut* : ouvert (V6-12).
@@ -1122,17 +1223,17 @@ Voir §13. *Statut* : ouvert (V6-12).
 
 ## 16. Proposition de structure de `006_facturation.sql` (brief §23, question 19)
 
-> **PROPOSITION**, rédigée avant les décisions de §19 et **alignée le 2026-10-05 sur VR-01 à VR-13**. Aucun SQL n'est écrit ici. V6-01 et V6-03 sont verrouillées ; le contenu dépend encore de V6-04 et V6-05 (⛔). Le rang de 006 est **9** (corrective 005c au rang 8, §M.8).
+> **PROPOSITION**, rédigée avant les décisions de §19 et **alignée le 2026-10-05 sur VR-01 à VR-13**. Aucun SQL n'est écrit ici. V6-01 et V6-03 sont verrouillées ; les **règles** de V6-04 et V6-05 sont validées (DV-1 à DV-10, 2026-10-07) ; le contenu dépend encore de la **conception des mécanismes** PT-10, PT-11 et V6-13 (⛔). Le rang de 006 est **9** (corrective 005c au rang 8, §M.8).
 
 ### 16.1 En-tête de fichier (comme 005 et 005b)
 
-Références (modèle §4.8, §6, §8, §9, §14, §17.1 ; conv. §5, §9 ; cadrage 006 et décisions V6-xx validées), invariants cités, décisions, propositions techniques mises en œuvre (PT-9, PT-10, PT-11, PT-16 selon décisions), **liste explicite de ce qui n'est pas créé** (`reglements`, `garanties`, `historique`, `documents`, TVA/TTC, statut, annulation, brouillon, structure d'import au-delà de BLOC-IMP, exécution/remise au prorata PT-12/13, aucune donnée initiale), description d'exécution par le runner (une transaction, `user_version = 9` posé par le runner avant COMMIT, aucun `BEGIN`/`COMMIT`/`PRAGMA` dans le fichier, `foreign_keys=ON`, `recursive_triggers=ON`).
+Références (modèle §4.8, §6, §8, §9, §14, §17.1 ; conv. §5, §9 ; cadrage 006 et décisions V6-xx validées), invariants cités, décisions, propositions techniques mises en œuvre (PT-9, PT-10, PT-11, PT-16 selon décisions), **liste explicite de ce qui n'est pas créé** (dont aucun CHECK/trigger/CK pour le plafond de l'acompte par le prévu du devis, DV-2, règle de service) (`reglements`, `garanties`, `historique`, `documents`, TVA/TTC, statut, annulation, brouillon, structure d'import au-delà de BLOC-IMP, exécution/remise au prorata PT-12/13, aucune donnée initiale), description d'exécution par le runner (une transaction, `user_version = 9` posé par le runner avant COMMIT, aucun `BEGIN`/`COMMIT`/`PRAGMA` dans le fichier, `foreign_keys=ON`, `recursive_triggers=ON`).
 
 ### 16.2 Contenu minimal et suffisant (ordre d'écriture)
 
 | # | Bloc | Contenu | Remarques |
 |---|---|---|---|
-| 1 | Gardes d'exécution (optionnelles) | `user_version = 8` (chaîne 005c → 006) ; au besoin, vérification que la base n'a ni `factures` ni `facture_lignes` | précédent 005b (tables temporaires `CHECK`) ; 005 n'en a pas — **[DV]** simple choix de style |
+| 1 | Gardes d'exécution (optionnelles) | `user_version = 8` (chaîne 005c → 006) ; au besoin, vérification que la base n'a ni `factures` ni `facture_lignes` | précédent 005b (tables temporaires `CHECK`) ; 005 n'en a pas — **[À VALIDER]** simple choix de style |
 | 2 | `CREATE TABLE factures` (STRICT) | colonnes et CHECK §2.2 | aucune ligne insérée |
 | 3 | `CREATE TABLE facture_lignes` (STRICT) | colonnes et CHECK §2.3 | |
 | 4 | Index | §2.2, §2.3 | un par FK + recherche (modèle §9) |
@@ -1160,7 +1261,7 @@ Références (modèle §4.8, §6, §8, §9, §14, §17.1 ; conv. §5, §9 ; cadr
 - Chaîne **001 → 006** (rang 9, 005c incluse) rejouée avec un runner émulé (comme `test_005b` : `executescript`, `user_version = rang`) ; connexion de test avec `foreign_keys=ON` et `recursive_triggers=ON`, un test de contrôle de ces réglages ; helpers d'état BC `en_cours / gele / termine / annule / annule_gele` réutilisés de 005b (`gele` = état de test sans statut ni effet : VR-02) (`test_005b:78-80`, `geler_bc`).
 - Contrôles CK écrits en constantes SQL (`CK01_…`, `CK04_…`, `CK05_…`, `CK06_…`, `CK13_…`, `CK14_…`) comme dans 005b — **aucun nouveau CK**.
 - Messages de triggers asserts par identifiant d'invariant (`refuse_inv("INV-53", …)`), comme dans 005.
-- Effectif indicatif : **220 à 290 tests** (180 à 230 avant les groupes G22 à G24) (004 : 150 ; 005 : 158 ; 005a : 119 ; 005b : 153).
+- Effectif indicatif : **250 à 330 tests** (220 à 290 avant le groupe G25 ; 180 à 230 avant les groupes G22 à G24) (004 : 150 ; 005 : 158 ; 005a : 119 ; 005b : 153).
 
 ### 17.2 Groupes de tests (brief §24 + cadrage)
 
@@ -1174,9 +1275,9 @@ Références (modèle §4.8, §6, §8, §9, §14, §17.1 ; conv. §5, §9 ; cadr
 | **G6 Numérotation** | `UNIQUE(numero)` partagé FAC (situation vs solde) ; ACP/AVO séparés ; non-réutilisation (suppression refusée, `REPLACE` refusé, 3 variantes) ; `numerotation_sequences` : `tr_95`, `tr_96`, `REPLACE` refusé pour ACP/FAC/AVO ; TR-02 (égal accepté, antérieur refusé, autre clé indépendante, ligne absente selon V6-07) ; numéro immuable ; année du numéro = année d'émission ; plafond **non** testable en SQL (service) | INV-20 → INV-24, INV-179 |
 | **G7 Immutabilité** | pour **chaque colonne** de `factures` : `UPDATE` refusé (y compris `client_id`, `bc_id`, `type`, `total_ht`, snapshots, `numero`, dates, `origine`) ; `UPDATE` sans changement refusé ; `facture_lignes` : `UPDATE` de chaque colonne refusé ; insertion de lignes sur une facture existante *(limite documentée : acceptée en SQL, détectée par CK-04/05)* | INV-53, TR-20, TR-21 |
 | **G8 Suppression et contournements** | `DELETE` facture / ligne refusés pour chaque type ; `INSERT OR REPLACE`, `REPLACE INTO` et conflit `ON CONFLICT REPLACE` sur `factures` (par `id`, par `numero`) et `facture_lignes` (par `id`, par `(facture_id, ordre)`) ; suppression du parent : `DELETE bons_commande` (tr_19), `devis`, `clients`, `bc_lignes`, `factures` (origine d'un avoir) refusés ; FK `foreign_keys=ON` vs `OFF` (le `PRAGMA foreign_key_check` détecte) ; `ON DELETE CASCADE` absent | INV-06, INV-07, conv. §9, audit conservation §8 |
-| **G9 Types : acompte** | acompte prévu vs facture vs (absence de) règlement ; acompte sans paiement possible ; un acompte non neutralisé par devis ; devis hors BC refusé ; plafond ≤ `devis.total_ht` ; acompte après solde refusé ; deux devis → deux acomptes ; nouvel acompte après avoir total accepté, après avoir partiel refusé | INV-189, INV-57, C-34 |
-| **G10 Types : situation** | pourcentage et montant ; cumul ; `montant_deja_facture_ht` = nette avant ; nette après ≤ (ou <) contractuel ; situation après solde refusée ; numéro unique par BC non neutralisé ; après avoir : C-09 ; 6 colonnes figées ; vecteurs C-03, C-37 | INV-57, INV-190, C-03, C-09, C-37 |
-| **G11 Types : solde** | final obligatoire ; `0.00` accepté (C-08) ; formule `contractuel − nette` (vecteurs C-04) ; deuxième solde refusé ; solde après avoir partiel de l'ancien refusé ; solde après avoir total accepté (nouveau numéro) ; acompte/situation après solde refusés | INV-58, C-04, C-07, C-08, C-33 |
+| **G9 Types : acompte** | acompte prévu vs facture vs (absence de) règlement ; `devis_id` obligatoire (DV-1) ; plafond du prévu (DV-2, G25) ; acompte sans paiement possible ; un acompte non neutralisé par devis ; devis hors BC refusé ; plafond ≤ `devis.total_ht` ; acompte après solde refusé ; deux devis → deux acomptes ; nouvel acompte après avoir total accepté, après avoir partiel refusé | INV-189, INV-57, C-34 |
+| **G10 Types : situation** | pourcentage et montant ; cumul ; `montant_deja_facture_ht` = nette avant ; nette après ≤ contractuel (100 % atteignable, DV-4) ; situation après solde refusée ; numéro unique par BC non neutralisé ; après avoir : C-09 ; 6 colonnes figées ; vecteurs C-03, C-37 | INV-57, INV-190, C-03, C-09, C-37 |
+| **G11 Types : solde** | final obligatoire ; `0.00` accepté (C-08) après confirmation de service (DV-9, G25) ; formule `contractuel − nette` (vecteurs C-04) ; deuxième solde refusé ; solde après avoir partiel de l'ancien refusé ; solde après avoir total accepté (nouveau numéro) ; acompte/situation après solde refusés | INV-58, C-04, C-07, C-08, C-33 |
 | **G12 Types : avoir** | origine obligatoire, non avoir, même BC ; Σ ≤ origine (dernier centime) ; avoir sur avoir refusé ; avoir sur BC annulé accepté ; sur BC `termine` **accepté** (VR-07) ; motif ; échéance NULL ; avoir partiel ne rouvre pas ; avoir total puis nouvelle facture ; avoir sur solde `0.00` refusé | INV-76, INV-78, INV-188, C-33, C-35, C-36 |
 | **G13 BC multi-devis** | matrice des états `en_cours`, `gele` (marqueur), `termine`, `annule`, `annule_gele` × {acompte, situation, solde, avoir} ; BC à 1, 2, 3 devis ; contractuel = Σ ; solde reprend les lignes de tous les devis ; remise globale par devis (lignes `deduction`) ; rattachement refusé après solde (y compris neutralisé) | INV-187, INV-188, C-34, C-35 |
 | **G14 Lignes et composition** | par type (synthèse/prestation/déduction) ; `bc_ligne_id` d'un autre BC refusé ; `bc_ligne_id` NULL accepté ; `Σ lignes = total_ht` : CK-05 vide sur données cohérentes, **non vide** sur incohérence fabriquée ; facture sans ligne : CK-04 | INV-54, INV-62 |
@@ -1190,6 +1291,32 @@ Références (modèle §4.8, §6, §8, §9, §14, §17.1 ; conv. §5, §9 ; cadr
 | **G22 BC annulé** (VR-04, VR-05) | acompte / situation / solde sur BC annulé refusés ; rattachement de devis refusé (`tr_99`) ; modification commerciale (colonnes du contrat) refusée ; modification de `statut`, `completed_at`, `cancelled_at`, `motif_annulation`, `frozen_at` refusée ; avoir sur document existant accepté ; recalcul des trois caches après avoir (un seul `UPDATE`) accepté ; `statut` reste `annule` ; aucune réouverture implicite ; règlement sur document existant : test porté par 007 (`reglements` n'existe pas en 006) | INV-173, INV-188, C-36, §M.4 |
 | **G23 BC `termine` et avoirs** (VR-07, VR-09, VR-10, VR-11) | cas A à D de §M.5 (avoir partiel sur acompte, situation, solde ; avoir total sur acompte ; avoir total sur solde) ; conservation ou évolution de `termine` ; `termine → en_cours` dans le cas D ; `completed_at` cohérent (CHECK) ; `date_100_facture` conservée / NULL / nouvelle valeur ; aucun devis après un solde **y compris crédité** (CK-14, service, trigger si V6-10) ; nouveau solde après solde crédité accepté ; acompte / situation après solde crédité refusés | INV-42, INV-43, INV-58, INV-187, C-07, C-33, C-35 |
 | **G24 `frozen_at` résiduel** (VR-02, VR-03) | O-1 à O-4 (pose conjointe, irréversibilité, NULL à la naissance, absence de comportement) ; les états de test `en_cours` et `gele` donnent les **mêmes** résultats de facturation ; aucune colonne `frozen_at` dans `factures` | §M.2 |
+| **G25 Décisions V6-04 / V6-05** (DV-1 à DV-10 ; §17.2 bis) | scénarios 1 à 14 de l'étape du 2026-10-07 et scénarios complémentaires (§17.2 bis) ; **tests à écrire plus tard : aucun n'est créé par cette mise à jour** | DV-1 à DV-10, INV-52, INV-55, INV-57, INV-58, INV-189 |
+
+### 17.2 bis Groupe G25 — scénarios des décisions V6-04 / V6-05 (à écrire ; aucun test créé)
+
+Le niveau (SQL / service) dépend des mécanismes retenus (§N.3) : un scénario de **service** est testé au niveau du service ; il n'est testé en SQL que si une garde SQL est retenue.
+
+| # | Scénario | Résultat attendu | Décision | Niveau |
+|---|---|---|---|---|
+| 1 | acompte sur un devis `aucun` | **refus** | DV-2 | service |
+| 2 | acompte **inférieur** au prévu | accepté | DV-2 | service |
+| 3 | acompte **égal** au prévu (pourcentage et montant) | accepté | DV-2 | service |
+| 4 | acompte **supérieur** au prévu (dernier centime) | **refus** | DV-2 | service |
+| 5 | acompte respectant le plafond du devis mais **dépassant le plafond global du BC** (BC à deux devis) | **refus** | DV-3 | SQL/service |
+| 6 | situation **exactement à 100 %** (nette après = contractuel) | acceptée | DV-4 | SQL/service |
+| 7 | situation à 100 % **sans solde** | pas de `date_100_facture`, pas de garantie, BC non `termine`, `avancement` = 100.00 | DV-4, DV-5 | service (caches) |
+| 8 | solde à **0.00** | accepté **après confirmation** explicite ; refusé sans confirmation | DV-9 | service |
+| 9 | solde actif, puis acompte | **refus** | DV-7 | SQL/service |
+| 10 | solde actif, puis situation | **refus** | DV-7 | SQL/service |
+| 11 | solde totalement neutralisé, puis acompte | **refus** | DV-8 | SQL/service |
+| 12 | solde totalement neutralisé, puis situation | **refus** | DV-8 | SQL/service |
+| 13 | avoirs sur factures existantes après un solde | **autorisés** selon les règles ; le BC n'est pas rouvert commercialement | DV-7 | SQL/service |
+| 14 | facture à `0.00` (solde) avec `total_ht = Σ avoirs = 0` | **non** considérée comme neutralisée ; un deuxième solde reste refusé | DV-9 | SQL/service |
+| 15 *(complémentaire)* | acompte **sans `devis_id`** ; acompte avec un devis **hors du BC** | **refus** | DV-1 | SQL + service |
+| 16 *(complémentaire)* | situation à cible **≤ nette** existante | **aucune** situation positive incohérente (refus) | DV-6 | service |
+| 17 *(complémentaire)* | deuxième acompte actif sur le **même** devis ; deux devis → deux acomptes | refus ; acceptés | DV-10, INV-52 | SQL/service |
+| 18 *(complémentaire)* | solde totalement neutralisé, puis **nouveau solde** | accepté ; `date_100_facture` suit VR-10 | DV-8, VR-10 | SQL/service |
 
 ### 17.3 Cas chiffrés à traduire (modèle §13) : C-02 (à l'avoir près), C-03, C-04, C-07, C-08, C-09, C-14 → C-17, C-33 → C-37 ; C-05, C-06, C-10 → C-13 sont des cas de 007 *(sauf C-10 pour la partie « absorbé par avoir », vérifiable avec 006 seul)*.
 
@@ -1258,23 +1385,40 @@ Volumétrie indicative (**[PR]**, non documentée) : de l'ordre de **plusieurs c
 
 Familles ajoutées à la campagne de 006 : définition de « neutralisée » (`=` ↔ `<=`/`<`, `total_ht > 0` supprimé), clause « un solde a existé » (neutralisé ou non), `EXISTS ↔ NOT EXISTS` sur les soldes, conditions d'état du BC dans TR-16 (`termine` accepté pour l'avoir), requêtes CK-06 (BC annulé : trois caches seulement) et CK-14. Campagne **ciblée** de 005c : ≈ 40 à 80 mutants **[PR]** (un trigger, ≈ 25 colonnes ; détail en §M.8, §M.9). Règle de clôture inchangée : **0 survivant non qualifié**.
 
+### 18.7 Compléments du 2026-10-07 (DV-1 à DV-10)
+
+Mutation **approfondie**, comme pour les tranches précédentes, sur chaque règle des dix décisions ; la campagne ne mute que 006 (et ses tests), jamais 001–005c. Familles ajoutées :
+
+| Famille | Mutations |
+|---|---|
+| Prévu de l'acompte (DV-2) | `<=` ↔ `<` ; `<>`/`=` sur `acompte_type = 'aucun'` ; pourcentage ↔ montant ; omission d'un cas ; plafond remplacé par `devis.total_ht` ; arrondi du pourcentage (HALF_UP → DOWN) ; contrôle supprimé |
+| Plafond global du BC (DV-3) | `<=` ↔ `<` ; omission de la nette avant ; plafond du devis seul (ou du BC seul) ; avoirs oubliés dans la nette |
+| Rattachement (DV-1) | `devis_id` NULL accepté ; devis d'un autre BC accepté ; `bc_id ↔ id` dans la jointure |
+| Situation (DV-4, DV-6) | borne `<=` → `<` (100 % refusé) ; `montant = cible − nette` inversé ; cible ≤ nette non refusée ; nette avant omise |
+| Caches (DV-4, DV-5) | plafond artificiel à 99.99 ; `date_100_facture` posée sur une situation à 100 % ; garantie ou `termine` déclenchés par une situation |
+| Après solde (DV-7, DV-8) | `EXISTS ↔ NOT EXISTS` sur les soldes ; « solde actif » au lieu de « solde existant » ; état de neutralisation pris en compte à tort ; acompte ou situation après solde neutralisé accepté |
+| Solde `0.00` (DV-9) | `total_ht > 0.00` retiré de `neutralisee` ; `0.00` jugé neutralisé (`Σ avoirs = total_ht = 0`) ; confirmation de service supprimée ou contournée |
+| Avoirs après solde (DV-7) | avoir refusé après solde ; l'avoir rouvre le BC (statut, caches, `termine`) |
+
+Règle de clôture inchangée : **0 survivant non qualifié**. Les règles de service (DV-2, DV-9) sont mutées dans leur **test de service**, les survivants non testables en SQL étant classés « non testable » avec renvoi au test de service attendu (§18.3).
+
 ---
 
 ## 19. Liste des décisions nécessitant notre validation (brief §27, question 18)
 
-Légende : ⛔ = bloque l'écriture du SQL (DDL ou trigger dont la forme en dépend) ; ◐ = à trancher avant le SQL mais avec une proposition par défaut raisonnable ; ○ = indépendant du SQL ; ✔ = **verrouillée le 2026-10-05** (§M.1). « Recommandation » = **PROPOSITION**, jamais une décision. Les lignes marquées ✔ sont des décisions de Rémy ; les autres restent des propositions.
+Légende : ⛔ = bloque l'écriture du SQL (DDL ou trigger dont la forme en dépend) ; ◐ = à trancher avant le SQL mais avec une proposition par défaut raisonnable ; ○ = indépendant du SQL ; ✔ = **verrouillée le 2026-10-05** (§M.1). « Recommandation » = **PROPOSITION**, jamais une décision. Les lignes marquées ✔ sont des décisions de Rémy ; les autres restent des propositions. **Mise à jour du 2026-10-07** : V6-04 et V6-05 sont passées de ⛔ à ◐ : leurs **règles** sont validées (DV-1 à DV-6, partie N), seule la **conception des mécanismes** reste à trancher ; V6-09 est verrouillée (DV-7, DV-8).
 
 | ID | Question | Options (la 1ʳᵉ = proposition) | Réf. | Prio |
 |---|---|---|---|---|
 | **V6-01** ✔ | **Sort de `frozen_at` (PT-8) et règle du brief « gel au premier encaissement »** | **Verrouillée (VR-01 à VR-03)** : gel progressif abandonné (E-10) ; colonne conservée, statut résiduel technique ; obligations techniques O-1 à O-5 ; aucune corrective pour `frozen_at` | A6-01, §M.2, modèle §7.1, INV-46, journal INV-33/35 | ✔ |
 | **V6-02** | **PT-9** : « actif » / « entièrement créditée » ; « avoir total » = un avoir ou un cumul ; mécanisme d'unicité ; solde `0.00` non corrigeable | **Définition verrouillée (VR-12)**, lecture cumulative incluse ; reste **[PR]** : unicité par triggers `EXISTS` ; solde `0.00` : QO-2 (aucune règle inventée) | A6-04, A6-05, A6-10, A6-24, INV-52 | ◐ |
 | **V6-03** ✔ | **PT-16** : caches d'un BC annulé après avoir ; avoir sur BC `termine` ; avoir total sur le solde d'un BC `termine` | **Verrouillée (VR-04 à VR-09)** : caches évolutifs sur BC annulé (`statut` reste `annule`) via la corrective **005c** ; avoir autorisé sur BC `termine` ; `termine → en_cours` possible par recalcul (état dérivé ≠ réouverture commerciale) | A6-02, A6-03, A6-12, INV-47, INV-173, INV-188, 005b l.26-27, §M.4, §M.5 | ✔ |
-| **V6-04** | **PT-10** : `factures.devis_id` (acompte seulement) ; un acompte non neutralisé par devis ; plafond = `devis.total_ht` ; acompte facturé = prévu ou seulement ≤ plafond ? | colonne `devis_id` + CHECK F8 ; plafond seulement | §6.4, §9.2, INV-189, D-48 | ⛔ |
-| **V6-05** | **PT-11** : colonnes de situation (`situation_mode`, `situation_valeur_saisie`) ; sens du « montant » (valeur cumulée visée) ; plafond strict `< 100 %` | cumulée ; strict | A6-17, A6-18, INV-57, INV-190, E-17 | ⛔ |
+| **V6-04** | **Règles validées (DV-1, DV-2, DV-3, 2026-10-07)** : `devis_id` obligatoire pour un acompte ; prévu du devis = plafond de l'acompte facturable (service) ; nette après ≤ contractuel du BC. **Reste** : **PT-10**, forme du mécanisme `factures.devis_id` (colonne, CHECK F8, FK, un acompte non neutralisé par devis) ; **QO-3** (base du pourcentage) | **mécanisme** : colonne `devis_id` + CHECK F8 (proposition, non décidée) | §6.4, §9.2, §N, INV-189, D-48 | ◐ |
+| **V6-05** | **Règles validées (DV-4, DV-5, DV-6, 2026-10-07)** : situation jusqu'à 100 % (`≤`) ; `avancement` formule pure ; valeur saisie = cible cumulée. **Reste** : **PT-11**, forme des colonnes de situation (`situation_mode`, `situation_valeur_saisie`) | **mécanisme** : à concevoir (non décidé) | A6-17, A6-18, §N, INV-57, INV-190, E-17 | ◐ |
 | **V6-06** | **D6** : `situation_numero` réutilisable après avoir total d'une situation ? | non réutilisable (ordinal = max global + 1) | A6-18, audit conservation §4.6 | ◐ |
 | **V6-07** | **TR-02** : clé `(type, année de date_emission)` ; ligne de séquence absente ; qui écrit `derniere_date` (service ou trigger) | clé par type+date ; pas de création de ligne par trigger ; écriture par le service ; trigger garde pure | A6-07, §5.3, modèle §8, §10.5–10.6 | ◐ |
 | **V6-08** | **« Document correctif »** = avoir uniquement ? **Correction d'un avoir erroné** (partiel) : rien n'est documenté | aucun 5ᵉ type ; laisser la correction d'un avoir partiel erroné non conçue et le dire | A6-09, A6-10, E-14, INV-185 | ◐ |
-| **V6-09** | Après avoir total sur le **solde**, quels types peuvent être émis ? | **Réduite à QO-1** : nouveau solde seulement (INV-58, E-14, C-33) ; reste le remplacement d'un acompte/d'une situation crédité(e) alors qu'un solde existe | A6-20, §M.7, CD-08 | ◐ |
+| **V6-09** ✔ | Après avoir total sur le **solde**, quels types peuvent être émis ? | **Verrouillée (DV-7, DV-8, 2026-10-07)** : après un solde, actif ou totalement neutralisé, aucun acompte ni aucune situation ; seul un nouveau solde ; QO-1 close | A6-20, §M.7, CD-08, §N | ✔ |
 | **V6-10** | Garde SQL « aucun devis rattaché après un solde » (même crédité) : la **règle est fixée** (VR-09) ; **couche** : nouveau trigger sur `bc_devis`, ou service + CK-14 seulement ? | nouveau trigger (aucune réécriture de 005b) ; CK-14 reste le diagnostic | modèle §4.7, §14 ; INV-187 | ◐ |
 | **V6-11** ✔ | **`date_100_facture`** après avoir total du solde puis nouveau solde ; lien avec la règle des 30 jours | **Verrouillée (VR-10, VR-13)** : NULL si le solde actif est totalement crédité et qu'aucun autre n'est actif ; date du nouveau solde actif ; 006 n'agit pas sur la règle des 30 jours | A6-06, INV-43, INV-103, D-31 | ✔ |
 | **V6-12** | **Frontière 006 / 007** : parts de `termine`, CK-06, CK-04/05/06 bloquants ou non à la restauration | 006 : formules de facturation et gardes ; 007 : `reste_du`, `termine` par encaissements ; échec de CK-04/05/06 non bloquant tant que rien n'est décidé | A6-11, A6-26, §1.3, §13 | ◐ |
@@ -1287,7 +1431,7 @@ Légende : ⛔ = bloque l'écriture du SQL (DDL ou trigger dont la forme en dép
 | **V6-19** | **`historique` / `documents`** absents : 006 n'écrit aucun événement et ne référence pas ces tables | oui | A6-22 | ○ |
 | **V6-20** ✔ | **Nom exact** de la corrective 005c et de son test ; gardes d'exécution (style 005b ou 005) | **Décidée (2026-10-05)** : `005c_bc_annule_caches_financiers.sql` et `test_005c_bc_annule_caches_financiers.py` ; aucune garde d'exécution dans le SQL ; rang **9** pour 006 et **T-48** (décidés par VR-06) | D-55, A6-23, §16, §M.8 | ○ |
 
-**Ordre de décision recommandé** (V6-01, V6-03 et V6-11 étant verrouillées, V6-02 réduite) : V6-04 et V6-05 (DDL de `factures`), puis QO-1, V6-07, V6-10, V6-13, V6-14, puis les points ○.
+**Ordre de décision recommandé** (V6-01, V6-03, V6-09 et V6-11 étant verrouillées, V6-02 réduite, V6-04 et V6-05 réduites à leurs mécanismes) : PT-10 et PT-11 (DDL de `factures`), V6-13 (couche des plafonds), puis QO-3, QO-2, V6-07, V6-10, V6-14, puis les points ○.
 
 ---
 
@@ -1296,23 +1440,23 @@ Légende : ⛔ = bloque l'écriture du SQL (DDL ou trigger dont la forme en dép
 1. **Qu'est-ce qu'une facture ?** Un document de facturation **validé**, numéroté, rattaché à un BC, immuable dès l'INSERT, sans statut, sans brouillon, sans TVA ni TTC, jamais annulé ni supprimé. *(§1.1 ; INV-185, INV-53, métier §10, E-14)*
 2. **Types exacts ?** `acompte`, `situation`, `solde`, `avoir` — pas de `complete`, pas de cinquième type documenté ; « document correctif » non défini (A6-09). *(§1.2 ; CDC §18, modèle §2.5)*
 3. **ACP, FAC, AVO ?** `ACP-nnnnn-yy` (acomptes), `FAC-nnnnn-yy` (situations **et** soldes, séquence partagée), `AVO-nnnnn-yy` (avoirs) ; année = `date_emission` ; réservation PT-1 ; trou accepté, doublon jamais ; chronologie TR-02 ; `numerotation_sequences` inchangée. *(§5 ; modèle §6, INV-20 → 24, INV-179)*
-4. **Lien au BC ou aux devis/lignes ?** Au **BC** (`bc_id`) ; devis référencé seulement par un acompte (PT-10, proposition) ; lignes de facture ↔ `bc_lignes`, jamais `devis_lignes`. *(§3 ; métier §10–§11)*
-5. **Plusieurs devis d'un BC ?** Facturation **globale au BC** (situations, solde) ; un acompte par devis ; remises globales en lignes `deduction` par devis ; pas de ventilation ; rattachement tardif possible jusqu'au solde. *(§9.2 ; D-48, INV-187, INV-189, INV-190)*
-6. **Situation ?** Globale au BC, saisie en % ou en montant, calcul en montants cumulés, mode/valeur/avancement/montant figés, ne peut atteindre 100 % (le solde clôt), ni suivre un solde ; correction par avoir ; colonnes et sens du « montant » = PT-11 **à valider**. *(§4.2, §6.2 ; métier §12, E-17, INV-57)*
-7. **Solde ?** Toujours la facture finale, `0.00` autorisé, `= contractuel − nette avant`, unique non neutralisé par BC, clôture commerciale (plus de devis), déclenche `date_100_facture` et les garanties (008). *(métier §13, INV-58)*
-8. **Acomptes ?** Prévu ≠ facturé ≠ encaissé ; un par devis ; plafond = contractuel du devis ; pris en compte par la nette dans le solde (lignes `deduction`) ; la facture d'acompte n'est pas un règlement. *(§6.4–6.5 ; INV-189)*
-9. **Avoirs ?** Seul mécanisme de correction : origine obligatoire, même BC, non avoir, motif, Σ ≤ origine, jamais annulable ; avant solde il libère un montant refacturable ; après solde il ne rouvre rien ; avoir total ⇒ nouvelle facture du même type, nouveau numéro. Correction d'un avoir erroné : non conçue. *(métier §14, INV-76, INV-185 ; A6-10)*
+4. **Lien au BC ou aux devis/lignes ?** Au **BC** (`bc_id`) ; devis référencé seulement par un acompte, `devis_id` **obligatoire** (DV-1 ; forme : PT-10, proposition) ; lignes de facture ↔ `bc_lignes`, jamais `devis_lignes`. *(§3 ; métier §10–§11)*
+5. **Plusieurs devis d'un BC ?** Facturation **globale au BC** (situations, solde) ; un acompte par devis, plafonné par le prévu de ce devis (DV-2) et par le contractuel du BC (DV-3) ; remises globales en lignes `deduction` par devis ; pas de ventilation ; rattachement tardif possible jusqu'au solde. *(§9.2 ; D-48, INV-187, INV-189, INV-190)*
+6. **Situation ?** Globale au BC, saisie en % ou en montant, calcul en montants cumulés, mode/valeur/avancement/montant figés, **peut atteindre exactement 100 %** sans être un solde (DV-4 ; seul le solde clôt), valeur saisie = **cible cumulée** (DV-6), ne peut suivre un solde, même neutralisé (DV-7, DV-8) ; correction par avoir ; forme des colonnes = PT-11 **à concevoir**. *(§4.2, §6.2 ; métier §12, E-17, INV-57)*
+7. **Solde ?** Toujours la facture finale, `0.00` autorisé (confirmation de service avant émission, jamais « neutralisé » : DV-9), `= contractuel − nette avant`, unique non neutralisé par BC, clôture commerciale (plus de devis), déclenche `date_100_facture` et les garanties (008). *(métier §13, INV-58)*
+8. **Acomptes ?** Prévu ≠ facturé ≠ encaissé ; un par devis ; rattaché à son devis ; plafonds : prévu du devis (DV-2, service, jamais obligatoire), contractuel du devis, contractuel du BC (DV-3) ; pris en compte par la nette dans le solde (lignes `deduction`) ; la facture d'acompte n'est pas un règlement. *(§6.4–6.5 ; INV-189)*
+9. **Avoirs ?** Seul mécanisme de correction : origine obligatoire, même BC, non avoir, motif, Σ ≤ origine, jamais annulable ; avant solde il libère un montant refacturable ; après solde il ne rouvre rien (pas de nouvel acompte ni de nouvelle situation, même solde neutralisé : DV-7, DV-8) ; avoir total ⇒ nouvelle facture du même type, nouveau numéro. Correction d'un avoir erroné : non conçue. *(métier §14, INV-76, INV-185 ; A6-10)*
 10. **Immuabilité ?** **Dès l'INSERT**, pour tout : numéro, BC, client, type, dates, montants, lignes, snapshots, relations. *(§4 ; INV-53, TR-20, TR-21, INV-184)*
 11. **Documents supprimables ?** **Aucun** (facture, acompte, situation, solde, avoir, lignes, relations). Seule une *préparation non validée* disparaît parce qu'elle n'a jamais existé en base. *(INV-06, INV-53, INV-185)*
-12. **Règles par état du BC ?** `en_cours` : tous types tant qu'aucun solde n'a été émis (après un solde, même crédité : nouveau solde et avoirs seulement) ; `termine` : aucun nouveau document hors avoir, **avoir autorisé** (VR-07) ; `annule` : terminal commercial, avoirs et règlements sur documents existants, caches financiers évolutifs, `statut` reste `annule` (VR-04, VR-05) ; `frozen_at` : marqueur technique résiduel sans effet ; `gele` n'est pas un statut. *(§9.3, §M.3 à §M.5 ; INV-47, INV-188)*
+12. **Règles par état du BC ?** `en_cours` : tous types tant qu'aucun solde n'a été émis (après un solde, même crédité : nouveau solde et avoirs seulement : DV-7, DV-8) ; `termine` : aucun nouveau document hors avoir, **avoir autorisé** (VR-07) ; `annule` : terminal commercial, avoirs et règlements sur documents existants, caches financiers évolutifs, `statut` reste `annule` (VR-04, VR-05) ; `frozen_at` : marqueur technique résiduel sans effet ; `gele` n'est pas un statut. *(§9.3, §M.3 à §M.5 ; INV-47, INV-188)*
 13. **006 vs 007 ?** 006 : tables `factures`/`facture_lignes`, formules de facturation, unicités, plafonds, immuabilité, numérotation (garde). 007 : règlements, `reste_du`, `absorbe`, crédit, états de paiement, `termine` par encaissements. *(§1.3)*
 14. **Données historiques à conserver ?** Toute facture et toute ligne (contenu, snapshots, numéro, relations BC/avoir/devis), jamais modifiées ; les caches du BC, eux, sont recalculables. *(INV-184, INV-30)*
 15. **Garanties SQLite ?** Formes et types, unicités, FK RESTRICT, immuabilité, non-suppression (y compris `REPLACE`), plafonds locaux, chronologie, conditions d'état du BC. *(§11)*
 16. **Règles de service ?** Attribution du numéro (PT-1), calcul des montants et arrondis, Σ lignes, caches du BC, échéance, borne d'année, garanties, rattachement de devis (porte), événements d'historique. *(§11)*
-17. **CK nécessaires ?** Aucun nouveau. Existants rendus exécutables ou complétés : CK-01, CK-02, CK-04, CK-05, CK-06, CK-13, CK-14 (clause « après solde »). *(§9.4, §11)*
-18. **Décisions à valider ?** V6-01, V6-03 et V6-11 **verrouillées** (VR-01 à VR-13) ; **bloquantes restantes** : V6-04 (devis_id), V6-05 (situation) ; questions ouvertes : QO-1, QO-2 ; autres : V6-02 (mécanisme), V6-06 à V6-08, V6-10, V6-12 à V6-19 (V6-20 décidée le 2026-10-05). *(§M.11, §19)*
+17. **CK nécessaires ?** Aucun nouveau (**aucun CK** n'est créé par DV-2 ; piste « acompte facturé > prévu » non décidée : §N.4). Existants rendus exécutables ou complétés : CK-01, CK-02, CK-04, CK-05, CK-06, CK-13, CK-14 (clause « après solde »). *(§9.4, §11)*
+18. **Décisions à valider ?** V6-01, V6-03 et V6-11 **verrouillées** (VR-01 à VR-13) ; V6-04, V6-05 (règles : DV-1 à DV-6) et V6-09 (DV-7, DV-8) **validées le 2026-10-07** ; **restantes** : mécanismes PT-10 et PT-11, V6-13 ; questions ouvertes : QO-2 (réduite), QO-3 ; autres : V6-02 (mécanisme), V6-06 à V6-08, V6-10, V6-12, V6-14 à V6-19 (V6-20 décidée le 2026-10-05). *(§M.11, §19)*
 19. **Structure minimale de `006_facturation.sql` ?** 2 tables STRICT (`factures`, `facture_lignes`), ≈ 7 index, ≈ 11–14 triggers gardiens, 0 donnée, sans TVA/statut/annulation/historique ; **rang 9, après la corrective 005c** ; aucun remplacement d'objet existant dans 006. *(§16, §M.8)*
-20. **Campagne de tests ?** 24 groupes (G1 → G24), 220–290 tests, matrice des états du BC (dont annulé, et `termine` avec avoirs), contournements `DELETE`/`REPLACE`/parent/FK, non-régression 001–005c, CK écrits en constantes, mutation à 0 survivant non qualifié (006, plus campagne ciblée 005c). *(§17, §18, §M.9)*
+20. **Campagne de tests ?** 25 groupes (G1 → G25), 250–330 tests, matrice des états du BC (dont annulé, et `termine` avec avoirs), contournements `DELETE`/`REPLACE`/parent/FK, non-régression 001–005c, CK écrits en constantes, mutation approfondie à 0 survivant non qualifié (006, plus campagne ciblée 005c ; familles DV : §18.7). *(§17, §18, §M.9)*
 
 ---
 
@@ -1322,4 +1466,5 @@ Légende : ⛔ = bloque l'écriture du SQL (DDL ou trigger dont la forme en dép
 - Aucun autre fichier du dépôt modifié ; **aucune migration ni aucun test de 006 créé** ; aucun CK, aucune décision officielle créé par ce cadrage.
 - Les trois fichiers 005b (`005b_bc_multi_devis.sql`, `test_005b_bc_multi_devis.py`, `CADRAGE__005b_bc_multi_devis.md`) sont présents dans `main` : non touchés.
 - Mise à jour du 2026-10-06 : la corrective 005c (`005c_bc_annule_caches_financiers.sql` et `test_005c_bc_annule_caches_financiers.py`) est livrée dans `main` ; elle n'est pas modifiée par ce cadrage, qui n'en reprend que l'état (rang 8, 006 au rang 9).
+- Mise à jour du 2026-10-07 (décisions DV-1 à DV-10 sur V6-04 / V6-05) : **uniquement** `fichiers-a-relire/CADRAGE__006_facturation.md` modifié ; aucune migration, aucun test, aucun SQL, aucun CK créé ; 005c, 003, 004, les migrations existantes, `docs/` et les autres fichiers de `fichiers-a-relire/` non touchés.
 - Ce cadrage ne commite ni ne pousse rien ; l'intégration dans le dépôt est manuelle.
