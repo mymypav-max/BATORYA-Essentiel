@@ -653,6 +653,28 @@
     mask: none;
   }
 
+  /* État final : arrêt net de la rotation et anneau totalement rempli. */
+  .splash-ring.splash-complete {
+    animation: splashComplete .5s cubic-bezier(.22,1,.36,1) forwards;
+  }
+
+  .splash-ring.splash-complete::before {
+    display: none;
+  }
+
+  .splash-ring.splash-complete::after {
+    inset: 12px;
+  }
+
+  .splash-ring.splash-complete {
+    background: conic-gradient(
+      from 0deg,
+      var(--orange) 0deg,
+      var(--orange-soft2) 180deg,
+      var(--orange) 360deg
+    );
+  }
+
   @keyframes splashSpin {
     to { transform: rotate(360deg); }
   }
