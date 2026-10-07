@@ -653,48 +653,26 @@
     mask: none;
   }
 
-  /* État final : arrêt net de la rotation et anneau totalement rempli. */
+  /* État final : le même anneau devient vert pour confirmer la préparation. */
   .splash-ring.splash-complete {
-    animation: splashComplete .5s cubic-bezier(.22,1,.36,1) forwards;
-  }
-
-  .splash-ring.splash-complete::before {
-    display: none;
-  }
-
-  .splash-ring.splash-complete::after {
-    content: '';
-    position: absolute;
-    inset: 14px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.78);
-    box-shadow:
-      inset 0 0 10px rgba(53,105,158,.05),
-      0 0 14px rgba(201,130,58,.10);
-    -webkit-mask: none;
-    mask: none;
-  }
-
-  .splash-ring.splash-complete::before {
-    display: none;
-  }
-
-  .splash-ring.splash-complete::after {
-    clip-path: polygon(22% 48%, 30% 40%, 43% 53%, 72% 24%, 79% 31%, 43% 68%);
-    background: #4FA56A;
-    inset: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  .splash-ring.splash-complete {
-    -webkit-mask: none;
-    mask: none;
-    background: radial-gradient(
-      circle,
-      transparent 0 91%,
-      var(--orange) 92% 100%
+    animation: splashComplete .38s cubic-bezier(.22,1,.36,1) forwards;
+    -webkit-mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - 4px),
+      #000 calc(100% - 3px)
     );
+    mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - 4px),
+      #000 calc(100% - 3px)
+    );
+    background: #4FA56A;
+    filter: drop-shadow(0 3px 8px rgba(79,165,106,.16));
+  }
+
+  .splash-ring.splash-complete::before,
+  .splash-ring.splash-complete::after {
+    display: none;
   }
 
   @keyframes splashSpin {
@@ -716,27 +694,26 @@
     letter-spacing: .02em;
   }
 
+  /* Compatibilité avec l'état porté par un parent : même anneau, même épaisseur, vert. */
   .splash-complete .splash-ring {
-    -webkit-mask: none;
-    mask: none;
-    animation: splashComplete .5s cubic-bezier(.22,1,.36,1) forwards;
-    background: radial-gradient(
-      circle,
-      transparent 0 91%,
-      var(--orange) 92% 100%
+    -webkit-mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - 4px),
+      #000 calc(100% - 3px)
     );
-  }
-
-  .splash-complete .splash-ring::before {
-    opacity: 0;
-  }
-
-  .splash-complete .splash-ring::after {
-    clip-path: polygon(22% 48%, 30% 40%, 43% 53%, 72% 24%, 79% 31%, 43% 68%);
+    mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - 4px),
+      #000 calc(100% - 3px)
+    );
     background: #4FA56A;
-    inset: 0;
-    border-radius: 0;
-    box-shadow: none;
+    animation: splashComplete .38s cubic-bezier(.22,1,.36,1) forwards;
+    filter: drop-shadow(0 3px 8px rgba(79,165,106,.16));
+  }
+
+  .splash-complete .splash-ring::before,
+  .splash-complete .splash-ring::after {
+    display: none;
   }
 
   @keyframes splashComplete {
@@ -1294,7 +1271,18 @@
 
       setTimeout(() => {
         document.getElementById('splash-ring').classList.add('splash-complete');
-        splashStatus.textContent = 'Espace prêt';
+
+        // Le texte confirme juste après la transformation de l'anneau.
+        setTimeout(() => {
+          splashStatus.style.opacity = '0';
+          splashStatus.style.transform = 'translateY(5px)';
+
+          setTimeout(() => {
+            splashStatus.textContent = 'Espace prêt';
+            splashStatus.style.opacity = '1';
+            splashStatus.style.transform = 'translateY(0)';
+          }, 100);
+        }, 220);
 
         // Transition prototype vers BATORYA.
         setTimeout(() => {
