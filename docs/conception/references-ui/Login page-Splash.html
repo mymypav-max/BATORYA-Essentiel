@@ -510,8 +510,7 @@
   }
 
   .panel-face {
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    transform-style: preserve-3d;
   }
 
   .panel-face--front {
@@ -529,9 +528,9 @@
     flex-direction: column;
     padding: 42px 36px;
     text-align: center;
-    transform: rotateY(180deg);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    transform: rotateY(180deg) translateZ(1px);
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
     visibility: hidden;
     opacity: 0;
   }
@@ -830,7 +829,7 @@
       </div>
       </div>
       <div class="panel-face panel-face--back">
-        <img class="splash-logo" src="../../assets/icon.png" alt="BATORYA" onerror="this.style.display='none'">
+        <img class="splash-logo" src="../../../assets/icon.png" alt="BATORYA" onerror="this.style.display='none'">
         <div class="splash-ring" id="splash-ring" aria-hidden="true"></div>
         <div class="splash-status" id="splash-status">Initialisation…</div>
         <div class="splash-version">BATORYA Essentiel · V6.0.1.4</div>
