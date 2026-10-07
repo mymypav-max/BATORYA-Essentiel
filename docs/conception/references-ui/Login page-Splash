@@ -496,6 +496,167 @@
     transform: translate(-50%, -50%) scale(1.08);
   }
 
+
+  /* ===== LOGIN → SPLASH ===== */
+  .login-panel {
+    transform-style: preserve-3d;
+    transition:
+      width 950ms cubic-bezier(0.22, 1, 0.36, 1),
+      padding 950ms cubic-bezier(0.22, 1, 0.36, 1),
+      height 950ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 950ms ease,
+      border-radius 950ms ease,
+      transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .panel-face {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .panel-face--front {
+    position: relative;
+    z-index: 2;
+  }
+
+  .panel-face--back {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 42px 36px;
+    text-align: center;
+    transform: rotateY(180deg);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .login-panel.is-splash {
+    transform: rotateY(180deg);
+    min-height: 390px;
+    width: min(420px, 92vw);
+  }
+
+  .login-panel.is-splash .panel-face--front {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .login-panel.is-splash .panel-face--back {
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .splash-logo {
+    height: 44px;
+    width: auto;
+    margin-bottom: 18px;
+    filter: drop-shadow(0 3px 8px rgba(53,105,158,.16));
+  }
+
+  .splash-ring {
+    width: 58px;
+    height: 58px;
+    margin: 4px 0 22px;
+    border-radius: 50%;
+    border: 3px solid rgba(53,105,158,.13);
+    border-top-color: var(--orange);
+    border-right-color: var(--blue-soft);
+    animation: splashSpin 1s linear infinite;
+  }
+
+  @keyframes splashSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  .splash-status {
+    min-height: 21px;
+    font-size: 14px;
+    color: var(--text-sec);
+    transition: opacity 180ms ease, transform 280ms cubic-bezier(0.22,1,0.36,1);
+  }
+
+  .splash-version {
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: var(--text-sec);
+    opacity: .72;
+    letter-spacing: .02em;
+  }
+
+  .splash-complete .splash-ring {
+    animation: none;
+    border-color: var(--orange);
+    position: relative;
+  }
+
+  .splash-complete .splash-ring::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 9px;
+    left: 50%;
+    top: 46%;
+    border-left: 2px solid var(--orange);
+    border-bottom: 2px solid var(--orange);
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
+
+  .app-placeholder {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(circle at 18% 18%, rgba(53,105,158,.10), transparent 32%),
+      linear-gradient(135deg, var(--bg) 0%, #F4F6F9 48%, var(--bg-deep) 100%);
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.015);
+    transition: opacity 700ms ease, transform 900ms cubic-bezier(0.22,1,0.36,1);
+  }
+
+  .app-placeholder.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+  }
+
+  .app-placeholder__card {
+    width: min(720px, 88vw);
+    padding: 34px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.72);
+    border: 1px solid rgba(255,255,255,.78);
+    box-shadow: 0 20px 50px rgba(53,105,158,.12);
+    text-align: center;
+    backdrop-filter: blur(18px);
+  }
+
+  .app-placeholder__card h2 {
+    color: var(--text);
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .app-placeholder__card p {
+    color: var(--text-sec);
+    font-size: 14px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .login-panel.is-splash,
+    .splash-ring,
+    .app-placeholder {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+
   @media (max-width: 700px) {
     .login-panel.is-register {
       width: min(94vw, 520px);
@@ -525,7 +686,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .draw, .fade-in, .panel-wrapper, .technical-pulse, .plan-stage::after, .btn::after,
-    .login-panel, .workspace-form, .workspace-section, .plan-stage, .avatar-button {
+    .login-panel, .workspace-form, .workspace-section, .plan-stage, .avatar-button, .splash-ring, .app-placeholder {
       animation: none !important;
       transition: none !important;
       opacity: 1 !important;
@@ -597,6 +758,7 @@
   <!-- LOGIN PANEL -->
   <div class="panel-wrapper">
     <div class="login-panel" id="login-panel">
+      <div class="panel-face panel-face--front">
       <div class="logo">
         <img src="../../assets/icon.png" alt="BATORYA" onerror="this.style.display='none'">
       </div>
@@ -659,6 +821,20 @@
           <button class="btn" type="button" id="submit-btn">Se connecter</button>
         </section>
       </div>
+      </div>
+      <div class="panel-face panel-face--back">
+        <img class="splash-logo" src="../../assets/icon.png" alt="BATORYA" onerror="this.style.display='none'">
+        <div class="splash-ring" id="splash-ring" aria-hidden="true"></div>
+        <div class="splash-status" id="splash-status">Initialisation…</div>
+        <div class="splash-version">BATORYA Essentiel · V6.0.1.4</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-placeholder" id="app-placeholder">
+    <div class="app-placeholder__card">
+      <h2>BATORYA Essentiel</h2>
+      <p>Votre espace est prêt.</p>
     </div>
   </div>
 
@@ -678,6 +854,8 @@
     const avatarPlaceholder = document.getElementById('avatar-placeholder');
     const avatarImage = document.getElementById('avatar-image');
     const avatarCaption = document.getElementById('avatar-caption');
+    const splashStatus = document.getElementById('splash-status');
+    const appPlaceholder = document.getElementById('app-placeholder');
 
     let currentMode = 'login';
     let transitionTimer = null;
@@ -728,6 +906,42 @@
 }, 980);
     }
 
+    function startSplash() {
+      if (currentMode !== 'login') return;
+
+      submitBtn.disabled = true;
+      loginPanel.classList.add('is-splash');
+      planStage.classList.add('is-transitioning');
+
+      const stages = [
+        { text: 'Initialisation…', delay: 0 },
+        { text: 'Chargement de votre espace…', delay: 520 },
+        { text: 'Préparation de BATORYA…', delay: 1040 }
+      ];
+
+      stages.forEach(({ text, delay }) => {
+        setTimeout(() => {
+          splashStatus.style.opacity = '0';
+          splashStatus.style.transform = 'translateY(5px)';
+
+          setTimeout(() => {
+            splashStatus.textContent = text;
+            splashStatus.style.opacity = '1';
+            splashStatus.style.transform = 'translateY(0)';
+          }, 160);
+        }, delay);
+      });
+
+      setTimeout(() => {
+        document.getElementById('splash-ring').classList.add('splash-complete');
+        splashStatus.textContent = 'Espace prêt';
+      }, 1540);
+
+      setTimeout(() => {
+        appPlaceholder.classList.add('is-visible');
+      }, 1880);
+    }
+
     modeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const nextMode = btn.dataset.mode;
@@ -741,6 +955,10 @@
 
         switchMode(nextMode);
       });
+    });
+
+    submitBtn.addEventListener('click', () => {
+      if (currentMode === 'login') startSplash();
     });
 
     avatarButton.addEventListener('click', () => avatarInput.click());
