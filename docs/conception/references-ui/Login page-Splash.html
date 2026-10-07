@@ -663,21 +663,21 @@
   }
 
   .splash-ring.splash-complete::after {
-    content: '';
+    content: '✓';
     position: absolute;
-    inset: auto;
-    left: 50%;
-    top: 50%;
-    width: 13px;
-    height: 25px;
-    margin-left: -7px;
-    margin-top: -15px;
-    border-right: 3px solid #4FA56A;
-    border-bottom: 3px solid #4FA56A;
-    border-radius: 1px;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #4FA56A;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
     background: transparent;
     box-shadow: none;
-    transform: rotate(45deg);
+    transform: none;
+    -webkit-mask: none;
+    mask: none;
   }
 
   .splash-ring.splash-complete {
