@@ -212,32 +212,34 @@
   /* Mode switch */
   .mode-switch {
     position: relative;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
     background: linear-gradient(90deg, rgba(109,150,189,.12), rgba(201,137,84,.08));
     border: 1px solid rgba(255,255,255,.10);
     border-radius: 50px;
     padding: 4px;
     margin-bottom: 28px;
+    gap: 4px;
     overflow: hidden;
   }
 
-  /* Curseur actif : sa géométrie est exactement celle d'une moitié du sélecteur. */
-  .mode-indicator {
+  /* Curseur actif : il glisse physiquement d'un bouton à l'autre. */
+  .mode-switch::before {
+    content: "";
     position: absolute;
     z-index: 0;
     top: 4px;
     left: 4px;
-    width: calc(50% - 4px);
+    width: calc(50% - 6px);
     height: 38px;
     border-radius: 50px;
     background: rgba(245,247,249,.96);
     box-shadow: 0 3px 10px rgba(0,0,0,.20), inset 0 0 0 1px rgba(255,255,255,.65);
-    transition: left 0.9s ease;
+    transition: transform 0.9s ease;
+    transform: translateX(0);
   }
 
-  .mode-switch.is-register .mode-indicator {
-    left: 50%;
+  .mode-switch:has(.mode-btn[data-mode="register"].active)::before {
+    transform: translateX(calc(100% + 4px));
   }
 
   .mode-btn {
@@ -1099,7 +1101,7 @@
         <img src="../../../assets/icon.png" alt="BATORYA" onerror="this.style.display='none'">
       </div>
 
-      <div class="mode-switch" id="mode-switch">\n        <span class="mode-indicator" aria-hidden="true"></span>
+      <div class="mode-switch">
         <button type="button" class="mode-btn active" data-mode="login">Se connecter</button>
         <button type="button" class="mode-btn" data-mode="register">Créer mon espace</button>
       </div>
@@ -1207,7 +1209,7 @@
   <script>
     const loginPanel = document.getElementById('login-panel');
     const planStage = document.querySelector('.plan-stage');
-    const modeSwitch = document.getElementById('mode-switch');\n    const modeBtns = document.querySelectorAll('.mode-btn');
+    const modeBtns = document.querySelectorAll('.mode-btn');
     const title = document.getElementById('welcome-title');
     const subtitle = document.getElementById('welcome-subtitle');
     const welcome = document.querySelector('.welcome');
@@ -1339,7 +1341,6 @@
         if (nextMode === currentMode) return;
 
         modeBtns.forEach(b => b.classList.toggle('active', b === btn));
-        modeSwitch.classList.toggle('is-register', nextMode === 'register');
         currentMode = nextMode;
 
         clearTimeout(transitionTimer);
