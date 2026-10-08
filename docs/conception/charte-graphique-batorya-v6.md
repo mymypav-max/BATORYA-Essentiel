@@ -1,6 +1,6 @@
 # Charte graphique BATORYA V6
 
-**Version : 0.1**  
+**Version : 0.2**  
 **Statut : En construction — référence de conception**  
 **Périmètre : BATORYA Essentiel V6**
 
@@ -535,4 +535,4 @@ Les références visuelles présentes dans docs/conception/references-ui/ peuven
 ---
 
 **Statut actuel :** charte en construction.  
-**Version courante : 0.1**
+**Version courante : 0.2**
