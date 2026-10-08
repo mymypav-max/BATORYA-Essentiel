@@ -538,11 +538,7 @@
   }
 
   .plan-stage {
-    transition: transform 460ms cubic-bezier(0.22, 1, 0.36, 1), opacity 460ms ease;
-  }
-
-  .plan-stage.is-transitioning {
-    transform: scale(1.012);
+    /* Le plan reste strictement fixe pendant le changement de mode. */
   }
 
   .plan-stage.is-transitioning::after {
