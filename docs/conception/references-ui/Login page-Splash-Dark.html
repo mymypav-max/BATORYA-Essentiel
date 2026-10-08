@@ -212,34 +212,33 @@
   /* Mode switch */
   .mode-switch {
     position: relative;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     background: linear-gradient(90deg, rgba(109,150,189,.12), rgba(201,137,84,.08));
     border: 1px solid rgba(255,255,255,.10);
     border-radius: 50px;
     padding: 4px;
     margin-bottom: 28px;
-    gap: 4px;
     overflow: hidden;
   }
 
-  /* Curseur actif : il glisse physiquement d'un bouton à l'autre. */
+  /* Curseur actif : sa géométrie est calée exactement sur les deux cellules. */
   .mode-switch::before {
     content: "";
     position: absolute;
     z-index: 0;
     top: 4px;
     left: 4px;
-    width: calc(50% - 6px);
+    width: calc(50% - 4px);
     height: 38px;
     border-radius: 50px;
     background: rgba(245,247,249,.96);
     box-shadow: 0 3px 10px rgba(0,0,0,.20), inset 0 0 0 1px rgba(255,255,255,.65);
-    transition: transform 0.9s ease;
-    transform: translateX(0);
+    transition: left 0.9s ease;
   }
 
   .mode-switch:has(.mode-btn[data-mode="register"].active)::before {
-    transform: translateX(calc(100% + 4px));
+    left: 50%;
   }
 
   .mode-btn {
