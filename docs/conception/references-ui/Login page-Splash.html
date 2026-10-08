@@ -140,7 +140,7 @@
     box-shadow:
       0 4px 10px -2px var(--blue-soft),
       0 14px 32px -8px var(--blue-soft),
-      0 28px 60px -16px var(--blue-soft), 
+      0 28px 60px -16px var(--blue-soft),
       0 0 0 1px rgba(53, 105, 158, 0.04),
       inset 0 -1px 0 rgba(53,105,158,0.04);
     padding: 40px 36px 36px;
@@ -179,32 +179,54 @@
 
   /* Mode switch */
   .mode-switch {
-    display: flex;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     background: linear-gradient(90deg, rgba(53,105,158,.08), rgba(201,130,58,.09));
     border: 1px solid rgba(53,105,158,.08);
-    border-radius: 12px;
+    border-radius: 50px;
     padding: 4px;
     margin-bottom: 28px;
-    gap: 4px;
+    overflow: hidden;
+  }
+
+  /* Curseur actif : sa géométrie est calée exactement sur les deux cellules. */
+  .mode-switch::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: 38px;
+    border-radius: 50px;
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 3px 10px rgba(31,45,61,.10), inset 0 0 0 1px rgba(255,255,255,.65);
+    transition: left 0.9s ease;
+  }
+
+  .mode-switch:has(.mode-btn[data-mode="register"].active)::before {
+    left: 50%;
   }
 
   .mode-btn {
+    position: relative;
+    z-index: 1;
     flex: 1;
     height: 38px;
     border: none;
-    border-radius: 9px;
+    border-radius: 50px;
     background: transparent;
     font-size: 13.5px;
     font-weight: 550;
     color: var(--text-sec);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: color 0.9s ease;
   }
 
   .mode-btn.active {
-    background: white;
+    background: transparent;
     color: var(--orange);
-    box-shadow: 0 3px 10px rgba(31,45,61,.08), inset 0 0 0 1px rgba(53,105,158,.06);
   }
 
   .mode-btn:hover:not(.active) {
@@ -387,27 +409,27 @@
   }
 
   .remember-me {
-  margin: -4px 0 2px;
-}
+    margin: -4px 0 2px;
+  }
 
-.remember-me__label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-sec);
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-  user-select: none;
-}
+  .remember-me__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-sec);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+  }
 
-.remember-me__label input {
-  width: 15px;
-  height: 15px;
-  margin: 0;
-  accent-color: var(--orange);
-  cursor: pointer;
-}
+  .remember-me__label input {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: var(--orange);
+    cursor: pointer;
+  }
 
   .btn {
     width: 100%;
@@ -483,19 +505,15 @@
     display: none !important;
   }
 
+  /* Le plan technique reste strictement fixe pendant le changement de mode. */
   .plan-stage {
-    transition: transform 460ms cubic-bezier(0.22, 1, 0.36, 1), opacity 460ms ease;
-  }
-
-  .plan-stage.is-transitioning {
-    transform: scale(1.012);
+    /* Aucun transform de transition ici : les tracés ne bougent pas. */
   }
 
   .plan-stage.is-transitioning::after {
     opacity: 1.12;
     transform: translate(-50%, -50%) scale(1.08);
   }
-
 
   /* ===== LOGIN → SPLASH ===== */
   .login-panel {
@@ -594,7 +612,7 @@
         var(--orange-soft2) 42deg,
         rgba(201,130,58,.22) 78deg,
         rgba(91,134,174,.10) 108deg,
-        rgba(91,134,174,.78) 138deg,
+        rgba(53,105,158,.78) 138deg,
         rgba(53,105,158,.18) 154deg,
         rgba(53,105,158,.06) 164deg,
         transparent 166deg,
@@ -653,7 +671,6 @@
     mask: none;
   }
 
-  /* État final : le même anneau devient vert pour confirmer la préparation. */
   .splash-ring.splash-complete {
     animation: splashComplete .38s cubic-bezier(.22,1,.36,1) forwards;
     -webkit-mask: radial-gradient(
@@ -694,7 +711,6 @@
     letter-spacing: .02em;
   }
 
-  /* Compatibilité avec l'état porté par un parent : même anneau, même épaisseur, vert. */
   .splash-complete .splash-ring {
     -webkit-mask: radial-gradient(
       farthest-side,
@@ -787,20 +803,6 @@
     transform: translateY(0) scale(1);
     opacity: 1;
     transition-delay: 120ms;
-  }
-
-  .batorya-shell {
-    width: min(1180px, 100%);
-    height: 100%;
-    margin: auto;
-    display: grid;
-    grid-template-columns: 210px 1fr;
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,.82);
-    border-radius: 20px;
-    background: rgba(255,255,255,.52);
-    box-shadow: 0 24px 70px rgba(53,105,158,.12);
-    backdrop-filter: blur(18px);
   }
 
   .batorya-sidebar {
@@ -905,8 +907,6 @@
     .batorya-kpis { grid-template-columns: 1fr; }
   }
 
-  /* The real application will replace the splash directly.
-     No separate placeholder screen is used in this prototype. */
   .app-placeholder {
     display: none;
     position: fixed;
@@ -1001,7 +1001,6 @@
 </head>
 <body>
 
-  <!-- TECHNICAL PLAN -->
   <div class="plan-stage">
     <svg class="plan-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
       <g class="fade-in" stroke="#35699E" stroke-opacity="0.04" stroke-width="0.6">
@@ -1058,7 +1057,6 @@
     </svg>
   </div>
 
-  <!-- LOGIN PANEL -->
   <div class="panel-wrapper">
     <div class="login-panel" id="login-panel">
       <div class="panel-face panel-face--front">
@@ -1232,11 +1230,8 @@
 
       clearTimeout(transitionTimer);
       transitionTimer = setTimeout(() => {
-      planStage.classList.remove('is-transitioning');
-
-  // Conserver la hauteur calculée pendant le rendu final
-  // pour éviter le léger "saut" provoqué par le passage à height:auto.
-}, 980);
+        planStage.classList.remove('is-transitioning');
+      }, 980);
     }
 
     function startSplash() {
@@ -1244,7 +1239,6 @@
 
       submitBtn.disabled = true;
 
-      // Freeze the card height before the 3D flip.
       const splashHeight = loginPanel.offsetHeight;
       loginPanel.style.height = splashHeight + 'px';
       loginPanel.classList.add('is-splash');
@@ -1272,7 +1266,6 @@
       setTimeout(() => {
         document.getElementById('splash-ring').classList.add('splash-complete');
 
-        // Le texte confirme juste après la transformation de l'anneau.
         setTimeout(() => {
           splashStatus.style.opacity = '0';
           splashStatus.style.transform = 'translateY(5px)';
@@ -1284,10 +1277,7 @@
           }, 100);
         }, 220);
 
-        // Transition prototype vers BATORYA.
         setTimeout(() => {
-          // On fait se chevaucher les deux états : le splash s'efface
-          // pendant que BATORYA apparaît progressivement derrière lui.
           batoryaHome.classList.add('is-visible');
 
           loginPanel.style.transition =
@@ -1306,7 +1296,6 @@
           }, 1150);
         }, 850);
       }, 1540);
-
     }
 
     modeBtns.forEach(btn => {
