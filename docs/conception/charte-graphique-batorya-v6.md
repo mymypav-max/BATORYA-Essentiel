@@ -1,6 +1,6 @@
 # Charte graphique BATORYA V6
 
-**Version : 0.2**  
+**Version : 0.3**  
 **Statut : En construction — référence de conception**  
 **Périmètre : BATORYA Essentiel V6**
 
@@ -21,7 +21,7 @@ Le présent document est volontairement indépendant de l'organisation fonctionn
 
 ### 1.1. Versionnement de la charte
 
-La charte commence en **version 0.1**.
+La charte a été créée en version 0.1. La version courante est indiquée dans l'en-tête, l'historique et le pied de document.
 
 Toute modification du contenu de cette charte devra entraîner une augmentation de l'indice de version. Les évolutions successives doivent permettre de retrouver précisément la référence graphique utilisée lors d'une phase de conception ou d'implémentation.
 
@@ -204,7 +204,8 @@ Le prototype établit une famille de rayons arrondis :
 | Élément | Référence prototype |
 |---|---:|
 | Grand panneau | 20px |
-| Contrôle / sélecteur | 12px |
+| Sélecteur segmenté / bouton principal | 50px (forme pilule) |
+| Contrôle de saisie / champ | 12px |
 | Bouton principal | 13px |
 | Champ | 12px |
 | Petit élément / état actif | 9px |
@@ -255,7 +256,9 @@ Le sélecteur « Se connecter / Créer mon espace » établit un principe réuti
 - deux zones de même importance ;
 - état actif porté par une surface blanche ;
 - accent orange pour l'état actif ;
-- transitions rapides et discrètes.
+- curseur actif qui glisse d'une cellule à l'autre (environ 900 ms) ;
+- couleur du libellé actif synchronisée avec le déplacement ;
+- géométrie du sélecteur stable pendant le mouvement.
 
 ---
 
@@ -321,7 +324,8 @@ Le prototype utilise plusieurs familles :
 - environ 180–260ms : changements d'état simples ;
 - environ 380–500ms : petites transformations visuelles ;
 - environ 850–1200ms : transitions majeures ;
-- jusqu'à environ 950ms pour la transformation du panneau Login → Splash.
+- environ 900 ms pour le glissement du curseur du sélecteur et le retournement du panneau Login → Splash ;
+- environ 950 ms pour les changements de largeur, de hauteur, de padding et d'ombre du panneau lors du passage vers « Créer mon espace ».
 
 Ces durées ne doivent pas être appliquées mécaniquement à tous les composants. Elles définissent des ordres de grandeur selon l'importance de la transition.
 
@@ -337,7 +341,12 @@ La fonctionnalité et la compréhension de l'interface doivent rester identiques
 
 ## 10. Login + Splash — référence visuelle V6
 
-Le prototype docs/conception/references-ui/Login page-Splash.html constitue la **référence graphique actuelle du mode clair** pour :
+Les deux prototypes ci-dessous constituent les **références graphiques figées** des écrans Login + Splash :
+
+- Mode clair : `docs/conception/references-ui/Login page-Splash.html` ;
+- Mode sombre : `docs/conception/references-ui/Login page-Splash-Dark.html`.
+
+Ils définissent, chacun pour leur thème, les références visuelles pour :
 
 - la palette ;
 - les surfaces ;
@@ -350,11 +359,25 @@ Le prototype docs/conception/references-ui/Login page-Splash.html constitue la *
 - la relation bleu/orange ;
 - le traitement du Splash.
 
-Le prototype est considéré comme **figé pour le mode clair**, sous réserve des évolutions explicitement décidées ultérieurement, notamment le remplacement du logo.
+Les deux prototypes sont considérés comme **figés**. Ils ne doivent être modifiés que sur demande explicite ou à la suite d'une décision de conception clairement validée. Toute évolution ultérieure de la charte ne modifie pas automatiquement ces fichiers.
 
 Le Shell et le dashboard visibles dans ce prototype sont uniquement des éléments de démonstration de transition et **ne constituent pas la référence fonctionnelle ou structurelle de l'application**.
 
 ---
+
+
+### 10.1. Comportements graphiques figés
+
+Les deux prototypes fixent également les comportements visuels suivants :
+
+- Le panneau Login et le panneau « Créer mon espace » partagent le même composant visuel ; le passage à l'enregistrement élargit le panneau et répartit les champs en deux colonnes sur écran suffisamment large.
+- Le curseur du sélecteur « Se connecter / Créer mon espace » glisse physiquement entre les deux cellules. Le plan technique en arrière-plan reste fixe pendant ce changement ; seul son halo peut réagir subtilement.
+- Après une connexion de démonstration, le même panneau effectue un retournement sur son axe vertical pour révéler le Splash. Le Splash présente le logo, le message d'accueil, l'anneau de progression, les étapes de préparation et la version.
+- À la fin de la préparation, l'anneau devient vert (#4FA56A) et le statut « Espace prêt » est affiché ; aucune coche n'est ajoutée.
+- Le passage du Splash vers l'écran de démonstration BATORYA se fait par une transition progressive. Cet écran reste une démonstration visuelle, pas une spécification du Shell ou du dashboard métier.
+- Les deux prototypes prévoient une adaptation de prefers-reduced-motion ; l'implémentation devra préserver la compréhension des états lorsque les animations sont réduites.
+
+Ces comportements sont des références de conception des prototypes, pas une preuve que l'authentification ou le démarrage métier sont déjà implémentés.
 
 ## 11. Mode sombre
 
@@ -372,7 +395,23 @@ Il doit conserver :
 
 Les valeurs de couleurs pourront cependant être adaptées afin de garantir le contraste et le confort visuel.
 
-### 11.2. Ce qui ne doit pas être fait
+### 11.2. Palette et surfaces — référence du prototype sombre
+
+| Token prototype | Valeur | Rôle |
+|---|---:|---|
+| --orange | #E37A38 | Accent principal, titres et actions |
+| --orange-soft2 | #C98954 | Orange secondaire et nuances de transition |
+| --blue-soft | #6D96BD | Bleu secondaire, profondeur et focus |
+| --blue-deep | #3F6F9E | Bleu profond |
+| --text | #F1F3F5 | Texte principal |
+| --text-sec | #B7BDC5 | Texte secondaire |
+| --bg | #10161D | Fond principal |
+| --bg-deep | #17212C | Fond profond |
+| Succès / espace prêt | #4FA56A | Confirmation de fin du Splash, sans coche |
+
+Le prototype sombre utilise des surfaces vitrées foncées, des bordures claires discrètes et des ombres mêlant profondeur sombre et nuances orange. Les halos bleu et orange restent diffus : ils donnent de la profondeur sans devenir un contour lumineux permanent. Le panneau, les champs et les effets de profondeur sont conçus spécifiquement pour le sombre ; ils ne sont pas une inversion mécanique des styles clairs.
+
+### 11.3. Ce qui ne doit pas être fait
 
 Le mode sombre ne doit pas être obtenu par une simple inversion des couleurs du mode clair.
 
@@ -384,7 +423,7 @@ En particulier :
 - les ombres du mode clair ne doivent pas être conservées telles quelles ;
 - les surfaces doivent conserver plusieurs niveaux de profondeur.
 
-### 11.3. Structure attendue
+### 11.4. Structure attendue
 
 Le mode sombre devra définir au minimum :
 
@@ -404,7 +443,7 @@ Le mode sombre devra définir au minimum :
 - avertissement ;
 - information.
 
-Les valeurs exactes seront définies après réalisation et validation du prototype Login + Splash en mode sombre.
+Les valeurs de la palette sombre ci-dessous sont celles du prototype sombre validé. Elles constituent une référence pour ce prototype, sans prétendre définir à elles seules tous les tokens du futur système de thème.
 
 ---
 
@@ -469,7 +508,7 @@ Les composants ne doivent pas recréer chacun leur propre interprétation du ble
 
 ## 14. Éléments restant à définir
 
-La présente version 0.1 ne prétend pas figer tous les composants de l'application.
+La présente version 0.3 ne prétend pas figer tous les composants de l'application.
 
 Restent notamment à définir :
 
@@ -489,7 +528,7 @@ Restent notamment à définir :
 - états vides ;
 - états de chargement ;
 - composants métier ;
-- adaptation détaillée du mode sombre ;
+- déclinaison complète des composants métier en mode sombre ;
 - règles responsive complètes.
 
 Ces éléments seront ajoutés lorsque leur conception sera effectivement réalisée.
@@ -519,6 +558,8 @@ La charte est donc un **document vivant**, mais elle ne doit pas devenir un cata
 | Version | Date | Nature de l'évolution |
 |---|---|---|
 | 0.1 | 2026-10-05 | Création de la charte. Formalisation de l'identité commune, du mode clair issu du prototype Login + Splash, principes du mode sombre et gestion du thème. |
+| 0.2 | 2026-10-05 | Consolidation de la référence graphique commune et des principes de thème. |
+| 0.3 | 2026-10-09 | Alignement sur les versions actuelles et figées des prototypes Login + Splash clair et sombre ; documentation de la palette sombre, du sélecteur segmenté animé, du panneau de création d'espace, du plan technique fixe et de la transition Login → Splash → BATORYA. |
 
 ---
 
@@ -535,4 +576,4 @@ Les références visuelles présentes dans docs/conception/references-ui/ peuven
 ---
 
 **Statut actuel :** charte en construction.  
-**Version courante : 0.2**
+**Version courante : 0.3**
