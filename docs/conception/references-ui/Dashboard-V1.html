@@ -8,7 +8,7 @@
 <style>
 :root{color-scheme:light;--bg:#f3f5f7;--surface:#fff;--ink:#18232d;--muted:#77838d;--line:#e8edf0;--orange:#ee873b;--orange-soft:#fff3e9;--blue:#4e9cb3;--blue-soft:#eaf6f9;--green:#3b9674;--red:#cb665e;--shadow:0 5px 20px #2030400a}
 :root[data-theme=dark]{color-scheme:dark;--bg:#151b20;--surface:#20282e;--ink:#eef3f5;--muted:#a2afb7;--line:#313d44;--orange:#f29a54;--orange-soft:#392d25;--blue:#6bb6ca;--blue-soft:#22343a;--green:#6ec09e;--red:#ed8b82;--shadow:0 5px 20px #0003}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button{font:inherit;color:inherit;cursor:pointer} .app{min-height:100vh;display:grid;grid-template-columns:246px 1fr}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button{font:inherit;color:inherit;cursor:pointer} .app{min-height:100vh;display:block}
 aside{background:var(--surface);border-right:1px solid var(--line);padding:25px 16px;display:flex;flex-direction:column;gap:30px}
 .brand{display:flex;align-items:center;gap:11px;padding:0 10px}.brand-mark{width:34px;height:34px;border-radius:10px;background:var(--orange);color:white;display:grid;place-items:center;font-weight:800;font-size:17px}.brand-name{font-size:15px;font-weight:750;letter-spacing:.02em}.brand-name small{display:block;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
 .workspace{margin:0 6px;padding:12px;border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:10px}.avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--blue-soft);color:var(--blue);font-weight:700}.workspace b{display:block;font-size:12px}.workspace span{font-size:11px;color:var(--muted)}
@@ -24,28 +24,49 @@ main{min-width:0}.topbar{height:68px;background:var(--surface);border-bottom:1px
 @media(max-width:1100px){.app{grid-template-columns:205px 1fr}.content{padding:26px 22px}.kpis{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.app{display:block}aside{position:fixed;z-index:4;left:0;right:0;bottom:0;height:62px;padding:5px 9px;border-right:0;border-top:1px solid var(--line);display:block}.brand,.workspace,.nav-label,.side-bottom{display:none}.nav{height:100%;grid-template-columns:repeat(5,1fr);align-items:center}.nav button{justify-content:center;flex-direction:column;gap:2px;padding:5px 2px;font-size:9px}.ico{font-size:16px}.topbar{height:58px;padding:0 16px}.profile span{display:none}.content{padding:23px 15px 84px}.heading{align-items:flex-start;gap:12px;flex-direction:column}.heading h1{font-size:23px}.grid,.lower{grid-template-columns:1fr}.kpis{gap:10px}.kpi{padding:15px;min-height:135px}.kpi-value{font-size:22px}.panel{padding:17px 15px}.chart{height:165px}}
 @media(max-width:390px){.kpis{grid-template-columns:1fr 1fr}.kpi-top{font-size:10px}.kpi-icon{width:26px;height:26px}.kpi-value{font-size:19px}.kpi-foot{font-size:10px}.shortcuts{gap:7px}.shortcut{padding:9px 7px;gap:6px}}
+
+/* Navigation V1 : les chapitres, modules et sous-modules vivent dans la topbar. */
+.brand-home{border:0;background:transparent;padding:0;flex:none;text-align:left;display:flex;align-items:center;gap:10px;min-width:176px}
+.brand-home .brand-mark{flex:none}
+.brand-home .brand-name{line-height:1.2}
+.topbar{gap:22px;padding:0 28px}
+.topbar-nav{display:flex;align-items:center;gap:5px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:thin}
+.top-nav-item,.top-nav-back,.top-nav-subitem{flex:none;border:1px solid transparent;background:transparent;border-radius:9px;padding:9px 11px;font-size:12px;font-weight:600;white-space:nowrap;color:var(--muted);transition:background .18s,border-color .18s,color .18s}
+.top-nav-item:hover,.top-nav-subitem:hover,.top-nav-back:hover{background:var(--bg);color:var(--ink)}
+.top-nav-item.active{background:var(--blue-soft);border-color:color-mix(in srgb,var(--blue) 22%,transparent);color:var(--ink)}
+.top-nav-back{color:var(--orange);border-color:var(--line)}
+.top-nav-context{font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);white-space:nowrap;padding:0 7px}
+.top-nav-divider{height:23px;width:1px;background:var(--line);flex:none;margin:0 3px}
+.top-actions{flex:none}
+@media(max-width:1100px){.topbar{padding:0 18px;gap:14px}.brand-home{min-width:auto}.brand-home .brand-name{display:none}.top-nav-item,.top-nav-subitem,.top-nav-back{padding:8px 9px}}
+@media(max-width:760px){
+ .topbar{height:auto;min-height:64px;padding:10px 13px;flex-wrap:wrap;gap:8px}
+ .brand-home{min-width:0}.brand-home .brand-name{display:block;font-size:12px}.brand-home .brand-name small{font-size:9px}
+ .top-actions{margin-left:auto;gap:6px}.profile{margin-left:0}.profile span{display:none}
+ .topbar-nav{order:3;flex-basis:100%;width:100%;padding:3px 0 2px;overflow-x:auto}
+ .topbar-nav[data-level="chapters"]{border-top:1px solid var(--line);padding-top:8px}
+ .top-nav-item,.top-nav-subitem,.top-nav-back{font-size:11px;padding:8px 10px}
+ .top-nav-context{font-size:9px;padding:0 3px}
+ .content{padding:23px 15px 30px}
+}
+@media(prefers-reduced-motion:reduce){.top-nav-item,.top-nav-subitem,.top-nav-back{transition:none}}
+
 </style>
 </head>
 <body>
 <div class="app">
-<aside aria-label="Navigation principale">
-  <div class="brand"><div class="brand-mark">B</div><div class="brand-name">BATORYA<small>Essentiel · V6</small></div></div>
-  <div class="workspace"><div class="avatar">M</div><div><b>Mon entreprise</b><span>Espace professionnel</span></div></div>
-  <div><div class="nav-label">Espace de travail</div><nav class="nav" id="navigation">
-    <button class="active" data-page="Accueil"><span class="ico">⌂</span>Accueil</button>
-    <button data-page="Clients"><span class="ico">♙</span>Clients</button>
-    <button data-page="Devis"><span class="ico">▤</span>Devis</button>
-    <button data-page="Bons de commande"><span class="ico">▣</span>Bons de commande</button>
-    <button data-page="Factures"><span class="ico">▧</span>Factures</button>
-    <button data-page="Dépenses"><span class="ico">↘</span>Dépenses</button>
-    <button data-page="Planification"><span class="ico">▦</span>Planification</button>
-    <button data-page="URSSAF"><span class="ico">◉</span>URSSAF</button>
-    <button data-page="Catalogue"><span class="ico">◇</span>Catalogue</button>
-  </nav></div>
-  <div class="side-bottom"><div class="nav-label">Préférences</div><nav class="nav"><button data-page="Paramètres"><span class="ico">⚙</span>Paramètres</button></nav><div class="status"><i class="dot"></i>Données stockées localement</div></div>
-</aside>
 <main>
-<header class="topbar"><div class="crumb" id="breadcrumb"><strong>Accueil</strong></div><div class="top-actions"><button class="icon-btn" id="themeToggle" aria-label="Changer de thème" title="Changer de thème">◐</button><button class="icon-btn" aria-label="Notifications" title="Notifications">♧</button><div class="profile"><div class="avatar">M</div><span>Mon entreprise</span></div></div></header>
+<header class="topbar">
+  <button class="brand brand-home" id="homeButton" aria-label="Retour à l’accueil" title="Accueil">
+    <span class="brand-mark">B</span><span class="brand-name">BATORYA<small>Essentiel · V6</small></span>
+  </button>
+  <nav class="topbar-nav" id="topNavigation" aria-label="Navigation principale"></nav>
+  <div class="top-actions">
+    <button class="icon-btn" id="themeToggle" aria-label="Changer de thème" title="Changer de thème">◐</button>
+    <button class="icon-btn" aria-label="Notifications" title="Notifications">♧</button>
+    <div class="profile"><div class="avatar">M</div><span>Mon entreprise</span></div>
+  </div>
+</header>
 <div class="content">
   <section class="heading"><div><div class="eyebrow">Mardi 10 octobre 2026</div><h1 id="pageTitle">Bonjour, bienvenue 👋</h1><p>Voici le résumé de votre activité.</p></div><div class="date-pill">◷ &nbsp;Vue d’ensemble · Octobre 2026</div></section>
   <section class="kpis" aria-label="Indicateurs clés">
@@ -101,13 +122,96 @@ const savedTheme=localStorage.getItem('batorya-theme');
 if(savedTheme==='dark')root.dataset.theme='dark';
 themeButton.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';localStorage.setItem('batorya-theme',root.dataset.theme)});
 const title=document.getElementById('pageTitle'), crumb=document.getElementById('breadcrumb');
-document.querySelectorAll('#navigation button').forEach(button=>button.addEventListener('click',()=>{
- document.querySelectorAll('#navigation button').forEach(item=>item.classList.remove('active'));
- button.classList.add('active');
- const page=button.dataset.page;
- if(page==='Accueil'){title.textContent='Bonjour, bienvenue 👋';crumb.innerHTML='<strong>Accueil</strong>'}
- else{title.textContent=page;crumb.innerHTML='<span>Accueil</span> &nbsp;›&nbsp; <strong>'+page+'</strong>'}
-}));
+const topNavigation=document.getElementById('topNavigation');
+const homeButton=document.getElementById('homeButton');
+
+const navigationModel = {
+  "Commercial": { "Clients": [], "Devis": ["Tous les devis", "À relancer"], "Bons de commande": ["En cours", "Terminés"], "Facturation": ["Factures", "Avoirs"] },
+  "Catalogue": { "Prestations": ["Catalogue des prestations"] },
+  "Chantiers": { "Suivi des chantiers": ["Chantiers en cours", "Planning"], "Réception et garanties": ["Réceptions", "Garanties"] },
+  "Gestion financière": { "Règlements": ["Encaissements", "Restes dus"], "Dépenses": ["Toutes les dépenses"] },
+  "Pilotage": { "Analyses": ["Activité", "Marges"], "URSSAF": ["Estimations", "Historique"] },
+  "Documents": { "Documents": ["Tous les documents"] },
+  "Historique": { "Historique métier": ["Journal des opérations"] },
+  "Paramètres": { "Configuration": ["Entreprise", "Préférences"] }
+};
+let currentChapter = null;
+let currentModule = null;
+
+function renderTopNavigation(level="chapters") {
+  topNavigation.replaceChildren();
+  topNavigation.dataset.level = level;
+  if (level === "chapters") {
+    Object.keys(navigationModel).forEach(chapter => {
+      const button=document.createElement('button');
+      button.className='top-nav-item';
+      button.textContent=chapter;
+      button.addEventListener('click',()=>openChapter(chapter));
+      topNavigation.append(button);
+    });
+    return;
+  }
+  const back=document.createElement('button');
+  back.className='top-nav-back';
+  back.textContent='‹ Chapitres';
+  back.addEventListener('click',()=>{currentChapter=null;currentModule=null;renderTopNavigation('chapters');setDashboard();});
+  topNavigation.append(back);
+  const chapterLabel=document.createElement('span');
+  chapterLabel.className='top-nav-context';
+  chapterLabel.textContent=currentChapter;
+  topNavigation.append(chapterLabel);
+  Object.keys(navigationModel[currentChapter]).forEach(moduleName=>{
+    const button=document.createElement('button');
+    button.className='top-nav-item'+(moduleName===currentModule?' active':'');
+    button.textContent=moduleName;
+    button.addEventListener('click',()=>openModule(moduleName));
+    topNavigation.append(button);
+  });
+  if (level === "submodules" && currentModule) {
+    const divider=document.createElement('span');divider.className='top-nav-divider';topNavigation.append(divider);
+    navigationModel[currentChapter][currentModule].forEach(submodule=>{
+      const button=document.createElement('button');
+      button.className='top-nav-subitem';
+      button.textContent=submodule;
+      button.addEventListener('click',()=>showPage(submodule, currentChapter+' › '+currentModule+' › '+submodule));
+      topNavigation.append(button);
+    });
+  }
+}
+function setDashboard() {
+  title.textContent='Bonjour, bienvenue 👋';
+  crumb.innerHTML='<strong>Accueil</strong>';
+  document.querySelector('.heading p').textContent='Voici le résumé de votre activité.';
+  document.querySelector('.eyebrow').textContent='Mardi 10 octobre 2026';
+}
+function showPage(page, breadcrumbText) {
+  title.textContent=page;
+  crumb.textContent=breadcrumbText;
+  document.querySelector('.heading p').textContent='Aperçu de navigation — contenu fonctionnel à concevoir.';
+  document.querySelector('.eyebrow').textContent='BATORYA ESSENTIEL · V6';
+}
+function openChapter(chapter) {
+  currentChapter=chapter;currentModule=null;
+  renderTopNavigation('modules');
+  title.textContent=chapter;
+  crumb.textContent='Accueil › '+chapter;
+  document.querySelector('.heading p').textContent='Choisissez un module dans la barre de navigation.';
+  document.querySelector('.eyebrow').textContent='CHAPITRE';
+}
+function openModule(moduleName) {
+  currentModule=moduleName;
+  const subs=navigationModel[currentChapter][moduleName];
+  if (subs.length) {
+    renderTopNavigation('submodules');
+    showPage(moduleName, 'Accueil › '+currentChapter+' › '+moduleName);
+  } else {
+    renderTopNavigation('modules');
+    showPage(moduleName, 'Accueil › '+currentChapter+' › '+moduleName);
+  }
+}
+homeButton.addEventListener('click',()=>{currentChapter=null;currentModule=null;renderTopNavigation('chapters');setDashboard();});
+renderTopNavigation('chapters');
+setDashboard();
 let toastTimer;
 function toast(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2200)}
 document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',()=>toast(button.dataset.action+' · aperçu du prototype')));
