@@ -1,6 +1,6 @@
 # Charte graphique BATORYA V6
 
-**Version : 0.3**  
+**Version : 0.4**  
 **Statut : En construction — référence de conception**  
 **Périmètre : BATORYA Essentiel V6**
 
@@ -53,19 +53,21 @@ Elle doit privilégier une approche proche des interfaces modernes de bureau et 
 
 ### 2.2. Rôle des couleurs
 
-La hiérarchie chromatique repose sur trois rôles :
+La palette validée pour les deux prototypes Login + Splash repose sur trois couleurs principales et une répartition visuelle indicative **60 / 30 / 10** :
 
-| Rôle | Couleur de référence | Fonction |
+| Part indicative | Couleur | Fonction |
 |---|---|---|
-| Identité / structure | Bleu BATORYA | identité, structure, navigation, éléments techniques |
-| Accent / énergie | Orange BATORYA | action, mise en évidence, accent visuel |
-| Structure de surface | Gris / blanc | fonds, surfaces, séparation et lisibilité |
+| 60 % | Gris très clair #F4F7F8 en mode clair ; fonds anthracite/bleu-noir en mode sombre | surface de fond et respiration |
+| 30 % | Bleu glacier #C8F3FF | halos, tracés techniques, détails et états actifs |
+| 10 % | Orange BATORYA #FF5C23 | action principale, accent et mise en évidence |
+
+Ces proportions sont un repère de composition, pas une mesure pixel par pixel. En mode sombre, le bleu glacier doit être dosé selon le contraste ; l'orange reste ponctuel pour éviter un rendu agressif.
 
 **Principe directeur :**
 
-> **Bleu = identité et structure. Orange = énergie et accent. Gris/blanc = structure et lisibilité.**
+> **Fond neutre = lisibilité. Bleu glacier = profondeur technique et états. Orange = action et accent.**
 
-L'orange ne doit pas devenir la couleur dominante de l'interface.
+Les deux thèmes partagent les mêmes couleurs d'identité, mais adaptent les fonds, les surfaces, les textes et les transparences à leur environnement.
 
 ### 2.3. Hiérarchie des surfaces
 
@@ -111,91 +113,63 @@ Les titres utilisent un espacement légèrement resserré, notamment sur les gra
 
 ## 4. Palette — Mode clair
 
-Cette palette constitue la **palette réellement utilisée dans le prototype Login + Splash actuellement validé**. Elle constitue la base de travail de la charte et non encore une liste exhaustive de tous les composants V6.
+Cette palette correspond au prototype clair actuellement validé : docs/conception/references-ui/Login page-Splash.html. Les valeurs ci-dessous décrivent les couleurs de référence et les principaux tokens du prototype ; elles ne constituent pas encore le système exhaustif de composants V6.
 
-### 4.1. Couleurs fondamentales
+### 4.1. Palette de référence
 
-| Token prototype | Valeur | Rôle |
+| Rôle | Valeur | Utilisation |
 |---|---:|---|
-| --orange | #DC6E29 | accent principal, actions, titres d'accueil |
-| --orange-soft2 | #C9823A | orange secondaire / transitions |
-| --blue-soft | #5B86AE | bleu secondaire, profondeur, ombres |
-| --blue-deep | #2E5D8C | bleu profond, éléments structurants |
-| BATORYA blue | #35699E | bleu d'identité actuellement présent dans le prototype |
-| --text | #1B1C1E | texte principal |
-| --text-sec | #595C61 | texte secondaire |
-| --bg | #E9EEF4 | fond principal bleuté |
-| --bg-deep | #DCE5EF | fond secondaire / profondeur |
-| --orange-soft | rgba(201,130,58,0.14) | accent orange très léger |
+| Fond clair principal | #F4F7F8 | fond général gris très clair, légèrement froid |
+| Bleu glacier | #C8F3FF | halos, tracés techniques, détails, états actifs |
+| Orange BATORYA | #FF5C23 | action principale et accents |
+| Bleu pétrole profond | #24434A | contraste structurel et nuance sombre de la palette |
+| Fond clair secondaire | #EAF0F2 | profondeur et variations du fond |
+| Texte secondaire | #595C61 | libellés et informations secondaires |
+| Succès / espace prêt | #4FA56A | confirmation de fin du Splash, sans coche |
 
-### 4.2. Couleurs fonctionnelles déjà présentes
+La répartition 60 / 30 / 10 est indicative : elle guide l'équilibre visuel global, sans imposer ces proportions à chaque composant.
 
-Le prototype utilise également un vert de confirmation pour l'état final du Splash :
+### 4.2. Tokens du prototype clair
 
-| Usage | Valeur |
+Le prototype utilise actuellement les variables CSS suivantes :
+
+| Token | Valeur actuelle |
 |---|---|
-| Succès / espace prêt | #4FA56A |
+| --orange | rgb(255, 94, 35) |
+| --orange-soft2 | #FF5C23 |
+| --blue-soft | #C8F3FF |
+| --blue-deep | #24434A |
+| --text | #ff5c23 |
+| --text-sec | #595C61 |
+| --bg | #F4F7F8 |
+| --bg-deep | #EAF0F2 |
+| --orange-soft | rgba(255, 92, 35, 0.12) |
 
-Cette couleur est fonctionnelle et ne doit pas être confondue avec la couleur d'identité BATORYA.
+Ces valeurs documentent fidèlement le prototype validé. Les tokens de couleur du texte devront être rationalisés au moment de la conception du système UI complet, sans modifier rétroactivement le prototype validé.
 
-Les couleurs d'erreur, d'avertissement et d'information complémentaires restent à définir dans une prochaine version de la charte lorsque les composants fonctionnels correspondants seront étudiés.
+### 4.3. Couleurs fonctionnelles
 
-### 4.3. Transparences
+Le vert de succès est réservé aux états de confirmation, notamment à la fin du Splash. Il ne fait pas partie de l'identité chromatique principale.
 
-Le prototype utilise largement des couleurs semi-transparentes, notamment pour :
+Les couleurs d'erreur, d'avertissement et d'information complémentaires restent à définir lorsque les composants fonctionnels correspondants seront étudiés.
 
-- les halos ;
-- les surfaces vitrées ;
-- les bordures ;
-- les ombres ;
-- les accents techniques.
+### 4.4. Transparences
 
-Les transparences doivent rester discrètes. Elles servent à créer une profondeur ou une hiérarchie, pas à produire un effet décoratif permanent.
-
----
+Les transparences servent notamment pour les halos, les surfaces vitrées, les bordures, les ombres et les accents techniques. Elles doivent rester discrètes et ne pas concurrencer le contenu.
 
 ## 5. Mode clair — surfaces et profondeur
 
 ### 5.1. Fond général
 
-Le prototype utilise une combinaison de :
-
-- gris bleuté ;
-- blanc cassé ;
-- gris bleu plus profond ;
-- halos bleu et orange très diffus.
-
-Le fond ne doit pas être parfaitement plat lorsque l'environnement le justifie, mais les effets doivent rester suffisamment faibles pour ne jamais concurrencer le contenu.
+Le fond général de référence est #F4F7F8, avec des variations très légères vers #EAF0F2. Les halos bleu glacier et orange peuvent ajouter une profondeur diffuse, à condition de rester subtils.
 
 ### 5.2. Surface principale
 
-Les panneaux principaux utilisent des blancs légèrement translucides ou légèrement teintés.
+Les panneaux principaux privilégient le blanc ou des blancs légèrement translucides. La surface doit rester distincte du fond sans recourir à une bordure lourde.
 
-Exemple de référence du prototype :
+### 5.3. Bordures et ombres
 
-    background: linear-gradient(145deg, rgba(255,255,255,.82), rgba(248,250,252,.68));
-
-### 5.3. Bordures
-
-Les bordures sont fines et discrètes.
-
-Le prototype utilise notamment des bordures blanches semi-transparentes et des bordures bleu/gris très faibles.
-
-Elles servent principalement à délimiter une surface lorsqu'un contraste d'arrière-plan ne suffit pas.
-
-### 5.4. Ombres
-
-Les ombres doivent créer une profondeur douce.
-
-Elles doivent éviter :
-
-- les ombres noires fortes ;
-- les contours lourds ;
-- l'effet « carte flottante » systématique.
-
-Le bleu BATORYA peut être utilisé très légèrement dans les ombres afin de conserver la cohérence chromatique.
-
----
+Les bordures sont fines et discrètes. Les ombres créent une profondeur douce et peuvent intégrer une nuance de bleu ou d'orange à faible opacité. Éviter les ombres noires fortes, les contours lourds et l'effet « carte flottante » systématique.
 
 ## 6. Formes et rayons
 
@@ -383,69 +357,47 @@ Ces comportements sont des références de conception des prototypes, pas une pr
 
 ### 11.1. Principe
 
-Le mode sombre doit être une **déclinaison de la même identité BATORYA**, et non une seconde charte graphique.
+Le mode sombre est une déclinaison nocturne de la même identité BATORYA, et non une seconde identité ni une inversion mécanique du mode clair. Les deux prototypes partagent le bleu glacier #C8F3FF et l'orange #FF5C23, tout en adaptant les surfaces, le contraste, les ombres et les transparences.
 
-Il doit conserver :
+### 11.2. Palette de référence — prototype sombre
 
-- la même hiérarchie ;
-- les mêmes rôles chromatiques ;
-- les mêmes formes ;
-- les mêmes principes typographiques ;
-- les mêmes principes d'animation.
+| Rôle / token | Valeur | Utilisation |
+|---|---|---|
+| Orange BATORYA --orange | #FF5C23 | action principale, accents |
+| Orange clair secondaire --orange-soft2 | #FF9A72 | transitions et nuance secondaire |
+| Bleu glacier --blue-soft | #C8F3FF | tracés techniques, focus, halos et détails actifs |
+| Bleu pétrole profond --blue-deep | #24434A | nuance structurelle |
+| Texte principal --text | #F1F3F5 | texte sur fond sombre |
+| Texte secondaire --text-sec | #B7BDC5 | libellés et informations secondaires |
+| Fond principal --bg | #10161D | fond anthracite |
+| Fond profond --bg-deep | #17212C | profondeur bleu-noir |
+| Succès / espace prêt | #4FA56A | confirmation de fin du Splash, sans coche |
 
-Les valeurs de couleurs pourront cependant être adaptées afin de garantir le contraste et le confort visuel.
+Le prototype utilise des surfaces vitrées foncées, des bordures discrètes et des ombres profondes. Les halos bleu glacier et orange restent diffus. L'orange est réservé aux éléments d'accent et ne doit pas devenir une lueur omniprésente.
 
-### 11.2. Palette et surfaces — référence du prototype sombre
+### 11.3. Règles de contraste et de profondeur
 
-| Token prototype | Valeur | Rôle |
-|---|---:|---|
-| --orange | #E37A38 | Accent principal, titres et actions |
-| --orange-soft2 | #C98954 | Orange secondaire et nuances de transition |
-| --blue-soft | #6D96BD | Bleu secondaire, profondeur et focus |
-| --blue-deep | #3F6F9E | Bleu profond |
-| --text | #F1F3F5 | Texte principal |
-| --text-sec | #B7BDC5 | Texte secondaire |
-| --bg | #10161D | Fond principal |
-| --bg-deep | #17212C | Fond profond |
-| Succès / espace prêt | #4FA56A | Confirmation de fin du Splash, sans coche |
+- Conserver plusieurs niveaux de surface pour distinguer le panneau, les champs et le fond.
+- Employer le bleu glacier avec mesure : sa forte luminosité doit servir à souligner un état ou un tracé, pas à colorer toutes les bordures.
+- Réserver l'orange aux actions et accents importants.
+- Garder un contraste suffisant entre texte et fond ; le bleu glacier ne remplace pas automatiquement le texte courant.
+- Ne pas reprendre telles quelles les ombres du mode clair : le sombre nécessite une profondeur et des transparences adaptées.
 
-Le prototype sombre utilise des surfaces vitrées foncées, des bordures claires discrètes et des ombres mêlant profondeur sombre et nuances orange. Les halos bleu et orange restent diffus : ils donnent de la profondeur sans devenir un contour lumineux permanent. Le panneau, les champs et les effets de profondeur sont conçus spécifiquement pour le sombre ; ils ne sont pas une inversion mécanique des styles clairs.
+### 11.4. Tokens du prototype sombre
 
-### 11.3. Ce qui ne doit pas être fait
+| Token | Valeur actuelle |
+|---|---|
+| --orange | #FF5C23 |
+| --orange-soft2 | #FF9A72 |
+| --blue-soft | #C8F3FF |
+| --blue-deep | #24434A |
+| --text | #F1F3F5 |
+| --text-sec | #B7BDC5 |
+| --bg | #10161D |
+| --bg-deep | #17212C |
+| --orange-soft | rgba(255, 92, 35, 0.16) |
 
-Le mode sombre ne doit pas être obtenu par une simple inversion des couleurs du mode clair.
-
-En particulier :
-
-- le blanc ne devient pas automatiquement noir ;
-- le bleu ne doit pas être simplement remplacé par un bleu plus foncé ;
-- l'orange ne doit pas devenir excessivement lumineux ;
-- les ombres du mode clair ne doivent pas être conservées telles quelles ;
-- les surfaces doivent conserver plusieurs niveaux de profondeur.
-
-### 11.4. Structure attendue
-
-Le mode sombre devra définir au minimum :
-
-- fond général ;
-- surface principale ;
-- surface secondaire ;
-- surface élevée ;
-- texte principal ;
-- texte secondaire ;
-- texte tertiaire ;
-- bordure ;
-- focus ;
-- bleu BATORYA ;
-- orange BATORYA ;
-- succès ;
-- erreur ;
-- avertissement ;
-- information.
-
-Les valeurs de la palette sombre ci-dessous sont celles du prototype sombre validé. Elles constituent une référence pour ce prototype, sans prétendre définir à elles seules tous les tokens du futur système de thème.
-
----
+Ces valeurs décrivent le prototype sombre validé. Elles ne prétendent pas définir à elles seules tous les tokens du futur système de thème.
 
 ## 12. Gestion du thème
 
@@ -559,7 +511,8 @@ La charte est donc un **document vivant**, mais elle ne doit pas devenir un cata
 |---|---|---|
 | 0.1 | 2026-10-05 | Création de la charte. Formalisation de l'identité commune, du mode clair issu du prototype Login + Splash, principes du mode sombre et gestion du thème. |
 | 0.2 | 2026-10-05 | Version intermédiaire antérieure ; le détail de ses changements n'était pas consigné dans l'historique source. |
-| 0.3 | 2026-10-09 | Alignement sur les versions actuelles et figées des prototypes Login + Splash clair et sombre ; documentation de la palette sombre, du sélecteur segmenté animé, du panneau de création d'espace, du plan technique fixe et de la transition Login → Splash → BATORYA. |
+| 0.3 | 2026-10-09 | Alignement sur les versions alors figées des prototypes Login + Splash clair et sombre ; documentation du sélecteur segmenté animé, du panneau de création d'espace, du plan technique fixe et de la transition Login → Splash → BATORYA. |
+| 0.4 | 2026-10-09 | Mise à jour des palettes de référence après validation de la palette gris clair / bleu glacier / orange et harmonisation des tokens documentés pour les prototypes clair et sombre. |
 
 ---
 
@@ -576,4 +529,4 @@ Les références visuelles présentes dans docs/conception/references-ui/ peuven
 ---
 
 **Statut actuel :** charte en construction.  
-**Version courante : 0.3**
+**Version courante : 0.4**
