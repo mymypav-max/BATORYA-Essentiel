@@ -1,7 +1,7 @@
 # CADRAGE 007 — Règlements
 
 Tranche 007 (rang 10) : `src-tauri/migrations/metier/007_reglements.sql` + `src-tauri/tests/metier/test_007_reglements.py`.
-Statut : **cadrage à valider — aucun SQL ni test n'est écrit.** Aucun fichier 001–006 n'est touché.
+Statut : **cadrage VALIDÉ par Rémy (2026-10-08) sous les arbitrages du §7 et la précision d'intégration du §2bis.** Aucun fichier 001–006 ni document officiel n'est touché.
 
 Légende des étiquettes :
 **[RD]** règle documentée · **[DV]** décision déjà validée (errata, cadrage 006, D-xx) · **[CT]** conséquence technique (déduite, aucune règle nouvelle) · **[PR]** proposition · **[QO]** question ouverte.
@@ -14,9 +14,30 @@ Sources lues : `invariants.md`, modèle SQLite V3.13, `modèle-métier-V6.md`, `
 
 | # | Document | Section | Écart | Conséquence pour 007 | Correction minimale proposée |
 |---|---|---|---|---|---|
-| Z-1 | `docs/conception/` | modèle | Le brief cite `docs/conception/modèle-données-sqlite-v6-v3.13.md` : **ce fichier n'existe pas** dans `main` (5b7697a). `docs/` contient la **V3.12** ; la V3.13 n'existe que dans `fichiers-a-relire/MAJ__modèle-données-sqlite-v6-v3.13.md`. | Même situation que pour 006, qui s'est appuyée sur les `MAJ__*`. | **Je retiens les `MAJ__*` (V3.13, post-E-14/E-15) comme référence**, comme en 006. Si ce n'est pas le cas, dites-le avant validation. |
+| Z-1 | `docs/conception/` | modèle | Le brief cite `docs/conception/modèle-données-sqlite-v6-v3.13.md` : **ce fichier n'existe pas** dans `main` (5b7697a). `docs/` contient la **V3.12** ; la V3.13 n'existe que dans `fichiers-a-relire/MAJ__modèle-données-sqlite-v6-v3.13.md`. | Écart documentaire, **pas un blocage** (validé). | **La V3.13 utilisée pour 007 est celle de `fichiers-a-relire/MAJ__*`**, comme pour 006. Les documents officiels ne sont pas modifiés ; leur mise à jour est traitée séparément. |
 | Z-2 | `docs/conception/invariants.md` | INV-72, INV-76 | Version `docs/` antérieure à E-14 (« aucun encaissement sur facture annulée », « Σ avoirs actifs », « non annulée »). Les `MAJ__invariants.md` sont à jour. | Idem Z-1. | Reporter les `MAJ__*` dans `docs/` (hors 007, à votre main). |
 | Z-3 | Modèle V3.13 | §10.5 (ordre d'import) | La phrase « Le gel est posé par TR-15 lors de l'insertion des factures et règlements » est un **reliquat**, TR-15 étant marqué obsolète (PT-8, VR-01, E-10). | Aucun : 007 ne pose ni gel ni `frozen_at`. | Supprimer la phrase (documentaire). |
+| Z-4 | Modèle V3.13 | §13, cas C-10 | « Solde 400.00 impayé, avoir 400.00, autres factures payées ⇒ BC `termine` » : lu littéralement, un **avoir total** sur le solde le **neutralise** (plus de solde actif, VR-07/D de 006, INV-42 : `termine ⇔ solde actif ∧ Σ reste_du = 0`). Le cas date de la V3.12 (où l'avoir total n'ôtait pas le statut de solde actif). | Le volet **financier** de C-10 (l'avoir absorbe : `reste_du` du solde = 0.00, aucun encaissement) est testé tel quel ; le statut du BC suit la décision **006 déjà validée** (`en_cours`). Une variante à avoir **partiel** donne bien `termine`. | Aucune règle créée. Mettre le libellé de C-10 en cohérence avec VR-07/D lors de la mise à jour documentaire (hors 007). |
+
+### Comparaison V3.12 (officielle) ↔ V3.13 (`MAJ__`) sur le périmètre règlements
+
+Comparaison ligne à ligne des sections concernées. **Aucune règle n'a été créée pour résoudre ces différences** ; elles sont consignées telles quelles.
+
+| Élément | V3.12 (`docs/`) | V3.13 (`MAJ__`) | Effet sur 007 |
+|---|---|---|---|
+| §4.9 colonnes, CHECK `(cancelled_at IS NULL) = (motif_annulation IS NULL)`, annulation une seule fois | identiques | identiques | aucun |
+| §4.9 « un règlement = une seule facture ; virement multi-factures réparti » | absent | **ajouté** (D-48, Q20, Q27) | déjà portée par `facture_id` NN ; aucune colonne multi-factures |
+| §3.3 garde-fou « encaissement … » | « aucun encaissement sur une facture annulée ni sur un avoir » | « … sur un avoir » (E-14) | « active » se réduit à CT-1 |
+| §3.3 formules `absorbe`/`reste_du`/`credit` | identiques | identiques | aucun |
+| §3.4 `etat_paiement` | `annulee` si `cancelled_at` | état `annulee` supprimé ; « entièrement créditée » = PT-9 | dérivé, hors SQL |
+| §3.4 avoir | état `annule` | « un avoir n'est pas annulable » | CT-2 |
+| §3.5 `termine → en_cours` | « annulation d'un règlement **ou d'un avoir** » | « annulation d'un règlement » | l'avoir n'est plus une cause d'annulation ; le service recalcule après un avoir |
+| §3.5 `date_100_facture` | remise à NULL à l'annulation du solde | sort après avoir total : VR-10 (006) | service ; hors SQL |
+| TR-30, TR-31, TR-32, TR-33 (§8) ; index (§9) ; C-05, C-06, C-10 à C-13 | identiques | identiques | aucun |
+| TR-15 (gel à l'encaissement d'acompte), C-02 « gel immédiat » | actifs | **obsolètes** (PT-8, E-10, VR-01) | 007 ne pose aucun gel |
+| D-48 | absent | présent | voir ci-dessus |
+
+Conclusion : **TR-30→TR-33 et §4.9 sont identiques dans les deux versions** ; les écarts V3.12/V3.13 sont des retraits liés aux errata E-10/E-14 et ne modifient pas le DDL de `reglements`.
 
 Aucune contradiction **bloquante** n'a été trouvée sur le fond des règlements.
 
@@ -86,6 +107,15 @@ Aucune contradiction **bloquante** n'a été trouvée sur le fond des règlement
 
 ---
 
+## 2bis. Précision d'intégration (validée)
+
+> **Un règlement ne constitue jamais une réouverture commerciale du BC.**
+> L'annulation d'un règlement peut modifier l'état financier et éventuellement faire repasser le BC de `termine` à `en_cours` lorsque les règles financières le prévoient, mais elle ne réautorise jamais la création d'un devis, acompte, situation ou solde lorsque les garde-fous de 006 l'interdisent.
+
+**[CT]** Conséquence d'intégration des règles déjà validées (VR-07, VR-08, VR-09 ; `tr_22`, `tr_99`, `tr_16`), **pas une nouvelle règle métier**. Le test d'intégration correspondant est obligatoire dans 007 (groupe I).
+
+---
+
 ## 3. Dépendances avec 006 (et avant)
 
 | Dépendance | Détail | Verdict |
@@ -99,7 +129,7 @@ Aucune contradiction **bloquante** n'a été trouvée sur le fond des règlement
 | `tr_99_bc_devis_apres_solde` | Ferme le rattachement après solde, indépendamment du statut. | Test d'intégration. |
 | 004/005b/005c (`bons_commande`) | `statut` peut passer `termine → en_cours` si `OLD.statut <> 'annule'` (`tr_12_contrat`) ; sur BC annulé, seuls `updated_at` et les 3 caches financiers évoluent (`tr_12_annule`, 005c). CHECK `termine ⇔ completed_at`, `termine ⇒ date_100_facture`, `termine ⇒ frozen_at` : le **service** doit écrire ces champs ensemble (résiduel `frozen_at`, VR-02 : non réouvert). | Test d'intégration avec oracle de recalcul (réutilise `recalcul_bc`). |
 | Numérotation | Aucune pour les règlements ; ACP/AVO/FAC restent 006. `type_objet` de 001 n'est pas modifié. | OK |
-| Import | `origine IN ('v6','import')`, `legacy_id`, `legacy_data json_valid` ; `origine='v6'` ⇒ legacy NULL ; **aucune exemption** (INV-131). | OK ; voir QO-1 et QO-2. |
+| Import | `origine IN ('v6','import')`, `legacy_id`, `legacy_data json_valid` ; `origine='v6'` ⇒ legacy NULL ; **aucune exemption** (INV-131). | OK ; voir Q1 et Q2. |
 | Runner | `PRAGMA user_version = 10` (rang 10, D-55) ; `foreign_keys=ON`, `recursive_triggers=ON` (D-39). | OK |
 
 ---
@@ -121,8 +151,8 @@ Aucune contradiction **bloquante** n'a été trouvée sur le fond des règlement
 | Trigger | Événement | Garde | INV |
 |---|---|---|---|
 | `tr_30_reglements_cible` | BEFORE INSERT | encaissement ⇒ cible `type <> 'avoir'` ; remboursement ⇒ cible `type = 'avoir'` | 71 |
-| `tr_31_reglements_encaissement` | BEFORE INSERT, `type='encaissement'` (cible non-avoir) | `montant ≤ reste_du(cible)` en centimes | 72 |
-| `tr_31_reglements_remboursement` | BEFORE INSERT, `type='remboursement'` (cible avoir) | `montant ≤ credit(origine de l'avoir)` en centimes | 74 |
+| `tr_31_reglements_encaissement` | BEFORE INSERT, `type='encaissement'`, règlement **actif** (`cancelled_at IS NULL`, Q1), cible non-avoir | `montant ≤ reste_du(cible)` en centimes | 72 |
+| `tr_31_reglements_remboursement` | BEFORE INSERT, `type='remboursement'`, règlement **actif** (Q1), cible avoir | `montant ≤ credit(origine de l'avoir)` en centimes | 74 |
 | `tr_32_reglements_update` | BEFORE UPDATE | (a) toute colonne autre que `cancelled_at`/`motif_annulation` inchangée (id, facture_id, type, date_evenement, montant, mode, reference, note, created_at, origine, legacy_*) ; (b) `OLD.cancelled_at IS NOT NULL` ⇒ refus (annulation **une seule fois**, irréversible, motif non modifiable) | 70 |
 | `tr_32_reglements_no_delete` | BEFORE DELETE | refus (couvre le DELETE implicite d'un `INSERT OR REPLACE`, `recursive_triggers=ON`) | 70 |
 | `tr_33_reglements_annulation` | BEFORE UPDATE, `OLD.cancelled_at IS NULL AND NEW.cancelled_at IS NOT NULL AND OLD.type='encaissement'` | `Σ avoirs − absorbe(encaisse − montant) < Σ remboursements actifs de l'origine` ⇒ refus | 75 |
@@ -157,26 +187,20 @@ Aucune contradiction **bloquante** n'a été trouvée sur le fond des règlement
 **Annulation** : encaissement sans remboursement ; encaissement avec remboursement (refus si crédit < Σ remb., accepté si suffisant) ; limites exactes (crédit = Σ remb.) ; deux encaissements dont un annulé ; annulation d'un remboursement ; double annulation ; motif vide ; `cancelled_at` sans motif ; ré-activation ; modification du motif après annulation ; `UPDATE` sans effet sur un actif (no-op).
 **Immuabilité / bypass** : UPDATE de chaque colonne ; DELETE actif et annulé ; `INSERT OR REPLACE` sur `id` existant ; `UPDATE OR REPLACE` ; cascade (aucune) : DELETE facture/BC/client refusés (006/004) ; `recursive_triggers` documentée.
 **BC** : encaissement/remboursement/annulation sur BC `en_cours`, `termine`, `annule` ; aucune écriture de 007 sur `bons_commande` (empreinte avant/après) ; recalcul oracle : `en_cours → termine` à Σ reste = 0 avec solde actif, `termine → en_cours` à l'annulation d'un encaissement, `annule` reste `annule` avec caches évolutifs ; **après `termine → en_cours` : devis, acompte, situation, second solde actif toujours refusés** ; C-05, C-10, C-36 ; solde à 0.00 + acompte dû ⇒ pas `termine`.
-**Import** : `origine='import'` + `legacy_id`/`legacy_data` ; `origine='v6'` + legacy refusé ; `legacy_data` invalide ; mêmes triggers (encaissement import dépassant le reste dû refusé, INV-131) ; QO-1/QO-2 selon décision.
+**Import** : `origine='import'` + `legacy_id`/`legacy_data` ; `origine='v6'` + legacy refusé ; `legacy_data` invalide ; mêmes triggers (encaissement import dépassant le reste dû refusé, INV-131) ; Q1 (INSERT annulé accepté, plafonds non appliqués à un règlement annulé) et Q2 (encaissement dépassant le reste dû refusé même si l'état final serait valide).
 **Atomicité** : une garde échouée dans une transaction multi-règlements annule tout (`ROLLBACK`/`SAVEPOINT`) ; `sqlite_sequence` cohérent ; échec d'un `INSERT` ne laisse aucune ligne ; `INSERT … SELECT` multi-lignes partiellement invalide ⇒ rien.
 **Désynchronisation d'ids** (leçon 006) : ids de `reglements`, `factures`, `bons_commande`… volontairement distincts pour tuer les mutants `facture_id ↔ bc_id/id`.
+**Limites connues (documentées, testées par témoin, non traitées par 007)** : (1) *saturation int64* — les montants sont comparés en centimes entiers via `CAST(REPLACE(x,'.','') AS INTEGER)` ; au-delà de 9 223 372 036 854 775 807 centimes (≈ 9,2·10^16 €) la conversion sature, comme dans 006 (CK-17, limite de même nature) ; hors usage Essentiel ; (2) *octet NUL* — un montant `'1.00' || char(0)` traverse les `GLOB` de la famille D2 (le moteur lit la chaîne C), limite **commune à toutes les tables 001–006** et à la convention D2, non propre à 007 ; les triggers lisent le montant en centimes, donc l'arithmétique n'est pas trompée ; les dates sont protégées par `date(x) IS x` ; (3) *conversion STRICT* — un entier ou un réel passé à une colonne TEXT (`reference`, `note`, `motif_annulation`, `legacy_data`) est converti en texte par SQLite, un BLOB est refusé ; (4) *ordre d'évaluation* — un `UPDATE` ou un `INSERT` multi-lignes est évalué ligne par ligne dans l'ordre de parcours (un lot qui annule un encaissement avant le remboursement correspondant est refusé).
 
 ---
 
-## 7. Questions ouvertes (3, chacune avec défaut proposé)
+## 7. Questions ouvertes — décisions validées (2026-10-08)
 
-**QO-1 — INSERT d'un règlement déjà annulé (`cancelled_at` renseigné dès l'INSERT).**
-Le contrat d'import traite les **annulations** comme des faits saisis (modèle §10.3) et TR-31 s'y applique « comme en fonctionnement normal » (§10.2) ; rien ne dit si un règlement peut naître annulé, ni si le plafond s'applique alors. Un règlement annulé n'étant pas « actif », il ne consomme aucune capacité.
-**[PR] Défaut proposé** : INSERT annulé **autorisé pour toutes les origines** (INV-131) ; `tr_30` (cible/type) s'applique toujours ; `tr_31` et `tr_33` ne s'appliquent qu'aux règlements **actifs**.
-*Alternative* : tout règlement naît actif, l'annulation se fait par UPDATE (le convertisseur doit alors rejouer l'ordre chronologique réel, sans qu'aucun document ne le fournisse).
+**Q1 — INSERT d'un règlement déjà annulé : OK.** Un règlement historiquement annulé peut être inséré directement avec son état annulé (toutes origines, INV-131) ; l'import doit pouvoir représenter fidèlement cet état. `tr_30` (cible/type) s'applique toujours ; `tr_31` et `tr_33` s'appliquent selon l'état du règlement (un règlement annulé ne consomme aucune capacité). Aucune règle supplémentaire n'est ajoutée pour empêcher cet INSERT.
 
-**QO-2 — Ordre d'import (§10.5) vs plafond TR-31.**
-L'import insère **toutes les factures, avoirs compris, puis les règlements** (par `date_evenement`). Un encaissement historique **antérieur** à un avoir qui l'absorbe (cas C-06 : 1000 payé 600, puis avoir 500 ; ou facture V2 « annulée » = facture + avoir total, PT-19, déjà partiellement payée) serait **refusé** à l'import, alors que l'état final est valide en fonctionnement natif. §10.4 prévoit déjà que le convertisseur « corrige ou déclare non_importe » une donnée violant un plafond.
-**[PR] Défaut proposé** : aucune modification SQL ni de l'ordre d'import ; contrainte à consigner dans le contrat du convertisseur (P-04). À confirmer.
+**Q2 — Ordre d'import / TR-31 : OK.** Ni le SQL 007 ni l'ordre d'import (§10.5) ne sont modifiés pour permettre artificiellement un état final valide lorsqu'un historique intermédiaire ne respecte pas les contraintes d'insertion (ex. C-06 : encaissement 600 antérieur à un avoir 500, importé après l'avoir). **La contrainte est portée par le contrat du convertisseur/import (P-04, §10.4 « corrige ou déclare non_importe »), pas par un affaiblissement des garde-fous SQL.** Le comportement SQL est couvert par test, sans en faire une règle métier.
 
-**QO-3 — Précisions de DDL mineures sans source (à ne pas décider seul).**
-(a) `date_evenement` : aucune chronologie imposée (ni ≥ `date_emission` de la facture, ni ≤ aujourd'hui, ni remboursement ≥ date de l'avoir) ; (b) `reference`/`note` : texte libre sans CHECK (`''` toléré) ; (c) `cancelled_at` : seul le format TS est contrôlé (pas de relation avec `created_at`/`date_evenement`).
-**[PR] Défaut proposé** : **rien en SQL** pour (a)(b)(c) (même principe que V6-17 en 006 : ne pas transformer une absence documentaire en décision implicite). Les tests documentent l'acceptation.
+**Q3 — `date_evenement`, `reference`, `note` : OK.** Aucune validation inventée : aucune chronologie (ni ≥ `date_emission`, ni ≤ aujourd'hui, ni remboursement ≥ avoir), `reference`/`note` en texte libre sans CHECK, `cancelled_at` contrôlé seulement par son format TS.
 
 Hors questions (déjà tranché ou sans effet SQL) : « active » (CT-1), neutralisation (CT-1/CT-8), BC annulé/terminé (VR-04/07), numérotation (aucune), PT-9 « entièrement créditée » (affichage), `frozen_at` (résiduel, VR-02).
 
@@ -196,13 +220,13 @@ Contrôle d'atomicité : une seule transaction du runner ; échec ⇒ ROLLBACK i
 ## 9. Stratégie de tests (`test_007_reglements.py`)
 
 - **Infra réutilisée de 006** (`Base9`, `monde()`, `facture()`, `avoir()`, `tente/accepte/refuse`, `recalcul_bc`, `emettre_*`, `desynchroniser_ids`, oracle g/r/valeur_cumulee) ; ajout `Base10` (+`migrer10`, rang 10), constructeurs `encaisse()`, `rembourse()`, `annule_reglement()`, et un **oracle Decimal** indépendant : `encaisse`, `absorbe`, `reste_du`, `credit`, `etat_paiement`, `termine?`.
-- **Groupes** : A structure/migration · B CHECK de colonnes · C énumérations · D dates · E montants/centimes · F FK/index · G `tr_30` · H `tr_31` encaissement · I intégration BC (annulé / terminé / en cours, recalcul oracle, pas de réouverture commerciale) · J `tr_31` remboursement · K `tr_32` (UPDATE/DELETE/REPLACE) · L `tr_33` · M avoirs (partiel, total, multiples, origines différentes) · N acompte/situation/solde/solde 0.00/facture neutralisée · O import/BLOC-IMP · P anti-contournement SQL · Q atomicité/rollback · R cas chiffrés du modèle (C-02, C-05, C-06, C-10, C-11, C-12, C-13, C-36) · S fuzz déterministe (graine fixe) contre l'oracle.
-- **Volume attendu** : ≈ 180–230 tests (006 : 309 pour 2 tables et 12 triggers).
+- **Groupes (tels qu'implémentés)** : A chaîne et structure · B CHECK de colonnes · C FK et index · D `tr_30` (cible) · E `tr_31` encaissement (INV-72, C-02, C-06, C-11) · F `tr_31` remboursement (INV-74, C-13) · G règlement né annulé (Q1) · H `tr_32` immuabilité / non-suppression / `REPLACE` (INV-70) · I `tr_33` annulation d'un encaissement (INV-75, C-12) · J états dérivés et cas chiffrés (C-02, C-05, C-06, C-08, C-10, C-11, C-36) · K intégration BC (aucune écriture de 007 dans `bons_commande`, `termine → en_cours` par recalcul, **aucune réouverture commerciale**) · L import (Q1, Q2, INV-131) · M diagnostics CK-06 (volet termine), CK-18, CK-19, CK-20 · N contournements SQL · O atomicité / rollback · P valeurs limites et centimes · Q dates (format seul, Q3) · R données malformées · S fuzz déterministe contre l'oracle (140 séquences × 18 opérations, graine fixe) · T compléments issus de la mutation (jetons d'énumération hors liste, annulation d'un règlement importé, défense en profondeur de `tr_31`/`tr_33` lorsque `tr_30` est contourné, périmètre exact de la clause `WHEN` de `tr_33`).
+- **Volume obtenu** : 279 tests (608 sous-tests) (006 : 309 pour 2 tables et 12 triggers ; 007 : 1 table et 6 triggers, dont un test de fuzz de 140 séquences).
 - **Assertion sur la règle, pas sur l'exécution** : chaque refus vérifie le code INV du message ; chaque acceptation vérifie l'état résultant (lignes, sommes, empreintes des autres tables).
 - **Mutation** : `mut007.py` (dérivé de `mut006.py`, périmètre : seul `007_reglements.sql`), mutants de CHECK, littéraux, opérateurs, listes IN, GLOB, `substr`, triggers (WHEN, SELECT, sous-requêtes, `COALESCE`, `CASE`), cache de migration rang 9 sérialisé, 2 workers, fail-fast. Statistiques séparées **table/CHECK/index** et **triggers**. **Chaque survivant qualifié individuellement** : tué / invalide / équivalent démontré (fuzz différentiel `diff007.py` : original vs mutant en parallèle, avec mutants-témoins non équivalents) / vraie lacune de test / vraie lacune métier.
 - **Contrôles finaux** : pytest 001→007 ; pytest 007 seul ; `integrity_check` ; `foreign_key_check` ; `user_version = 10` ; statistiques exactes ; tableau des survivants.
 
 ---
 
-## Livraison prévue après validation
+## Livraison
 `007_reglements.sql`, `test_007_reglements.py` (envoyés ici ; vous poussez vous-même) et le rapport de mutation. Aucune modification de 001–006 ni des documents officiels.
