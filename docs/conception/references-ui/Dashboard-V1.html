@@ -1,1 +1,117 @@
-
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f4f6f8">
+<title>BATORYA Essentiel — Tableau de bord</title>
+<style>
+:root{color-scheme:light;--bg:#f3f5f7;--surface:#fff;--ink:#18232d;--muted:#77838d;--line:#e8edf0;--orange:#ee873b;--orange-soft:#fff3e9;--blue:#4e9cb3;--blue-soft:#eaf6f9;--green:#3b9674;--red:#cb665e;--shadow:0 5px 20px #2030400a}
+:root[data-theme=dark]{color-scheme:dark;--bg:#151b20;--surface:#20282e;--ink:#eef3f5;--muted:#a2afb7;--line:#313d44;--orange:#f29a54;--orange-soft:#392d25;--blue:#6bb6ca;--blue-soft:#22343a;--green:#6ec09e;--red:#ed8b82;--shadow:0 5px 20px #0003}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button{font:inherit;color:inherit;cursor:pointer} .app{min-height:100vh;display:grid;grid-template-columns:246px 1fr}
+aside{background:var(--surface);border-right:1px solid var(--line);padding:25px 16px;display:flex;flex-direction:column;gap:30px}
+.brand{display:flex;align-items:center;gap:11px;padding:0 10px}.brand-mark{width:34px;height:34px;border-radius:10px;background:var(--orange);color:white;display:grid;place-items:center;font-weight:800;font-size:17px}.brand-name{font-size:15px;font-weight:750;letter-spacing:.02em}.brand-name small{display:block;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+.workspace{margin:0 6px;padding:12px;border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:10px}.avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--blue-soft);color:var(--blue);font-weight:700}.workspace b{display:block;font-size:12px}.workspace span{font-size:11px;color:var(--muted)}
+.nav-label{padding:0 11px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.11em;font-weight:700;margin-bottom:8px}.nav{display:grid;gap:4px}.nav button{background:none;border:0;border-radius:8px;padding:10px 11px;text-align:left;color:var(--muted);display:flex;gap:12px;align-items:center;font-size:13px}.nav button:hover{background:var(--bg);color:var(--ink)}.nav button.active{background:var(--orange-soft);color:var(--orange);font-weight:650}.ico{width:17px;text-align:center;font-size:15px}.side-bottom{margin-top:auto}.status{border-top:1px solid var(--line);padding:17px 11px;color:var(--muted);font-size:11px;display:flex;align-items:center;gap:8px}.dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+main{min-width:0}.topbar{height:68px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 34px;position:sticky;top:0;z-index:2}.crumb{font-size:13px;color:var(--muted)}.crumb strong{color:var(--ink);font-weight:650}.top-actions{display:flex;align-items:center;gap:10px}.icon-btn{width:36px;height:36px;border:1px solid var(--line);background:var(--surface);border-radius:9px;display:grid;place-items:center;color:var(--muted)}.icon-btn:hover{color:var(--orange);border-color:var(--orange)}.profile{display:flex;align-items:center;gap:9px;margin-left:8px;font-size:12px;font-weight:600}.profile .avatar{width:32px;height:32px}
+.content{max-width:1440px;margin:auto;padding:34px}.heading{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:26px}.eyebrow{color:var(--orange);font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:750}.heading h1{margin:5px 0 4px;font-size:25px;letter-spacing:-.035em}.heading p{margin:0;color:var(--muted);font-size:13px}.date-pill{border:1px solid var(--line);background:var(--surface);padding:9px 12px;border-radius:9px;color:var(--muted);font-size:12px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}.kpi{padding:19px 20px 17px;min-height:146px;position:relative;overflow:hidden}.kpi:before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:0 4px 4px 0;background:var(--accent,var(--orange))}.kpi-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}.kpi-icon{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--icon-bg,var(--orange-soft));color:var(--accent,var(--orange));font-size:15px}.kpi-value{font-size:25px;font-weight:720;letter-spacing:-.04em;margin:15px 0 6px}.kpi-foot{font-size:11px;color:var(--muted)}.trend{font-weight:650;color:var(--green)}.trend.down{color:var(--red)}
+.grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,.85fr);gap:18px;margin-bottom:18px}.panel{padding:21px 22px}.panel-head{display:flex;justify-content:space-between;align-items:flex-start}.panel h2{font-size:14px;margin:0 0 4px}.sub{font-size:11px;color:var(--muted)}.select{border:1px solid var(--line);border-radius:7px;padding:6px 9px;background:var(--surface);font-size:11px;color:var(--muted)}.legend{display:flex;gap:16px;margin-top:18px;color:var(--muted);font-size:11px}.legend span{display:flex;align-items:center;gap:6px}.swatch{width:8px;height:8px;border-radius:50%;background:var(--orange)}.swatch.blue{background:var(--blue)}
+.chart{height:190px;margin-top:5px;position:relative}.chart svg{width:100%;height:100%;overflow:visible}.chart-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:0}.gridline{stroke:var(--line);stroke-dasharray:3 5;stroke-width:1}.line-orange{fill:none;stroke:var(--orange);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.line-blue{fill:none;stroke:var(--blue);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.area{fill:url(#fade)}
+.alert-list{display:grid;margin-top:13px}.alert{display:flex;gap:11px;padding:13px 0;border-bottom:1px solid var(--line);align-items:flex-start}.alert:last-child{border-bottom:0}.alert-icon{width:29px;height:29px;border-radius:8px;display:grid;place-items:center;flex:none;background:var(--orange-soft);color:var(--orange)}.alert-icon.blue{background:var(--blue-soft);color:var(--blue)}.alert-icon.red{background:#fff0ee;color:var(--red)}:root[data-theme=dark] .alert-icon.red{background:#3c2928}.alert b{display:block;font-size:11px;margin:1px 0 3px}.alert p{margin:0;color:var(--muted);font-size:10px}.alert .time{margin-left:auto;color:var(--muted);font-size:10px;white-space:nowrap}
+.lower{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,.85fr);gap:18px}.table-wrap{overflow:auto;margin-top:13px}table{width:100%;border-collapse:collapse;white-space:nowrap}th{text-align:left;color:var(--muted);font-size:10px;font-weight:600;padding:9px 8px;border-bottom:1px solid var(--line)}td{padding:11px 8px;border-bottom:1px solid var(--line);font-size:11px}tr:last-child td{border:0}.ref{font-weight:650}.client{color:var(--muted);margin-top:2px;font-size:10px}.badge{border-radius:20px;padding:4px 8px;font-size:10px;font-weight:650;background:var(--blue-soft);color:var(--blue)}.badge.orange{background:var(--orange-soft);color:var(--orange)}.badge.green{background:#e9f6f0;color:var(--green)}:root[data-theme=dark] .badge.green{background:#23372f}.amount{text-align:right;font-weight:650}.shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}.shortcut{border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:12px 11px;text-align:left;display:flex;align-items:center;gap:10px;font-size:11px;font-weight:600}.shortcut:hover{border-color:var(--orange);background:var(--orange-soft)}.shortcut i{width:28px;height:28px;border-radius:8px;background:var(--orange-soft);color:var(--orange);display:grid;place-items:center;font-style:normal;font-size:14px}.shortcut:nth-child(even) i{background:var(--blue-soft);color:var(--blue)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);background:var(--ink);color:var(--surface);padding:11px 16px;border-radius:9px;font-size:12px;opacity:0;pointer-events:none;transition:.2s;z-index:5}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:1100px){.app{grid-template-columns:205px 1fr}.content{padding:26px 22px}.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.app{display:block}aside{position:fixed;z-index:4;left:0;right:0;bottom:0;height:62px;padding:5px 9px;border-right:0;border-top:1px solid var(--line);display:block}.brand,.workspace,.nav-label,.side-bottom{display:none}.nav{height:100%;grid-template-columns:repeat(5,1fr);align-items:center}.nav button{justify-content:center;flex-direction:column;gap:2px;padding:5px 2px;font-size:9px}.ico{font-size:16px}.topbar{height:58px;padding:0 16px}.profile span{display:none}.content{padding:23px 15px 84px}.heading{align-items:flex-start;gap:12px;flex-direction:column}.heading h1{font-size:23px}.grid,.lower{grid-template-columns:1fr}.kpis{gap:10px}.kpi{padding:15px;min-height:135px}.kpi-value{font-size:22px}.panel{padding:17px 15px}.chart{height:165px}}
+@media(max-width:390px){.kpis{grid-template-columns:1fr 1fr}.kpi-top{font-size:10px}.kpi-icon{width:26px;height:26px}.kpi-value{font-size:19px}.kpi-foot{font-size:10px}.shortcuts{gap:7px}.shortcut{padding:9px 7px;gap:6px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside aria-label="Navigation principale">
+  <div class="brand"><div class="brand-mark">B</div><div class="brand-name">BATORYA<small>Essentiel · V6</small></div></div>
+  <div class="workspace"><div class="avatar">M</div><div><b>Mon entreprise</b><span>Espace professionnel</span></div></div>
+  <div><div class="nav-label">Espace de travail</div><nav class="nav" id="navigation">
+    <button class="active" data-page="Accueil"><span class="ico">⌂</span>Accueil</button>
+    <button data-page="Clients"><span class="ico">♙</span>Clients</button>
+    <button data-page="Devis"><span class="ico">▤</span>Devis</button>
+    <button data-page="Bons de commande"><span class="ico">▣</span>Bons de commande</button>
+    <button data-page="Factures"><span class="ico">▧</span>Factures</button>
+    <button data-page="Dépenses"><span class="ico">↘</span>Dépenses</button>
+    <button data-page="Planification"><span class="ico">▦</span>Planification</button>
+    <button data-page="URSSAF"><span class="ico">◉</span>URSSAF</button>
+    <button data-page="Catalogue"><span class="ico">◇</span>Catalogue</button>
+  </nav></div>
+  <div class="side-bottom"><div class="nav-label">Préférences</div><nav class="nav"><button data-page="Paramètres"><span class="ico">⚙</span>Paramètres</button></nav><div class="status"><i class="dot"></i>Données stockées localement</div></div>
+</aside>
+<main>
+<header class="topbar"><div class="crumb" id="breadcrumb"><strong>Accueil</strong></div><div class="top-actions"><button class="icon-btn" id="themeToggle" aria-label="Changer de thème" title="Changer de thème">◐</button><button class="icon-btn" aria-label="Notifications" title="Notifications">♧</button><div class="profile"><div class="avatar">M</div><span>Mon entreprise</span></div></div></header>
+<div class="content">
+  <section class="heading"><div><div class="eyebrow">Mardi 10 octobre 2026</div><h1 id="pageTitle">Bonjour, bienvenue 👋</h1><p>Voici le résumé de votre activité.</p></div><div class="date-pill">◷ &nbsp;Vue d’ensemble · Octobre 2026</div></section>
+  <section class="kpis" aria-label="Indicateurs clés">
+    <article class="card kpi" style="--accent:var(--green);--icon-bg:#e9f6f0"><div class="kpi-top"><span>CA encaissé</span><span class="kpi-icon">€</span></div><div class="kpi-value">18 420 €</div><div class="kpi-foot"><span class="trend">↗ 12,8 %</span> <span>vs. mois dernier</span></div></article>
+    <article class="card kpi" style="--accent:var(--orange)"><div class="kpi-top"><span>Reste dû factures</span><span class="kpi-icon">◷</span></div><div class="kpi-value">6 850 €</div><div class="kpi-foot">Sur <b>4 factures</b> en attente</div></article>
+    <article class="card kpi" style="--accent:var(--blue);--icon-bg:var(--blue-soft)"><div class="kpi-top"><span>Devis en attente</span><span class="kpi-icon">▤</span></div><div class="kpi-value">12 300 €</div><div class="kpi-foot"><b>3 devis</b> à relancer</div></article>
+    <article class="card kpi" style="--accent:#7488a4;--icon-bg:#eef1f6"><div class="kpi-top"><span>BC en cours</span><span class="kpi-icon">▣</span></div><div class="kpi-value">8</div><div class="kpi-foot">Montant engagé <b>24 600 €</b></div></article>
+  </section>
+  <section class="grid">
+    <article class="card panel"><div class="panel-head"><div><h2>Encaissements & dépenses</h2><div class="sub">Suivi de trésorerie · montants en euros</div></div><select class="select" id="period" aria-label="Période du graphique"><option>6 derniers mois</option><option>12 derniers mois</option></select></div>
+      <div class="legend"><span><i class="swatch"></i>Encaissements</span><span><i class="swatch blue"></i>Dépenses</span></div>
+      <div class="chart"><svg viewBox="0 0 700 190" preserveAspectRatio="none" role="img" aria-label="Graphique des encaissements et dépenses sur six mois">
+       <defs><linearGradient id="fade" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ee873b" stop-opacity=".16"/><stop offset="1" stop-color="#ee873b" stop-opacity="0"/></linearGradient></defs>
+       <line class="gridline" x1="0" y1="28" x2="700" y2="28"/><line class="gridline" x1="0" y1="75" x2="700" y2="75"/><line class="gridline" x1="0" y1="122" x2="700" y2="122"/><line class="gridline" x1="0" y1="169" x2="700" y2="169"/>
+       <path class="area" d="M0 130 C45 118 65 106 100 111 S170 91 210 100 S275 68 310 82 S380 95 420 62 S490 74 520 53 S585 65 630 37 S670 51 700 22 L700 178 L0 178Z"/>
+       <path class="line-orange" d="M0 130 C45 118 65 106 100 111 S170 91 210 100 S275 68 310 82 S380 95 420 62 S490 74 520 53 S585 65 630 37 S670 51 700 22"/>
+       <path class="line-blue" d="M0 151 C45 145 65 132 100 139 S170 128 210 132 S275 115 310 123 S380 130 420 111 S490 124 520 108 S585 119 630 98 S670 104 700 91"/>
+      </svg></div><div class="chart-labels"><span>Mai</span><span>Juin</span><span>Juil.</span><span>Août</span><span>Sept.</span><span>Oct.</span></div>
+    </article>
+    <article class="card panel"><div class="panel-head"><div><h2>À ne pas oublier</h2><div class="sub">Vos prochaines actions</div></div><button class="select" data-action="Voir toutes les alertes">Tout voir&nbsp; →</button></div>
+      <div class="alert-list">
+        <div class="alert"><div class="alert-icon red">!</div><div><b>Facture en retard</b><p>FAC-00042 · Martin Rénovation</p></div><span class="time">8 j</span></div>
+        <div class="alert"><div class="alert-icon">◷</div><div><b>Devis à relancer</b><p>DEV-00038 · Atelier du Parc</p></div><span class="time">Aujourd’hui</span></div>
+        <div class="alert"><div class="alert-icon blue">▧</div><div><b>Échéance URSSAF</b><p>Déclaration du 3ᵉ trimestre</p></div><span class="time">12 j</span></div>
+      </div>
+    </article>
+  </section>
+  <section class="lower">
+    <article class="card panel"><div class="panel-head"><div><h2>Activité récente</h2><div class="sub">Les derniers mouvements de votre entreprise</div></div><button class="select" data-action="Voir l’activité">Voir tout&nbsp; →</button></div>
+      <div class="table-wrap"><table><thead><tr><th>DOCUMENT</th><th>CLIENT</th><th>STATUT</th><th>DATE</th><th class="amount">MONTANT</th></tr></thead><tbody>
+       <tr><td><div class="ref">FAC-00048</div><div class="client">Facture · Solde</div></td><td>Maison Durand</td><td><span class="badge green">Réglée</span></td><td>08 oct. 2026</td><td class="amount">3 240 €</td></tr>
+       <tr><td><div class="ref">DEV-00051</div><div class="client">Devis travaux</div></td><td>Atelier du Parc</td><td><span class="badge orange">En attente</span></td><td>07 oct. 2026</td><td class="amount">5 680 €</td></tr>
+       <tr><td><div class="ref">FAC-00047</div><div class="client">Facture · Situation</div></td><td>Martin Rénovation</td><td><span class="badge">Partiellement réglée</span></td><td>06 oct. 2026</td><td class="amount">2 100 €</td></tr>
+       <tr><td><div class="ref">BCD-00019</div><div class="client">Bon de commande</div></td><td>Les Jardins Bleus</td><td><span class="badge">En cours</span></td><td>05 oct. 2026</td><td class="amount">8 950 €</td></tr>
+      </tbody></table></div>
+    </article>
+    <article class="card panel"><div><h2>Raccourcis</h2><div class="sub">Accédez rapidement à vos actions</div></div>
+      <div class="shortcuts">
+        <button class="shortcut" data-action="Créer un devis"><i>＋</i>Créer un devis</button>
+        <button class="shortcut" data-action="Enregistrer un règlement"><i>€</i>Enregistrer un règlement</button>
+        <button class="shortcut" data-action="Ajouter une dépense"><i>↘</i>Ajouter une dépense</button>
+        <button class="shortcut" data-action="Ajouter un client"><i>♙</i>Ajouter un client</button>
+      </div>
+    </article>
+  </section>
+</div>
+</main>
+</div><div class="toast" id="toast" role="status"></div>
+<script>
+const root=document.documentElement;
+const themeButton=document.getElementById('themeToggle');
+const savedTheme=localStorage.getItem('batorya-theme');
+if(savedTheme==='dark')root.dataset.theme='dark';
+themeButton.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';localStorage.setItem('batorya-theme',root.dataset.theme)});
+const title=document.getElementById('pageTitle'), crumb=document.getElementById('breadcrumb');
+document.querySelectorAll('#navigation button').forEach(button=>button.addEventListener('click',()=>{
+ document.querySelectorAll('#navigation button').forEach(item=>item.classList.remove('active'));
+ button.classList.add('active');
+ const page=button.dataset.page;
+ if(page==='Accueil'){title.textContent='Bonjour, bienvenue 👋';crumb.innerHTML='<strong>Accueil</strong>'}
+ else{title.textContent=page;crumb.innerHTML='<span>Accueil</span> &nbsp;›&nbsp; <strong>'+page+'</strong>'}
+}));
+let toastTimer;
+function toast(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2200)}
+document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',()=>toast(button.dataset.action+' · aperçu du prototype')));
+document.getElementById('period').addEventListener('change',e=>toast('Période sélectionnée : '+e.target.value));
+</script>
+</body>
+</html>
