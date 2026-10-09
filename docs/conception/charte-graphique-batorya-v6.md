@@ -558,7 +558,7 @@ La charte est donc un **document vivant**, mais elle ne doit pas devenir un cata
 | Version | Date | Nature de l'évolution |
 |---|---|---|
 | 0.1 | 2026-10-05 | Création de la charte. Formalisation de l'identité commune, du mode clair issu du prototype Login + Splash, principes du mode sombre et gestion du thème. |
-| 0.2 | 2026-10-05 | Consolidation de la référence graphique commune et des principes de thème. |
+| 0.2 | 2026-10-05 | Version intermédiaire antérieure ; le détail de ses changements n'était pas consigné dans l'historique source. |
 | 0.3 | 2026-10-09 | Alignement sur les versions actuelles et figées des prototypes Login + Splash clair et sombre ; documentation de la palette sombre, du sélecteur segmenté animé, du panneau de création d'espace, du plan technique fixe et de la transition Login → Splash → BATORYA. |
 
 ---
