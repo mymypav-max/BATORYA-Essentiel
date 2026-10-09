@@ -1,10 +1,10 @@
 # CADRAGE 008 — Garanties
 
 Tranche 008 (rang 11) : future `src-tauri/migrations/metier/008_garanties.sql` + `src-tauri/tests/metier/test_008_garanties.py` (T-50). **Ce document est un cadrage : aucun fichier SQL, test ou document officiel n'est créé ou modifié.**
-Statut : **PROPOSÉ — en attente de validation par Rémy.** Dépôt lu : `main` @ `a9fd50f`.
+Statut : **RÉVISÉ le 2026-10-09 après les arbitrages de Rémy (QO-1 oui, QO-2 oui, QO-3 non — §1.6) et le traitement des dates extrêmes (§3.6) ; en attente de validation avant écriture du SQL et des tests.** Dépôt lu : `main` @ `a9fd50f`.
 
 Légende des étiquettes :
-**[RD]** règle documentée · **[DV]** décision déjà validée (errata, cadrages 006/007, D-xx) · **[CT]** conséquence technique (déduite, aucune règle nouvelle) · **[PR]** proposition (à arbitrer) · **[QO]** question ouverte.
+**[RD]** règle documentée · **[DV]** décision déjà validée (errata, cadrages 006/007, D-xx) · **[CT]** conséquence technique (déduite, aucune règle nouvelle) · **[PR]** proposition (à arbitrer) · **[QO]** question ouverte. *Révision 2026-10-09 : les trois [PR] de la première version sont devenues **[DV]** (arbitrages du 2026-10-09).*
 
 ---
 
@@ -52,6 +52,7 @@ Fichiers cités : « Mod. » = `MAJ__modèle-données-sqlite-v6-v3.13.md` ; « I
 | Création **par le service** : lit `bc_ligne_garanties` du BC, `INSERT OR IGNORE` (idempotent, première date conservée) ; **jamais par trigger** | [RD] | Mod. §4.10 (l.530) ; Mod. §8 rappel (l.801) ; INV-86 ; conv. §9 (MAJ l.347 : `INSERT OR IGNORE` permis pour « la création des garanties ») |
 | `date_declenchement` = date d'émission de ce solde ; **immuable** | [RD] | INV-87 ; Mét. §24 (l.645) |
 | Un **solde à 0.00** reste un solde : il peut déclencher les conséquences métier du solde | [DV] | DV-9 (cadrage 006 l.309) ; C-08 ; cadrage 006 synthèse n°7 (l.1490 : « déclenche … les garanties (008) ») |
+| La règle « premier solde » (une seule tentative de création, au premier solde du BC) est portée par le **service**, pas par le SQL, pour préserver l'idempotence du rejeu `INSERT OR IGNORE` | [DV] | **QO-3 : NON** (Rémy, 2026-10-09) ; §1.6 |
 | Tout devis rattaché l'est **avant** la rédaction du solde (TR-99) : toutes les lignes du BC et leurs garanties de ligne existent au premier solde ; une ligne supprimée (brouillon) n'a plus de garantie ; **aucun nouveau mécanisme de garantie** | [RD][DV] | INV-87, INV-187 ; D-47 ; E-16 (errata MAJ l.23) ; PT-18 (Mod. l.1387) ; 006 `tr_99_bc_devis_apres_solde` (l.483) |
 
 ### 1.3 Durées et dates
@@ -60,7 +61,8 @@ Fichiers cités : « Mod. » = `MAJ__modèle-données-sqlite-v6-v3.13.md` ; « I
 | `date_fin_suivi` = `date_declenchement` **+1 an** (parfait achèvement) / **+2 ans** (biennale) / **+10 ans** (décennale) | [RD] | INV-88 ; Mét. §24 (l.631) ; Mod. §4.10 |
 | **29 février → 28 février** | [RD] | INV-88 ; Mod. §4.10 (« si l'année cible n'est pas bissextile ») — équivalence démontrée en [CT-3] |
 | Suivi interne, libellé toujours « Suivi interne BATORYA — date indicative » ; état **dérivé** `a_surveiller` / `echue` | [RD] | INV-88, INV-89 ; Mod. §3.4 (l.226) ; CDC §24-25 |
-| Dates au format `YYYY-MM-DD` réel (`GLOB` + `date(x) IS x`), aucune borne d'année (INV-177 : bornes réservées aux dates de numérotation) ; « jour courant » = date locale | [RD] | conv. techniques ; INV-177 (Inv. l.41) ; Mod. l.83 |
+| Dates au format `YYYY-MM-DD` réel (famille D : `GLOB` + `date(x) IS x`, année sur **4 chiffres**), aucune borne d'année **métier** (INV-177 : 2001-2099 réservé aux dates de numérotation annuelle, contrôle de service) ; « jour courant » = date locale | [RD] | INV-10 (Inv. l.35) ; Mod. §2 famille D (l.78) ; INV-177 (Inv. l.41) ; Mod. l.83 |
+| Une date de fin **non représentable** en famille D (année > 9999) n'est ni tronquée ni bornée : voir §3.6 | [CT] | INV-10, INV-88 ; §3.6 |
 
 ### 1.4 Effets des autres objets
 | Règle | Étiquette | Source |
@@ -78,6 +80,14 @@ Fichiers cités : « Mod. » = `MAJ__modèle-données-sqlite-v6-v3.13.md` ; « I
 | Aucune règle exemptée pour les données importées | [RD] | INV-131 |
 | Jamais de suppression physique d'une garantie ; FK en `RESTRICT` par défaut, `ON DELETE` examiné relation par relation : aucune cascade ici (pas de parent supprimable : BC, ligne de BC et facture sont insupprimables) ; aucune clause `ON UPDATE` | [RD][CT] | INV-05, INV-06, INV-174 ; D-44 ; 004 `tr_19`, 005b `tr_13_*_delete`, 006 `tr_21_factures_no_delete` |
 | `INSERT OR REPLACE` / `REPLACE` interdits ; `recursive_triggers=ON` | [RD] | conv. §9 (official l.216) ; D-39 |
+
+### 1.6 Arbitrages validés par Rémy (2026-10-09)
+| Arbitrage | Décision | Effet sur le cadrage |
+|---|---|---|
+| **QO-1** | **OUI** — deux gardes d'insertion supplémentaires : G3 (la garantie existe dans `bc_ligne_garanties` de la ligne) et G4 (`date_declenchement = date_emission` de la facture) | `tr_51_garanties_insert` = **G1 + G2 + G3 + G4** (§3.3) |
+| **QO-2** | **OUI** — `CHECK` de durée exacte selon le type, **y compris 29 février → 28 février** | CHECK **G5** dans la table (§2, §3.1) |
+| **QO-3** | **NON** — pas de garde « premier solde » en SQL ; la règle reste au service, pour préserver l'idempotence (rejeu `INSERT OR IGNORE` sans erreur) | G6 **abandonnée** ; CK-07c reste un diagnostic ; test de rejeu au 2ᵉ solde (§5, groupe C) |
+| Dates extrêmes | Traitement technique de §3.6 (aucune borne métier nouvelle) ; soumis à validation avec ce cadrage révisé | §3.6, §4, §5 groupe N, Z-12 |
 
 ---
 
@@ -97,7 +107,7 @@ CREATE TABLE garanties (
     created_at               TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     UNIQUE (bc_ligne_id, garantie_type),
     CHECK (date_fin_suivi > date_declenchement),
-    -- [PR] QO-2 : durée exacte par type, 29/02 -> 28/02
+    -- [DV] QO-2 (G5) : durée exacte par type (+1 / +2 / +10 ans), 29/02 -> 28/02
     CHECK (date_fin_suivi = printf('%04d', CAST(substr(date_declenchement, 1, 4) AS INTEGER)
                                          + CASE garantie_type WHEN 'parfait_achevement' THEN 1 WHEN 'biennale' THEN 2 ELSE 10 END)
                             || CASE WHEN substr(date_declenchement, 6, 5) = '02-29' THEN '-02-28' ELSE substr(date_declenchement, 5) END),
@@ -105,6 +115,8 @@ CREATE TABLE garanties (
 ) STRICT;
 ```
 *(Esquisse du cadrage, éprouvée sur une copie jetable de la chaîne 001→007 hors dépôt : STRICT, FK `RESTRICT` sans `ON UPDATE`, CHECK, UNIQUE, index et triggers se comportent comme décrit ci-dessous. Ce n'est pas le livrable `008_garanties.sql`.)*
+
+**Contenu retenu après arbitrages : 1 table, 3 index, 3 triggers** (`tr_50_garanties_update`, `tr_50_garanties_no_delete`, `tr_51_garanties_insert` portant G1 à G4). Aucun trigger supplémentaire n'est nécessaire pour les dates extrêmes (§3.6).
 
 **Absences voulues** : `statut`, `updated_at`, `origine`/`legacy_*`, `prestation_id`/`designation` (lisibles via `bc_lignes`), `active`, numéro, `facture_declenchement_id` NULL. Les types (`INTEGER`/`TEXT`) sont ceux de 004/006.
 
@@ -117,9 +129,9 @@ CREATE TABLE garanties (
 |---|---|---|
 | 6 colonnes `NOT NULL` (`bc_id`, `bc_ligne_id`, `garantie_type`, 2 dates, `facture_declenchement_id`) | [RD] | 90, 134 |
 | `UNIQUE(bc_ligne_id, garantie_type)` — rempart de l'idempotence ; son index couvre la FK `bc_ligne_id` | [RD] | 86 |
-| CHECK `garantie_type IN (3 valeurs)`, dates réelles, TS | [RD][CT] | 88 |
+| CHECK `garantie_type IN (3 valeurs)`, dates réelles (famille D, année sur 4 chiffres), TS | [RD][CT] | 88 |
 | CHECK `date_fin_suivi > date_declenchement` | [RD] | 88 |
-| CHECK durée exacte par type (29/02 → 28/02) — **G5** | **[PR] QO-2** | 88 |
+| CHECK durée exacte par type (29/02 → 28/02) — **G5** | **[DV] QO-2** | 88 |
 | 3 FK `RESTRICT`, sans `ON UPDATE` | [RD][CT] | 05, 06, 174 |
 
 ### 3.2 Index
@@ -137,14 +149,14 @@ CREATE TABLE garanties (
 | `tr_50_garanties_no_delete` | BEFORE DELETE | toujours refusé (couvre le DELETE implicite d'un `INSERT OR REPLACE`, `recursive_triggers=ON`) | 87, 06 | [RD] TR-50 |
 | `tr_51_garanties_insert` — **G1** | BEFORE INSERT | `bc_ligne_id` existe et `bc_lignes.bc_id = NEW.bc_id` | 90 | [CT] |
 | — **G2** | idem | `facture_declenchement_id` désigne une facture `type = 'solde'` du **même BC** (pas « actif » : notion dérivée, PT-9 ; le premier solde reste valide après avoir total) | 85, 90 | [CT] |
-| — **G3** | idem | `(bc_ligne_id, garantie_type)` existe dans `bc_ligne_garanties` (« création lue dans `bc_ligne_garanties` ») ; rend impossible toute garantie sur un BC importé (INV-134) | 86, 134 | **[PR] QO-1** |
-| — **G4** | idem | `date_declenchement = factures.date_emission` de la facture de déclenchement | 87 | **[PR] QO-1** |
-| — **G6** | idem | la facture est le **premier** solde du BC | 87 | **[PR] déconseillé — QO-3** |
+| — **G3** | idem | `(bc_ligne_id, garantie_type)` existe dans `bc_ligne_garanties` (« création lue dans `bc_ligne_garanties` ») ; rend impossible toute garantie sur un BC importé (INV-134) | 86, 134 | **[DV] QO-1** |
+| — **G4** | idem | `date_declenchement = factures.date_emission` de la facture de déclenchement | 87 | **[DV] QO-1** |
+| ~~G6~~ | — | ~~la facture est le premier solde du BC~~ — **abandonnée** : reste au service (rejeu idempotent préservé) | 87 | **[DV] QO-3 : NON** |
 
-*Numérotation : `TR-50` est celui du modèle ; `TR-51` est **proposé** pour les gardes d'insertion (libre dans Mod. §8, qui passe de TR-50 à TR-60) — à reporter dans le modèle après validation (Z-9).*
+*Numérotation : `TR-50` est celui du modèle ; `TR-51` est **retenu** pour les gardes d'insertion (libre dans Mod. §8, qui passe de TR-50 à TR-60) — à reporter dans le modèle après validation (Z-9).*
 
 ### 3.4 Protections anti-contournement
-`INSERT OR REPLACE` (DELETE implicite refusé) ; `UPDATE OR REPLACE/IGNORE` (RAISE(ABORT) non altéré par `OR`) ; **UPSERT `ON CONFLICT … DO UPDATE`** (déclenche `BEFORE UPDATE` → refusé, sondé) ; `INSERT OR IGNORE` rejoué : sans violation de garde, 0 ligne, aucune erreur, première date conservée (sondé) ; ré-INSERT d'un doublon avec une garde fausse → **ABORT** (un `BEFORE` s'exécute avant la détection du doublon, sondé : c'est pourquoi G6 est déconseillée, cf. QO-3). **Limite assumée (D-39)** : avec `recursive_triggers=OFF`, le DELETE implicite d'un `REPLACE` échapperait à `tr_50_garanties_no_delete` (sondé : la ligne est remplacée, id changé) — réglage de connexion, testé comme en 006/007. Octet NUL et saturation int64 : limites transverses 001–007, sans objet spécifique ici (aucun montant).
+`INSERT OR REPLACE` (DELETE implicite refusé) ; `UPDATE OR REPLACE/IGNORE` (RAISE(ABORT) non altéré par `OR`) ; **UPSERT `ON CONFLICT … DO UPDATE`** (déclenche `BEFORE UPDATE` → refusé, sondé) ; `INSERT OR IGNORE` rejoué : sans violation de garde, 0 ligne, aucune erreur, première date conservée (sondé) ; ré-INSERT d'un doublon avec une garde fausse → **ABORT** (un `BEFORE` s'exécute avant la détection du doublon, sondé : c'est pourquoi G6 est abandonnée (QO-3 : NON)). **Limite assumée (D-39)** : avec `recursive_triggers=OFF`, le DELETE implicite d'un `REPLACE` échapperait à `tr_50_garanties_no_delete` (sondé : la ligne est remplacée, id changé) — réglage de connexion, testé comme en 006/007. Octet NUL et saturation int64 : limites transverses 001–007, sans objet spécifique ici (aucun montant).
 
 ### 3.5 Conséquences techniques
 - **CT-1** Les triggers de 008 ne lisent ni `reglements`, ni `bons_commande.statut`, ni les avoirs : une garantie est **indépendante du paiement et de l'état du BC** (INV-85, INV-87).
@@ -153,6 +165,26 @@ CREATE TABLE garanties (
 - **CT-4** Complétude : TR-99 (006) interdit tout rattachement après un solde ; au premier solde, `bc_ligne_garanties` est complet (lignes de **tous** les devis). Le SQL de 008 n'impose pas cette complétude (limite assumée) ; **CK-07a** la diagnostique.
 - **CT-5** Aucun garde « BC non annulé » sur `garanties` : aucune source ne le prévoit (les garanties ne sont pas du contenu contractuel, INV-173) et la naissance exige un solde, déjà refusé sur BC annulé (`tr_16`, INV-188). Une garantie existante survit à l'annulation du BC.
 
+### 3.6 Dates extrêmes : date de fin non représentable (analyse et traitement retenus)
+
+**Constat.** `date_fin_suivi` = année + N (N = 1, 2 ou 10). Pour une année de départ `Y`, la fin n'est représentable en famille D (année sur 4 chiffres, INV-10, Mod. §2 l.78) que si `Y + N ≤ 9999` : parfait achèvement jusqu'à `Y = 9998`, biennale jusqu'à `9997`, décennale jusqu'à `9989`. Au-delà, `printf('%04d')` produit 5 chiffres (`10000-…`) : refusé par le `GLOB` de `date_fin_suivi` et par le CHECK de durée. Côté bas, `0000-01-01` est une date valide (famille D) et n'a aucun effet (+N reste positif).
+
+**Au regard des invariants et conventions.**
+- INV-177 borne **uniquement** les dates de numérotation (2001-2099, contrôle de service, « jamais un CHECK ») ; la date d'émission d'une facture V6 est donc ≤ 2099 en flux nominal, et `date_fin_suivi` ≤ 2109 : **le cas est inatteignable par le service**. Il reste atteignable en SQL direct (le SQL ne borne pas l'année) : les années `9990`-`9999` ont un `yy` de numérotation valide (`90`-`99`), contrairement à `9900`/`0000`/`2000` (`yy = 00` impossible).
+- INV-88 impose les durées exactes, INV-134 « une garantie n'est jamais recalculée », INV-85/86 qu'un solde V6 porte les garanties de ses lignes. Aucune source ne prévoit de **tronquer** (ex. `9999-12-31`), de **décaler** ou d'**omettre** une garantie : le faire serait **inventer une règle** (et violerait INV-88).
+
+**Comportement technique attendu (aucune borne métier nouvelle).**
+1. **SQL** : une ligne dont la fin n'est pas représentable est **refusée par contrainte** (CHECK, sans préfixe `INV-nn`) ; aucun trigger, aucune borne d'année ajoutée. La limite est celle du **format de date** (convention existante), pas une règle métier.
+2. **Piège établi (sondé, chaîne 001→007 + esquisse 008)** : `INSERT OR IGNORE` ignore **aussi** les violations de `CHECK` et de `NOT NULL` (seuls les `RAISE(ABORT)` des triggers et les FK y échappent). Avec un solde daté `9990-06-01` (BC à garanties décennale, biennale, parfait achèvement), le `INSERT OR IGNORE … SELECT` naïf du service renvoie **sans erreur** `rowcount = 2` sur 3 attendues : le solde existerait avec des garanties **partielles**, en silence. Résultats sondés : `9989-06-01` → 3 ; `9990-06-01` → 2 ; `9997-06-01` → 2 ; `9998-06-01` → 1 ; `9999-06-01` et `9999-12-31` → 0. **Le CHECK seul ne suffit donc pas à faire échouer la transaction.**
+3. **Service (obligatoire, [CT])** — trois temps, dans la transaction d'émission du solde :
+   a. **calcul préalable pur** de toutes les dates de fin (arithmétique civile entière, sans SQLite) *avant toute écriture* : si une seule année de fin dépasse 9999 → erreur typée (ex. `DateFinSuiviHorsFormat`, avec BC, ligne, type, date de déclenchement), **rien n'a été écrit** (aucun numéro de facture consommé) ;
+   b. `INSERT OR IGNORE` (inchangé, [RD]) ;
+   c. **post-condition dans la même transaction** : toute paire `(ligne de BC, type)` de `bc_ligne_garanties` du BC doit exister dans `garanties` (requête CK-07a, résultat vide exigé) ; sinon erreur → rollback. Ce contrôle ferme aussi tout autre `IGNORE` silencieux (bug de valeur, NOT NULL).
+4. **Transaction (décision technique)** : l'impossibilité de calculer **ou** d'enregistrer une date de fin **fait échouer toute la transaction d'émission du solde** (facture, lignes, garanties, caches, historique) : **ROLLBACK intégral**. Raison : « un solde sans garantie attendue » est l'état que CK-07a doit détecter (INV-85/86), non un état à produire ; une garantie ne peut pas être « rattrapée plus tard » (sa date est celle du solde, immuable, INV-87, jamais recalculée, INV-134). Conséquence : un solde ne peut être émis à une date dont la fin de suivi dépasse 9999 **pour un BC portant une garantie du type concerné** ; un BC sans garantie de ligne, ou dont les types présents restent représentables, n'est pas affecté.
+5. **Diagnostic** : CK-07a (manquante) et CK-07b (date de fin ≠ formule) détectent a posteriori tout écart (import, restauration, SQL direct).
+
+*Non retenu (et pourquoi)* : borne d'année sur `date_declenchement` (nouvelle borne métier) ; troncature à `9999-12-31` (invente une date, viole INV-88) ; garantie omise avec avertissement (viole INV-85/86) ; remplacement de `OR IGNORE` par `WHERE NOT EXISTS` (rouvrirait une décision : Mod. §4.10, INV-86, conv. §9) ; doublon du CHECK de durée en `RAISE(ABORT)` dans `tr_51` : renforcement possible, **non retenu** (voir P-4).
+
 ---
 
 ## 4. Ce qui relève du service applicatif (ne passe pas en SQL)
@@ -160,10 +192,10 @@ CREATE TABLE garanties (
 | Règle | Pourquoi pas SQL |
 |---|---|
 | **Détecter** le déclenchement : émission du **premier solde du BC** (type `solde`, jamais `avancement = 100.00`, DV-5), solde à 0.00 inclus après confirmation (DV-9) | État du BC et ordre d'émission : service financier (INV-46, INV-164) |
-| Créer les garanties **dans la même transaction que le solde** (échec ⇒ rollback du solde) : sinon fenêtre « solde sans garantie » (CK-07a) | Atomicité = transaction du service [CT] |
-| Lire `bc_ligne_garanties` de **toutes** les lignes du BC (tous devis rattachés) ; ne tenter la création qu'au premier solde (au 2ᵉ solde après avoir total : rien à créer) | Règle de déclenchement (INV-85/86) ; G6 refusée (QO-3) |
+| Créer les garanties **dans la même transaction que le solde** (tout échec de calcul, d'insertion ou de post-condition ⇒ **rollback intégral du solde**, §3.6) : sinon fenêtre « solde sans garantie » (CK-07a) | Atomicité = transaction du service [CT] |
+| Lire `bc_ligne_garanties` de **toutes** les lignes du BC (tous devis rattachés) ; ne tenter la création qu'au premier solde (au 2ᵉ solde après avoir total : rien à créer) | Règle de déclenchement (INV-85/86) ; garde « premier solde » en SQL **refusée** (QO-3 : NON, [DV]) |
 | **Calculer** `date_fin_suivi` (+1/+2/+10 ans, 29/02 → 28/02) en arithmétique civile, **sans** `date(x,'+N year')` | INV-88 : garde « SVC, test » ; le CHECK QO-2 ne fait que **vérifier** |
-| `INSERT OR IGNORE` uniquement ; jamais `REPLACE`, jamais UPSERT | conv. §9 |
+| `INSERT OR IGNORE` uniquement ; jamais `REPLACE`, jamais UPSERT. **Calcul préalable pur de toutes les dates de fin + post-condition CK-07a dans la transaction** ; toute date de fin non représentable ou garantie manquante ⇒ **erreur et rollback du solde** (§3.6) | conv. §9 ; `OR IGNORE` masque les violations de CHECK/NOT NULL (sondé) |
 | États dérivés `a_surveiller` / `echue`, libellé « Suivi interne BATORYA — date indicative », jour courant = date locale | INV-89 ; jamais persistés |
 | Consultation par BC / client / prestation / type / dates (jointures sur `bc_lignes`, `bons_commande`, `clients`) | CDC §25 ; aucun module « Garanties » (Mét. l.145) |
 | Événement `declenchement_garantie` dans `historique` (INV-110, INV-194) | `historique` n'est pas encore créée (D-34 : tranche propre) ; hors 008 ; granularité (par BC ou par garantie) non décidée — voir §7, P-2 |
@@ -172,33 +204,46 @@ CREATE TABLE garanties (
 | Pas d'effet des PV et de leur levée sur les garanties | INV-95 ; Mét. l.614 |
 
 **Requêtes de contrôle** (lecture seule, constantes de test ; **CK-07 n'ayant pas de formule dans les sources**, découpé en a/b/c sans nouveau numéro) :
-- **CK-07a — garantie manquante** : pour tout BC ayant (ou ayant eu) un solde, toute paire `(ligne de BC, garantie_type)` de `bc_ligne_garanties` sans ligne dans `garanties` (esquisse éprouvée : renvoie 0 ligne sur un BC conforme).
+- **CK-07a — garantie manquante** : pour tout BC ayant (ou ayant eu) un solde, toute paire `(ligne de BC, garantie_type)` de `bc_ligne_garanties` sans ligne dans `garanties` (esquisse éprouvée : renvoie 0 ligne sur un BC conforme). **Sert aussi de post-condition du service** dans la transaction du solde (§3.6).
 - **CK-07b — garantie incohérente** : paire absente de `bc_ligne_garanties` ; `bc_id` ≠ BC de la ligne ; facture non-solde ou d'un autre BC ; `date_declenchement` ≠ `date_emission` ; `date_fin_suivi` ≠ formule INV-88 ; garantie sur un BC `origine = 'import'` (INV-134).
-- **CK-07c — non premier solde** (informatif, utile si G6 est refusée) : `facture_declenchement_id` ≠ plus petit `id` des soldes du BC.
+- **CK-07c — non premier solde** (diagnostic seul, G6 étant abandonnée) : `facture_declenchement_id` ≠ plus petit `id` des soldes du BC.
 
 ---
 
 ## 5. Tests (`test_008_garanties.py`, T-50) — positifs, négatifs, limites, non-régression
 
-**Infra réutilisée** de 006/007 : `migrer10` + application de 008 au rang 11 (`BEGIN IMMEDIATE`, fichier, `user_version = 11`, `COMMIT`), `Base9`/`monde()`, `emettre_solde`, `neutraliser`, `terminer_bc`/`annuler_bc`, `desynchroniser_ids` ; ajout d'une fabrique de devis **avec garanties de ligne**, d'un **service émulé** `declencher_garanties()` (centimes/arithmétique civile indépendante du SQL) et d'un **oracle Python** de `date_fin_suivi` (balayage ≥ 800 dates × 3 types). Assertion sur la **règle** (code INV du message ; état résultant par empreintes), jamais sur l'exécution. Connexion : `foreign_keys=ON`, `recursive_triggers=ON`.
+**Infra réutilisée** de 006/007 : `migrer10` + application de 008 au rang 11 (`BEGIN IMMEDIATE`, fichier, `user_version = 11`, `COMMIT`), `Base9`/`monde()`, `emettre_solde`, `neutraliser`, `terminer_bc`/`annuler_bc`, `desynchroniser_ids` ; ajout d'une fabrique de devis **avec garanties de ligne**, d'un **service émulé** `declencher_garanties()` (arithmétique civile indépendante du SQL, **avec calcul préalable, `INSERT OR IGNORE` et post-condition CK-07a, §3.6**) et d'un **oracle Python** de `date_fin_suivi` (voir groupe N). Assertion sur la **règle** (code INV du message ; état résultant par empreintes), jamais sur l'exécution. Connexion : `foreign_keys=ON`, `recursive_triggers=ON`.
 
 | Groupe | Contenu |
 |---|---|
 | **A chaîne et structure** | migration 008 sur base 007 vide et peuplée ; `user_version = 11` ; 1 table STRICT, colonnes/ordre/NOT NULL/défauts exacts, aucune colonne statut/`updated_at`/`origine`/`legacy_*` ; 3 index + autoindex UQ ; 3 triggers ; **aucune ligne** insérée ; 001–007 inchangés (empreinte `sqlite_master`) ; `foreign_key_list` = 3 `RESTRICT`, sans `ON UPDATE` ; `integrity_check` / `foreign_key_check` vides |
 | **B CHECK de colonnes** | `garantie_type` (3 valides ; casse, espaces, vide, NULL, voisins refusés) ; dates (29/02 bissextile, 31/12, 01/01, `0001-01-01` ; 30/02, 29/02 non bissextile, 13ᵉ mois, `2026-1-1`, avec heure, vide, NULL refusés) ; `fin = début`, `fin < début`, `fin = début + 1 jour` ; `created_at` ; NOT NULL ×6. *(Les BEFORE masquent certains codes : un NULL sur la facture lève INV-85, pas « NOT NULL » — chaque test vérifie le code attendu.)* |
-| **C Unicité et idempotence** | doublon `(ligne, type)` refusé ; même type sur 2 lignes accepté ; 2 types sur 1 ligne accepté ; `INSERT OR IGNORE` rejoué = 0 ligne, **première date conservée** (rejeu au 2ᵉ solde avec date différente) ; rejeu partiel complète seulement les manquantes ; UPSERT `DO UPDATE` refusé ; `INSERT OR REPLACE` refusé (témoin `recursive_triggers=OFF` documenté) |
-| **D Durées et 29/02** (QO-2) | table de vérité 3 types × dates (fin d'année, 31 janvier, 28/02, **29/02 de 2000, 2028, 2096**, 01/01, `0001-01-01`) ; valeurs fausses (±1 jour, ±1 an, type permuté, 29/02 conservé, 01/03) refusées ; `9999-12-31` → année à 5 chiffres refusée ; **témoin** `date(x,'+1 year')` = 01/03 (ce que le service ne doit pas faire) ; balayage différentiel contre l'oracle |
+| **C Unicité et idempotence** | doublon `(ligne, type)` refusé ; même type sur 2 lignes accepté ; 2 types sur 1 ligne accepté ; `INSERT OR IGNORE` rejoué = 0 ligne, **première date conservée** ; **QO-3 : rejeu au 2ᵉ solde (date et facture différentes) = 0 ligne et aucune erreur** (idempotence préservée, aucune garde « premier solde ») ; rejeu partiel complète seulement les manquantes ; UPSERT `DO UPDATE` refusé ; `INSERT OR REPLACE` refusé (témoin `recursive_triggers=OFF` documenté) |
+| **D Durées et 29/02** (QO-2, G5) | table de vérité 3 types × dates (fin d'année, 31 janvier, 28/02, **29/02 de 2000, 2028, 2096, 9996**, 01/01, `0001-01-01`, `0000-01-01`) ; valeurs fausses (±1 jour, ±1 an, type permuté, 29/02 conservé, 01/03) refusées ; **témoin** `date(x,'+1 year')` = 01/03 (ce que le service ne doit pas faire) ; balayage différentiel contre l'oracle |
 | **E FK et suppression des parents** | DELETE de `bons_commande`, `bc_lignes`, `factures` référencés refusés (tr_19, tr_13, tr_21) ; FK `RESTRICT` éprouvée sur base **sans triggers** avec `foreign_keys=ON` ; ids volontairement distincts (`bc_id`/`bc_ligne_id`/`facture_declenchement_id`, leçon 006) |
 | **F `tr_50`** | UPDATE de **chaque** colonne, UPDATE no-op, `UPDATE OR REPLACE/IGNORE`, UPSERT, DELETE (simple, multi-lignes), `INSERT OR REPLACE` ; code INV-87 ; aucune modification résiduelle |
-| **G `tr_51`** (selon QO-1/QO-3) | G1 : `bc_id` incohérent, ligne d'un autre BC, ligne inexistante ; G2 : facture acompte / situation / avoir / solde d'un autre BC / inexistante / NULL ; G3 : type absent de `bc_ligne_garanties`, ligne sans garantie de ligne ; G4 : date ≠ `date_emission` (±1 jour) ; G6 (si retenue) : 2ᵉ solde refusé, y compris au rejeu |
+| **G `tr_51`** (G1 à G4, validés) | G1 : `bc_id` incohérent, ligne d'un autre BC, ligne inexistante ; G2 : facture acompte / situation / avoir / solde d'un autre BC / inexistante / NULL ; G3 : type absent de `bc_ligne_garanties`, ligne sans garantie de ligne, BC importé ; G4 : date ≠ `date_emission` (±1 jour) ; **absence de G6** : une garantie référençant un 2ᵉ solde est acceptée si G1-G4 passent (INTERPRETATION documentée, la règle « premier solde » étant au service) |
 | **H Scénarios métier** (service émulé) | C-04 : solde → garanties de toutes les lignes ; **BC sans garantie de ligne** → 0 ligne, pas d'erreur ; multi-devis (C-34) : lignes des deux devis ; **solde 0.00** (C-08, DV-9) déclenche ; **situation à 100 % sans solde** → aucune garantie (DV-5) ; C-07 : avoir partiel → inchangé ; **T-14 : avoir total sur le solde** → garanties, `facture_declenchement_id` et dates inchangés, BC `termine → en_cours`, **nouveau solde** → rejeu `IGNORE` = 0 ligne, première date conservée (distincte de `date_100_facture`, VR-10) ; solde **impayé** → garanties créées (indépendance du paiement) ; règlement / annulation / remboursement → empreinte de `garanties` inchangée ; BC annulé après solde → garanties conservées ; avoir sur BC annulé / `termine` ; rattachement de devis après solde refusé (tr_99) ⇒ complétude ; absence de PV |
 | **I Import** | BC `origine='import'` + factures importées : `bc_ligne_garanties` vides ⇒ aucune garantie insérable (G3) ; mêmes gardes pour toute origine (INV-131) ; ligne de BC importée sans garantie de ligne ; CK-07 vide |
 | **J Diagnostics** | CK-07a (manquante, y compris BC dont le **solde est totalement crédité**, Z-4) ; CK-07b (orpheline, date erronée, mauvais BC, base sans triggers) ; CK-07c ; BC sans solde → rien d'attendu ; lecture seule (empreinte avant/après) |
 | **K Non-régression** | suites 001→007 inchangées (1344 tests) ; 008 n'écrit ni ne lit `bons_commande`, `bc_ligne_garanties`, `factures`, `reglements`, `numerotation_sequences` (empreintes) ; texte des triggers 001–007 identique ; chaîne rejouée sur base vide et peuplée |
 | **L Données malformées / contournements** | BLOB, REAL, INTEGER dans colonnes TEXT (STRICT), NUL, espaces, casse, années extrêmes ; `recursive_triggers=OFF` (témoin) |
-| **M Atomicité** | `INSERT … SELECT` multi-lignes partiellement invalide ⇒ rien ; `SAVEPOINT`/`ROLLBACK` ; `sqlite_sequence` cohérent |
+| **M Atomicité** | `INSERT … SELECT` multi-lignes partiellement invalide ⇒ rien (avec `INSERT` simple) ; `SAVEPOINT`/`ROLLBACK` ; `sqlite_sequence` cohérent |
+| **N Dates extrêmes** (§3.6) | voir ci-dessous |
 
-**Volume visé** : 180 à 230 tests (1 table, 3 index, 3 triggers + CK). **Mutation** (phase suivante, après validation et livraison SQL + tests, comme en 007) : mutants du seul `008_garanties.sql` — listes `IN`, littéraux `1/2/10`, `'02-29'`, `substr`, `GLOB`, `>`/`>=`, `WHERE` des gardes, `CASE` — chaque survivant qualifié individuellement ; **non lancée ici**.
+**Groupe N — dates extrêmes, avec oracle indépendant.**
+- **Oracle 1 (entiers purs, sans SQLite ni `datetime`)** : `fin_attendue(debut, type) → 'YYYY-MM-DD' | None` : `y, m, d` extraits par découpe de chaîne ; `y' = y + N` ; si `(m, d) = (02, 29)` alors `d = 28` ; si `y' > 9999` → `None` (non représentable) ; sinon formatage `%04d-%02d-%02d`. Fonction `bissextile(y)` propre au test (règle grégorienne 4/100/400), utilisée pour valider les dates d'entrée.
+- **Oracle 2 (indépendant du premier)** : `datetime.date` de Python (années 1-9999) : `date(y + N, m, d)` avec repli `d = 28` si `ValueError` sur un 29/02 ; `OverflowError`/`ValueError` d'année ⇒ `None`. Les deux oracles doivent **concorder** sur tout le balayage ; l'année `0000` (hors `datetime`) n'est vérifiée que par l'oracle 1.
+- **Balayage** : toutes les années 0000-9999 × {01-01, 02-28, 02-29 (si bissextile), 12-31} × 3 types (97 275 cas dont 41 non représentables, chiffres éprouvés : les deux oracles concordent sur tous les cas et l'expression du CHECK donne le même verdict ; exécution par `executemany` dans une transaction annulée) ; pour chaque cas, SQL (CHECK G5 sur INSERT avec la valeur de l'oracle) **accepte exactement quand l'oracle ≠ None** et que la valeur de l'oracle est insérée ; toute autre valeur de fin est refusée.
+- **Seuils exacts** (cas nommés) : parfait achèvement `9998-xx` accepté / `9999-xx` refusé ; biennale `9997` accepté / `9998` refusé ; décennale `9989` accepté / `9990` refusé ; `9999-12-31` refusé pour les 3 types ; `9996-02-29` (bissextile) : fins `9997-02-28`, `9998-02-28` ; décennale refusée.
+- **Refus par contrainte** : une fin à 5 chiffres (`10000-06-01`) est refusée avec un message **sans préfixe `INV-nn`** ; aucune ligne créée ; `sqlite_sequence` inchangé.
+- **Piège `OR IGNORE`** (témoin, base chaîne 001→008) : solde daté `9990-06-01` (BC à 3 garanties : décennale, biennale, parfait achèvement) ; un `INSERT OR IGNORE … SELECT` brut renvoie `rowcount = 2` **sans erreur** (documente le piège) ; le **service émulé** doit, lui, lever `DateFinSuiviHorsFormat` **avant toute écriture** : aucune ligne dans `garanties`, aucun solde, aucun numéro FAC consommé (empreintes avant/après) ; mêmes essais à `9997`, `9998`, `9999`.
+- **Post-condition** : base où un `IGNORE` silencieux est provoqué par un défaut injecté (garantie retirée du lot) ⇒ CK-07a non vide ⇒ le service émulé lève l'erreur et le **rollback restaure intégralement** l'état d'avant le solde (facture, lignes, garanties, caches du BC).
+- **Cas qui doivent réussir** : BC sans garantie de ligne avec solde daté `9999-12-31` (rien à créer) ; BC à `parfait_achevement` seul avec solde `9998-12-31` ; solde nominal 2099 (fin ≤ 2109).
+- **Voie nominale** : date d'émission V6 hors 2001-2099 refusée par le **service** (INV-177), jamais par le SQL (témoin : le SQL accepte la facture, `9990-xx` incluse) ; `yy = 00` (ex. `9900-01-01`) refusé par la séquence (`annee = 0` réservé CLI/FOU), distinct de §3.6.
+- **Diagnostics** : CK-07a/b sur base alimentée en SQL direct (triggers supprimés) avec une fin incorrecte ou absente ⇒ détection.
+
+**Volume visé** : 200 à 260 tests (1 table, 3 index, 3 triggers + CK ; le balayage du groupe N compte comme un petit nombre de tests à nombreux sous-tests). **Mutation** (phase suivante, après validation et livraison SQL + tests, comme en 007) : mutants du seul `008_garanties.sql` — listes `IN`, littéraux `1/2/10`, `'02-29'`, `substr`, `GLOB`, `>`/`>=`, `WHERE` des gardes, `CASE` — chaque survivant qualifié individuellement ; **non lancée ici**.
 
 ---
 
@@ -214,9 +259,11 @@ CREATE TABLE garanties (
 | Z-6 | Inv. INV-86 / INV-87, colonne « Cas » (l.122-123) | Renvoient à **C-20**, marqué **OBSOLÈTE (E-14)** (remplacé par C-33) | Cosmétique ; tests référencent C-04, C-07, C-08, C-33, C-34, T-14 | « C-20 » → « C-33 » |
 | Z-7 | INV-88 « 29 février → 28 février » vs Mod. §4.10 « … si l'année cible n'est pas bissextile » | Équivalents pour +1/+2/+10 ans (CT-3) : **pas de vraie contradiction** | Service inconditionnel + tests | Aucune (note possible dans INV-88) |
 | Z-8 | INV-90 « native : ligne et facture de déclenchement NOT NULL » | « native » est un reliquat du mode migration V3.5 (supprimé V3.6, D-23, INV-134 « NOT NULL sans exception ») | Aucune garantie non native : NOT NULL partout | Supprimer « native » |
-| Z-9 | Mod. §8 | Seul TR-50 existe ; les gardes d'insertion (G1-G4) n'ont pas de numéro | `TR-51` proposé | Ajouter TR-51 au §8 après arbitrage QO-1 |
+| Z-9 | Mod. §8 | Seul TR-50 existe ; les gardes d'insertion (G1-G4) n'ont pas de numéro | `TR-51` retenu (QO-1 validé) | Ajouter TR-51 au §8 |
 | Z-10 | Mod. §3.4 (l.226) et CDC §24-25 | `a_surveiller` « avant échéance » / `echue` « après `date_fin_suivi` » : le **jour même** de `date_fin_suivi` n'est classé nulle part | Aucun effet SQL (état dérivé) | [PR service/UI] `echue` ⇔ jour courant **>** `date_fin_suivi` (lecture littérale de « après ») ; à fixer à l'écriture du service |
 | Z-11 | CDC §24 « franchissement de 100 % facturé » vs DV-5 (`avancement` peut valoir 100.00 par situations sans solde) | Lecture ambiguë du déclencheur | Résolu par Mod. §3.2 (l.197 : « 100 % facturé = présence d'un solde »), INV-85, DV-5 | Aucune ; test dédié (groupe H) |
+| Z-12 | INV-88, INV-10, INV-177, Mod. §4.10 (« aucune borne d'année » sur les dates hors numérotation) | Les sources ne disent pas ce qui se passe quand `date_declenchement + N ans` dépasse l'année 9999 (famille D à 4 chiffres) ; « aucune borne d'année » (INV-177) vise les bornes **métier**, pas la représentabilité | Traitement §3.6 : refus par contrainte + échec du solde, aucune borne métier | Ajouter à INV-88 : « si l'année de fin dépasse 9999, la création est refusée et le solde n'est pas émis » |
+| Z-13 | Mod. §4.10 / INV-86 / conv. §9 (« `INSERT OR IGNORE` … idempotent ») | Non dit : `OR IGNORE` ignore aussi `CHECK` et `NOT NULL` (sondé) ; l'idempotence ne doit pas masquer un défaut de valeur | Post-condition CK-07a obligatoire dans le service (§3.6) | Ajouter une phrase à conv. §9 / Mod. §4.10 : « `INSERT OR IGNORE` ne dispense pas du contrôle du nombre de lignes créées » |
 
 Aucune de ces lacunes ne contredit le **DDL** ni le **comportement** décidés de `garanties`.
 
@@ -224,24 +271,22 @@ Aucune de ces lacunes ne contredit le **DDL** ni le **comportement** décidés d
 
 ## 7. Points bloquants et arbitrages
 
-**Points bloquants : aucun.** Le DDL, TR-50, l'idempotence, les durées et l'effet des avoirs/règlements sont entièrement décidés (§1) ; aucune règle n'est inventée.
+**Points bloquants : aucun.**
 
-**Arbitrages proposés** (non bloquants ; une valeur par défaut est recommandée, comme pour Q1-Q3 de 007) :
-
-- **QO-1 — Gardes d'insertion croisées G3 + G4** (en plus de G1 + G2, [CT]). *G3* : la garantie doit exister dans `bc_ligne_garanties` de la ligne (INV-86 « création lue dans `bc_ligne_garanties` ») ; *G4* : `date_declenchement = date_emission` de la facture (INV-87). Raison : la table est **immuable** (TR-50) — une ligne erronée ne se corrige jamais ; G3 rend en outre INV-134 (« un BC importé ne génère aucune garantie ») vrai en SQL. Coût : deux `WHERE`. **Recommandé : oui.** *Si non* : tr_51 se limite à G1 + G2 ; CK-07b porte G3/G4.
-- **QO-2 — CHECK de durée exacte** (INV-88 « SVC, test »). Le service calcule ; le CHECK ne fait que **vérifier** (+1/+2/+10, 29/02 → 28/02), sur une seule ligne, sans lecture d'autre table. Même raison d'irréparabilité. **Recommandé : oui.** *Si non* : seul `fin > début` reste ; CK-07b + oracle de test portent la règle.
-- **QO-3 — Garde « premier solde » en SQL (G6).** **Recommandé : non.** Un `BEFORE INSERT` s'exécute avant la détection du doublon : au 2ᵉ solde, un rejeu `INSERT OR IGNORE` (légitime, idempotent) ferait **échouer** la transaction au lieu d'être ignoré (sondé). La règle « premier solde » reste au service (§4) et au diagnostic CK-07c.
+**Arbitrages — tous tranchés (§1.6)** : QO-1 **OUI** (G3 + G4) · QO-2 **OUI** (CHECK de durée, 29/02 → 28/02) · QO-3 **NON** (pas de garde « premier solde » en SQL).
+**À valider avec ce cadrage révisé** : le traitement des dates extrêmes (§3.6) — refus par contrainte, calcul préalable, post-condition CK-07a, **rollback intégral du solde**, aucune borne métier nouvelle.
 
 **Points d'information (service/UI, non bloquants, à ne pas rouvrir ici)** :
 - **P-1** Jour d'échéance : voir Z-10.
 - **P-2** Événement `declenchement_garantie` : un par BC ou par garantie ? À fixer avec la tranche `historique`.
 - **P-3** Limite assumée : 004/005b autorisent en SQL un `INSERT` tardif dans `bc_ligne_garanties` d'un BC non annulé (même après solde, hors TR-99 qui ne garde que le lien devis) ; 008 ne le corrige pas (001–007 intouchables) — CK-07a le détecte. Idem pour `bc_ligne_garanties` sur un BC importé (INV-134).
+- **P-4** Option non retenue par défaut : dupliquer la vérification de durée exacte en `RAISE(ABORT)` dans `tr_51` (un `ABORT` n'est pas masqué par `OR IGNORE`, contrairement au CHECK). Elle ferait échouer le SQL lui-même, sans dépendre du service ; coût : une règle écrite deux fois (mutants équivalents à qualifier). Le cadrage retient le CHECK validé (QO-2) + garde du service ; à ne rouvrir que si vous souhaitez ce double rempart.
 
 ---
 
 ## Conclusion
 
-**Cadrage prêt à valider.** Aucun point bloquant. Il reste **trois arbitrages simples** (QO-1 : G3+G4 ; QO-2 : CHECK de durée ; QO-3 : G6) avec recommandation : **oui / oui / non**. Après validation : implémentation `008_garanties.sql` → `test_008_garanties.py` → mutation → contrôles finaux → rapport (même ordre qu'en 007).
+**Cadrage révisé prêt à valider.** Aucun point bloquant. Les trois arbitrages (QO-1 oui, QO-2 oui, QO-3 non) sont intégrés comme décisions validées. Dates extrêmes : **refus par contrainte, échec de toute la transaction du solde, aucune borne métier nouvelle** (§3.6) — avec une exigence de service explicite, car `INSERT OR IGNORE` masque les violations de CHECK. Après validation : implémentation `008_garanties.sql` → `test_008_garanties.py` → mutation → contrôles finaux → rapport (même ordre qu'en 007).
 
 ## Livraison
-Ce seul fichier : `fichiers-a-relire/CADRAGE__008_garanties.md`. Aucun `008_garanties.sql`, aucun test modifié, aucun document officiel modifié, aucune mutation lancée, V3.13 non déplacée. Aucun push effectué (vous poussez vous-même).
+Ce seul fichier : `fichiers-a-relire/CADRAGE__008_garanties.md` (version révisée du 2026-10-09). Aucun `008_garanties.sql`, aucun test ni document officiel modifié, aucune migration modifiée, aucune mutation lancée, V3.13 non déplacée. Aucun push effectué (vous poussez vous-même).
