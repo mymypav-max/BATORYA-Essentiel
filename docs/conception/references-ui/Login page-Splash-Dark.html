@@ -6,15 +6,15 @@
 <title>BATORYA Essentiel V6 — Plan Technique — Dark</title>
 <style>
   :root {
-    --orange: #E37A38;
-    --blue-soft: #6D96BD;
-    --blue-deep: #3F6F9E;
-    --orange-soft2: #C98954;
+    --orange: #FF5C23;
+    --blue-soft: #C8F3FF;
+    --blue-deep: #24434A;
+    --orange-soft2: #FF9A72;
     --text: #F1F3F5;
     --text-sec: #B7BDC5;
     --bg: #10161D;
     --bg-deep: #17212C;
-    --orange-soft: rgba(201, 137, 84, 0.16);
+    --orange-soft: rgba(255, 92, 35, 0.16);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -23,8 +23,8 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     min-height: 100vh;
     background:
-      radial-gradient(circle at 18% 18%, rgba(53,105,158,0.20), transparent 32%),
-      radial-gradient(circle at 82% 78%, rgba(201,130,58,0.10), transparent 30%),
+      radial-gradient(circle at 18% 18%, rgba(200,243,255,0.12), transparent 32%),
+      radial-gradient(circle at 82% 78%, rgba(255,92,35,0.075), transparent 30%),
       linear-gradient(135deg, var(--bg) 0%, #141B23 48%, var(--bg-deep) 100%);
     display: flex;
     align-items: center;
@@ -67,7 +67,7 @@
     top: 50%;
     transform: translate(-50%, -50%);
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(53,105,158,0.12), rgba(201,130,58,0.028) 38%, transparent 72%);
+    background: radial-gradient(circle, rgba(200,243,255,0.09), rgba(255,92,35,0.025) 38%, transparent 72%);
     filter: blur(8px);
     animation: ambientPulse 9s ease-in-out infinite;
   }
@@ -128,9 +128,9 @@
     border-radius: 48px;
     background: radial-gradient(
       ellipse at center,
-      rgba(220,122,56,.42) 0%,
-      rgba(220,122,56,.22) 34%,
-      rgba(220,122,56,.08) 58%,
+      rgba(255,92,35,.28) 0%,
+      rgba(255,92,35,.15) 34%,
+      rgba(255,92,35,.055) 58%,
       transparent 76%
     );
     filter: blur(12px);
@@ -169,8 +169,8 @@
     border-radius: 20px;
     border: 1px solid rgba(255,255,255,.12);
     box-shadow:
-      0 4px 10px -2px rgba(201,137,84,.34),
-      0 14px 32px -8px rgba(201,137,84,.42),
+      0 4px 10px -2px rgba(255,92,35,.18),
+      0 14px 32px -8px rgba(255,92,35,.22),
       0 28px 60px -16px rgba(0,0,0,.48),
       0 0 0 1px rgba(220,122,56,.055),
       inset 0 1px 0 rgba(255,255,255,.045),
@@ -193,7 +193,7 @@
     left: 30px;
     right: 30px;
     height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(109,150,189,.28), rgba(201,137,84,.72), rgba(109,150,189,.28), transparent);
+    background: linear-gradient(90deg, transparent, rgba(200,243,255,.34), rgba(255,92,35,.72), rgba(200,243,255,.34), transparent);
   }
 
   .logo {
@@ -214,7 +214,7 @@
     position: relative;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    background: linear-gradient(90deg, rgba(109,150,189,.12), rgba(201,137,84,.08));
+    background: linear-gradient(90deg, rgba(200,243,255,.12), rgba(255,92,35,.08));
     border: 1px solid rgba(255,255,255,.10);
     border-radius: 50px;
     padding: 4px;
@@ -258,7 +258,7 @@
 
   .mode-btn.active {
     background: transparent;
-    color: #A85422;
+    color: #B94316;
   }
 
   .mode-btn:hover:not(.active) {
@@ -364,14 +364,14 @@
   }
 
   .form-group input:hover {
-    border-color: rgba(109,150,189,.55);
+    border-color: rgba(200,243,255,.48);
     background: rgba(12,18,24,.46);
   }
 
   .form-group input:focus {
-    border-color: rgba(109,150,189,.72);
+    border-color: rgba(200,243,255,.68);
     background: rgba(11,17,23,.62);
-    box-shadow: 0 0 0 4px rgba(109,150,189,.16);
+    box-shadow: 0 0 0 4px rgba(200,243,255,.15);
   }
 
   .form-group input::placeholder {
@@ -389,7 +389,7 @@
     height: 104px;
     margin: 0 auto 10px;
     padding: 0;
-    border: 1px solid rgba(109,150,189,.28);
+    border: 1px solid rgba(200,243,255,.34);
     border-radius: 50%;
     background:
       radial-gradient(circle at 35% 28%, rgba(114, 131, 149, 0.96), rgba(27,35,44,.90));
@@ -406,10 +406,10 @@
 
   .avatar-button:hover {
     transform: translateY(-1px);
-    border-color: rgba(201,137,84,.65);
+    border-color: rgba(255,92,35,.62);
     box-shadow:
       0 10px 24px rgba(0,0,0,.34),
-      0 0 0 4px rgba(201,137,84,.10),
+      0 0 0 4px rgba(255,92,35,.10),
       inset 0 0 0 5px rgba(255,255,255,.045);
   }
 
@@ -469,12 +469,12 @@
     margin-top: 10px;
     border: none;
     border-radius: 50px;
-    background: linear-gradient(160deg, var(--orange) 0%, var(--orange) 100%);
+    background: var(--orange);
     color: white;
     font-size: 15.5px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 10px 24px -7px rgba(0,0,0,.42), 0 3px 8px rgba(201,137,84,.10);
+    box-shadow: 0 10px 24px -7px rgba(0,0,0,.42), 0 3px 8px rgba(255,92,35,.10);
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
@@ -517,7 +517,7 @@
 
   .login-panel.is-register .workspace-section--security {
     padding-left: 34px;
-    border-left: 1px solid rgba(109,150,189,.16);
+    border-left: 1px solid rgba(200,243,255,.15);
   }
 
   .login-panel.is-register .section-heading,
@@ -641,11 +641,11 @@
         from 18deg,
         var(--orange) 0deg,
         var(--orange-soft2) 42deg,
-        rgba(201,137,84,.20) 78deg,
-        rgba(109,150,189,.12) 108deg,
-        rgba(109,150,189,.78) 138deg,
-        rgba(63,111,158,.20) 154deg,
-        rgba(63,111,158,.08) 164deg,
+        rgba(255,92,35,.18) 78deg,
+        rgba(200,243,255,.12) 108deg,
+        rgba(200,243,255,.82) 138deg,
+        rgba(200,243,255,.20) 154deg,
+        rgba(200,243,255,.08) 164deg,
         transparent 166deg,
         transparent 360deg
       );
@@ -694,10 +694,10 @@
     inset: 12px;
     border-radius: 50%;
     background:
-      radial-gradient(circle, rgba(28,36,45,.88) 0 34%, rgba(42,52,63,.50) 35%, rgba(109,150,189,.07) 70%, transparent 71%);
+      radial-gradient(circle, rgba(28,36,45,.88) 0 34%, rgba(42,52,63,.50) 35%, rgba(200,243,255,.07) 70%, transparent 71%);
     box-shadow:
       inset 0 0 12px rgba(0,0,0,.18),
-      0 0 14px rgba(201,137,84,.06);
+      0 0 14px rgba(255,92,35,.06);
     -webkit-mask: none;
     mask: none;
   }
@@ -777,7 +777,7 @@
     z-index: 25;
     padding: 28px;
     background:
-      radial-gradient(circle at 12% 8%, rgba(109,150,189,.10), transparent 28%),
+      radial-gradient(circle at 12% 8%, rgba(200,243,255,.09), transparent 28%),
       linear-gradient(135deg, #151D25 0%, #11171E 48%, #1B2733 100%);
     opacity: 0;
     visibility: hidden;
@@ -839,7 +839,7 @@
 
   .batorya-sidebar {
     padding: 24px 16px;
-    background: linear-gradient(180deg, rgba(46,93,140,.96), rgba(53,105,158,.92));
+    background: linear-gradient(180deg, #24434A, #1C343A);
     color: white;
   }
 
@@ -863,7 +863,7 @@
   }
 
   .batorya-nav span.active {
-    background: rgba(255,255,255,.14);
+    background: rgba(200,243,255,.14);
     opacity: 1;
   }
 
@@ -890,7 +890,7 @@
     height: 34px;
     border-radius: 50%;
     background: linear-gradient(145deg, #3A4653, #202A34);
-    border: 1px solid rgba(109,150,189,.20);
+    border: 1px solid rgba(200,243,255,.20);
     box-shadow: 0 4px 12px rgba(0,0,0,.28);
   }
 
@@ -947,7 +947,7 @@
     display: grid;
     place-items: center;
     background:
-      radial-gradient(circle at 18% 18%, rgba(109,150,189,.10), transparent 32%),
+      radial-gradient(circle at 18% 18%, rgba(200,243,255,.09), transparent 32%),
       linear-gradient(135deg, var(--bg) 0%, #141B23 48%, var(--bg-deep) 100%);
     opacity: 0;
     pointer-events: none;
@@ -1035,12 +1035,12 @@
 
   <div class="plan-stage">
     <svg class="plan-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
-      <g class="fade-in" stroke="#6D96BD" stroke-opacity="0.10" stroke-width="0.6">
+      <g class="fade-in" stroke="#C8F3FF" stroke-opacity="0.10" stroke-width="0.6">
         <path d="M0 100 H1440 M0 200 H1440 M0 300 H1440 M0 400 H1440 M0 500 H1440 M0 600 H1440 M0 700 H1440 M0 800 H1440"/>
         <path d="M100 0 V900 M200 0 V900 M300 0 V900 M400 0 V900 M500 0 V900 M600 0 V900 M700 0 V900 M800 0 V900 M900 0 V900 M1000 0 V900 M1100 0 V900 M1200 0 V900 M1300 0 V900"/>
       </g>
 
-      <g stroke="#6D96BD" stroke-opacity="0.22" stroke-width="1.2" stroke-linecap="round">
+      <g stroke="#C8F3FF" stroke-opacity="0.22" stroke-width="1.2" stroke-linecap="round">
         <rect class="draw" x="180" y="90" width="1080" height="720" rx="2"/>
         <line class="draw draw-delay-1" x1="180" y1="270" x2="1260" y2="270"/>
         <line class="draw draw-delay-1" x1="180" y1="540" x2="1260" y2="540"/>
@@ -1048,13 +1048,13 @@
         <line class="draw draw-delay-2" x1="960" y1="90" x2="960" y2="810"/>
       </g>
 
-      <g stroke="#6D96BD" stroke-opacity="0.16" stroke-width="1" fill="none">
+      <g stroke="#C8F3FF" stroke-opacity="0.16" stroke-width="1" fill="none">
         <rect class="draw draw-delay-3" x="220" y="130" width="220" height="110" rx="1"/>
         <rect class="draw draw-delay-3" x="1000" y="620" width="220" height="140" rx="1"/>
         <rect class="draw draw-delay-4" x="520" y="310" width="400" height="200" rx="1"/>
       </g>
 
-      <g stroke="#6D96BD" stroke-opacity="0.26" stroke-width="1" stroke-linecap="round">
+      <g stroke="#C8F3FF" stroke-opacity="0.26" stroke-width="1" stroke-linecap="round">
         <line class="draw draw-delay-3" x1="220" y1="70" x2="440" y2="70"/>
         <line class="draw draw-delay-3" x1="220" y1="64" x2="220" y2="76"/>
         <line class="draw draw-delay-3" x1="440" y1="64" x2="440" y2="76"/>
@@ -1063,7 +1063,7 @@
         <line class="draw draw-delay-4" x1="144" y1="240" x2="156" y2="240"/>
       </g>
 
-      <g class="fade-in fade-delay-2" fill="#6D96BD" fill-opacity="0.30">
+      <g class="fade-in fade-delay-2" fill="#C8F3FF" fill-opacity="0.30">
         <circle cx="220" cy="130" r="3"/>
         <circle cx="440" cy="130" r="3"/>
         <circle cx="480" cy="270" r="3"/>
@@ -1071,21 +1071,21 @@
         <circle cx="1000" cy="620" r="3"/>
       </g>
 
-      <g class="fade-in fade-delay-3" fill="#C98954" fill-opacity="0.62">
+      <g class="fade-in fade-delay-3" fill="#FF9A72" fill-opacity="0.62">
         <circle cx="520" cy="310" r="3.5"/>
-        <circle class="technical-pulse" cx="720" cy="410" r="5" fill="#C98954" fill-opacity=".34"/>
+        <circle class="technical-pulse" cx="720" cy="410" r="5" fill="#FF9A72" fill-opacity=".34"/>
         <circle cx="920" cy="510" r="2.5"/>
         <rect x="1220" y="730" width="8" height="8" rx="1"/>
       </g>
 
-      <g class="fade-in fade-delay-3" stroke="#C98954" stroke-opacity=".42" stroke-width="1.4">
+      <g class="fade-in fade-delay-3" stroke="#FF9A72" stroke-opacity=".42" stroke-width="1.4">
         <path d="M500 300 L520 280 L540 300 L520 320 Z"/>
         <path d="M900 500 L920 480 L940 500 L920 520 Z"/>
       </g>
 
       <text class="fade-in fade-delay-1" x="720" y="460" text-anchor="middle"
             font-family="system-ui, sans-serif" font-size="92" font-weight="700"
-            fill="#6D96BD" fill-opacity="0.055" letter-spacing="-2">BATORYA</text>
+            fill="#C8F3FF" fill-opacity="0.055" letter-spacing="-2">BATORYA</text>
     </svg>
   </div>
 
