@@ -694,24 +694,54 @@ tr:last-child td {
     gap:6px
   }
 }
-/* Navigation V1.1 : navigation flottante, sans bandeau plein largeur. */
+/* En-tête : bienvenue à gauche, commandes utilisateur à droite. */
 .topbar {
-  min-height:76px;
+  width:100%;
+  max-width:1440px;
+  min-height:0;
   height:auto;
-  padding:16px 30px;
-  gap:18px;
+  margin:0 auto;
+  padding:30px 34px 18px;
+  gap:24px;
   background:transparent;
   border:0;
   position:relative;
-  top:auto;
-  justify-content:flex-start;
+  justify-content:space-between;
   align-items:center;
   flex-wrap:nowrap;
+}
+.welcome-heading {
+  flex:1;
+  min-width:0;
+  margin:0;
+  align-items:flex-start;
+}
+.welcome-heading h1 {
+  margin-top:5px;
+}
+.welcome-heading p {
+  margin:6px 0 0;
+  color:var(--muted);
+}
+.navigation-row {
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  max-width:1440px;
+  min-height:64px;
+  margin:0 auto;
+  padding:8px 34px 22px;
 }
 .home-pill,.top-nav-item,.top-nav-back,.top-nav-subitem,.profile-pill,.icon-btn {
   box-shadow:0 3px 14px #2030400a;
 }
 .home-pill {
+  position:absolute;
+  left:34px;
+  top:50%;
+  transform:translateY(-50%);
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -729,7 +759,7 @@ tr:last-child td {
 }
 .home-pill:hover {
   border-color:var(--orange);
-  transform:translateY(-1px)
+  transform:translateY(calc(-50% - 1px))
 }
 .home-symbol {
   font-size:21px;
@@ -739,10 +769,15 @@ tr:last-child td {
 .topbar-nav {
   display:flex;
   align-items:center;
+  justify-content:center;
   gap:8px;
-  flex:1;
+  flex:none;
+  width:max-content;
+  max-width:100%;
   min-width:0;
-  overflow-x:auto;
+  flex-wrap:wrap;
+  overflow:visible;
+  margin:0 auto;
   scrollbar-width:none;
   padding:4px 2px;
 }
@@ -852,8 +887,14 @@ tr:last-child td {
 }
 @media(max-width:1250px) {
   .topbar {
-    padding:14px 20px;
-    gap:12px
+    padding:24px 20px 16px;
+    gap:16px
+  }
+  .navigation-row {
+    padding:8px 20px 18px
+  }
+  .home-pill {
+    left:20px
   }
   .top-nav-item,.top-nav-back,.top-nav-subitem {
     padding:0 12px
@@ -874,19 +915,43 @@ tr:last-child td {
 }
 @media(max-width:760px) {
   .topbar {
-    padding:12px 13px 8px;
-    gap:8px;
-    flex-wrap:wrap;
-    align-items:center
+    padding:20px 15px 12px;
+    gap:12px;
+    align-items:flex-start
   }
-  .home-pill {
-    min-height:42px;
-    padding:0 12px;
-    font-size:13px
+  .welcome-heading h1 {
+    font-size:21px
+  }
+  .welcome-heading p {
+    max-width:38ch
   }
   .top-actions {
     margin-left:auto;
     gap:6px
+  }
+  .navigation-row {
+    min-height:0;
+    padding:8px 15px 16px;
+    flex-direction:column;
+    gap:8px
+  }
+  .home-pill {
+    position:static;
+    align-self:flex-start;
+    transform:none;
+    min-height:42px;
+    padding:0 12px;
+    font-size:13px
+  }
+  .home-pill:hover {
+    transform:translateY(-1px)
+  }
+  .topbar-nav {
+    width:100%;
+    max-width:100%;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:7px
   }
   .icon-btn {
     width:42px;
@@ -899,13 +964,6 @@ tr:last-child td {
   .profile-pill .avatar {
     width:30px;
     height:30px
-  }
-  .topbar-nav {
-    order:3;
-    flex-basis:100%;
-    width:100%;
-    padding:7px 1px 5px;
-    gap:7px
   }
   .top-nav-item,.top-nav-back {
     min-height:42px;
@@ -937,10 +995,13 @@ tr:last-child td {
 <div class="app">
 <main>
 <header class="topbar">
-  <button class="home-pill" id="homeButton" aria-label="Retour à l’accueil" title="Retour au tableau de bord">
-    <span class="home-symbol">⌂</span><span>Accueil</span>
-  </button>
-  <nav class="topbar-nav" id="topNavigation" aria-label="Navigation principale"></nav>
+  <section class="heading welcome-heading">
+    <div>
+      <div class="eyebrow">Mardi 10 octobre 2026</div>
+      <h1 id="pageTitle">Bonjour, bienvenue 👋</h1>
+      <p>Voici le résumé de votre activité.</p>
+    </div>
+  </section>
   <div class="top-actions">
     <button class="icon-btn" id="themeToggle" aria-label="Changer de thème" title="Changer de thème">◐</button>
     <button class="icon-btn" aria-label="Notifications" title="Notifications">♧</button>
@@ -949,8 +1010,13 @@ tr:last-child td {
     </button>
   </div>
 </header>
+<div class="navigation-row">
+  <button class="home-pill" id="homeButton" aria-label="Retour à l’accueil" title="Retour au tableau de bord">
+    <span class="home-symbol">⌂</span><span>Accueil</span>
+  </button>
+  <nav class="topbar-nav" id="topNavigation" aria-label="Navigation principale"></nav>
+</div>
 <div class="content">
-  <section class="heading"><div><div class="eyebrow">Mardi 10 octobre 2026</div><h1 id="pageTitle">Bonjour, bienvenue 👋</h1><p>Voici le résumé de votre activité.</p></div><div class="date-pill">◷ &nbsp;Vue d’ensemble · Octobre 2026</div></section>
   <section class="kpis" aria-label="Indicateurs clés">
     <article class="card kpi" style="--accent:var(--green);--icon-bg:#e9f6f0"><div class="kpi-top"><span>CA encaissé</span><span class="kpi-icon">€</span></div><div class="kpi-value">18 420 €</div><div class="kpi-foot"><span class="trend">↗ 12,8 %</span> <span>vs. mois dernier</span></div></article>
     <article class="card kpi" style="--accent:var(--orange)"><div class="kpi-top"><span>Reste dû factures</span><span class="kpi-icon">◷</span></div><div class="kpi-value">6 850 €</div><div class="kpi-foot">Sur <b>4 factures</b> en attente</div></article>
