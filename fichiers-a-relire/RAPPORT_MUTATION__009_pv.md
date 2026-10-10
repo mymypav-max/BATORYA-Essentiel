@@ -2,7 +2,7 @@
 
 Périmètre : `src-tauri/migrations/metier/009_pv.sql` (175 lignes ; 1 table STRICT, 1 index explicite + 2 index de `UNIQUE`, 3 triggers) **après la correction du contrôle d'octets NUL (D1–D3, validée par Rémy le 2026-10-10)**.
 Suite évaluée : `src-tauri/tests/metier/test_009_pv.py` (268 tests, 940 sous-tests) rejouée en entier, arrêt au premier échec (`-f`).
-Aucun fichier 001–008, aucun cadrage, aucun document officiel n'est touché. Outils de campagne et de preuve : `fichiers-a-relire/outils_mutation_009/` (hors `src-tauri/`, non versionnés dans le dépôt de l'application ; empreintes en §6). **Cette campagne remplace intégralement celle de la version précédente du rapport (SQL sans contrôle d'octets, 255 tests, 692 mutants), qui n'est plus valable pour le SQL livré.**
+Aucun fichier 001–008, aucun cadrage, aucun document officiel n'est touché. Outils de campagne et de preuve : `fichiers-a-relire/preuves_009_pv/outils/` (hors `src-tauri/`, non versionnés dans le dépôt de l'application ; empreintes en §6 ; mode d'emploi et inventaire : `fichiers-a-relire/preuves_009_pv/LISEZ-MOI__preuves_009_pv.md`). **Cette campagne remplace intégralement celle de la version précédente du rapport (SQL sans contrôle d'octets, 255 tests, 692 mutants), qui n'est plus valable pour le SQL livré.**
 Rien n'a été commité ni poussé.
 
 ## 1. Résultat final (SQL final, tests finaux)
@@ -178,16 +178,23 @@ Ces 14 mutants comptent parmi les 770 tués, mais **le seul test qui les tue est
 | `test_009_pv.py` (final, 268 tests, 940 sous-tests) | `4d56721107285773f12920224c2f83ded43f7aeb74b96a8909ef57beaeb59f04` |
 | `mut009b.py` (campagne définitive) | `2cc9f2b6561fb5cc6b8d06e9818b72b4e300584be2bed75e4a42817259e5c6d6` |
 | `genmut009b.py` | `047f54a265ec92f5fa1cb335d92c0f336ab60f6822263bc262c71a0a6d7fa894` |
-| `classify009b.py` | `be4a436dda8f43135f3094da42d4e5abee30b6c9299e48d4e7c90f7bb8377d12` |
+| `classify009b.py` (version du 10/10 : chemins en arguments) | `6eca7881b5119993698ee6a4e029913387799c305975ec016c1152385cbd7c3c` |
 | `preuves_equivalence_009.py` | `72d2e99af9ad8e818585442488d420649a3be83629e69c8cbcac8f17b90ec6a7` |
-| `rapprochement_survivants_registre.py` | `1d56db5637a53000c7dfbebcc411f9c70f518a54ede7f627f77cbfc847f162a7` |
+| `rapprochement_survivants_registre.py` (version du 10/10 : arguments par défaut et contrôles de fichiers) | `df6966b3f341b6ac816d6af799f38c0b0f2062ec99553cd657519f16d479ad3e` |
 | `mut009_v0_campagne_initiale.py` (outil de la campagne initiale, pour mémoire) | `d8dcd8636731be016ee7010218437fcebba2b725e66e011c1b44d91714bbd589` |
+| `verifier_campagne_009.py` (nouveau : partition 797 = 770 + 3 + 24, rejeu ciblé) | `2c11c1deca6b7f26233ba8848c9398eb39ca1976a8dda5594a2826b0d521f05c` |
+| `epreuves_negatives_rapprochement.py` (nouveau) | `86c86929d4722152ff03aa869ebb3c2aa6d32f836c15dbd33c85ab87b10bac41` |
 
-Rejeu (depuis la racine du dépôt contenant `src-tauri/`, outils dans `fichiers-a-relire/outils_mutation_009/`) :
+`classify009b.py` et `rapprochement_survivants_registre.py` : les versions qui ont produit les sorties brutes avaient pour empreintes `be4a436d…` et `1d56db56…`. Seuls les chemins et les arguments ont changé (la logique de classement et de rapprochement est inchangée) ; les deux scripts, rejoués depuis l'arborescence livrée, redonnent des sorties identiques. Les autres outils sont octet pour octet ceux de la campagne. Empreintes complètes de tous les fichiers livrés : `preuves_009_pv/MANIFEST_SHA256.txt`.
+
+Rejeu (`RACINE` = dossier contenant `src-tauri/` ; `PREUVES` = `fichiers-a-relire/preuves_009_pv`) :
 ```
-python3 -B outils_mutation_009/mut009b.py . /tmp/mut009_travail            # campagne complète
-MUT_EXCLUDE=Chaine python3 -B outils_mutation_009/mut009b.py . /tmp/m_sansA   # passe sans groupe A
-python3 -B outils_mutation_009/preuves_equivalence_009.py .                # preuves liées au SQL (TOUT EST OK)
-python3 -B outils_mutation_009/rapprochement_survivants_registre.py . outils_mutation_009/mut009b.py /tmp/mut009_travail/survivors009.txt /tmp/m_sansA/survivors009.txt /tmp/m_sansAK/survivors009.txt   # BIJECTION OK
+python3 -B $PREUVES/outils/campagne_mutation/mut009b.py $RACINE /tmp/mut009_travail            # campagne complète
+MUT_EXCLUDE=Chaine python3 -B $PREUVES/outils/campagne_mutation/mut009b.py $RACINE /tmp/m_sansA   # passe sans groupe A
+MUT_EXCLUDE=Chaine,Malformees.test_T51_K_TEMOIN_sans_les_controles_de_longueur_et_d_octet_nul_les_valeurs_a_queue_passent python3 -B $PREUVES/outils/campagne_mutation/mut009b.py $RACINE /tmp/m_sansAK   # passe sans A ni témoin K
+python3 -B $PREUVES/outils/preuves_equivalence/preuves_equivalence_009.py $RACINE                # preuves liées au SQL (TOUT EST OK)
+python3 -B $PREUVES/outils/preuves_equivalence/rapprochement_survivants_registre.py $RACINE $PREUVES/outils/campagne_mutation/mut009b.py /tmp/mut009_travail/survivors009.txt /tmp/m_sansA/survivors009.txt /tmp/m_sansAK/survivors009.txt   # BIJECTION OK
+python3 -B $PREUVES/outils/campagne_mutation/verifier_campagne_009.py $RACINE [--rejeu N]       # cohérence 797 = 770 + 3 + 24 sur les sorties enregistrées (+ rejeu ciblé)
 ```
-Sorties brutes de cette campagne : `fichiers-a-relire/sorties_brutes_009_nul/`.
+Sans argument autre que `RACINE`, le rapprochement lit les sorties enregistrées sous `$PREUVES/sorties_brutes/`.
+Sorties brutes de cette campagne : `fichiers-a-relire/preuves_009_pv/sorties_brutes/` (`campagne_complete/`, `passes_diagnostic/`, `preuves_equivalence/`, `suites_et_integrite/`, `historique/`). Rejeu partiel fait depuis cette arborescence le 10/10 (campagne complète **non** rejouée en entier) : `sorties_brutes/rejeu_depuis_structure_livree/`.
