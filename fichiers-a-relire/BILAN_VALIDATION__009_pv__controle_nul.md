@@ -66,7 +66,7 @@ Diffs finaux exacts : `DIFF_FINAL__009_pv.sql.diff` (sha256 `37a4e7f73c197e82d6b
  
 ```
 
-## 2. Résultats (sorties brutes dans `sorties_brutes_009_nul/`)
+## 2. Résultats (sorties brutes dans `fichiers-a-relire/preuves_009_pv/sorties_brutes/`)
 
 | Contrôle | Résultat | Attendu (annoncé sur copies jetables) |
 |---|---|---|
@@ -78,7 +78,7 @@ Diffs finaux exacts : `DIFF_FINAL__009_pv.sql.diff` (sha256 `37a4e7f73c197e82d6b
 | Passe sans groupe A | 758 / 3 / 36 survivants (= 24 + les mêmes 12 mutants structurels qu'avant) | — |
 | Passe sans groupe A ni test témoin de texte | 744 / 3 / 50 survivants (= 36 + 14 tués seulement par le texte du témoin) | « 6 équivalents probables » annoncés → **14, voir §3** |
 | Preuves d'équivalence liées au SQL du dépôt (`preuves_equivalence_009.py`, 203 s) | **52 contrôles OK, 0 échec, TOUT EST OK** : 24 survivants S01–S24, 14 mutants K01–K14, 11 témoins non équivalents qui divergent | 29 contrôles annoncés (19 + 7 témoins…) → étendu |
-| Rapprochement campagne ↔ registre (`rapprochement_survivants_registre.py`) | **BIJECTION OK** : 24 survivants ↔ S01–S24 (SQL muté identique octet pour octet) ; 14 ↔ K01–K14. Épreuve négative (survivant retiré, intrus ajouté) : ECHEC | nouveau |
+| Rapprochement campagne ↔ registre (`rapprochement_survivants_registre.py`) | **BIJECTION OK** : 24 survivants ↔ S01–S24 (SQL muté identique octet pour octet) ; 14 ↔ K01–K14. Épreuve négative (survivant retiré, intrus ajouté) : ECHEC (rejouée par `epreuves_negatives_rapprochement.py`) | nouveau |
 
 ### Justification de chaque équivalence (détail et chiffres : rapport §4 et §4 quater)
 - **E1** S02–S10 (`GLOB` de date affaibli) : `date(x) IS x` impose que `x` soit une image de `date()` ; 5 373 485 jours juliens évalués, 0 divergence. Relative au conjoncte `date(x) IS x`.
@@ -104,11 +104,11 @@ Diffs finaux exacts : `DIFF_FINAL__009_pv.sql.diff` (sha256 `37a4e7f73c197e82d6b
 
 ## 4. Script de preuve des survivants : emplacement et exécution proposés (autorisation : « propose son emplacement et son mode d'exécution »)
 
-**Livré** : `fichiers-a-relire/outils_mutation_009/preuves_equivalence_009.py` (sha256 `72d2e99af9ad8e818585442488d420649a3be83629e69c8cbcac8f17b90ec6a7`), avec `rapprochement_survivants_registre.py`. Il lit `009_pv.sql` dans le dépôt (substitutions textuelles à ancres uniques, CHECK extraits du DDL créé, triggers exécutés tels que créés) ; il **s'arrête** si le SQL ne correspond plus au registre. **Il ne remplace pas la campagne de mutation** : seule la campagne énumère les survivants ; le rapprochement relie les deux.
-- **Emplacement proposé** : `src-tauri/tests/metier/outils/preuves_equivalence_009.py` et `…/rapprochement_survivants_registre.py` (hors du motif `test_*.py` et sans `__init__.py` : `unittest discover` ne les collecte pas — **vérifié sur copie jetable : 1 866 tests avant et après**). Le chemin par défaut du dépôt est dérivé de cet emplacement.
+**Livré** : `fichiers-a-relire/preuves_009_pv/outils/preuves_equivalence/preuves_equivalence_009.py` (sha256 `72d2e99af9ad8e818585442488d420649a3be83629e69c8cbcac8f17b90ec6a7`), avec `rapprochement_survivants_registre.py` dans le même dossier (sha256 `df6966b3f341b6ac816d6af799f38c0b0f2062ec99553cd657519f16d479ad3e`). Il lit `009_pv.sql` dans le dépôt (substitutions textuelles à ancres uniques, CHECK extraits du DDL créé, triggers exécutés tels que créés) ; il **s'arrête** si le SQL ne correspond plus au registre. **Il ne remplace pas la campagne de mutation** : seule la campagne énumère les survivants ; le rapprochement relie les deux.
+- **Emplacement proposé** : `src-tauri/tests/metier/outils/preuves_equivalence_009.py` et `…/rapprochement_survivants_registre.py` (hors du motif `test_*.py` et sans `__init__.py` : `unittest discover` ne les collecte pas — **vérifié sur copie jetable : 1 866 tests avant et après**). Le chemin par défaut du dépôt (script de preuve) est dérivé de cet emplacement ; le rapprochement, lui, déduit ses fichiers par défaut de l'arborescence `preuves_009_pv/` : déplacé ailleurs, on lui passe ses arguments explicitement.
 - **Exécution proposée** : manuelle ou en CI hors suite rapide (≈ 3,5 min), obligatoire dès que `009_pv.sql` change : `python3 -B src-tauri/tests/metier/outils/preuves_equivalence_009.py` (code de sortie 0 = TOUT EST OK). Après toute modification du SQL : relancer la campagne (`mut009b.py`), puis le rapprochement ; un survivant sans entrée de registre fait échouer le rapprochement.
 - **Variantes** (à ton choix) : (B) test opt-in appelant le script via une variable d'environnement ; (D) versionner aussi l'outil de campagne `mut009b.py` + `genmut009b.py` + `classify009b.py` (seule option qui rend la complétude rejouable depuis le dépôt) ; (C) ne rien versionner et annexer sha256 + sorties au rapport (déjà fait dans le rapport §6).
-**Rien de tout cela n'est dans `src-tauri/`** : les outils sont dans `fichiers-a-relire/outils_mutation_009/`.
+**Rien de tout cela n'est dans `src-tauri/`** : les outils sont dans `fichiers-a-relire/preuves_009_pv/outils/`.
 
 ## 5. Points qui restent à arbitrer
 
@@ -124,4 +124,11 @@ Diffs finaux exacts : `DIFF_FINAL__009_pv.sql.diff` (sha256 `37a4e7f73c197e82d6b
 
 ## 6. Pièces livrées dans `fichiers-a-relire/`
 
-`RAPPORT_MUTATION__009_pv.md` (mis à jour) · `BILAN_VALIDATION__009_pv__controle_nul.md` (ce fichier) · `DIFF_FINAL__009_pv.sql.diff` · `DIFF_FINAL__test_009_pv.py.diff` · `PROPOSITION_DOC__009_pv__formulations_controle_nul.md` · `outils_mutation_009/` (outils, non versionnés dans `src-tauri/`) · `sorties_brutes_009_nul/` (suites, campagnes, preuves, intégrité, rapprochement, survivants, tueurs, essai 1).
+`RAPPORT_MUTATION__009_pv.md` (mis à jour) · `BILAN_VALIDATION__009_pv__controle_nul.md` (ce fichier) · `DIFF_FINAL__009_pv.sql.diff` · `DIFF_FINAL__test_009_pv.py.diff` · `PROPOSITION_DOC__009_pv__formulations_controle_nul.md` · `preuves_009_pv/` (`LISEZ-MOI__preuves_009_pv.md`, `MANIFEST_SHA256.txt`, `outils/`, `sorties_brutes/` : suites, campagnes, preuves, intégrité, rapprochement, survivants, tueurs, essai 1, rejeu du 10/10 ; non versionnés dans `src-tauri/`).
+
+## 7. Mise en cohérence des preuves (2026-10-10, après contrôle) — aucune conclusion technique modifiée
+
+Les chemins cités plus haut ont été alignés sur l'arborescence réellement livrée (`fichiers-a-relire/preuves_009_pv/`). Aucun résultat, aucun chiffre et aucune empreinte du SQL, des tests et des diffs n'ont changé.
+- **Rejeu depuis l'arborescence livrée** (SQLite 3.45.1) : cohérence 797 = 770 + 3 + 24 (12 contrôles OK) ; rejeu ciblé de 87 mutants (3 invalides, 24 survivants, 60 tués tirés au hasard) = mêmes statuts et mêmes tests tueurs ; `preuves_equivalence_009.py` 52 OK ; rapprochement BIJECTION OK ; 4 épreuves négatives conformes ; classement, intégrité et comptage (268 / 940) identiques. Sorties : `preuves_009_pv/sorties_brutes/rejeu_depuis_structure_livree/`.
+- **Non rejoué** : la campagne complète de 797 mutants (710 tués non tirés au sort ne sont vérifiés que par cohérence de partition) et les deux passes de contrôle ; la suite 001→009 complète. Toutes les preuves restent établies **sur SQLite 3.45.1 seulement**.
+- Sur `origin/main`, `outils_mutation_009.py` et `sorties_brutes_009_nul.py` sont des doublons mal nommés (preuve d'équivalence ; ancienne version du rapprochement) ; ils ne sont pas modifiés ici.
