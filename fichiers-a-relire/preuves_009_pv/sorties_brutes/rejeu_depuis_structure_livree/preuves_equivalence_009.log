@@ -1,0 +1,63 @@
+Dépôt : /tmp/claude-0/-home-claude/4bfddb88-39e2-5600-90f2-05410e2089ac/scratchpad/g007
+009_pv.sql sha256 = 764a2d302969f471bad2e6770f57454eff7659ebd886e5c6aa6be14509d84cb3
+SQLite 3.45.1 | Python 3.11.15
+
+OK    registre : les 24 + 14 ancres de S01-S24 et K01-K14 figurent chacune exactement une fois dans 009_pv.sql
+OK    base : les tentatives de référence produisent des refus ET des acceptations (156 états, 8316 tentatives)
+OK    base : immuabilité de référence : toute tentative d'UPDATE/DELETE sur un PV existant est refusée par INV-96/INV-06
+
+OK    S01 (E2) mutant valide, ancre unique ; 240000 (numéro, date) dont 400 acceptés ; divergences = 0
+OK    S02 (E1) mutant valide, ancre unique ; 5373485 points (image de date()), 3652425 acceptés par l'original ; divergences = 0
+OK    S03 (E1) mutant valide, ancre unique ; 5373485 points (image de date()), 3652425 acceptés par l'original ; divergences = 0
+OK    S04 (E1) mutant valide, ancre unique ; 5373485 points (image de date()), 3652425 acceptés par l'original ; divergences = 0
+OK    S05 (E1) mutant valide, ancre unique ; 5373485 points (image de date()), 3652425 acceptés par l'original ; divergences = 0
+OK    S06 (E1) mutant valide, ancre unique ; 5373485 points (image de date()), 3652425 acceptés par l'original ; divergences = 0
+OK    S07 (E1) mutant valide, ancre unique ; 5373485 points (image de date()), 3652425 acceptés par l'original ; divergences = 0
+OK    S08 (E1) mutant valide, ancre unique ; 5373485 points (image de date()), 3652425 acceptés par l'original ; divergences = 0
+OK    S09 (E1) mutant valide, ancre unique ; 5373485 points (image de date()), 3652425 acceptés par l'original ; divergences = 0
+OK    S10 (E1) mutant valide, ancre unique ; 5373485 points (image de date()), 3652425 acceptés par l'original ; divergences = 0
+OK    S11 (E3) mutant valide, ancre unique ; 6760000 (numéro, date) dont 10000 acceptés ; divergences = 0
+OK    S12 (E3) mutant valide, ancre unique ; 6760000 (numéro, date) dont 10000 acceptés ; divergences = 0
+OK    S13 (E4) mutant valide, ancre unique ; 101001 entiers (format lu dans le trigger : '%02d' / '%02i') + 300 tentatives de levée successives ; divergences = 0
+OK    S14 (E5) mutant valide, ancre unique ; 156 états de 0 à 3 PV, 8316 tentatives ; divergences = 0
+OK    S15 (E5) mutant valide, ancre unique ; 156 états de 0 à 3 PV, 8316 tentatives ; divergences = 0
+OK    S16 (E5) mutant valide, ancre unique ; 156 états de 0 à 3 PV, 8316 tentatives ; divergences = 0
+OK    S17 (E6) mutant valide, ancre unique ; 156 états de 0 à 3 PV, 8316 tentatives ; divergences = 0
+OK    S18 (E7) mutant valide, ancre unique ; 1047 tentatives d'UPDATE/DELETE/REPLACE ; divergences = 0
+OK    S19 (E7) mutant valide, ancre unique ; 1047 tentatives d'UPDATE/DELETE/REPLACE ; divergences = 0
+OK    S20 (E8) mutant valide, ancre unique ; 20 valeurs de legacy_data (NULL, JSON valide, invalide, NUL brut, \u0000) ; sur NULL : valeur du CHECK original = 1, mutant = None (NULL ne fait pas échouer un CHECK) ; divergences = 0
+OK    S21 (E8) mutant valide, ancre unique ; 20 valeurs de legacy_data (NULL, JSON valide, invalide, NUL brut, \u0000) ; sur NULL : valeur du CHECK original = 1, mutant = None (NULL ne fait pas échouer un CHECK) ; divergences = 0
+OK    S22 (E9) mutant valide, ancre unique ; 43824 évaluations du CHECK de numero (substitutions d'1 à 2 caractères, troncatures, queues avec NUL, caractère multi-octets, branche import comprise) dont 14646 acceptées ; divergences = 0
+OK    S23 (E9) mutant valide, ancre unique ; 18594 évaluations du CHECK de created_at (substitutions d'1 à 2 caractères, troncatures, queues avec NUL, caractère multi-octets) dont 93 acceptées ; divergences = 0
+OK    S24 (E9) mutant valide, ancre unique ; 18594 évaluations du CHECK de created_at (substitutions d'1 à 2 caractères, troncatures, queues avec NUL, caractère multi-octets) dont 93 acceptées ; divergences = 0
+
+Mutants tués seulement par le test témoin de texte (passe de contrôle), qualifiés comme les survivants :
+OK    K01 (E9) mutant valide, ancre unique ; 43824 évaluations du CHECK de numero (substitutions d'1 à 2 caractères, troncatures, queues avec NUL, caractère multi-octets, branche import comprise) dont 14646 acceptées ; divergences = 0
+OK    K02 (E9) mutant valide, ancre unique ; 18594 évaluations du CHECK de created_at (substitutions d'1 à 2 caractères, troncatures, queues avec NUL, caractère multi-octets) dont 93 acceptées ; divergences = 0
+OK    K03 (E10) mutant valide, ancre unique ; 59 valeurs de client_snapshot (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+OK    K04 (E10) mutant valide, ancre unique ; 59 valeurs de client_snapshot (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+OK    K05 (E10) mutant valide, ancre unique ; 59 valeurs de client_snapshot (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+OK    K06 (E10) mutant valide, ancre unique ; 59 valeurs de entreprise_snapshot (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+OK    K07 (E10) mutant valide, ancre unique ; 59 valeurs de entreprise_snapshot (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+OK    K08 (E10) mutant valide, ancre unique ; 59 valeurs de entreprise_snapshot (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+OK    K09 (E10) mutant valide, ancre unique ; 59 valeurs de chantier_snapshot (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+OK    K10 (E10) mutant valide, ancre unique ; 59 valeurs de chantier_snapshot (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+OK    K11 (E10) mutant valide, ancre unique ; 59 valeurs de chantier_snapshot (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+OK    K12 (E10) mutant valide, ancre unique ; 59 valeurs de legacy_data (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+OK    K13 (E10) mutant valide, ancre unique ; 59 valeurs de legacy_data (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+OK    K14 (E10) mutant valide, ancre unique ; 59 valeurs de legacy_data (NULL, JSON valide/invalide, NUL brut en toute position, \u0000, 0x01, multi-octets) dont 8 acceptées ; divergences = 0
+
+OK    TÉMOIN E1 W1 : suppression de `date(date_reception) IS date_reception` : divergences = 3 (doit être > 0)
+OK    TÉMOIN E2 W2 : décalage de position `substr(numero, 10, 2)` : divergences = 400 (doit être > 0)
+OK    TÉMOIN E3 W3 : `?` sur yy ET suppression de l'égalité avec l'année : divergences = 2390000 (doit être > 0)
+OK    TÉMOIN E4 W4 : `printf('%d', ...)` : divergences = 309 (doit être > 0)
+OK    TÉMOIN E5 W5 : jointure avec une table vide (`import_anomalies x`) : divergences = 83 (doit être > 0)
+OK    TÉMOIN E6 W6 : `IS NOT` à la place de `IS` : divergences = 83 (doit être > 0)
+OK    TÉMOIN E8 W8 : `legacy_data IS NULL` remplacé par `1` (accepte tout JSON invalide) : divergences = 11 (doit être > 0)
+OK    TÉMOIN E9 W9 : `*` en queue du GLOB du numéro ET suppression du contrôle d'octets (queues acceptées) : divergences = 680 (doit être > 0)
+OK    TÉMOIN E9b W9b : `length(CAST(numero AS BLOB)) >= 12` (accepte les queues après NUL) : divergences = 170 (doit être > 0)
+OK    TÉMOIN E10 W10 : `instr(CAST(client_snapshot AS BLOB), x'01') = 0` (ne cherche plus le NUL) : divergences = 11 (doit être > 0)
+OK    TÉMOIN E7 W7 : trigger limité à `UPDATE OF observations` : divergences = 432 (doit être > 0)
+
+Durée : 296 s
+TOUT EST OK
