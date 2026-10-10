@@ -1,0 +1,5 @@
+OK    N1 voisin absent : code 2 (attendu 2) | ERREUR D'ENVIRONNEMENT : script de preuve (doit être à côté de ce script) introuvable : /tmp/tmprx1zs24j/n1/preuves_equivalence_009.py
+OK    N2 voisin renommé : code 2 (attendu 2) | ERREUR D'ENVIRONNEMENT : script de preuve (doit être à côté de ce script) introuvable : /tmp/tmprx1zs24j/n2/preuves_equivalence_009.py
+OK    N3 survivant retiré : code 1 (attendu 1) | ECHEC
+OK    N4 intrus ajouté : code 1 (attendu 1) | ECHEC
+TOUTES LES ÉPREUVES ÉCHOUENT COMME ATTENDU
