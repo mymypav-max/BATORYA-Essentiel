@@ -759,7 +759,7 @@ tr:last-child td {
 }
 .home-pill:hover {
   border-color:var(--orange);
-  transform:translateY(calc(-50% - 1px))
+  transform:translateY(calc(-50% - 4px))
 }
 .home-symbol {
   display:inline-flex;
@@ -805,7 +805,7 @@ tr:last-child td {
 }
 .top-nav-item:hover,.top-nav-subitem:hover,.top-nav-back:hover {
   border-color:var(--line);
-  transform:translateY(-1px)
+  transform:translateY(-4px)
 }
 .top-nav-item.active {
   background:var(--blue-soft);
@@ -816,7 +816,7 @@ tr:last-child td {
 }
 .top-nav-subitem.active {
   background:var(--orange-soft);
-  border-color:var(--orange);
+  border:1px solid color-mix(in srgb,var(--orange) 38%,transparent);
   color:var(--ink);
   font-weight:750;
   box-shadow:0 0 0 2px color-mix(in srgb,var(--orange) 18%,transparent);
@@ -956,7 +956,7 @@ tr:last-child td {
     font-size:13px
   }
   .home-pill:hover {
-    transform:translateY(-1px)
+    transform:translateY(-4px)
   }
   .topbar-nav {
     width:100%;
