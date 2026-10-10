@@ -814,6 +814,13 @@ tr:last-child td {
   font-weight:750;
   box-shadow:0 0 0 2px color-mix(in srgb,var(--blue) 18%,transparent);
 }
+.top-nav-subitem.active {
+  background:var(--orange-soft);
+  border-color:var(--orange);
+  color:var(--ink);
+  font-weight:750;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--orange) 18%,transparent);
+}
 .top-nav-back {
   color:var(--orange);
   border-color:var(--line)
@@ -1090,6 +1097,7 @@ const navigationModel = {
 };
 let currentChapter=null;
 let currentModule=null;
+let currentSubmodule=null;
 
 function renderTopNavigation(level="chapters") {
   topNavigation.replaceChildren();
@@ -1128,9 +1136,14 @@ function renderTopNavigation(level="chapters") {
     topNavigation.append(divider);
     navigationModel[currentChapter][currentModule].forEach(submodule=>{
       const button=document.createElement('button');
-      button.className='top-nav-subitem';
+      button.className='top-nav-subitem'+(submodule===currentSubmodule?' active':'');
       button.textContent=submodule;
-      button.addEventListener('click',()=>showPage(submodule,currentChapter,currentModule));
+      if(submodule===currentSubmodule) button.setAttribute('aria-current','page');
+      button.addEventListener('click',()=>{
+        currentSubmodule=submodule;
+        showPage(submodule,currentChapter,currentModule);
+        renderTopNavigation('submodules');
+      });
       topNavigation.append(button);
     });
   }
@@ -1151,6 +1164,7 @@ function showPage(page,chapter,moduleName){
 function openChapter(chapter){
   currentChapter=chapter;
   currentModule=null;
+  currentSubmodule=null;
   homeButton.removeAttribute('aria-current');
   renderTopNavigation('modules');
   title.textContent=chapter;
@@ -1159,13 +1173,14 @@ function openChapter(chapter){
 }
 function openModule(moduleName){
   currentModule=moduleName;
+  currentSubmodule=null;
   const subs=navigationModel[currentChapter][moduleName];
   const level=subs.length?'submodules':'modules';
   renderTopNavigation(level);
   showPage(moduleName,currentChapter,moduleName);
 }
 homeButton.addEventListener('click',()=>{
-  currentChapter=null;currentModule=null;
+  currentChapter=null;currentModule=null;currentSubmodule=null;
   renderTopNavigation('chapters');
   setDashboard();
 });
