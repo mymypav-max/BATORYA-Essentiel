@@ -1,0 +1,23 @@
+009_pv.sql: 966 mutants générés, 797 distincts
+== Partie 1 : cohérence statique ==
+OK    mutants distincts régénérés : 797 (attendu 797)
+OK    le journal de campagne annonce « 966 mutants générés, 797 distincts »
+OK    fichiers enregistrés : tués=770 survivants=24 invalides=3 (attendu 770 / 24 / 3)
+OK    totaux imprimés par la campagne : {'tué': 770, 'survivant': 24, 'invalide': 3}
+OK    aucun délai dépassé (TIMEOUTS: [])
+OK    pas de doublon dans les survivants ni dans les invalides
+OK    tués, survivants et invalides sont deux à deux disjoints
+OK    leur réunion est exactement l'ensemble des 797 mutants (intrus : [] ; oubliés : [])
+OK    chaque SQL muté diffère du SQL du dépôt
+OK    les 797 SQL mutés sont deux à deux distincts
+OK    les 45 tests tueurs distincts existent tous dans test_009_pv.py (inconnus : []) ; groupes : {'Atomicite': 554, 'CheckPV': 133, 'Chaine': 56, 'Levee': 5, 'Immuabilite': 4, 'Malformees': 14, 'Import': 4}
+OK    aucun mutant tué dont le test tueur est inconnu (« ? »)
+
+== Partie 2 : rejeu avec mut009b.py de 3 invalides + 24 survivants + 60 tués tirés au hasard (graine 2026) ==
+OK    mut009b.py terminé (code 0) ; journal : /tmp/claude-0/-home-claude/4bfddb88-39e2-5600-90f2-05410e2089ac/scratchpad/verif2/rejeu_work/rejeu.log
+OK    survivants rejoués = les 24 survivants enregistrés (24 rejoués)
+OK    invalides rejoués = les 3 invalides enregistrés (3 rejoués)
+OK    les 60 mutants tirés sont tous retrouvés tués (60 tués au rejeu)
+OK    même test tueur qu'à la campagne pour les 60 tués tirés (écarts : [])
+
+COHÉRENT
