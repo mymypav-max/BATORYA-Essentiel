@@ -1,0 +1,365 @@
+--- a/fichiers-a-relire/RAPPORT_MUTATION__009_pv.md
++++ b/fichiers-a-relire/RAPPORT_MUTATION__009_pv.md
+@@ -3,7 +3,7 @@
+ Périmètre : `src-tauri/migrations/metier/009_pv.sql` (175 lignes ; 1 table STRICT, 1 index explicite + 2 index de `UNIQUE`, 3 triggers) **après la correction du contrôle d'octets NUL (D1–D3, validée par Rémy le 2026-10-10)**.
+ Suite évaluée : `src-tauri/tests/metier/test_009_pv.py` (268 tests, 940 sous-tests) rejouée en entier, arrêt au premier échec (`-f`).
+ Aucun fichier 001–008, aucun cadrage, aucun document officiel n'est touché. Outils de campagne et de preuve : `fichiers-a-relire/preuves_009_pv/outils/` (hors `src-tauri/`, non versionnés dans le dépôt de l'application ; empreintes en §6 ; mode d'emploi et inventaire : `fichiers-a-relire/preuves_009_pv/LISEZ-MOI__preuves_009_pv.md`). **Cette campagne remplace intégralement celle de la version précédente du rapport (SQL sans contrôle d'octets, 255 tests, 692 mutants), qui n'est plus valable pour le SQL livré.**
+-Rien n'a été commité ni poussé.
++**État de publication (daté).** À la rédaction (copie de travail, 10/10, 01 h–03 h), rien n'était commité ni poussé. Au 10/10 21 h 06 (`main` = `5ebf202`), `009_pv.sql` et `test_009_pv.py` aux empreintes du §6 sont publiés ; le dossier `preuves_009_pv/` ne l'était que partiellement (13 fichiers sur 41, dont 2 mal rangés) et un clone brut de `main` ne permettait pas de rejouer la campagne. Les chiffres de ce rapport viennent de la campagne de la copie de travail (sorties « historiques »), **rejouée en entier le 10/10 au soir (22 h 49–23 h 05) depuis une copie ne contenant que `main` 5ebf202 et les 48 fichiers du dossier minimal `preuves_009_pv/`** : résultats identiques pour la campagne complète (§1 bis), un écart expliqué et testé pour les deux passes de diagnostic.
+ 
+ ## 1. Résultat final (SQL final, tests finaux)
+ 
+@@ -28,7 +28,7 @@
+ 
+ Historique des passes :
+ 1. campagne initiale (SQL sans contrôle d'octets, 255 tests) : 839 générés / 692 distincts → 670 tués, 3 invalides, 19 survivants équivalents (version précédente du rapport) ;
+-2. après la correction NUL, **essai 1** (outil `mut009b.py` v1, 803 distincts) : 752 tués, **27 invalides**, 24 survivants. Les 24 mutants invalides supplémentaires venaient d'un **défaut de l'outil** : les opérateurs `cast_*` supposaient `CAST(… AS INTEGER)` (hérités de 006/007) et produisaient `CAST(x AS BLOB AS TEXT)` ou `(x AS BLOB)` ; ils n'étaient donc pas des mutants valides. Sortie brute conservée (`essai1_outil_v1_defaut_CAST__mut009_complete.log`) ;
++2. après la correction NUL, **essai 1** (outil `mut009b.py` v1, 803 distincts) : 752 tués, **27 invalides**, 24 survivants. Les 24 mutants invalides supplémentaires venaient d'un **défaut de l'outil** : les opérateurs `cast_*` supposaient `CAST(… AS INTEGER)` (hérités de 006/007) et produisaient `CAST(x AS BLOB AS TEXT)` ou `(x AS BLOB)` ; ils n'étaient donc pas des mutants valides. Journal de cet essai : **historique, non publié** dans le dossier de preuves (il n'est pas nécessaire à un rejeu) ;
+ 3. **essai 2, définitif** (outil corrigé, ces opérateurs ne présupposent plus le type d'origine) : 797 distincts → **770 tués, 3 invalides, 24 survivants** ; les 3 invalides sont ceux de la campagne initiale (§4 ter) ; les 24 survivants sont les 19 de la campagne initiale + 5 nouveaux (S20–S24, §4).
+ 
+ **Passe « sans groupe A »** (classe `Chaine` exclue, tests de DDL/structure) : 758 tués, 3 invalides, 36 survivants = les 24 survivants + **12 mutants tués uniquement par le groupe A** (§4 bis, mêmes 12 que dans la campagne initiale).
+@@ -58,6 +58,28 @@
+ 
+ Constat de moteur consigné par un test (SQLite 3.45) : avec `PRAGMA defer_foreign_keys=ON`, une suppression qui viole une FK `RESTRICT` n'est refusée qu'au `COMMIT` (et non à l'instruction) ; l'effet reste un refus sans suppression.
+ 
++### 1 bis. Rejeu complet du 10/10 au soir (SQLite 3.45.1, Python 3.11.15, 2 cœurs)
++
++Rejeu fait depuis une copie de `main` 5ebf202 **plus uniquement les fichiers de `preuves_009_pv/`**, par la commande unique `outils/rejouer_toutes_les_verifications_009.sh`. Sorties conservées : `fichiers-a-relire/preuves_009_pv/sorties_brutes/rejeu_copie_propre_2026-10-10/` (`STATUT.tsv`, étapes 04–07, 10, 11, 13–16, listes de survivants rejoués des passes) ; expérience du paragraphe suivant : `sorties_brutes/experience_date_decalee_2026-10-10/`.
++
++| Vérification | Résultat du rejeu | Comparaison à l'historique |
++|---|---|---|
++| Campagne complète (197 s) | 966 générés, 797 distincts ; **770 tués, 3 invalides, 24 survivants**, 0 délai dépassé | **identique** : mêmes survivants et invalides (octet pour octet), même test tueur pour chacun des 770 tués |
++| Partition, rapprochement S01–S24 / K01–K14, épreuves négatives | partition exacte, BIJECTION OK (24↔24, 14↔14), 4 échecs attendus sur 4 | identiques |
++| Preuves d'équivalence (216 s) | 52 contrôles OK, 0 échec | journal identique hors durée |
++| Suite machine / métier 001→009 / comptage / intégrité | 13 OK / 1 866 OK (103 s) / 268 tests et 940 sous-tests / `integrity_check` ok, FK vide | identiques |
++| Passe « sans groupe A » (199 s) | **37 survivants** | **différent** : 36 dans l'historique |
++| Passe « sans A ni témoin K » (206 s) | **51 survivants** | **différent** : 50 dans l'historique |
++
++**Écart des passes (explication testée).** Le seul survivant en plus est `default_fmt#1` (`%Y-%m-%d` → `%Y-%d-%d` dans le `DEFAULT` de `created_at`). Hors groupe A, le seul test qui peut le tuer est `CheckPV.test_T51_B_created_at_par_defaut_est_l_instant_courant_utc` (comparaison à l'heure UTC courante) ; le jour UTC du rejeu était le 10/10, où mois = jour : le mutant produit alors la même chaîne que l'original et ne peut être détecté (12 jours UTC par an). Dans les sorties historiques (09/10 UTC), le mutant donnait `2026-09-09` et était tué. Aucun nombre attendu, test ni SQL n'a été modifié. **Expérience exécutée** (`outils/controles/passes_a_date_decalee_009.sh`, horloge simulée des seuls processus de la campagne par LD_PRELOAD ; SQLite 3.45.1) :
++
++| Date UTC simulée | Mois = jour ? | « sans A » | « sans A ni témoin K » | Listes vs historique |
++|---|---|---|---|---|
++| 2026-09-08 | non | 36 | 50 | identiques |
++| 2026-09-09 | oui | 37 | 51 | une entrée en plus : `default_fmt#1` |
++
++L'explication est donc confirmée dans les deux sens **pour l'horloge vue par les processus** ; ce n'est pas un rejeu un autre jour réel. Les nombres 36 et 50 valent pour un jour où mois ≠ jour ; ils ne sont pas universellement reproductibles. La campagne complète (24 survivants) n'en dépend pas (le mutant y est tué par le test textuel `Chaine.test_T51_A_table_stricte_et_colonnes_exactes`).
++
+ Efficacité des tests sur la correction : les 68 mutants de la famille « contrôles d'octets (longueur, NUL) et CAST » sont tous tués ; 54 par au moins un autre test que le témoin de texte, **14 seulement par ce test témoin** (§4 quater).
+ 
+ ## 4. Qualification individuelle des 24 survivants
+@@ -112,7 +134,7 @@
+ 
+ ## 4 bis. Mutants tués uniquement par le groupe A (tests de structure)
+ 
+-12 mutants ne sont tués par aucun test comportemental (passe « sans groupe A » : 36 survivants = 24 + ces 12 ; liste identique à la campagne initiale) ; ils sont tués par les tests de DDL/structure (groupe A, classe `Chaine`) :
++12 mutants ne sont tués par aucun test comportemental (passe « sans groupe A » : 36 survivants = 24 + ces 12 ; liste identique à la campagne initiale ; **13 les jours UTC où mois = jour**, voir §1 bis) ; ils sont tués par les tests de DDL/structure (groupe A, classe `Chaine`) :
+ 
+ | Mutants | Nombre | Test tueur | Nature |
+ |---|---:|---|---|
+@@ -168,7 +190,7 @@
+ - Points sans règle documentaire, constatés par des tests nommés « constat » et **non présentés comme des règles** : QO-1 (statut du BC), QO-3 (cohérence de dates), QO-4 (non-vacuité de `reserves`), PR-3 (pas de format imposé au numéro d'une levée), Z-8 (levée V6 sur origine `origine='import'` à numéro libre).
+ - Import V2 : aucun PV V2 n'est importé (décision de Rémy) ; aucune exception de numérotation ni parcours d'import V2 n'existent (vérification statique dans le groupe H). Les mécanismes génériques `origine='import'` prévus par le cadrage sont conservés et testés comme tels.
+ - Une partie des kills est textuelle : groupe A (§4 bis, 12 mutants) et test témoin des conjoncts NUL (§4 quater, 14 mutants). La campagne les compte comme tués ; les passes de contrôle les isolent.
+-- **Reproductibilité** : l'outil de campagne (`mut009b.py`) et les scripts de preuve sont hors de `src-tauri/` ; leur présence dans le dépôt est à décider (voir le bilan). La campagne se rejoue avec `python3 -B mut009b.py RACINE DOSSIER_TRAVAIL` (≈ 8 min, 2 processus) ; le lien entre preuves et SQL se rejoue avec `preuves_equivalence_009.py RACINE` (≈ 3,5 min) puis `rapprochement_survivants_registre.py` (§6). Une évolution du SQL rend les ancres du registre caduques : le script s'arrête, et la campagne doit être relancée.
++- **Reproductibilité** : l'outil de campagne (`mut009b.py`) et les scripts de preuve sont hors de `src-tauri/` (dans `fichiers-a-relire/preuves_009_pv/outils/`). Rejouée le 10/10 au soir depuis une copie propre (`main` 5ebf202 + dossier minimal) : la campagne complète prend ≈ 3,3 min sur 2 cœurs (197 s), les preuves ≈ 3,6 min (216 s), l'ensemble ≈ 16 min avec la commande unique `outils/rejouer_toutes_les_verifications_009.sh` (§6). Une évolution du SQL rend les ancres du registre caduques : le script s'arrête, et la campagne doit être relancée. **Réserves non fermées** : moteur SQLite réellement embarqué non identifié (V-7) ; services Rust/TypeScript absents du dépôt ; résultats établis sur SQLite 3.45.1 seulement ; une campagne de mutation réussie ne remplace pas la validation sur le moteur réellement utilisé ; les contrôles sur d'autres versions de SQLite (3.39.4→3.53.4, 3.51.1, 3.53.2) sont des résultats historiques non reproduits dans ce dossier.
+ 
+ ## 6. Empreintes et rejeu
+ 
+@@ -181,14 +203,19 @@
+ | `classify009b.py` (version du 10/10 : chemins en arguments) | `6eca7881b5119993698ee6a4e029913387799c305975ec016c1152385cbd7c3c` |
+ | `preuves_equivalence_009.py` | `72d2e99af9ad8e818585442488d420649a3be83629e69c8cbcac8f17b90ec6a7` |
+ | `rapprochement_survivants_registre.py` (version du 10/10 : arguments par défaut et contrôles de fichiers) | `df6966b3f341b6ac816d6af799f38c0b0f2062ec99553cd657519f16d479ad3e` |
+-| `mut009_v0_campagne_initiale.py` (outil de la campagne initiale, pour mémoire) | `d8dcd8636731be016ee7010218437fcebba2b725e66e011c1b44d91714bbd589` |
+-| `verifier_campagne_009.py` (nouveau : partition 797 = 770 + 3 + 24, rejeu ciblé) | `2c11c1deca6b7f26233ba8848c9398eb39ca1976a8dda5594a2826b0d521f05c` |
++| `verifier_campagne_009.py` (partition 797 = 770 + 3 + 24, rejeu ciblé ; option `--sorties` ajoutée le 10/10 soir) | `ee5e6f62cb4fd2c5f9b0d65b2e32e18591b88ed3e9039dafbd619f7af014e387` |
++| `comparer_campagne_009.py` (nouveau : campagne rejouée ↔ sorties historiques) | `8a5e10daa001318a0adef5334e0a1885f4820523f93aed7e4e81000cea0155b0` |
++| `rejouer_toutes_les_verifications_009.sh` (nouveau : commande unique) | `58306098317cc1738b3f27516eb858f82ec0f74925529e7d73aee11105e836fc` |
+ | `epreuves_negatives_rapprochement.py` (nouveau) | `86c86929d4722152ff03aa869ebb3c2aa6d32f836c15dbd33c85ab87b10bac41` |
++| `verifier_manifestes_009.py` (nouveau : vérifie empreintes et périmètre des deux manifestes) | `4033ee93fea0d583c9e3da94b2a219dd6266c10dd92d2e500dcd2b5265bcf160` |
++| `passes_a_date_decalee_009.sh` (nouveau : expérience à date simulée) | `b02a4aa3361b68dc0f375c3bc8e0f79862725199e6976c5037488b27ba354eb8` |
++| `faketime_shim.c` (nouveau : décalage d'horloge LD_PRELOAD) | `17854b9729a5e9a315c35514b0eec5734ed16fd200a9bf665aa8948f3dfe156b` |
+ 
+ `classify009b.py` et `rapprochement_survivants_registre.py` : les versions qui ont produit les sorties brutes avaient pour empreintes `be4a436d…` et `1d56db56…`. Seuls les chemins et les arguments ont changé (la logique de classement et de rapprochement est inchangée) ; les deux scripts, rejoués depuis l'arborescence livrée, redonnent des sorties identiques. Les autres outils sont octet pour octet ceux de la campagne. Empreintes complètes de tous les fichiers livrés : `preuves_009_pv/MANIFEST_SHA256.txt`.
+ 
+ Rejeu (`RACINE` = dossier contenant `src-tauri/` ; `PREUVES` = `fichiers-a-relire/preuves_009_pv`) :
+ ```
++bash $PREUVES/outils/rejouer_toutes_les_verifications_009.sh $RACINE /chemin/sortie        # COMMANDE UNIQUE : toutes les étapes ci-dessous, classées dans STATUT.tsv
+ python3 -B $PREUVES/outils/campagne_mutation/mut009b.py $RACINE /tmp/mut009_travail            # campagne complète
+ MUT_EXCLUDE=Chaine python3 -B $PREUVES/outils/campagne_mutation/mut009b.py $RACINE /tmp/m_sansA   # passe sans groupe A
+ MUT_EXCLUDE=Chaine,Malformees.test_T51_K_TEMOIN_sans_les_controles_de_longueur_et_d_octet_nul_les_valeurs_a_queue_passent python3 -B $PREUVES/outils/campagne_mutation/mut009b.py $RACINE /tmp/m_sansAK   # passe sans A ni témoin K
+@@ -197,4 +224,4 @@
+ python3 -B $PREUVES/outils/campagne_mutation/verifier_campagne_009.py $RACINE [--rejeu N]       # cohérence 797 = 770 + 3 + 24 sur les sorties enregistrées (+ rejeu ciblé)
+ ```
+ Sans argument autre que `RACINE`, le rapprochement lit les sorties enregistrées sous `$PREUVES/sorties_brutes/`.
+-Sorties brutes de cette campagne : `fichiers-a-relire/preuves_009_pv/sorties_brutes/` (`campagne_complete/`, `passes_diagnostic/`, `preuves_equivalence/`, `suites_et_integrite/`, `historique/`). Rejeu partiel fait depuis cette arborescence le 10/10 (campagne complète **non** rejouée en entier) : `sorties_brutes/rejeu_depuis_structure_livree/`.
++Sorties brutes conservées (dossier minimal) : `fichiers-a-relire/preuves_009_pv/sorties_brutes/` — références historiques `campagne_complete/` et `passes_diagnostic/` ; dernier rejeu `rejeu_copie_propre_2026-10-10/` ; expérience à date simulée `experience_date_decalee_2026-10-10/`. Écartées (non publiées, voir LISEZ-MOI §6) : rejeu partiel de la nuit, journaux historiques de preuves et de suites, journal du 1er essai, outil de la campagne initiale (`mut009_v0_campagne_initiale.py`, sha256 `d8dcd8636731be016ee7010218437fcebba2b725e66e011c1b44d91714bbd589`, cité pour mémoire).
+--- a/fichiers-a-relire/BILAN_VALIDATION__009_pv__controle_nul.md
++++ b/fichiers-a-relire/BILAN_VALIDATION__009_pv__controle_nul.md
+@@ -1,7 +1,7 @@
+ # BILAN DE VALIDATION — 009 PV, contrôle de l'octet NUL (D1–D3)
+ 
+ Date : 2026-10-10. Dépôt de travail `g007/` (HEAD `a9fd50f`, branche `main` non en avance sur `origin/main`). SQLite 3.45.1, Python 3.11.15.
+-**Rien n'est commité ni poussé. Aucune migration 001–008 n'est modifiée. Z-8 et INV-131 sont inchangés. La tranche 010 n'est pas commencée.**
++**À la rédaction (copie de travail), rien n'était commité ni poussé ; l'état actuel du dépôt est décrit au §7. Aucune migration 001–008 n'est modifiée. Z-8 et INV-131 sont inchangés. La tranche 010 n'est pas commencée.**
+ 
+ ## 1. Ce qui a été modifié (autorisations 1 à 3)
+ 
+@@ -75,8 +75,8 @@
+ | `test_009_pv` seul | 268 tests, **940 sous-tests**, OK | 268 ✔ (sous-tests : nouveau chiffre ; l'ancien, 669, est retrouvé sur l'ancien fichier) |
+ | Intégrité sur base construite par la chaîne 001→009 et alimentée (6 PV V6 dont 3 levées + 1 PV importé à `legacy_data` contenant `\u0000`) | `integrity_check` = ok, `quick_check` = ok, `foreign_key_check` = vide, en mémoire **et** sur fichier ; `user_version` = 12 ; table `pv` STRICT ; 3 triggers 009 | — |
+ | Campagne complète de mutation (`mut009b.py`) | **797 mutants : 770 tués, 3 invalides, 0 délai dépassé, 24 survivants** | 19 survivants annoncés → **divergence, voir §3** |
+-| Passe sans groupe A | 758 / 3 / 36 survivants (= 24 + les mêmes 12 mutants structurels qu'avant) | — |
+-| Passe sans groupe A ni test témoin de texte | 744 / 3 / 50 survivants (= 36 + 14 tués seulement par le texte du témoin) | « 6 équivalents probables » annoncés → **14, voir §3** |
++| Passe sans groupe A | 758 / 3 / 36 survivants (= 24 + les mêmes 12 mutants structurels qu'avant) — **rejeu du 10/10 au soir : 37 (jour UTC où mois = jour) ; 36 avec l'horloge simulée au 8 sept. — §7** | — |
++| Passe sans groupe A ni test témoin de texte | 744 / 3 / 50 survivants (= 36 + 14 tués seulement par le texte du témoin) — **rejeu du 10/10 au soir : 51 ; 50 avec l'horloge simulée au 8 sept. — §7** | « 6 équivalents probables » annoncés → **14, voir §3** |
+ | Preuves d'équivalence liées au SQL du dépôt (`preuves_equivalence_009.py`, 203 s) | **52 contrôles OK, 0 échec, TOUT EST OK** : 24 survivants S01–S24, 14 mutants K01–K14, 11 témoins non équivalents qui divergent | 29 contrôles annoncés (19 + 7 témoins…) → étendu |
+ | Rapprochement campagne ↔ registre (`rapprochement_survivants_registre.py`) | **BIJECTION OK** : 24 survivants ↔ S01–S24 (SQL muté identique octet pour octet) ; 14 ↔ K01–K14. Épreuve négative (survivant retiré, intrus ajouté) : ECHEC (rejouée par `epreuves_negatives_rapprochement.py`) | nouveau |
+ 
+@@ -115,7 +115,7 @@
+ 1. Valider le **diff final** (SQL + tests + rapport de mutation) avant tout commit ; je n'ai rien commité.
+ 2. Option `C_LEGACY_JSON` plus stricte (une ligne) : l'appliquer (S20–S21 tués par le texte du message) ou garder le test validé tel quel (S20–S21 restent des équivalents qualifiés).
+ 3. Les 14 kills « textuels » (§4 quater) : les accepter comme tels, ou ajouter un test comportemental pour ceux qui ne dépendent pas du moteur (`<= N` ne peut pas être distingué comportementalement ; les 12 mutants `instr`/`CAST` sont équivalents sur 3.45.1 par construction).
+-4. Placer ou non le script de preuve (et l'outil de campagne) dans le dépôt, et sous quelle forme (§4).
++4. Placer ou non le script de preuve (et l'outil de campagne) dans le dépôt, et sous quelle forme (§4) — *depuis : dossier `preuves_009_pv/` publié partiellement le 10/10 à 21 h 06, voir §7*.
+ 5. Mentions documentaires optionnelles D-1 à D-3 (`PROPOSITION_DOC__009_pv__formulations_controle_nul.md`) : aucune n'est nécessaire à la conformité.
+ 6. **Version de SQLite embarquée par Tauri : non vérifiée.** D1–D3 n'emploient que `length`, `instr`, `CAST AS BLOB` ; E10 est relative à la version.
+ 7. Les services Rust/TS filtrent-ils déjà les NUL ? écrivent-ils `created_at` explicitement ? (hors dépôt ; un `created_at` non conforme sera désormais refusé).
+@@ -124,11 +124,19 @@
+ 
+ ## 6. Pièces livrées dans `fichiers-a-relire/`
+ 
+-`RAPPORT_MUTATION__009_pv.md` (mis à jour) · `BILAN_VALIDATION__009_pv__controle_nul.md` (ce fichier) · `DIFF_FINAL__009_pv.sql.diff` · `DIFF_FINAL__test_009_pv.py.diff` · `PROPOSITION_DOC__009_pv__formulations_controle_nul.md` · `preuves_009_pv/` (`LISEZ-MOI__preuves_009_pv.md`, `MANIFEST_SHA256.txt`, `outils/`, `sorties_brutes/` : suites, campagnes, preuves, intégrité, rapprochement, survivants, tueurs, essai 1, rejeu du 10/10 ; non versionnés dans `src-tauri/`).
++`RAPPORT_MUTATION__009_pv.md` (mis à jour) · `BILAN_VALIDATION__009_pv__controle_nul.md` (ce fichier) · `DIFF_FINAL__009_pv.sql.diff` · `DIFF_FINAL__test_009_pv.py.diff` · `PROPOSITION_DOC__009_pv__formulations_controle_nul.md` · `preuves_009_pv/` (dossier minimal de 48 fichiers : `LISEZ-MOI__preuves_009_pv.md`, `MANIFEST_SHA256.txt`, `MANIFEST_SHA256__fichiers_valides.txt`, `outils/`, `sorties_brutes/` : références historiques de la campagne et des passes, dernier rejeu, expérience à date simulée ; non versionnés dans `src-tauri/`).
+ 
+-## 7. Mise en cohérence des preuves (2026-10-10, après contrôle) — aucune conclusion technique modifiée
++## 7. Mise à jour du 2026-10-10 au soir : état du dépôt, rejeu complet, nettoyage — aucune conclusion technique modifiée
+ 
+-Les chemins cités plus haut ont été alignés sur l'arborescence réellement livrée (`fichiers-a-relire/preuves_009_pv/`). Aucun résultat, aucun chiffre et aucune empreinte du SQL, des tests et des diffs n'ont changé.
+-- **Rejeu depuis l'arborescence livrée** (SQLite 3.45.1) : cohérence 797 = 770 + 3 + 24 (12 contrôles OK) ; rejeu ciblé de 87 mutants (3 invalides, 24 survivants, 60 tués tirés au hasard) = mêmes statuts et mêmes tests tueurs ; `preuves_equivalence_009.py` 52 OK ; rapprochement BIJECTION OK ; 4 épreuves négatives conformes ; classement, intégrité et comptage (268 / 940) identiques. Sorties : `preuves_009_pv/sorties_brutes/rejeu_depuis_structure_livree/`.
+-- **Non rejoué** : la campagne complète de 797 mutants (710 tués non tirés au sort ne sont vérifiés que par cohérence de partition) et les deux passes de contrôle ; la suite 001→009 complète. Toutes les preuves restent établies **sur SQLite 3.45.1 seulement**.
+-- Sur `origin/main`, `outils_mutation_009.py` et `sorties_brutes_009_nul.py` sont des doublons mal nommés (preuve d'équivalence ; ancienne version du rapprochement) ; ils ne sont pas modifiés ici.
++**Distinction historique / état actuel.** Les §1 à §6 décrivent la copie de travail à la rédaction (10/10, 01 h–03 h : rien de commité ni poussé). Depuis, tu as poussé : au commit `main` = `5ebf202` (10/10 21 h 06), `009_pv.sql` et `test_009_pv.py` portent les empreintes du §1 (`764a2d30…` / `4d567211…`) ; le dossier `preuves_009_pv/` n'était publié que partiellement (13 fichiers sur 41, dont `classify009b.py` et `verifier_campagne_009.py` dans un mauvais sous-dossier) ; `mut009b.py`, `genmut009b.py` et les sorties brutes de la campagne n'étaient pas sur `main`. `DIFF_FINAL__009_pv.sql.diff` publié (`97a761a0…`, 47 lignes) est la version sans les deux dernières lignes vides du fichier d'origine (`37a4e7f7…`, 49 lignes) ; les deux s'appliquent de la même façon.
++
++**Rejeu complet depuis une copie propre** (`main` 5ebf202 + uniquement les 48 fichiers de `preuves_009_pv/`, commande unique `outils/rejouer_toutes_les_verifications_009.sh`, 22 h 49–23 h 05, SQLite 3.45.1, Python 3.11.15) — sorties : `preuves_009_pv/sorties_brutes/rejeu_copie_propre_2026-10-10/` :
++- campagne complète : 966 générés / 797 distincts ; **770 tués, 3 invalides, 24 survivants**, 0 délai dépassé (197 s) ; **identique à l'historique** (survivants et invalides octet pour octet ; même test tueur pour chacun des 770 tués) ;
++- partition exacte, rapprochement BIJECTION OK (24↔24, 14↔14), 4 épreuves négatives conformes, 52 contrôles de preuve OK, classement identique, suites 13 et 1 866 OK, 268 tests / 940 sous-tests, intégrité identique ;
++- **deux passes de diagnostic différentes de l'historique** : 37 survivants (sans A) et 51 (sans A ni témoin K) au lieu de 36 et 50. Cause : `default_fmt#1` n'est tué hors groupe A que par un test comparant le `created_at` par défaut à l'heure UTC courante, et le rejeu a eu lieu un jour où mois = jour (10/10 UTC). **Expérience exécutée** (horloge simulée des seuls processus de la campagne, `outils/controles/passes_a_date_decalee_009.sh`) : au 2026-09-08 (mois ≠ jour) les passes redonnent **36 et 50**, listes identiques à l'historique ; au 2026-09-09 (mois = jour) **37 et 51**, avec la seule entrée `default_fmt#1` en plus. Confirmation **pour l'horloge vue par les processus**, pas un rejeu un autre jour réel ; aucun test, SQL ni nombre attendu modifié (détail : `LISEZ-MOI__preuves_009_pv.md` §5).
++
++**Statuts.** Exécutées et réussies : tout ce qui précède sauf les deux passes. Exécutées avec écart expliqué et testé par horloge simulée : les deux passes. **Résultat historique conservé, non reproduit ici** : les contrôles sur d'autres versions de SQLite (D1–D3 sur 3.39.4→3.53.4, suite sur 3.51.1, rusqlite 3.53.2). **Impossible** : moteur SQLite réellement embarqué dans l'application (V-7) et services Rust/TypeScript (absents du dépôt).
++
++**Doublons.** `fichiers-a-relire/outils_mutation_009.py` (copie exacte de `preuves_equivalence_009.py`) et `fichiers-a-relire/sorties_brutes_009_nul.py` (ancienne version du rapprochement, remplacée) sont proposés à la suppression ; elle n'est sûre que si `preuves_equivalence_009.py` est publié dans le même lot (c'était la seule copie du script de preuve sur `main`). Le diff `DIFF_DOC__rapport_bilan__chemins_preuves.diff` publié le 10/10 21 h 06 décrit la correction de chemins précédente ; il est conservé tel quel (sa mention des anciens noms est historique).
++
++**Réserves non fermées.** Moteur embarqué non identifié ; compatibilité avec les futurs services Rust/TypeScript non démontrée ; résultats sur SQLite 3.45.1 seulement ; une campagne réussie ne remplace pas la validation sur le moteur réellement utilisé.
+--- a/fichiers-a-relire/preuves_009_pv/LISEZ-MOI__preuves_009_pv.md
++++ b/fichiers-a-relire/preuves_009_pv/LISEZ-MOI__preuves_009_pv.md
+@@ -1,90 +1,145 @@
+-# Preuves de la migration 009 (PV) — inventaire et mode de rejeu
++# Preuves de la migration 009 (PV) — dossier minimal, mode de rejeu et statut des vérifications
+ 
+-Date : 2026-10-10. Objet : rendre **auditables et rejouables** les preuves de `RAPPORT_MUTATION__009_pv.md` et `BILAN_VALIDATION__009_pv__controle_nul.md`.
+-**Ce dossier ne contient ni migration, ni test, ni document officiel.** Il n'est pas destiné à `src-tauri/`. Rien n'est commité.
++Objet : rendre **auditables et rejouables depuis un clone** les preuves de `RAPPORT_MUTATION__009_pv.md` et `BILAN_VALIDATION__009_pv__controle_nul.md`.
++Ce dossier ne contient ni migration, ni test, ni document officiel ; il n'est pas destiné à `src-tauri/`. Il ne contient **que** ce qui sert à comprendre, rejouer ou comparer (§2, §6).
++
++**Statut d'ensemble (daté).** Au commit `main` = `5ebf202` (2026-10-10 21:06), `009_pv.sql` et `test_009_pv.py` corrigés sont sur `main` (empreintes en §1) mais le dossier de preuves n'y est que partiel (13 fichiers, dont 2 mal rangés ; `mut009b.py`, `genmut009b.py`, `preuves_equivalence_009.py` — publié sous le nom `fichiers-a-relire/outils_mutation_009.py` — et les sorties de campagne manquent) : **ce clone brut de `main` ne permet pas de rejouer la campagne**. L'arborescence décrite ci-dessous est celle qui a été rejouée **en entier le 2026-10-10 (22:49–23:05, heure de Paris) depuis une copie contenant uniquement `main` 5ebf202 et les fichiers de ce dossier** (§4) : elle est donc reproductible depuis un clone propre *une fois publiée*. Ses empreintes sont dans `MANIFEST_SHA256.txt`.
+ 
+ ## 1. Prérequis
+ 
+-- Python 3 (rejeu fait avec 3.11.15), bibliothèque standard seulement. SQLite : celui de Python (rejeu fait avec **3.45.1**).
+-- `RACINE` = un dossier contenant `src-tauri/` avec les migrations 001→009 **et le `009_pv.sql` / `test_009_pv.py` révisés** (sha256 dans `MANIFEST_SHA256.txt`). Sur `origin/main`, ces deux fichiers sont encore les anciens : les outils s'arrêtent ou échouent dessus.
+-- Les scripts s'appellent **par leur chemin** et se retrouvent entre eux **par leur position relative** : ne pas renommer ni séparer `outils/preuves_equivalence/` (le rapprochement lit `preuves_equivalence_009.py` dans le même dossier) ni `outils/campagne_mutation/` (`genmut009b.py` et `classify009b.py` lisent `mut009b.py`).
++- Python 3 (rejeu fait avec 3.11.15), bibliothèque standard seulement ; bash pour les scripts d'ensemble ; **gcc** seulement pour l'expérience à date décalée (§5). SQLite : celui de Python (rejeu fait avec **3.45.1**) ; 2 cœurs.
++- `RACINE` = un clone du dépôt (dossier contenant `src-tauri/` et `fichiers-a-relire/`). Références exigées par les outils (sha256 complets) :
++  - `src-tauri/migrations/metier/009_pv.sql` : `764a2d302969f471bad2e6770f57454eff7659ebd886e5c6aa6be14509d84cb3`
++  - `src-tauri/tests/metier/test_009_pv.py` : `4d56721107285773f12920224c2f83ded43f7aeb74b96a8909ef57beaeb59f04`
++  Sur une version plus ancienne de ces deux fichiers, les outils s'arrêtent ou échouent.
++- Les scripts s'appellent **par leur chemin** et se retrouvent entre eux **par leur position relative** : ne pas renommer ni séparer `outils/preuves_equivalence/` (le rapprochement lit `preuves_equivalence_009.py` dans le même dossier) ni `outils/campagne_mutation/` (`genmut009b.py`, `classify009b.py`, `verifier_campagne_009.py` lisent `mut009b.py`).
+ - Aucun script n'écrit dans le dépôt : `mut009b.py` travaille dans des copies de `src-tauri/` sous le dossier de travail donné.
+ 
+-## 2. Arborescence
++## 2. Contenu conservé (48 fichiers) et rôle de chacun
+ 
+ ```
+ preuves_009_pv/
+-├── LISEZ-MOI__preuves_009_pv.md            (ce fichier)
+-├── MANIFEST_SHA256.txt                     empreintes de tous les fichiers de ce dossier (vérifiable : cd preuves_009_pv && sha256sum -c MANIFEST_SHA256.txt)
+-├── MANIFEST_SHA256__fichiers_valides.txt   empreintes du SQL, des tests, des diffs, du rapport et du bilan (chemins relatifs à RACINE ; sha256sum -c depuis RACINE)
++├── LISEZ-MOI__preuves_009_pv.md            ce fichier
++├── MANIFEST_SHA256.txt                     empreintes de TOUS les fichiers de ce dossier sauf lui-même (vérification : outils/controles/verifier_manifestes_009.py)
++├── MANIFEST_SHA256__fichiers_valides.txt   empreintes du SQL, des tests, des diffs, du rapport, du bilan (chemins depuis RACINE)
+ ├── outils/
++│   ├── rejouer_toutes_les_verifications_009.sh   COMMANDE UNIQUE : rejoue tout et classe chaque étape (§3)
+ │   ├── campagne_mutation/
+-│   │   ├── mut009b.py                      campagne complète (génère 966 mutants → 797 distincts, les exécute)
++│   │   ├── mut009b.py                      campagne complète (966 mutants générés → 797 distincts, exécutés) ; passes de diagnostic via MUT_EXCLUDE
+ │   │   ├── genmut009b.py                   régénère les mutants de mut009b.py (bibliothèque)
+-│   │   ├── classify009b.py                 classement par famille depuis les sorties enregistrées
+-│   │   └── verifier_campagne_009.py        NOUVEAU : partition 797 = 770 + 3 + 24 ; rejeu ciblé facultatif
++│   │   ├── classify009b.py                 classement par famille depuis des sorties enregistrées
++│   │   ├── verifier_campagne_009.py        partition 797 = 770 + 3 + 24 ; rejeu ciblé facultatif
++│   │   └── comparer_campagne_009.py        compare une campagne rejouée aux sorties de référence, sans rien masquer
+ │   ├── preuves_equivalence/
+-│   │   ├── preuves_equivalence_009.py      52 contrôles sur le SQL réel (S01–S24, K01–K14, témoins)
++│   │   ├── preuves_equivalence_009.py      52 contrôles sur le SQL réel (S01–S24, K01–K14, témoins) ; porte le registre S/K
+ │   │   ├── rapprochement_survivants_registre.py   bijection survivants de la campagne ↔ registre S/K
+-│   │   └── epreuves_negatives_rapprochement.py    NOUVEAU : le rapprochement doit échouer dans 4 cas
+-│   ├── controles/
+-│   │   ├── compte_sous_tests.py            268 tests / 940 sous-tests
+-│   │   └── controle_integrite_009.py       integrity_check / foreign_key_check sur base construite 001→009
+-│   └── historique/mut009_v0_campagne_initiale.py   outil de la 1re campagne (pour mémoire)
++│   │   └── epreuves_negatives_rapprochement.py    le rapprochement doit échouer dans 4 cas
++│   └── controles/
++│       ├── compte_sous_tests.py            268 tests / 940 sous-tests
++│       ├── controle_integrite_009.py       integrity_check / foreign_key_check sur base construite 001→009
++│       ├── verifier_manifestes_009.py      vérifie réellement les deux manifestes (empreintes + périmètre exact)
++│       ├── passes_a_date_decalee_009.sh    expérience : rejoue les deux passes de diagnostic à une date UTC simulée (§5)
++│       └── faketime_shim.c                 bibliothèque LD_PRELOAD (décalage d'horloge d'un processus) utilisée par le script précédent
+ └── sorties_brutes/
+-    ├── campagne_complete/                  mut009_complete.log, tueurs_…json (770), survivants_… (24), invalides_… (3), classification_familles.txt
+-    ├── passes_diagnostic/                  passes « sans groupe A » et « sans A ni témoin K » (journaux + survivants)
+-    ├── preuves_equivalence/                preuves_sql_depot.log (52 OK), rapprochement.log (BIJECTION OK)
+-    ├── suites_et_integrite/                suite_metier.log (1 866), suite_machine.log (13), compte_sous_tests.log, integrite.log
+-    ├── historique/                         journal du 1er essai (outil v1, 27 invalides, défaut CAST)
+-    └── rejeu_depuis_structure_livree/      sorties du rejeu fait DEPUIS cette arborescence (voir §5)
++    ├── campagne_complete/                  RÉFÉRENCE HISTORIQUE (5 fichiers) : tueurs (770), survivants (24), invalides (3), journal, classification_familles.txt
++    ├── passes_diagnostic/                  RÉFÉRENCE HISTORIQUE (4 fichiers) : passes « sans A » (36 survivants) et « sans A ni témoin K » (50)
++    ├── rejeu_copie_propre_2026-10-10/      SORTIES DU DERNIER REJEU (14 fichiers dont 2 listes de survivants rejoués des passes) : STATUT.tsv, environnement.txt, étapes 04–07, 10, 11, 13–16
++    └── experience_date_decalee_2026-10-10/ SORTIES DE L'EXPÉRIENCE du §5 (2 dates × 4 fichiers)
+ ```
+ 
+-## 3. Commandes de rejeu (depuis n'importe quel dossier ; `RACINE` et `PREUVES` à adapter)
++Les deux références historiques sont lues par les scripts (comparaison, rapprochement, classement) : elles ne sont donc pas facultatives. Elles proviennent de la copie de travail et ont été produites le 2026-10-09 (≈ 23:00 UTC) ; les scripts de ce dossier sont **octet pour octet** ceux qui les ont produites, hors `classify009b.py`, `rapprochement_survivants_registre.py` et `verifier_campagne_009.py` (voir §7).
+ 
+-`PREUVES` = ce dossier (`…/fichiers-a-relire/preuves_009_pv`).
++## 3. Commandes de rejeu
+ 
+-| But | Commande | Durée observée | Résultat attendu |
+-|---|---|---|---|
+-| Cohérence 797 = 770 + 3 + 24 (statique) | `python3 -B $PREUVES/outils/campagne_mutation/verifier_campagne_009.py $RACINE` | ≈ 1 s | `COHÉRENT` |
+-| + rejeu ciblé de 3 invalides, 24 survivants, N tués | `… verifier_campagne_009.py $RACINE --rejeu 60 --travail /tmp/rejeu009` | 90 s | `COHÉRENT` |
+-| Preuves d'équivalence liées au SQL | `python3 -B $PREUVES/outils/preuves_equivalence/preuves_equivalence_009.py $RACINE` | 203–296 s | 52 contrôles OK, `TOUT EST OK` |
+-| Rapprochement survivants ↔ registre | `python3 -B $PREUVES/outils/preuves_equivalence/rapprochement_survivants_registre.py $RACINE` | < 1 s | `BIJECTION OK` |
+-| Épreuves négatives du rapprochement | `python3 -B $PREUVES/outils/preuves_equivalence/epreuves_negatives_rapprochement.py $RACINE` | quelques s | `TOUTES LES ÉPREUVES ÉCHOUENT COMME ATTENDU` |
+-| Classement par famille | `python3 -B $PREUVES/outils/campagne_mutation/classify009b.py $RACINE` | quelques s | identique à `classification_familles.txt` |
+-| Intégrité SQLite / FK | `python3 -B $PREUVES/outils/controles/controle_integrite_009.py $RACINE` | quelques s | `OK` |
+-| Comptage tests / sous-tests | `python3 -B $PREUVES/outils/controles/compte_sous_tests.py $RACINE/src-tauri/tests/metier` | ≈ 13 s | `tests 268 sous-tests 940 ok` |
+-| **Campagne complète (797 mutants)** | `python3 -B $PREUVES/outils/campagne_mutation/mut009b.py $RACINE /tmp/mut009_travail` | non rejouée en entier le 10/10 | `{'tué': 770, 'survivant': 24, 'invalide': 3}` + fichiers `survivors009.txt`, `invalides009.txt`, `killers009.json` |
+-| Passe sans groupe A | `MUT_EXCLUDE=Chaine python3 -B …/mut009b.py $RACINE /tmp/m_sansA` | idem | 36 survivants |
+-| Passe sans A ni témoin K | `MUT_EXCLUDE=Chaine,Malformees.test_T51_K_TEMOIN_sans_les_controles_de_longueur_et_d_octet_nul_les_valeurs_a_queue_passent python3 -B …/mut009b.py $RACINE /tmp/m_sansAK` | idem | 50 survivants |
++`PREUVES` = `RACINE/fichiers-a-relire/preuves_009_pv`.
+ 
+-Le rapprochement accepte aussi les arguments explicites de l'ancienne forme : `… RACINE mut009b.py survivors009.txt [survivors_sans_A.txt survivors_sans_A_ni_temoin_K.txt]` (utile pour comparer une campagne fraîchement rejouée).
++**Commande unique** (≈ 16 min sur 2 cœurs ; le dossier de sortie doit être vide ou absent) :
++```
++bash $PREUVES/outils/rejouer_toutes_les_verifications_009.sh $RACINE /chemin/sortie [/chemin/travail]
++```
++Elle écrit `STATUT.tsv` (une ligne par étape : `reussie` / `echouee` / `non_executee`, code, durée, commande) et une sortie brute par étape ; code de sortie 1 si une étape échoue. `SANS_CAMPAGNE=1` saute les trois campagnes de mutation (étapes 01–07 alors `non_executee`). **Attendu les jours UTC où mois = jour (1/1 … 12/12) : l'étape 05 échoue (§5) et le script rend donc 1** ; ce n'est pas une régression, c'est la dépendance à la date décrite au §5.
+ 
+-## 4. Quelle sortie brute prouve quoi
++Vérification des manifestes (après rejeu ou seule ; non incluse dans le script d'ensemble car les manifestes se recalculent à chaque édition) :
++```
++python3 -B $PREUVES/outils/controles/verifier_manifestes_009.py $RACINE        # attendu : CONFORME
++```
++Expérience à date décalée (facultative, ≈ 7 min par date) :
++```
++bash $PREUVES/outils/controles/passes_a_date_decalee_009.sh $RACINE /chemin/sortie 2026-09-08   # mois ≠ jour : attendu 36 et 50, listes identiques à l'historique
++```
++
++Commandes unitaires :
+ 
+-| Affirmation | Sortie brute | Outil qui la recoupe | Limite |
++| But | Commande | Durée observée (dernier rejeu) | Résultat attendu |
+ |---|---|---|---|
+-| 797 mutants distincts (966 générés) | `campagne_complete/mut009_complete.log` l.1 | `verifier_campagne_009.py` (régénère) | — |
+-| 770 tués, avec le test tueur de chacun | `campagne_complete/tueurs_campagne_complete.json` | `verifier_campagne_009.py` : partition + existence des 45 tests tueurs | Que chacun des 770 soit bien tué n'est **rejoué que pour l'échantillon** (60 tirés, graine 2026) ; le reste exige la campagne complète |
+-| 3 invalides (SQL qui ne se charge pas) | `campagne_complete/invalides_campagne_complete.txt` + message d'erreur dans `mut009_complete.log` | rejeu ciblé : les 3 retrouvés | — |
+-| 24 survivants | `campagne_complete/survivants_campagne_complete.txt` | rejeu ciblé : les 24 survivent encore | — |
+-| Les 24 survivants sont équivalents, et eux seuls | `preuves_equivalence/preuves_sql_depot.log` (52 OK) + `rapprochement.log` (BIJECTION OK) | rejeu des deux scripts, épreuves négatives | Preuves **sur SQLite 3.45.1** ; les domaines bornés sont dans le script (rapport §4) |
+-| 14 mutants K tués seulement par le texte du témoin | `passes_diagnostic/*` + `rapprochement.log` (partie K) | rejeu du rapprochement | E10 (`instr(TEXT,x'00')` ≡ `instr(CAST…)`) dépend du moteur : vérifiée sur 3.45.1 seulement ici |
+-| Suites 1 866 / 13 / 268 / 940, intégrité | `suites_et_integrite/*` | `compte_sous_tests.py`, `controle_integrite_009.py` rejoués | La suite 001→009 complète (≈ 102 s) n'a pas été rejouée dans ce lot (sortie du 10/10 conservée) |
+-
+-## 5. Rejeu fait le 2026-10-10 depuis cette arborescence
+-
+-Dossier `sorties_brutes/rejeu_depuis_structure_livree/` (SQLite 3.45.1, Python 3.11.15, SQL et tests aux empreintes du manifeste) :
+-`verifier_campagne_009` partie 1 = 12 contrôles OK ; partie 2 (87 mutants) = 24 survivants, 3 invalides et 60 tués retrouvés avec le **même test tueur** ; `preuves_equivalence_009.py` = 52 OK, journal identique à l'original (hors durée) ; `rapprochement` = BIJECTION OK, journal identique à l'original ; épreuves négatives = 4 échecs attendus ; classement et intégrité identiques à l'original ; 268 tests / 940 sous-tests.
+-**Non rejoué** : la campagne complète de 797 mutants (710 tués non tirés au sort), et les passes « sans A » / « sans A ni témoin K ».
+-
+-## 6. Ce qui a changé par rapport aux outils précédents
+-
+-- `rapprochement_survivants_registre.py` : arguments facultatifs à valeurs par défaut déduites de l'arborescence ; contrôle explicite des fichiers requis (code de sortie 2 et message clair, au lieu d'un `FileNotFoundError`) ; logique de rapprochement **inchangée** (mêmes résultats, journal identique).
+-- `classify009b.py` : chemins relatifs codés en dur remplacés par des arguments (même sortie).
+-- `mut009b.py`, `genmut009b.py`, `preuves_equivalence_009.py`, `compte_sous_tests.py`, `controle_integrite_009.py`, `mut009_v0…` : **octet pour octet identiques** (empreintes du manifeste = celles du rapport).
+-- Nouveaux : `verifier_campagne_009.py`, `epreuves_negatives_rapprochement.py`, ce fichier, `MANIFEST_SHA256.txt`, dossier `rejeu_depuis_structure_livree/`.
++| **Campagne complète (797 mutants)** | `python3 -B $PREUVES/outils/campagne_mutation/mut009b.py $RACINE /tmp/mut009_travail` | 197 s | `{'tué': 770, 'survivant': 24, 'invalide': 3}` ; fichiers `survivors009.txt`, `invalides009.txt`, `killers009.json` |
++| Passe sans groupe A | `MUT_EXCLUDE=Chaine python3 -B …/mut009b.py $RACINE /tmp/m_sansA` | 199 s | 36 survivants **ou 37 selon la date UTC (§5)** |
++| Passe sans A ni témoin K | `MUT_EXCLUDE=Chaine,Malformees.test_T51_K_TEMOIN_sans_les_controles_de_longueur_et_d_octet_nul_les_valeurs_a_queue_passent python3 -B …/mut009b.py $RACINE /tmp/m_sansAK` | 206 s | 50 survivants **ou 51 selon la date UTC (§5)** |
++| Comparaison campagne rejouée ↔ référence | `python3 -B $PREUVES/outils/campagne_mutation/comparer_campagne_009.py DOSSIER_REJEU` | < 1 s | `IDENTIQUE A LA RÉFÉRENCE` |
++| Cohérence 797 = 770 + 3 + 24 (statique) | `python3 -B $PREUVES/outils/campagne_mutation/verifier_campagne_009.py $RACINE [--sorties DOSSIER]` | < 1 s | `COHÉRENT` |
++| + rejeu ciblé (3 invalides, 24 survivants, N tués) | `… verifier_campagne_009.py $RACINE --rejeu 60 --travail /tmp/rejeu009` | ≈ 90 s (rejeu partiel de la nuit du 10/10, non conservé) | `COHÉRENT` |
++| Rapprochement survivants ↔ registre | `python3 -B $PREUVES/outils/preuves_equivalence/rapprochement_survivants_registre.py $RACINE [mut009b.py survivors009.txt survivors_sans_A.txt survivors_sans_A_ni_temoin_K.txt]` | < 1 s | `BIJECTION OK` |
++| Épreuves négatives du rapprochement | `python3 -B $PREUVES/outils/preuves_equivalence/epreuves_negatives_rapprochement.py $RACINE` | 1 s | `TOUTES LES ÉPREUVES ÉCHOUENT COMME ATTENDU` |
++| Preuves d'équivalence liées au SQL | `python3 -B $PREUVES/outils/preuves_equivalence/preuves_equivalence_009.py $RACINE` | 216 s | 52 contrôles OK, `TOUT EST OK` |
++| Classement par famille | `python3 -B $PREUVES/outils/campagne_mutation/classify009b.py $RACINE [DOSSIER_SORTIES]` | < 1 s | identique à `classification_familles.txt` |
++| Suite machine / suite métier 001→009 | `cd $RACINE/src-tauri/tests/{machine,metier} && python3 -B -m unittest discover -s . -p 'test_*.py'` | < 1 s / 103 s | 13 / 1 866 tests OK |
++| Comptage tests et sous-tests | `python3 -B $PREUVES/outils/controles/compte_sous_tests.py $RACINE/src-tauri/tests/metier` | 14 s | `tests 268 sous-tests 940 ok` |
++| Intégrité SQLite / FK | `python3 -B $PREUVES/outils/controles/controle_integrite_009.py $RACINE` | < 1 s | `OK` |
+ 
+-## 7. Fichiers déjà poussés sur GitHub sous d'autres noms (à décider par le propriétaire du dépôt)
++## 4. Statut de chaque vérification (distinction stricte)
+ 
+-`fichiers-a-relire/outils_mutation_009.py` = `outils/preuves_equivalence/preuves_equivalence_009.py` (identique) ; `fichiers-a-relire/sorties_brutes_009_nul.py` = ancienne version du rapprochement (sha256 `1d56db56…`, **remplacée** par celle de ce dossier ; elle échoue telle que poussée). Ces deux fichiers sont des doublons mal nommés ; je n'y touche pas (aucun commit, aucun push).
++**Dernier rejeu** : 2026-10-10, 22:49:39 → ≈ 23:05 (Paris), soit le **10/10 UTC** ; SQLite 3.45.1, Python 3.11.15, 2 cœurs ; copie de `main` 5ebf202 **plus uniquement les fichiers de ce dossier** (ni git, ni fichier extérieur) ; commande unique du §3. Sorties : `sorties_brutes/rejeu_copie_propre_2026-10-10/`. Les outils sont restés inchangés pendant le rejeu (empreintes comparées avant/après). Les sorties 08, 09 et 12 de `STATUT.tsv` ne sont pas conservées : elles sont octet pour octet identiques aux sorties 07, 06 et à `campagne_complete/classification_familles.txt` (comparées par `cmp`).
++
++| Vérification | Statut | Sortie | Observation |
++|---|---|---|---|
++| Campagne complète : 966 générés, 797 distincts ; 770 tués / 3 invalides / 24 survivants ; 0 délai dépassé | **exécutée, réussie** | 01, 04 | **Identique à la référence historique** : mêmes 24 survivants et mêmes 3 invalides (octet pour octet), même test tueur pour chacun des 770 tués |
++| Partition 797 et cohérence (45 tests tueurs distincts existants) | **exécutée, réussie** | 06 (campagne rejouée ; la 09, sur la référence, lui est identique) | pas de doublon, d'oubli ni d'intrus |
++| Rapprochement survivants ↔ registre S01–S24 / K01–K14 | **exécutée, réussie** | 07 (survivants rejoués ; la 08, sur la référence, lui est identique) | BIJECTION OK 24↔24 et 14↔14 |
++| Épreuves négatives du rapprochement | **exécutée, réussie** | 10 | 4 échecs attendus sur 4 |
++| Preuves d'équivalence (24 survivants, 14 K, 11 témoins non équivalents) | **exécutée, réussie** | 11 | 52 contrôles OK, 0 échec ; journal identique à l'ancien hors chemin et durée |
++| Classement par famille | **exécutée, réussie** | 12 (non conservée : identique à `campagne_complete/classification_familles.txt`) | identique à la référence |
++| Suite machine (13) et suite métier 001→009 (1 866) | **exécutées, réussies** | 13, 14 | |
++| Comptage 268 tests / 940 sous-tests | **exécutée, réussie** | 15 | |
++| Intégrité SQLite et clés étrangères | **exécutée, réussie** | 16 | identique à la référence |
++| Passe « sans groupe A » | **exécutée, résultat DIFFÉRENT de la référence** (étape 05 « échouée ») | 02, 05, `rejeu_copie_propre…/passes_diagnostic/` | 37 survivants au lieu de 36 : explication et expérience au §5 |
++| Passe « sans A ni témoin K » | **exécutée, résultat DIFFÉRENT de la référence** | 03, 05 | 51 survivants au lieu de 50 : §5 |
++| Expérience à date simulée (8 et 9 sept.) | **exécutée, réussie** (hypothèse confirmée *pour l'horloge vue par les processus*) | `experience_date_decalee_2026-10-10/` | §5 |
++| Vérification des deux manifestes | **exécutée, réussie** lors de la préparation de cet arbre final (script `verifier_manifestes_009.py`) | non conservée (dépend des empreintes de ce dossier) | à relancer par le lecteur : commande au §3 |
++| Compatibilité sur d'autres versions de SQLite (D1–D3 sur 3.39.4→3.53.4, suite sur 3.51.1, rusqlite 3.53.2) | **résultat historique conservé, NON reproduit** | non publié (scripts hors dépôt) | cité dans le rapport comme historique |
++| Rejeu partiel de la nuit du 10/10 (87 mutants), 1er essai de campagne (outil v1, 27 invalides), campagne initiale (v0), suites 13/1 866 historiques | **résultats historiques, NON conservés ici** | — | remplacés par le dernier rejeu (§6) |
++| Moteur SQLite réellement embarqué dans l'application ; services Rust/TypeScript | **non exécutée — impossible** | — | §8 |
++
++## 5. Passes de diagnostic : un survivant dépend de la date UTC
++
++`default_fmt#1` (`'%Y-%m-%d…'` → `'%Y-%d-%d…'` : le mois est remplacé par le jour dans le `DEFAULT` de `created_at`) **survit** aux deux passes de diagnostic lorsque le jour UTC a mois = jour. Les références historiques (36 et 50) ont été produites le 2026-10-09 UTC (mois ≠ jour) ; le dernier rejeu a eu lieu le **10/10 UTC** (mois = jour) et donne 37 et 51. Le diff exact est une seule entrée en plus, `default_fmt#1` (`rejeu_copie_propre_2026-10-10/05_comparaison_passes_vs_historique.txt`).
++- **Cause** : hors groupe A, seul `CheckPV.test_T51_B_created_at_par_defaut_est_l_instant_courant_utc` peut tuer ce mutant (il compare le `created_at` par défaut à l'heure UTC courante à 60 s près). Quand `%d` = `%m`, le mutant produit exactement la même chaîne que l'original : aucun test comportemental ne peut le distinguer. Cela concerne 12 jours UTC par an (1/1, 2/2 … 12/12).
++- **Expérience (exécutée le 10/10 au soir)** : `passes_a_date_decalee_009.sh` rejoue les deux passes en décalant l'horloge **des seuls processus de la campagne** (bibliothèque LD_PRELOAD ; l'horloge du système n'est pas touchée ; SQL, tests et `mut009b.py` inchangés). Les processus voient bien la date simulée (`environnement.txt` de chaque dossier : SQLite `now` et Python concordent).
++
++  | Date UTC simulée | Mois = jour ? | Passe « sans A » | Passe « sans A ni témoin K » | Listes vs référence historique |
++  |---|---|---|---|---|
++  | 2026-09-08 | non | **36** | **50** | **identiques** (diff vide) |
++  | 2026-09-09 | oui | **37** | **51** | diffèrent d'une seule entrée : `default_fmt#1` |
++
++  L'hypothèse est donc confirmée dans les deux sens, **sur l'horloge vue par les processus**. Ce n'est pas un rejeu un autre jour réel : la machine n'a pas été exécutée un autre jour UTC. SQLite 3.45.1 uniquement.
++- **Ce qui reste vrai** : la campagne complète (24 survivants) n'en dépend pas, car le mutant y est tué par le test textuel `Chaine.test_T51_A_table_stricte_et_colonnes_exactes` ; le rapprochement du registre reste en BIJECTION OK. Aucun test, SQL ni nombre attendu n'a été modifié pour faire disparaître l'écart.
++- **Conséquence** : 36 et 50 ne sont **pas** des résultats universellement reproductibles ; ils valent les jours UTC où mois ≠ jour (37 et 51 les 12 autres). Ce ne sont pas des résultats de la campagne complète.
++
++## 6. Ce qui n'est volontairement pas dans le dossier
++
++Écarté pour garder un dossier minimal (conservé dans la copie de travail, non publié) : la sortie complète du rejeu (listes de tués rejouées, 101 Ko, déjà comparées octet pour octet à la référence par l'étape 04), les sorties 08, 09 et 12 (doublons prouvés, §4), les journaux historiques de preuves et de suites (remplacés par les sorties 11, 13–16), le journal du 1er essai de campagne (outil v1, 27 invalides dus à un défaut d'outil), l'outil de la campagne initiale `mut009_v0_campagne_initiale.py` (`d8dcd863…`, non nécessaire à un rejeu), le rejeu partiel de la nuit du 10/10 (87 mutants), dont 3 fichiers étaient sur `main` et sont proposés à la suppression (remplacés par le rejeu complet). Le rapport cite le journal du 1er essai et l'outil initial comme **historiques non publiés**.
++
++## 7. Qui a changé quoi dans les outils, et doublons retirés
++
++- `rapprochement_survivants_registre.py` : arguments facultatifs à valeurs par défaut déduites de l'arborescence ; contrôle explicite des fichiers requis (code 2 et message clair) ; logique **inchangée**.
++- `classify009b.py` : chemins relatifs codés en dur remplacés par des arguments (même sortie, vérifiée). `verifier_campagne_009.py` : option `--sorties` ajoutée.
++- Nouveaux : `comparer_campagne_009.py`, `rejouer_toutes_les_verifications_009.sh`, `epreuves_negatives_rapprochement.py`, `verifier_manifestes_009.py`, `passes_a_date_decalee_009.sh`, `faketime_shim.c`.
++- `mut009b.py`, `genmut009b.py`, `preuves_equivalence_009.py`, `compte_sous_tests.py`, `controle_integrite_009.py` : octet pour octet ceux qui ont produit les sorties historiques.
++- **Doublons** : `fichiers-a-relire/outils_mutation_009.py` (sha256 `72d2e99a…`) est une copie exacte de `outils/preuves_equivalence/preuves_equivalence_009.py` ; `fichiers-a-relire/sorties_brutes_009_nul.py` (`1d56db56…`) est l'ancienne version du rapprochement, remplacée et en échec tel que publié. Aucun document utile n'y renvoie plus (seul un nom de scénario de test négatif les cite). **Leur suppression n'est sûre que si `preuves_equivalence_009.py` est publié au même moment** : c'est la seule copie du script de preuve sur `main`. Deux scripts de `main` mal rangés (`outils/preuves_equivalence/campagne_mutation/`) sont déplacés vers `outils/campagne_mutation/`.
++
++## 8. Limites restantes (aucune n'est levée par ce dossier)
++
++- Le moteur SQLite réellement embarqué dans l'application n'est pas identifié à partir des sources du dépôt (point V-7 des documents de conception).
++- La compatibilité avec les futurs services Rust/TypeScript n'est pas démontrée : leurs sources ne sont pas dans le dépôt.
++- La campagne complète et tous les rejeux ont été exécutés sur **SQLite 3.45.1** ; les résultats sur d'autres versions sont historiques et non rejoués ici. L'équivalence E10 (`instr(TEXT, x'00')` ≡ `instr(CAST(TEXT AS BLOB), x'00')`) dépend du moteur.
++- Une campagne de mutation réussie ne remplace pas la validation sur le moteur réellement utilisé par l'application.
++- Les chiffres 36 et 50 dépendent de la date UTC (§5) et la confirmation porte sur une horloge simulée, pas sur un autre jour réel.
