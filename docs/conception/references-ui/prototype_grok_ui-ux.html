@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BATORYA Essentiel V6 — Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#f0f5fa',
+              100: '#d9e6f2',
+              200: '#b3cde5',
+              300: '#7eacd3',
+              400: '#4a8abf',
+              500: '#2d6a9f',
+              600: '#1e3a5f',
+              700: '#162c48',
+              800: '#111f33',
+              900: '#0c1624',
+            },
+            accent: {
+              50: '#fdf6f0',
+              100: '#f9e8d8',
+              200: '#f2ceb0',
+              300: '#e9ab7a',
+              400: '#e07a3d',
+              500: '#d4652a',
+              600: '#b84f20',
+              700: '#983d1c',
+              800: '#7c341c',
+              900: '#662d1a',
+            },
+            surface: {
+              light: '#F8F7F4',
+              card: '#FFFFFF',
+              dark: '#12141A',
+              darkcard: '#1C1F28',
+            }
+          },
+          boxShadow: {
+            'soft': '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
+            'card': '0 1px 3px 0 rgb(0 0 0 / 0.06), 0 4px 12px -2px rgb(0 0 0 / 0.05)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+    .dark .scrollbar-thin::-webkit-scrollbar-thumb { background: #374151; }
+    [data-page] { display: none; }
+    [data-page].active { display: block; }
+    .nav-chapter.active { color: #1e3a5f; border-bottom-color: #1e3a5f; }
+    .dark .nav-chapter.active { color: #6b9ac4; border-bottom-color: #6b9ac4; }
+    .status-pill { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
+    .leon-panel { transform: translateX(100%); transition: transform 0.25s ease; }
+    .leon-panel.open { transform: translateX(0); }
+    .profile-menu { opacity: 0; visibility: hidden; transform: translateY(-4px); transition: all 0.15s ease; }
+    .profile-menu.open { opacity: 1; visibility: visible; transform: translateY(0); }
+    .fade-in { animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body class="h-full bg-surface-light dark:bg-surface-dark text-gray-900 dark:text-gray-100 antialiased">
+  <div id="app" class="h-full flex flex-col">
+
+    <!-- ========== TOP BAR ========== -->
+    <header class="shrink-0 bg-white dark:bg-surface-darkcard border-b border-gray-200 dark:border-gray-700/60 z-40">
+      <div class="flex items-center h-14 px-4 gap-1">
+        <!-- Logo + Home -->
+        <button onclick="navigate('home')" class="flex items-center gap-2.5 pr-4 mr-2 border-r border-gray-200 dark:border-gray-700 hover:opacity-80 transition">
+          <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm tracking-tight">B</div>
+          <span class="font-semibold text-brand-600 dark:text-brand-300 text-sm hidden sm:block">BATORYA</span>
+        </button>
+
+        <!-- Chapters -->
+        <nav class="flex items-center gap-0.5 overflow-x-auto scrollbar-thin flex-1">
+          <button data-chapter="home" onclick="navigate('home')" class="nav-chapter px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-300 border-b-2 border-transparent transition whitespace-nowrap">
+            Accueil
+          </button>
+          <button data-chapter="crm" onclick="navigate('clients')" class="nav-chapter px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-300 border-b-2 border-transparent transition whitespace-nowrap">
+            Clients
+          </button>
+          <button data-chapter="commerce" onclick="navigate('devis')" class="nav-chapter px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-300 border-b-2 border-transparent transition whitespace-nowrap">
+            Commerce
+          </button>
+          <button data-chapter="travaux" onclick="navigate('chantiers')" class="nav-chapter px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-300 border-b-2 border-transparent transition whitespace-nowrap">
+            Travaux
+          </button>
+          <button data-chapter="facturation" onclick="navigate('factures')" class="nav-chapter px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-300 border-b-2 border-transparent transition whitespace-nowrap">
+            Facturation
+          </button>
+          <button data-chapter="tresorerie" onclick="navigate('tresorerie')" class="nav-chapter px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-300 border-b-2 border-transparent transition whitespace-nowrap">
+            Trésorerie
+          </button>
+          <button data-chapter="catalogue" onclick="navigate('catalogue')" class="nav-chapter px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-300 border-b-2 border-transparent transition whitespace-nowrap">
+            Catalogue
+          </button>
+          <button data-chapter="documents" onclick="navigate('documents')" class="nav-chapter px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-300 border-b-2 border-transparent transition whitespace-nowrap">
+            Documents
+          </button>
+          <button data-chapter="planification" onclick="navigate('planification')" class="nav-chapter px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-300 border-b-2 border-transparent transition whitespace-nowrap">
+            Planification
+          </button>
+        </nav>
+
+        <!-- Profile -->
+        <div class="relative ml-2 pl-3 border-l border-gray-200 dark:border-gray-700">
+          <button onclick="toggleProfileMenu()" class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=MarcDubois&backgroundColor=b6e3f4" alt="Marc Dubois" class="w-8 h-8 rounded-full bg-brand-100" />
+            <div class="text-left hidden md:block">
+              <div class="text-sm font-medium leading-tight">Marc Dubois</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Plomberie MD</div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div id="profileMenu" class="profile-menu absolute right-0 top-full mt-1 w-56 bg-white dark:bg-surface-darkcard rounded-xl shadow-card border border-gray-200 dark:border-gray-700 py-1 z-50">
+            <button onclick="navigate('profil'); closeProfileMenu()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3">
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              Mon profil
+            </button>
+            <button onclick="navigate('parametres'); closeProfileMenu()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3">
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Paramètres
+            </button>
+            <button onclick="toggleTheme(); closeProfileMenu()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3">
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+              <span id="themeLabel">Mode sombre</span>
+            </button>
+            <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+            <button onclick="alert('Version 6.0.0 — Prototype démonstration\nLicence locale — Données stockées uniquement sur cet ordinateur')" class="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 text-gray-500">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              À propos de BATORYA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secondary bar (modules) -->
+      <div id="secondaryBar" class="hidden border-t border-gray-100 dark:border-gray-700/50 bg-gray-50/80 dark:bg-gray-900/40 px-4 h-10 flex items-center gap-1">
+        <!-- filled by JS -->
+      </div>
+    </header>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="flex-1 overflow-auto scrollbar-thin">
+      <div class="max-w-[1400px] mx-auto p-5 md:p-6">
+
+        <!-- ==================== HOME / DASHBOARD ==================== -->
+        <div data-page="home" class="active fade-in">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h1 class="text-xl font-semibold tracking-tight">Bonjour Marc</h1>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Voici l’état de votre activité aujourd’hui</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="navigate('devis-create')" class="px-3.5 py-2 bg-accent-400 hover:bg-accent-500 text-white text-sm font-medium rounded-lg shadow-soft transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Nouveau devis
+              </button>
+              <button onclick="navigate('clients')" class="px-3.5 py-2 bg-white dark:bg-surface-darkcard border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium rounded-lg transition">Nouveau client</button>
+            </div>
+          </div>
+
+          <!-- KPI row -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl p-4 shadow-soft border border-gray-100 dark:border-gray-700/50">
+              <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Devis en attente</div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <span class="text-2xl font-semibold">4</span>
+                <span class="text-sm text-gray-500">· 12 450 €</span>
+              </div>
+              <button onclick="navigate('devis')" class="mt-2 text-xs text-brand-600 dark:text-brand-300 hover:underline">Voir les devis →</button>
+            </div>
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl p-4 shadow-soft border border-gray-100 dark:border-gray-700/50">
+              <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Chantiers en cours</div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <span class="text-2xl font-semibold">3</span>
+              </div>
+              <button onclick="navigate('chantiers')" class="mt-2 text-xs text-brand-600 dark:text-brand-300 hover:underline">Suivre →</button>
+            </div>
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl p-4 shadow-soft border border-gray-100 dark:border-gray-700/50">
+              <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">À encaisser</div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <span class="text-2xl font-semibold text-accent-500">8 320 €</span>
+              </div>
+              <button onclick="navigate('factures')" class="mt-2 text-xs text-brand-600 dark:text-brand-300 hover:underline">Factures →</button>
+            </div>
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl p-4 shadow-soft border border-gray-100 dark:border-gray-700/50">
+              <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Échéances 7 j</div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <span class="text-2xl font-semibold">2</span>
+              </div>
+              <button onclick="navigate('planification')" class="mt-2 text-xs text-brand-600 dark:text-brand-300 hover:underline">Planning →</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Actions à traiter -->
+            <div class="lg:col-span-2 bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50">
+              <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+                <h2 class="font-semibold text-sm">Actions à traiter</h2>
+              </div>
+              <div class="divide-y divide-gray-50 dark:divide-gray-700/40">
+                <div class="px-5 py-3.5 flex items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
+                  <div class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium truncate">Relancer devis D-2026-014 — Dupont Sophie</div>
+                    <div class="text-xs text-gray-500 mt-0.5">Envoyé il y a 12 jours · 3 280 €</div>
+                  </div>
+                  <button onclick="navigate('devis')" class="text-xs text-brand-600 dark:text-brand-300 font-medium hover:underline shrink-0">Ouvrir</button>
+                </div>
+                <div class="px-5 py-3.5 flex items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
+                  <div class="w-2 h-2 rounded-full bg-red-400 shrink-0"></div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium truncate">Facture F-2026-008 impayée — Martin Électricité</div>
+                    <div class="text-xs text-gray-500 mt-0.5">Échéance dépassée de 5 jours · 1 890 €</div>
+                  </div>
+                  <button onclick="navigate('facture-detail')" class="text-xs text-brand-600 dark:text-brand-300 font-medium hover:underline shrink-0">Ouvrir</button>
+                </div>
+                <div class="px-5 py-3.5 flex items-center gap-4 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
+                  <div class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium truncate">Chantier « Salle de bain Leroy » — fin prévue demain</div>
+                    <div class="text-xs text-gray-500 mt-0.5">Avancement 85 %</div>
+                  </div>
+                  <button onclick="navigate('chantiers')" class="text-xs text-brand-600 dark:text-brand-300 font-medium hover:underline shrink-0">Voir</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Raccourcis -->
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+              <h2 class="font-semibold text-sm mb-4">Raccourcis</h2>
+              <div class="space-y-2">
+                <button onclick="navigate('devis-create')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm text-left transition">
+                  <div class="w-8 h-8 rounded-lg bg-accent-50 dark:bg-accent-900/30 text-accent-500 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  </div>
+                  Créer un devis
+                </button>
+                <button onclick="navigate('clients')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm text-left transition">
+                  <div class="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                  </div>
+                  Ajouter un client
+                </button>
+                <button onclick="navigate('factures')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm text-left transition">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+                  </div>
+                  Nouvelle facture
+                </button>
+                <button onclick="navigate('planification')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-sm text-left transition">
+                  <div class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  </div>
+                  Voir le planning
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== CLIENTS LIST ==================== -->
+        <div data-page="clients" class="fade-in">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h1 class="text-xl font-semibold">Clients & Prospects</h1>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">12 clients · 3 prospects</p>
+            </div>
+            <button onclick="alert('Formulaire de création client (démo)')" class="px-3.5 py-2 bg-accent-400 hover:bg-accent-500 text-white text-sm font-medium rounded-lg shadow-soft transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Nouveau client
+            </button>
+          </div>
+
+          <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700/50 flex flex-wrap gap-3 items-center">
+              <div class="relative flex-1 min-w-[200px]">
+                <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" placeholder="Rechercher un client..." class="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
+              </div>
+              <select class="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-surface-darkcard focus:outline-none">
+                <option>Tous les statuts</option>
+                <option>Client</option>
+                <option>Prospect</option>
+              </select>
+            </div>
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50/80 dark:bg-gray-800/40 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <tr>
+                  <th class="px-4 py-3">Nom</th>
+                  <th class="px-4 py-3 hidden md:table-cell">Contact</th>
+                  <th class="px-4 py-3 hidden lg:table-cell">Ville</th>
+                  <th class="px-4 py-3">Statut</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-50 dark:divide-gray-700/40">
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 cursor-pointer" onclick="navigate('client-detail')">
+                  <td class="px-4 py-3.5">
+                    <div class="font-medium">Dupont Sophie</div>
+                    <div class="text-xs text-gray-500">Particulier</div>
+                  </td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-600 dark:text-gray-300">06 12 34 56 78</td>
+                  <td class="px-4 py-3.5 hidden lg:table-cell text-gray-600 dark:text-gray-300">Lyon</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Client</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium hover:underline">Ouvrir</button></td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 cursor-pointer" onclick="navigate('client-detail')">
+                  <td class="px-4 py-3.5">
+                    <div class="font-medium">Martin Électricité</div>
+                    <div class="text-xs text-gray-500">Entreprise</div>
+                  </td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-600 dark:text-gray-300">04 78 12 34 56</td>
+                  <td class="px-4 py-3.5 hidden lg:table-cell text-gray-600 dark:text-gray-300">Villeurbanne</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Client</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium hover:underline">Ouvrir</button></td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 cursor-pointer">
+                  <td class="px-4 py-3.5">
+                    <div class="font-medium">Leroy Jean</div>
+                    <div class="text-xs text-gray-500">Particulier</div>
+                  </td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-600 dark:text-gray-300">06 98 76 54 32</td>
+                  <td class="px-4 py-3.5 hidden lg:table-cell text-gray-600 dark:text-gray-300">Écully</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Client</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium hover:underline">Ouvrir</button></td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 cursor-pointer">
+                  <td class="px-4 py-3.5">
+                    <div class="font-medium">Boulangerie du Parc</div>
+                    <div class="text-xs text-gray-500">Entreprise</div>
+                  </td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-600 dark:text-gray-300">04 72 00 11 22</td>
+                  <td class="px-4 py-3.5 hidden lg:table-cell text-gray-600 dark:text-gray-300">Lyon 6e</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Prospect</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium hover:underline">Ouvrir</button></td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 cursor-pointer">
+                  <td class="px-4 py-3.5">
+                    <div class="font-medium">Moreau Claire</div>
+                    <div class="text-xs text-gray-500">Particulier</div>
+                  </td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-600 dark:text-gray-300">06 45 67 89 01</td>
+                  <td class="px-4 py-3.5 hidden lg:table-cell text-gray-600 dark:text-gray-300">Caluire</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Client</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium hover:underline">Ouvrir</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== CLIENT DETAIL ==================== -->
+        <div data-page="client-detail" class="fade-in">
+          <div class="mb-5">
+            <button onclick="navigate('clients')" class="text-sm text-gray-500 hover:text-brand-600 dark:hover:text-brand-300 flex items-center gap-1 mb-3">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              Retour aux clients
+            </button>
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-full bg-brand-100 dark:bg-brand-800 flex items-center justify-center text-brand-600 dark:text-brand-200 font-semibold text-lg">DS</div>
+                <div>
+                  <h1 class="text-xl font-semibold">Dupont Sophie</h1>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Particulier · Client depuis mars 2025</p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="navigate('devis-create')" class="px-3 py-2 bg-accent-400 hover:bg-accent-500 text-white text-sm font-medium rounded-lg transition">Nouveau devis</button>
+                <button class="px-3 py-2 border border-gray-200 dark:border-gray-600 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">Modifier</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 space-y-4">
+              <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+                <h3 class="text-sm font-semibold mb-3">Coordonnées</h3>
+                <dl class="space-y-2.5 text-sm">
+                  <div><dt class="text-gray-500 text-xs">Téléphone</dt><dd>06 12 34 56 78</dd></div>
+                  <div><dt class="text-gray-500 text-xs">Email</dt><dd>sophie.dupont@email.fr</dd></div>
+                  <div><dt class="text-gray-500 text-xs">Adresse</dt><dd>12 rue des Lilas<br>69003 Lyon</dd></div>
+                </dl>
+              </div>
+              <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+                <h3 class="text-sm font-semibold mb-3">Synthèse</h3>
+                <dl class="space-y-2 text-sm">
+                  <div class="flex justify-between"><span class="text-gray-500">Devis</span><span>3</span></div>
+                  <div class="flex justify-between"><span class="text-gray-500">Chantiers</span><span>1 en cours</span></div>
+                  <div class="flex justify-between"><span class="text-gray-500">Facturé</span><span class="font-medium">6 450 €</span></div>
+                  <div class="flex justify-between"><span class="text-gray-500">Restant dû</span><span class="text-accent-500 font-medium">0 €</span></div>
+                </dl>
+              </div>
+            </div>
+            <div class="lg:col-span-2">
+              <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50">
+                <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700/50 flex gap-4">
+                  <button class="text-sm font-medium text-brand-600 dark:text-brand-300 border-b-2 border-brand-600 dark:border-brand-300 pb-3 -mb-3.5">Historique</button>
+                  <button class="text-sm font-medium text-gray-500 hover:text-gray-700 pb-3">Documents</button>
+                  <button class="text-sm font-medium text-gray-500 hover:text-gray-700 pb-3">Notes</button>
+                </div>
+                <div class="divide-y divide-gray-50 dark:divide-gray-700/40">
+                  <div class="px-5 py-3.5 flex items-center gap-4">
+                    <div class="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 flex items-center justify-center text-xs font-medium">D</div>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium">Devis D-2026-014</div>
+                      <div class="text-xs text-gray-500">Envoyé · 12 sept. 2026 · 3 280 €</div>
+                    </div>
+                    <span class="status-pill bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">En attente</span>
+                  </div>
+                  <div class="px-5 py-3.5 flex items-center gap-4">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 flex items-center justify-center text-xs font-medium">F</div>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium">Facture F-2026-005</div>
+                      <div class="text-xs text-gray-500">Payée · 18 août 2026 · 2 170 €</div>
+                    </div>
+                    <span class="status-pill bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Payée</span>
+                  </div>
+                  <div class="px-5 py-3.5 flex items-center gap-4">
+                    <div class="w-9 h-9 rounded-lg bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300 flex items-center justify-center text-xs font-medium">C</div>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium">Chantier — Salle de bain</div>
+                      <div class="text-xs text-gray-500">En cours · Début 5 oct. 2026</div>
+                    </div>
+                    <span class="status-pill bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">En cours</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== DEVIS LIST ==================== -->
+        <div data-page="devis" class="fade-in">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h1 class="text-xl font-semibold">Devis</h1>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">8 devis · 4 en attente</p>
+            </div>
+            <button onclick="navigate('devis-create')" class="px-3.5 py-2 bg-accent-400 hover:bg-accent-500 text-white text-sm font-medium rounded-lg shadow-soft transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Nouveau devis
+            </button>
+          </div>
+
+          <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700/50 flex flex-wrap gap-3">
+              <div class="relative flex-1 min-w-[180px]">
+                <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" placeholder="Rechercher..." class="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
+              </div>
+              <select class="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-surface-darkcard">
+                <option>Tous les statuts</option>
+                <option>Brouillon</option>
+                <option>Envoyé</option>
+                <option>Accepté</option>
+                <option>Refusé</option>
+              </select>
+            </div>
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50/80 dark:bg-gray-800/40 text-left text-xs font-medium text-gray-500 uppercase">
+                <tr>
+                  <th class="px-4 py-3">N°</th>
+                  <th class="px-4 py-3">Client</th>
+                  <th class="px-4 py-3 hidden md:table-cell">Date</th>
+                  <th class="px-4 py-3">Montant</th>
+                  <th class="px-4 py-3">Statut</th>
+                  <th class="px-4 py-3 text-right"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-50 dark:divide-gray-700/40">
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                  <td class="px-4 py-3.5 font-medium">D-2026-014</td>
+                  <td class="px-4 py-3.5">Dupont Sophie</td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-500">12/09/2026</td>
+                  <td class="px-4 py-3.5 font-medium">3 280 €</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Envoyé</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium">Ouvrir</button></td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                  <td class="px-4 py-3.5 font-medium">D-2026-013</td>
+                  <td class="px-4 py-3.5">Leroy Jean</td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-500">05/09/2026</td>
+                  <td class="px-4 py-3.5 font-medium">1 890 €</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Accepté</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium">Ouvrir</button></td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                  <td class="px-4 py-3.5 font-medium">D-2026-012</td>
+                  <td class="px-4 py-3.5">Martin Électricité</td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-500">28/08/2026</td>
+                  <td class="px-4 py-3.5 font-medium">4 560 €</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">Brouillon</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium">Ouvrir</button></td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                  <td class="px-4 py-3.5 font-medium">D-2026-011</td>
+                  <td class="px-4 py-3.5">Moreau Claire</td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-500">15/08/2026</td>
+                  <td class="px-4 py-3.5 font-medium">2 100 €</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300">Refusé</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium">Ouvrir</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== DEVIS CREATE ==================== -->
+        <div data-page="devis-create" class="fade-in">
+          <div class="mb-5">
+            <button onclick="navigate('devis')" class="text-sm text-gray-500 hover:text-brand-600 flex items-center gap-1 mb-3">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              Retour aux devis
+            </button>
+            <h1 class="text-xl font-semibold">Nouveau devis</h1>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-5">
+              <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+                <h3 class="text-sm font-semibold mb-4">Client</h3>
+                <select class="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-surface-darkcard focus:outline-none focus:ring-2 focus:ring-brand-500/30">
+                  <option value="">Sélectionner un client…</option>
+                  <option>Dupont Sophie</option>
+                  <option>Martin Électricité</option>
+                  <option>Leroy Jean</option>
+                  <option>Moreau Claire</option>
+                </select>
+              </div>
+
+              <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-semibold">Prestations</h3>
+                  <button onclick="alert('Ouverture du catalogue pour sélection (démo)')" class="text-xs text-brand-600 dark:text-brand-300 font-medium hover:underline">+ Ajouter depuis le catalogue</button>
+                </div>
+                <div class="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                  <table class="w-full text-sm">
+                    <thead class="bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500">
+                      <tr>
+                        <th class="px-3 py-2 text-left">Désignation</th>
+                        <th class="px-3 py-2 text-right w-20">Qté</th>
+                        <th class="px-3 py-2 text-right w-24">P.U.</th>
+                        <th class="px-3 py-2 text-right w-24">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="border-t border-gray-100 dark:border-gray-700">
+                        <td class="px-3 py-2.5">Remplacement chauffe-eau 200L</td>
+                        <td class="px-3 py-2.5 text-right"><input type="number" value="1" class="w-14 text-right border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 bg-transparent" /></td>
+                        <td class="px-3 py-2.5 text-right">890 €</td>
+                        <td class="px-3 py-2.5 text-right font-medium">890 €</td>
+                      </tr>
+                      <tr class="border-t border-gray-100 dark:border-gray-700">
+                        <td class="px-3 py-2.5">Main d'œuvre — installation</td>
+                        <td class="px-3 py-2.5 text-right"><input type="number" value="4" class="w-14 text-right border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 bg-transparent" /></td>
+                        <td class="px-3 py-2.5 text-right">55 €</td>
+                        <td class="px-3 py-2.5 text-right font-medium">220 €</td>
+                      </tr>
+                      <tr class="border-t border-gray-100 dark:border-gray-700">
+                        <td class="px-3 py-2.5">Fournitures diverses</td>
+                        <td class="px-3 py-2.5 text-right"><input type="number" value="1" class="w-14 text-right border border-gray-200 dark:border-gray-600 rounded px-1 py-0.5 bg-transparent" /></td>
+                        <td class="px-3 py-2.5 text-right">85 €</td>
+                        <td class="px-3 py-2.5 text-right font-medium">85 €</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <button class="mt-3 text-xs text-gray-500 hover:text-brand-600">+ Ligne libre</button>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+                <h3 class="text-sm font-semibold mb-3">Totaux</h3>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between"><span class="text-gray-500">Sous-total</span><span>1 195 €</span></div>
+                  <div class="flex justify-between text-base font-semibold pt-2 border-t border-gray-100 dark:border-gray-700"><span>Total TTC</span><span>1 195 €</span></div>
+                  <p class="text-xs text-gray-400 mt-1">Sans TVA (franchise en base)</p>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5 space-y-3">
+                <label class="block text-xs font-medium text-gray-500">Date de validité</label>
+                <input type="date" value="2026-11-15" class="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-transparent" />
+                <label class="block text-xs font-medium text-gray-500 mt-3">Notes internes</label>
+                <textarea rows="2" class="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-transparent resize-none" placeholder="Optionnel…"></textarea>
+              </div>
+              <div class="flex flex-col gap-2">
+                <button onclick="alert('Devis enregistré en brouillon (simulation)')" class="w-full py-2.5 bg-accent-400 hover:bg-accent-500 text-white text-sm font-medium rounded-lg transition">Enregistrer le devis</button>
+                <button onclick="alert('Aperçu PDF (simulation)')" class="w-full py-2.5 border border-gray-200 dark:border-gray-600 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">Aperçu PDF</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== CHANTIERS ==================== -->
+        <div data-page="chantiers" class="fade-in">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h1 class="text-xl font-semibold">Travaux & Chantiers</h1>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">3 en cours · 1 terminé ce mois</p>
+            </div>
+            <button class="px-3.5 py-2 bg-accent-400 hover:bg-accent-500 text-white text-sm font-medium rounded-lg shadow-soft transition">Nouveau chantier</button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+              <div class="flex items-start justify-between mb-3">
+                <span class="status-pill bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">En cours</span>
+                <span class="text-xs text-gray-400">85 %</span>
+              </div>
+              <h3 class="font-semibold text-sm mb-1">Salle de bain — Leroy</h3>
+              <p class="text-xs text-gray-500 mb-3">Écully · Client : Leroy Jean</p>
+              <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-3">
+                <div class="bg-brand-500 h-1.5 rounded-full" style="width:85%"></div>
+              </div>
+              <div class="flex justify-between text-xs text-gray-500">
+                <span>Début 05/10</span>
+                <span>Fin prévue 12/10</span>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+              <div class="flex items-start justify-between mb-3">
+                <span class="status-pill bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">En cours</span>
+                <span class="text-xs text-gray-400">40 %</span>
+              </div>
+              <h3 class="font-semibold text-sm mb-1">Chauffage — Dupont</h3>
+              <p class="text-xs text-gray-500 mb-3">Lyon 3e · Client : Dupont Sophie</p>
+              <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-3">
+                <div class="bg-brand-500 h-1.5 rounded-full" style="width:40%"></div>
+              </div>
+              <div class="flex justify-between text-xs text-gray-500">
+                <span>Début 08/10</span>
+                <span>Fin prévue 25/10</span>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+              <div class="flex items-start justify-between mb-3">
+                <span class="status-pill bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Planifié</span>
+                <span class="text-xs text-gray-400">0 %</span>
+              </div>
+              <h3 class="font-semibold text-sm mb-1">Rénovation cuisine — Moreau</h3>
+              <p class="text-xs text-gray-500 mb-3">Caluire · Client : Moreau Claire</p>
+              <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-3">
+                <div class="bg-gray-300 h-1.5 rounded-full" style="width:0%"></div>
+              </div>
+              <div class="flex justify-between text-xs text-gray-500">
+                <span>Début 20/10</span>
+                <span>Fin prévue 05/11</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== FACTURES ==================== -->
+        <div data-page="factures" class="fade-in">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h1 class="text-xl font-semibold">Factures</h1>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">À encaisser : 8 320 €</p>
+            </div>
+            <button class="px-3.5 py-2 bg-accent-400 hover:bg-accent-500 text-white text-sm font-medium rounded-lg shadow-soft transition">Nouvelle facture</button>
+          </div>
+
+          <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50/80 dark:bg-gray-800/40 text-left text-xs font-medium text-gray-500 uppercase">
+                <tr>
+                  <th class="px-4 py-3">N°</th>
+                  <th class="px-4 py-3">Client</th>
+                  <th class="px-4 py-3 hidden md:table-cell">Date</th>
+                  <th class="px-4 py-3">Montant</th>
+                  <th class="px-4 py-3">Statut</th>
+                  <th class="px-4 py-3 text-right"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-50 dark:divide-gray-700/40">
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 cursor-pointer" onclick="navigate('facture-detail')">
+                  <td class="px-4 py-3.5 font-medium">F-2026-009</td>
+                  <td class="px-4 py-3.5">Leroy Jean</td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-500">02/10/2026</td>
+                  <td class="px-4 py-3.5 font-medium">4 120 €</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Partiel</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium">Détail</button></td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 cursor-pointer" onclick="navigate('facture-detail')">
+                  <td class="px-4 py-3.5 font-medium">F-2026-008</td>
+                  <td class="px-4 py-3.5">Martin Électricité</td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-500">25/09/2026</td>
+                  <td class="px-4 py-3.5 font-medium">1 890 €</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300">Impayée</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium">Détail</button></td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                  <td class="px-4 py-3.5 font-medium">F-2026-007</td>
+                  <td class="px-4 py-3.5">Dupont Sophie</td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-500">18/09/2026</td>
+                  <td class="px-4 py-3.5 font-medium">2 310 €</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Payée</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium">Détail</button></td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                  <td class="px-4 py-3.5 font-medium">F-2026-006</td>
+                  <td class="px-4 py-3.5">Moreau Claire</td>
+                  <td class="px-4 py-3.5 hidden md:table-cell text-gray-500">05/09/2026</td>
+                  <td class="px-4 py-3.5 font-medium">980 €</td>
+                  <td class="px-4 py-3.5"><span class="status-pill bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Payée</span></td>
+                  <td class="px-4 py-3.5 text-right"><button class="text-brand-600 dark:text-brand-300 text-xs font-medium">Détail</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== FACTURE DETAIL ==================== -->
+        <div data-page="facture-detail" class="fade-in">
+          <div class="mb-5">
+            <button onclick="navigate('factures')" class="text-sm text-gray-500 hover:text-brand-600 flex items-center gap-1 mb-3">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              Retour aux factures
+            </button>
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center gap-3">
+                  <h1 class="text-xl font-semibold">Facture F-2026-008</h1>
+                  <span class="status-pill bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300">Impayée</span>
+                </div>
+                <p class="text-sm text-gray-500 mt-1">Martin Électricité · Émise le 25/09/2026 · Échéance 05/10/2026</p>
+              </div>
+              <div class="flex gap-2">
+                <button class="px-3 py-2 border border-gray-200 dark:border-gray-600 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">PDF</button>
+                <button onclick="alert('Enregistrement d\'un règlement (simulation)')" class="px-3 py-2 bg-accent-400 hover:bg-accent-500 text-white text-sm font-medium rounded-lg">Enregistrer un règlement</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+              <h3 class="text-sm font-semibold mb-4">Lignes</h3>
+              <table class="w-full text-sm">
+                <thead class="text-xs text-gray-500 border-b border-gray-100 dark:border-gray-700">
+                  <tr>
+                    <th class="pb-2 text-left">Désignation</th>
+                    <th class="pb-2 text-right">Qté</th>
+                    <th class="pb-2 text-right">P.U.</th>
+                    <th class="pb-2 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-gray-50 dark:border-gray-700/50">
+                    <td class="py-2.5">Remplacement tableau électrique</td>
+                    <td class="py-2.5 text-right">1</td>
+                    <td class="py-2.5 text-right">1 450 €</td>
+                    <td class="py-2.5 text-right">1 450 €</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5">Main d'œuvre</td>
+                    <td class="py-2.5 text-right">8</td>
+                    <td class="py-2.5 text-right">55 €</td>
+                    <td class="py-2.5 text-right">440 €</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                <div class="text-right">
+                  <div class="text-sm text-gray-500">Total</div>
+                  <div class="text-xl font-semibold">1 890 €</div>
+                  <div class="text-xs text-gray-400">Sans TVA</div>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+                <h3 class="text-sm font-semibold mb-3">Règlements</h3>
+                <p class="text-sm text-gray-500">Aucun règlement enregistré</p>
+                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <div class="flex justify-between text-sm"><span class="text-gray-500">Restant dû</span><span class="font-semibold text-red-600 dark:text-red-400">1 890 €</span></div>
+                </div>
+              </div>
+              <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+                <h3 class="text-sm font-semibold mb-3">Documents liés</h3>
+                <div class="space-y-2 text-sm">
+                  <div class="flex items-center gap-2 text-brand-600 dark:text-brand-300 hover:underline cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    Devis D-2026-010
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== TRESORERIE ==================== -->
+        <div data-page="tresorerie" class="fade-in">
+          <div class="mb-5">
+            <h1 class="text-xl font-semibold">Trésorerie & Dépenses</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Vue synthétique des flux (données fictives)</p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl p-4 shadow-soft border border-gray-100 dark:border-gray-700/50">
+              <div class="text-xs text-gray-500 uppercase">Encaissements (30 j)</div>
+              <div class="text-2xl font-semibold mt-1 text-emerald-600 dark:text-emerald-400">9 640 €</div>
+            </div>
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl p-4 shadow-soft border border-gray-100 dark:border-gray-700/50">
+              <div class="text-xs text-gray-500 uppercase">Dépenses (30 j)</div>
+              <div class="text-2xl font-semibold mt-1">3 210 €</div>
+            </div>
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl p-4 shadow-soft border border-gray-100 dark:border-gray-700/50">
+              <div class="text-xs text-gray-500 uppercase">À recevoir</div>
+              <div class="text-2xl font-semibold mt-1 text-accent-500">8 320 €</div>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+            <h3 class="text-sm font-semibold mb-4">Derniers mouvements</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between items-center py-2 border-b border-gray-50 dark:border-gray-700/40">
+                <div><span class="font-medium">Règlement F-2026-007</span><span class="text-gray-500 ml-2">Dupont Sophie</span></div>
+                <span class="text-emerald-600 font-medium">+ 2 310 €</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-gray-50 dark:border-gray-700/40">
+                <div><span class="font-medium">Achat fournitures</span><span class="text-gray-500 ml-2">Quincaillerie</span></div>
+                <span class="text-gray-700 dark:text-gray-300">− 186 €</span>
+              </div>
+              <div class="flex justify-between items-center py-2">
+                <div><span class="font-medium">Règlement F-2026-006</span><span class="text-gray-500 ml-2">Moreau Claire</span></div>
+                <span class="text-emerald-600 font-medium">+ 980 €</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== CATALOGUE ==================== -->
+        <div data-page="catalogue" class="fade-in">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h1 class="text-xl font-semibold">Catalogue</h1>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Prestations et éléments réutilisables</p>
+            </div>
+            <button class="px-3.5 py-2 bg-accent-400 hover:bg-accent-500 text-white text-sm font-medium rounded-lg">Nouvelle prestation</button>
+          </div>
+          <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700/50">
+              <input type="text" placeholder="Rechercher une prestation…" class="w-full max-w-md pl-3 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/30" />
+            </div>
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50/80 dark:bg-gray-800/40 text-left text-xs font-medium text-gray-500 uppercase">
+                <tr>
+                  <th class="px-4 py-3">Libellé</th>
+                  <th class="px-4 py-3">Unité</th>
+                  <th class="px-4 py-3">Prix</th>
+                  <th class="px-4 py-3 hidden md:table-cell">Catégorie</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-50 dark:divide-gray-700/40">
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                  <td class="px-4 py-3">Remplacement chauffe-eau 200L</td>
+                  <td class="px-4 py-3">u</td>
+                  <td class="px-4 py-3 font-medium">890 €</td>
+                  <td class="px-4 py-3 hidden md:table-cell text-gray-500">Chauffage</td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                  <td class="px-4 py-3">Main d'œuvre — installation</td>
+                  <td class="px-4 py-3">h</td>
+                  <td class="px-4 py-3 font-medium">55 €</td>
+                  <td class="px-4 py-3 hidden md:table-cell text-gray-500">Main d'œuvre</td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                  <td class="px-4 py-3">Déplacement forfaitaire</td>
+                  <td class="px-4 py-3">u</td>
+                  <td class="px-4 py-3 font-medium">45 €</td>
+                  <td class="px-4 py-3 hidden md:table-cell text-gray-500">Frais</td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                  <td class="px-4 py-3">Remplacement tableau électrique</td>
+                  <td class="px-4 py-3">u</td>
+                  <td class="px-4 py-3 font-medium">1 450 €</td>
+                  <td class="px-4 py-3 hidden md:table-cell text-gray-500">Électricité</td>
+                </tr>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/20">
+                  <td class="px-4 py-3">Pose radiateur</td>
+                  <td class="px-4 py-3">u</td>
+                  <td class="px-4 py-3 font-medium">120 €</td>
+                  <td class="px-4 py-3 hidden md:table-cell text-gray-500">Chauffage</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== DOCUMENTS ==================== -->
+        <div data-page="documents" class="fade-in">
+          <div class="mb-5">
+            <h1 class="text-xl font-semibold">Documents</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">PDF générés et documents associés</p>
+          </div>
+          <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+            <div class="space-y-2">
+              <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/40 cursor-pointer">
+                <div class="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 flex items-center justify-center text-xs font-bold">PDF</div>
+                <div class="flex-1">
+                  <div class="text-sm font-medium">Devis_D-2026-014_Dupont.pdf</div>
+                  <div class="text-xs text-gray-500">12 sept. 2026 · 245 Ko</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/40 cursor-pointer">
+                <div class="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 flex items-center justify-center text-xs font-bold">PDF</div>
+                <div class="flex-1">
+                  <div class="text-sm font-medium">Facture_F-2026-008_Martin.pdf</div>
+                  <div class="text-xs text-gray-500">25 sept. 2026 · 198 Ko</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/40 cursor-pointer">
+                <div class="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 flex items-center justify-center text-xs font-bold">PDF</div>
+                <div class="flex-1">
+                  <div class="text-sm font-medium">Facture_F-2026-007_Dupont.pdf</div>
+                  <div class="text-xs text-gray-500">18 sept. 2026 · 210 Ko</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== PLANIFICATION ==================== -->
+        <div data-page="planification" class="fade-in">
+          <div class="mb-5">
+            <h1 class="text-xl font-semibold">Planification</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Vue hebdomadaire — octobre 2026</p>
+          </div>
+          <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+            <div class="grid grid-cols-7 border-b border-gray-100 dark:border-gray-700 text-center text-xs font-medium text-gray-500">
+              <div class="py-3">Lun 6</div>
+              <div class="py-3">Mar 7</div>
+              <div class="py-3">Mer 8</div>
+              <div class="py-3">Jeu 9</div>
+              <div class="py-3 bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-300">Ven 10</div>
+              <div class="py-3">Sam 11</div>
+              <div class="py-3">Dim 12</div>
+            </div>
+            <div class="grid grid-cols-7 min-h-[280px]">
+              <div class="border-r border-gray-50 dark:border-gray-700/50 p-2"></div>
+              <div class="border-r border-gray-50 dark:border-gray-700/50 p-2">
+                <div class="bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs rounded-lg p-2 mb-1">Salle de bain Leroy<br><span class="opacity-70">Journée</span></div>
+              </div>
+              <div class="border-r border-gray-50 dark:border-gray-700/50 p-2">
+                <div class="bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs rounded-lg p-2 mb-1">Salle de bain Leroy</div>
+                <div class="bg-violet-50 dark:bg-violet-900/30 text-violet-800 dark:text-violet-200 text-xs rounded-lg p-2">Chauffage Dupont<br><span class="opacity-70">Matin</span></div>
+              </div>
+              <div class="border-r border-gray-50 dark:border-gray-700/50 p-2">
+                <div class="bg-violet-50 dark:bg-violet-900/30 text-violet-800 dark:text-violet-200 text-xs rounded-lg p-2">Chauffage Dupont</div>
+              </div>
+              <div class="border-r border-gray-50 dark:border-gray-700/50 p-2 bg-brand-50/30 dark:bg-brand-900/10">
+                <div class="bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs rounded-lg p-2">Fin SDB Leroy</div>
+              </div>
+              <div class="border-r border-gray-50 dark:border-gray-700/50 p-2"></div>
+              <div class="p-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== PROFIL ==================== -->
+        <div data-page="profil" class="fade-in">
+          <div class="mb-5">
+            <h1 class="text-xl font-semibold">Mon profil</h1>
+          </div>
+          <div class="max-w-xl bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-6">
+            <div class="flex items-center gap-5 mb-6">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=MarcDubois&backgroundColor=b6e3f4" alt="Profil" class="w-20 h-20 rounded-full" />
+              <div>
+                <div class="font-semibold text-lg">Marc Dubois</div>
+                <div class="text-sm text-gray-500">Plomberie MD · Auto-entrepreneur</div>
+                <button class="mt-2 text-xs text-brand-600 dark:text-brand-300 hover:underline">Changer la photo</button>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Nom complet</label>
+                <input type="text" value="Marc Dubois" class="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-transparent" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Nom de l'entreprise</label>
+                <input type="text" value="Plomberie MD" class="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-transparent" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                <input type="email" value="marc@plomberie-md.fr" class="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-transparent" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Téléphone</label>
+                <input type="tel" value="06 11 22 33 44" class="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-transparent" />
+              </div>
+              <button onclick="alert('Profil mis à jour (simulation)')" class="mt-2 px-4 py-2 bg-accent-400 hover:bg-accent-500 text-white text-sm font-medium rounded-lg">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== PARAMETRES ==================== -->
+        <div data-page="parametres" class="fade-in">
+          <div class="mb-5">
+            <h1 class="text-xl font-semibold">Paramètres</h1>
+          </div>
+          <div class="max-w-xl space-y-4">
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+              <h3 class="text-sm font-semibold mb-4">Apparence</h3>
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-sm font-medium">Thème</div>
+                  <div class="text-xs text-gray-500">Clair ou sombre</div>
+                </div>
+                <button onclick="toggleTheme()" class="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2">
+                  <span id="themeBtnLabel">Mode sombre</span>
+                </button>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+              <h3 class="text-sm font-semibold mb-4">Entreprise</h3>
+              <div class="space-y-3 text-sm">
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">SIRET</label>
+                  <input type="text" value="123 456 789 00012" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-transparent" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Adresse</label>
+                  <input type="text" value="8 rue de la République, 69002 Lyon" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-transparent" />
+                </div>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-surface-darkcard rounded-xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-5">
+              <h3 class="text-sm font-semibold mb-2">À propos</h3>
+              <p class="text-sm text-gray-500">BATORYA Essentiel V6.0.0 — Prototype de démonstration<br>Fonctionnement local · Données stockées uniquement sur cet ordinateur</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- ========== LÉON FLOATING BUTTON ========== -->
+    <button id="leonBtn" onclick="toggleLeon()" class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-brand-600 hover:bg-brand-700 text-white shadow-lg flex items-center justify-center z-40 transition hover:scale-105 active:scale-95" title="Léon — Assistant">
+      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+    </button>
+
+    <!-- ========== LÉON PANEL ========== -->
+    <div id="leonPanel" class="leon-panel fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-surface-darkcard shadow-2xl border-l border-gray-200 dark:border-gray-700 z-50 flex flex-col">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-brand-600 text-white flex items-center justify-center text-sm font-bold">L</div>
+          <div>
+            <div class="font-semibold text-sm">Léon</div>
+            <div class="text-xs text-gray-500">Assistant local</div>
+          </div>
+        </div>
+        <button onclick="toggleLeon()" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-thin">
+        <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3.5 text-sm">
+          Bonjour Marc. Je suis Léon, votre assistant intégré. Je peux vous aider à retrouver un devis, préparer une facture ou répondre à une question sur votre activité. Tout reste local sur votre ordinateur.
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="leonReply(this)" class="text-xs px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Quels devis sont en attente ?</button>
+          <button onclick="leonReply(this)" class="text-xs px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Combien me reste-t-il à encaisser ?</button>
+          <button onclick="leonReply(this)" class="text-xs px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Prochains chantiers</button>
+        </div>
+        <div id="leonChat" class="space-y-3"></div>
+      </div>
+      <div class="p-4 border-t border-gray-100 dark:border-gray-700">
+        <div class="flex gap-2">
+          <input id="leonInput" type="text" placeholder="Posez une question…" class="flex-1 text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-transparent focus:outline-none focus:ring-2 focus:ring-brand-500/30" onkeydown="if(event.key==='Enter')sendLeon()" />
+          <button onclick="sendLeon()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg">Envoyer</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Navigation state
+    const pageChapter = {
+      'home': 'home',
+      'clients': 'crm', 'client-detail': 'crm',
+      'devis': 'commerce', 'devis-create': 'commerce',
+      'chantiers': 'travaux',
+      'factures': 'facturation', 'facture-detail': 'facturation',
+      'tresorerie': 'tresorerie',
+      'catalogue': 'catalogue',
+      'documents': 'documents',
+      'planification': 'planification',
+      'profil': null,
+      'parametres': null
+    };
+
+    const modules = {
+      'crm': [{ label: 'Liste des clients', page: 'clients' }, { label: 'Prospects', page: 'clients' }],
+      'commerce': [{ label: 'Devis', page: 'devis' }, { label: 'Bons de commande', page: 'devis' }],
+      'travaux': [{ label: 'Chantiers', page: 'chantiers' }, { label: 'Suivi', page: 'chantiers' }],
+      'facturation': [{ label: 'Factures', page: 'factures' }, { label: 'Avoirs', page: 'factures' }],
+      'tresorerie': [{ label: 'Vue d\'ensemble', page: 'tresorerie' }, { label: 'Dépenses', page: 'tresorerie' }],
+      'catalogue': [{ label: 'Prestations', page: 'catalogue' }],
+      'documents': [{ label: 'Tous les documents', page: 'documents' }],
+      'planification': [{ label: 'Calendrier', page: 'planification' }, { label: 'Liste', page: 'planification' }]
+    };
+
+    function navigate(page) {
+      document.querySelectorAll('[data-page]').forEach(el => el.classList.remove('active'));
+      const target = document.querySelector(`[data-page="${page}"]`);
+      if (target) {
+        target.classList.add('active');
+        target.classList.add('fade-in');
+      }
+
+      // Update chapter active state
+      document.querySelectorAll('.nav-chapter').forEach(btn => btn.classList.remove('active'));
+      const chapter = pageChapter[page];
+      if (chapter) {
+        const btn = document.querySelector(`[data-chapter="${chapter}"]`);
+        if (btn) btn.classList.add('active');
+      } else if (page === 'home') {
+        document.querySelector('[data-chapter="home"]')?.classList.add('active');
+      }
+
+      // Secondary bar
+      const bar = document.getElementById('secondaryBar');
+      if (chapter && modules[chapter]) {
+        bar.classList.remove('hidden');
+        bar.innerHTML = modules[chapter].map(m =>
+          `<button onclick="navigate('${m.page}')" class="px-3 py-1.5 text-xs font-medium rounded-md ${m.page === page || (page.startsWith(m.page.split('-')[0]) && m.page !== 'home') ? 'bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-300 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'} transition">${m.label}</button>`
+        ).join('');
+      } else {
+        bar.classList.add('hidden');
+        bar.innerHTML = '';
+      }
+
+      closeProfileMenu();
+      window.scrollTo(0, 0);
+    }
+
+    function toggleProfileMenu() {
+      document.getElementById('profileMenu').classList.toggle('open');
+    }
+    function closeProfileMenu() {
+      document.getElementById('profileMenu').classList.remove('open');
+    }
+
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      document.getElementById('themeLabel').textContent = isDark ? 'Mode clair' : 'Mode sombre';
+      document.getElementById('themeBtnLabel').textContent = isDark ? 'Mode clair' : 'Mode sombre';
+    }
+
+    function toggleLeon() {
+      document.getElementById('leonPanel').classList.toggle('open');
+    }
+
+    function leonReply(btn) {
+      const q = btn.textContent;
+      const chat = document.getElementById('leonChat');
+      chat.innerHTML += `<div class="flex justify-end"><div class="bg-brand-600 text-white text-sm rounded-xl px-3.5 py-2 max-w-[85%]">${q}</div></div>`;
+      setTimeout(() => {
+        let answer = "Je regarde…";
+        if (q.includes('devis')) answer = "Vous avez 4 devis en attente pour un total de 12 450 €. Le plus ancien est le D-2026-014 (Dupont Sophie, 3 280 €), envoyé il y a 12 jours.";
+        else if (q.includes('encaisser')) answer = "Il vous reste 8 320 € à encaisser, dont 1 890 € en retard (facture F-2026-008 — Martin Électricité).";
+        else if (q.includes('chantiers')) answer = "Prochains chantiers : fin de la salle de bain Leroy demain, puis chauffage Dupont (en cours), et rénovation cuisine Moreau à partir du 20 octobre.";
+        chat.innerHTML += `<div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3.5 text-sm max-w-[90%]">${answer}</div>`;
+        chat.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 400);
+    }
+
+    function sendLeon() {
+      const input = document.getElementById('leonInput');
+      const q = input.value.trim();
+      if (!q) return;
+      const chat = document.getElementById('leonChat');
+      chat.innerHTML += `<div class="flex justify-end"><div class="bg-brand-600 text-white text-sm rounded-xl px-3.5 py-2 max-w-[85%]">${q}</div></div>`;
+      input.value = '';
+      setTimeout(() => {
+        chat.innerHTML += `<div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3.5 text-sm max-w-[90%]">Dans ce prototype je peux répondre à des questions simples sur les devis, factures et chantiers. Essayez les suggestions ci-dessus !</div>`;
+        chat.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 400);
+    }
+
+    // Close profile menu on outside click
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#profileMenu') && !e.target.closest('[onclick*="toggleProfileMenu"]')) {
+        closeProfileMenu();
+      }
+    });
+
+    // Init
+    navigate('home');
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
