@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BATORYA Essentiel V6 — Prototype UI/UX</title>
+    <style>
+        /* --- DESIGN SYSTEM & VARIABLES --- */
+        :root {
+            --bg-app: #F8FAFC;
+            --bg-surface: #FFFFFF;
+            --bg-surface-hover: #F1F5F9;
+            --border-color: #E2E8F0;
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --primary: #D95B3D;
+            --primary-hover: #C24D30;
+            --primary-light: #FDF2F0;
+            --accent-blue: #3B82F6;
+            --success: #10B981;
+            --success-light: #ECFDF5;
+            --warning: #F59E0B;
+            --warning-light: #FFFBEB;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --radius: 10px;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        [data-theme="dark"] {
+            --bg-app: #0B0F19;
+            --bg-surface: #131B2E;
+            --bg-surface-hover: #1E293B;
+            --border-color: #1E293B;
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --primary: #E06D53;
+            --primary-hover: #EA826A;
+            --primary-light: #2A1713;
+            --accent-blue: #60A5FA;
+            --success: #34D399;
+            --success-light: #064E3B;
+            --warning: #FBBF24;
+            --warning-light: #451A03;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font);
+        }
+
+        body {
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-size: 14px;
+        }
+
+        /* --- TOP NAVIGATION --- */
+        header {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 60px;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-badge {
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+
+        .app-title {
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: -0.2px;
+        }
+
+        .chapters-nav {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding: 0 10px;
+        }
+
+        .chapter-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .chapter-btn:hover {
+            color: var(--text-main);
+            background: var(--bg-surface-hover);
+        }
+
+        .chapter-btn.active {
+            color: var(--primary);
+            background: var(--primary-light);
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .theme-toggle, .profile-menu-trigger {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .theme-toggle:hover, .profile-menu-trigger:hover {
+            background: var(--bg-surface-hover);
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        /* --- SUBNAV BAR --- */
+        .subnav-bar {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 24px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+
+        .subnav-tab {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .subnav-tab:hover {
+            color: var(--text-main);
+        }
+
+        .subnav-tab.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .subnav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        /* --- MAIN CONTENT AREA --- */
+        .main-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: none;
+        }
+
+        .main-container.active {
+            display: block;
+        }
+
+        /* --- COMMON UI COMPONENTS --- */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-surface);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-surface-hover);
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .kpi-label {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .kpi-trend {
+            font-size: 12px;
+            color: var(--success);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Tables & Lists */
+        .data-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .table-toolbar {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-input {
+            background: var(--bg-app);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 6px;
+            width: 260px;
+            font-size: 13px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: var(--bg-surface-hover);
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--bg-surface-hover);
+            cursor: pointer;
+        }
+
+        /* Status Badges */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-success { background: var(--success-light); color: var(--success); }
+        .badge-warning { background: var(--warning-light); color: var(--warning); }
+        .badge-neutral { background: var(--bg-surface-hover); color: var(--text-muted); }
+
+        /* --- ASSISTANT LEON (FLOATING & PANEL) --- */
+        .leon-trigger {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-md);
+            cursor: pointer;
+            border: none;
+            z-index: 1000;
+            transition: transform 0.2s;
+        }
+
+        .leon-trigger:hover {
+            transform: scale(1.05);
+        }
+
+        .leon-panel {
+            position: fixed;
+            bottom: 84px;
+            right: 24px;
+            width: 360px;
+            height: 480px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .leon-panel.open {
+            display: flex;
+        }
+
+        .leon-header {
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .leon-body {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .leon-msg {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            max-width: 85%;
+        }
+
+        .leon-msg.bot {
+            background: var(--bg-surface-hover);
+            color: var(--text-main);
+            align-self: flex-start;
+        }
+
+        .leon-msg.user {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+        }
+
+        .leon-footer {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+        }
+
+        .leon-input {
+            flex: 1;
+            background: var(--bg-app);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: var(--text-main);
+            font-size: 13px;
+        }
+
+        /* Utility grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP NAVIGATION -->
+    <header>
+        <div class="logo-area">
+            <div class="logo-badge">BAT</div>
+            <span class="app-title">BATORYA Essentiel</span>
+        </div>
+        <nav class="chapters-nav">
+            <button class="chapter-btn active" onclick="switchChapter('accueil', this)">Accueil</button>
+            <button class="chapter-btn" onclick="switchChapter('crm', this)">CRM & Clients</button>
+            <button class="chapter-btn" onclick="switchChapter('commerce', this)">Commerce (Devis)</button>
+            <button class="chapter-btn" onclick="switchChapter('travaux', this)">Travaux & Chantiers</button>
+            <button class="chapter-btn" onclick="switchChapter('facturation', this)">Facturation</button>
+            <button class="chapter-btn" onclick="switchChapter('tresorerie', this)">Trésorerie</button>
+            <button class="chapter-btn" onclick="switchChapter('catalogue', this)">Catalogue</button>
+            <button class="chapter-btn" onclick="switchChapter('planning', this)">Planification</button>
+            <button class="chapter-btn" onclick="switchChapter('parametres', this)">Paramètres</button>
+        </nav>
+        <div class="header-right">
+            <button class="theme-toggle" onclick="toggleTheme()">Mode Sombre</button>
+            <div class="profile-menu-trigger" onclick="switchChapter('parametres', null)">
+                <div class="user-avatar">MC</div>
+                <span>Mathieu C.</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- SUBNAV BAR -->
+    <div class="subnav-bar" id="subnav-container">
+        <button class="subnav-tab active">Synthèse globale</button>
+        <button class="subnav-tab">Actions rapides</button>
+        <button class="subnav-tab">Échéances de la semaine</button>
+    </div>
+
+    <!-- MAIN CONTENT : ACCUEIL -->
+    <div id="view-accueil" class="main-container active">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Tableau de bord</h1>
+                <p class="page-subtitle">Pilotez votre activité du bâtiment en un clin d'œil (Mode local & offline)</p>
+            </div>
+            <button class="btn" onclick="switchChapter('commerce', null)">+ Nouveau Devis</button>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Devis en attente</div>
+                <div class="kpi-value">12 450 €</div>
+                <div class="kpi-trend">4 devis en cours de validation</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Chantiers en cours</div>
+                <div class="kpi-value">3 chantiers</div>
+                <div class="kpi-trend">Planning respecté</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Factures impayées</div>
+                <div class="kpi-value">3 890 €</div>
+                <div class="kpi-trend" style="color: var(--warning);">2 relances à prévoir</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Encaissé ce mois</div>
+                <div class="kpi-value">18 200 €</div>
+                <div class="kpi-trend">+12% vs mois dernier</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="data-card">
+                <div class="table-toolbar">
+                    <span style="font-weight: 600;">Chantiers récents</span>
+                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="switchChapter('travaux', null)">Voir tout</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Chantier</th>
+                            <th>Client</th>
+                            <th>Avancement</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr onclick="switchChapter('travaux', null)">
+                            <td>Rénovation SDB - 45 rue de Paris</td>
+                            <td>SCI Les Oliviers</td>
+                            <td>75%</td>
+                            <td><span class="badge badge-success">En cours</span></td>
+                        </tr>
+                        <tr onclick="switchChapter('travaux', null)">
+                            <td>Installation Tableau Électrique</td>
+                            <td>Marc Dubois</td>
+                            <td>30%</td>
+                            <td><span class="badge badge-warning">En attente pièces</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="data-card" style="padding: 20px;">
+                <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px;">Raccourcis Rapides</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" onclick="switchChapter('crm', null)">👤 Créer une fiche client</button>
+                    <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" onclick="switchChapter('commerce', null)">📄 Rédiger un devis</button>
+                    <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" onclick="switchChapter('facturation', null)">💶 Établir une facture</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT : CRM -->
+    <div id="view-crm" class="main-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Clients et Prospects</h1>
+                <p class="page-subtitle">Gestion centralisée de vos contacts professionnels</p>
+            </div>
+            <button class="btn">+ Nouveau Client</button>
+        </div>
+        <div class="data-card">
+            <div class="table-toolbar">
+                <input type="text" class="search-input" placeholder="Rechercher un client...">
+                <span style="color: var(--text-muted); font-size: 13px;">42 contacts enregistrés</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom / Entreprise</th>
+                        <th>Contact</th>
+                        <th>Téléphone</th>
+                        <th>Chantiers actifs</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>SCI Les Oliviers</strong></td>
+                        <td>Jean Dupont</td>
+                        <td>06 12 34 56 78</td>
+                        <td>1 chantier</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dubois Électricité</strong></td>
+                        <td>Marc Dubois</td>
+                        <td>06 98 76 54 32</td>
+                        <td>2 chantiers</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mme Martin</strong></td>
+                        <td>Sophie Martin</td>
+                        <td>06 45 67 89 01</td>
+                        <td>0 chantier</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT : COMMERCE -->
+    <div id="view-commerce" class="main-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Devis & Bons de commande</h1>
+                <p class="page-subtitle">Suivi des propositions commerciales avant engagement</p>
+            </div>
+            <button class="btn">+ Créer un devis</button>
+        </div>
+        <div class="data-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N° Devis</th>
+                        <th>Client</th>
+                        <th>Objet</th>
+                        <th>Montant HT</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>DEV-2026-089</td>
+                        <td>SCI Les Oliviers</td>
+                        <td>Rénovation complète plomberie</td>
+                        <td>4 500,00 €</td>
+                        <td><span class="badge badge-success">Validé / Signé</span></td>
+                    </tr>
+                    <tr>
+                        <td>DEV-2026-090</td>
+                        <td>Marc Dubois</td>
+                        <td>Mise aux normes tableau électrique</td>
+                        <td>1 850,00 €</td>
+                        <td><span class="badge badge-warning">En attente client</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT : TRAVAUX -->
+    <div id="view-travaux" class="main-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Travaux & Chantiers</h1>
+                <p class="page-subtitle">Suivi opérationnel et avancement des chantiers en cours</p>
+            </div>
+            <button class="btn">+ Nouveau Chantier</button>
+        </div>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Chantiers Actifs</div>
+                <div class="kpi-value">3</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Terminés ce mois</div>
+                <div class="kpi-value">5</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT : FACTURATION -->
+    <div id="view-facturation" class="main-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Facturation</h1>
+                <p class="page-subtitle">Émission des factures, acomptes et suivi des encaissements (Franchise de TVA)</p>
+            </div>
+            <button class="btn">+ Nouvelle Facture</button>
+        </div>
+        <div class="data-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N° Facture</th>
+                        <th>Client</th>
+                        <th>Date</th>
+                        <th>Montant Net</th>
+                        <th>Statut Paiement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>FAC-2026-041</td>
+                        <td>SCI Les Oliviers</td>
+                        <td>02/10/2026</td>
+                        <td>4 500,00 €</td>
+                        <td><span class="badge badge-success">Payée</span></td>
+                    </tr>
+                    <tr>
+                        <td>FAC-2026-042</td>
+                        <td>Sophie Martin</td>
+                        <td>08/10/2026</td>
+                        <td>1 200,00 €</td>
+                        <td><span class="badge badge-warning">En attente</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT : TRESORERIE -->
+    <div id="view-tresorerie" class="main-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Trésorerie & Dépenses</h1>
+                <p class="page-subtitle">Vue claire des flux financiers locaux</p>
+            </div>
+        </div>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Encaissements (Octobre)</div>
+                <div class="kpi-value" style="color: var(--success);">+ 18 200,00 €</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Dépenses / Achats</div>
+                <div class="kpi-value" style="color: var(--primary);">4 150,00 €</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT : CATALOGUE -->
+    <div id="view-catalogue" class="main-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Catalogue de Prestations</h1>
+                <p class="page-subtitle">Éléments réutilisables pour vos devis et factures</p>
+            </div>
+            <button class="btn">+ Ajouter une prestation</button>
+        </div>
+        <div class="data-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Libellé</th>
+                        <th>Unité</th>
+                        <th>Prix unitaire HT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Pose de cloison placo standard</td>
+                        <td>m²</td>
+                        <td>45,00 €</td>
+                    </tr>
+                    <tr>
+                        <td>Remplacement tableau électrique 14 modules</td>
+                        <td>Forfait</td>
+                        <td>850,00 €</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT : PLANNING -->
+    <div id="view-planning" class="main-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Planification</h1>
+                <p class="page-subtitle">Calendrier local des interventions et chantiers</p>
+            </div>
+        </div>
+        <div class="data-card" style="padding: 40px; text-align: center; color: var(--text-muted);">
+            [ Vue Calendrier Hebdomadaire / Chantiers en cours ]<br>Aucune synchronisation cloud requise — Données stockées localement en SQLite.
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT : PARAMETRES -->
+    <div id="view-parametres" class="main-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Paramètres & Profil</h1>
+                <p class="page-subtitle">Configuration de votre entreprise et de l'application</p>
+            </div>
+        </div>
+        <div class="data-card" style="padding: 24px;">
+            <h3 style="margin-bottom: 16px; font-size: 16px;">Profil Professionnel</h3>
+            <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 24px;">
+                <div class="user-avatar" style="width: 60px; height: 60px; font-size: 20px;">MC</div>
+                <div>
+                    <div style="font-weight: 600; font-size: 16px;">Mathieu Construction</div>
+                    <div style="color: var(--text-muted); font-size: 13px;">Auto-entrepreneur — Gros œuvre & Second œuvre</div>
+                </div>
+            </div>
+            <div style="border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 500;">BATORYA Essentiel V6.0</div>
+                    <div style="color: var(--text-muted); font-size: 12px;">Mode local Tauri / SQLite actif (Offline-first)</div>
+                </div>
+                <button class="btn btn-secondary">Vérifier les mises à jour</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASSISTANT LEON -->
+    <button class="leon-trigger" onclick="toggleLeon()" title="Assistant Léon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    </button>
+
+    <div class="leon-panel" id="leon-panel">
+        <div class="leon-header">
+            <span>Léon — Assistant local</span>
+            <button onclick="toggleLeon()" style="background:none; border:none; color:white; font-size:16px; cursor:pointer;">&times;</button>
+        </div>
+        <div class="leon-body">
+            <div class="leon-msg bot">Bonjour Mathieu ! Je suis Léon, votre assistant BATORYA. Comment puis-je vous aider sur vos chantiers ou factures aujourd'hui ?</div>
+        </div>
+        <div class="leon-footer">
+            <input type="text" class="leon-input" placeholder="Posez une question à Léon...">
+            <button class="btn" style="padding: 8px 12px;">Envoyer</button>
+        </div>
+    </div>
+
+    <!-- INTERACTION LOGIC -->
+    <script>
+        function switchChapter(chapterId, element) {
+            // Hide all views
+            document.querySelectorAll('.main-container').forEach(el => el.classList.remove('active'));
+            // Show selected view
+            const targetView = document.getElementById('view-' + chapterId);
+            if (targetView) targetView.classList.add('active');
+
+            // Update chapter buttons
+            if (element) {
+                document.querySelectorAll('.chapter-btn').forEach(btn => btn.classList.remove('active'));
+                element.classList.add('active');
+            } else {
+                // Find matching button if triggered programmatically
+                document.querySelectorAll('.chapter-btn').forEach(btn => {
+                    if (btn.getAttribute('onclick').includes(chapterId)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            document.querySelector('.theme-toggle').textContent = newTheme === 'light' ? 'Mode Sombre' : 'Mode Clair';
+        }
+
+        function toggleLeon() {
+            const panel = document.getElementById('leon-panel');
+            panel.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>
