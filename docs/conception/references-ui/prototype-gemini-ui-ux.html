@@ -1,902 +1,699 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BATORYA Essentiel V6 — Prototype UI/UX</title>
+    <title>BATORYA Essentiel V6 — Creative Concept</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* --- DESIGN SYSTEM & VARIABLES --- */
-        :root {
-            --bg-app: #F8FAFC;
-            --bg-surface: #FFFFFF;
-            --bg-surface-hover: #F1F5F9;
-            --border-color: #E2E8F0;
-            --text-main: #0F172A;
-            --text-muted: #64748B;
-            --primary: #D95B3D;
-            --primary-hover: #C24D30;
-            --primary-light: #FDF2F0;
-            --accent-blue: #3B82F6;
-            --success: #10B981;
-            --success-light: #ECFDF5;
-            --warning: #F59E0B;
-            --warning-light: #FFFBEB;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            --radius: 10px;
-            --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        /* --- DESIGN SYSTEM & CREATIVE VARIABLES --- */
+        :root[data-theme="dark"] {
+            --bg-canvas: #0C0E12;
+            --bg-surface: #14171F;
+            --bg-surface-elevated: #1C212D;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(217, 91, 61, 0.4);
+            --text-primary: #F1F5F9;
+            --text-secondary: #8E9BAE;
+            --text-accent: #D95B3D; /* Terracotta cuit */
+            --brand-gold: #D4AF37; /* Laiton */
+            --accent-glow: rgba(217, 91, 61, 0.15);
+            --font-title: 'Syne', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
         }
 
-        [data-theme="dark"] {
-            --bg-app: #0B0F19;
-            --bg-surface: #131B2E;
-            --bg-surface-hover: #1E293B;
-            --border-color: #1E293B;
-            --text-main: #F8FAFC;
-            --text-muted: #94A3B8;
-            --primary: #E06D53;
-            --primary-hover: #EA826A;
-            --primary-light: #2A1713;
-            --accent-blue: #60A5FA;
-            --success: #34D399;
-            --success-light: #064E3B;
-            --warning: #FBBF24;
-            --warning-light: #451A03;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+        :root[data-theme="light"] {
+            --bg-canvas: #F4F1EA; /* Papier Archival / Sable */
+            --bg-surface: #FFFFFF;
+            --bg-surface-elevated: #EAE5DC;
+            --border-subtle: rgba(0, 0, 0, 0.08);
+            --border-accent: rgba(194, 77, 48, 0.4);
+            --text-primary: #12151C;
+            --text-secondary: #5A6474;
+            --text-accent: #C24D30;
+            --brand-gold: #B08D26;
+            --accent-glow: rgba(194, 77, 48, 0.08);
+            --font-title: 'Syne', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: var(--font);
+            font-family: var(--font-body);
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
 
         body {
-            background-color: var(--bg-app);
-            color: var(--text-main);
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
             height: 100vh;
             display: flex;
-            flex-direction: column;
             overflow: hidden;
-            font-size: 14px;
         }
 
-        /* --- TOP NAVIGATION --- */
-        header {
-            background-color: var(--bg-surface);
-            border-bottom: 1px solid var(--border-color);
+        /* --- LEFT ARCHITECTURAL NAVIGATION RAIL (9 CHAPTERS) --- */
+        .rail-nav {
+            width: 80px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            padding: 0 20px;
-            height: 60px;
-            flex-shrink: 0;
-            user-select: none;
+            padding: 20px 0;
+            z-index: 100;
         }
 
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-badge {
-            background: var(--primary);
-            color: white;
-            font-weight: 700;
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 13px;
-            letter-spacing: 0.5px;
-        }
-
-        .app-title {
-            font-weight: 600;
-            font-size: 15px;
-            letter-spacing: -0.2px;
-        }
-
-        .chapters-nav {
-            display: flex;
-            gap: 4px;
-            overflow-x: auto;
-            padding: 0 10px;
-        }
-
-        .chapter-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 13px;
-            white-space: nowrap;
-            transition: all 0.2s;
-        }
-
-        .chapter-btn:hover {
-            color: var(--text-main);
-            background: var(--bg-surface-hover);
-        }
-
-        .chapter-btn.active {
-            color: var(--primary);
-            background: var(--primary-light);
-            font-weight: 600;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .theme-toggle, .profile-menu-trigger {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 6px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-        }
-
-        .theme-toggle:hover, .profile-menu-trigger:hover {
-            background: var(--bg-surface-hover);
-        }
-
-        .user-avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            object-fit: cover;
-            background: var(--primary);
-            color: white;
+        .rail-brand {
+            width: 44px;
+            height: 44px;
+            background: var(--text-accent);
+            color: #FFF;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
-            font-size: 12px;
-        }
-
-        /* --- SUBNAV BAR --- */
-        .subnav-bar {
-            background-color: var(--bg-surface);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0 24px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-shrink: 0;
-        }
-
-        .subnav-tab {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 13px;
-            font-weight: 500;
+            font-family: var(--font-title);
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: -1px;
+            box-shadow: 0 4px 20px var(--accent-glow);
             cursor: pointer;
-            height: 100%;
+        }
+
+        .chapters-list {
             display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
             align-items: center;
+        }
+
+        .chapter-node {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
             position: relative;
         }
 
-        .subnav-tab:hover {
-            color: var(--text-main);
+        .chapter-node:hover {
+            color: var(--text-primary);
+            background: var(--bg-surface-elevated);
         }
 
-        .subnav-tab.active {
-            color: var(--primary);
-            font-weight: 600;
+        .chapter-node.active {
+            color: var(--text-accent);
+            background: var(--accent-glow);
+            border-color: var(--border-accent);
         }
 
-        .subnav-tab.active::after {
-            content: '';
+        .chapter-node .chap-num {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            opacity: 0.6;
+        }
+
+        .chapter-node .chap-code {
+            font-family: var(--font-title);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .chapter-tooltip {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--primary);
+            left: 88px;
+            background: var(--bg-surface-elevated);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            border: 1px solid var(--border-subtle);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
-        /* --- MAIN CONTENT AREA --- */
-        .main-container {
+        .chapter-node:hover .chapter-tooltip {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .rail-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .profile-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--brand-gold);
+            background: #2D3748;
+            color: #FFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* --- MAIN WORKSPACE --- */
+        .workspace {
             flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-            display: none;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
         }
 
-        .main-container.active {
-            display: block;
-        }
-
-        /* --- COMMON UI COMPONENTS --- */
-        .page-header {
+        /* DYNAMIC WORKSPACE HEADER */
+        .workspace-header {
+            padding: 24px 40px 12px 40px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
+            align-items: flex-end;
+            border-bottom: 1px solid var(--border-subtle);
         }
 
-        .page-title {
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-        }
-
-        .page-subtitle {
-            color: var(--text-muted);
-            font-size: 13px;
-            margin-top: 4px;
-        }
-
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 500;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            transition: background 0.2s;
-        }
-
-        .btn:hover {
-            background: var(--primary-hover);
-        }
-
-        .btn-secondary {
-            background: var(--bg-surface);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg-surface-hover);
-        }
-
-        /* KPI Cards */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .kpi-card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            padding: 20px;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .kpi-label {
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .kpi-value {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .kpi-trend {
-            font-size: 12px;
-            color: var(--success);
-            margin-top: 6px;
+        .chapter-title-group {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 4px;
         }
 
-        /* Tables & Lists */
-        .data-card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
-            margin-bottom: 24px;
+        .chapter-meta {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-accent);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
         }
 
-        .table-toolbar {
-            padding: 16px;
+        .chapter-heading {
+            font-family: var(--font-title);
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .workspace-actions {
             display: flex;
-            justify-content: space-between;
+            gap: 12px;
             align-items: center;
-            border-bottom: 1px solid var(--border-color);
         }
 
-        .search-input {
-            background: var(--bg-app);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 8px 12px;
-            border-radius: 6px;
-            width: 260px;
-            font-size: 13px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 13px;
-        }
-
-        th {
-            background: var(--bg-surface-hover);
-            color: var(--text-muted);
+        .btn-creative {
+            background: var(--text-accent);
+            color: #FFF;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
             font-weight: 600;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px var(--accent-glow);
         }
 
-        td {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-main);
+        .btn-creative:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
         }
 
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover td {
-            background: var(--bg-surface-hover);
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
             cursor: pointer;
         }
 
-        /* Status Badges */
-        .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            display: inline-block;
+        .btn-outline:hover {
+            background: var(--bg-surface-elevated);
         }
 
-        .badge-success { background: var(--success-light); color: var(--success); }
-        .badge-warning { background: var(--warning-light); color: var(--warning); }
-        .badge-neutral { background: var(--bg-surface-hover); color: var(--text-muted); }
+        /* WORKSPACE CONTENT AREA */
+        .workspace-body {
+            flex: 1;
+            padding: 32px 40px;
+            overflow-y: auto;
+            display: none;
+        }
 
-        /* --- ASSISTANT LEON (FLOATING & PANEL) --- */
-        .leon-trigger {
+        .workspace-body.active {
+            display: block;
+        }
+
+        /* CREATIVE EDITORIAL LAYOUTS */
+        .editorial-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 32px;
+        }
+
+        .hero-statement {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-statement::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--text-accent);
+        }
+
+        .hero-number {
+            font-family: var(--font-mono);
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -2px;
+        }
+
+        .hero-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* CUSTOM DATA SHEET TABLE */
+        .sheet-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .sheet-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr 1fr;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-subtle);
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .sheet-row.header {
+            background: var(--bg-surface-elevated);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sheet-row:hover:not(.header) {
+            background: var(--bg-surface-elevated);
+            cursor: pointer;
+        }
+
+        .tag-status {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .tag-active { background: rgba(16, 185, 129, 0.15); color: #10B981; }
+        .tag-pending { background: rgba(245, 158, 11, 0.15); color: #F59E0B; }
+
+        /* FLOATING LEON ASSISTANT */
+        .leon-orb {
             position: fixed;
             bottom: 24px;
             right: 24px;
-            background: var(--primary);
-            color: white;
-            width: 50px;
-            height: 50px;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-accent);
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: var(--shadow-md);
             cursor: pointer;
-            border: none;
-            z-index: 1000;
-            transition: transform 0.2s;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            z-index: 200;
         }
 
-        .leon-trigger:hover {
-            transform: scale(1.05);
+        .leon-orb-inner {
+            width: 12px;
+            height: 12px;
+            background: var(--text-accent);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--text-accent);
+            animation: pulse 2s infinite;
         }
 
-        .leon-panel {
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .leon-drawer {
             position: fixed;
             bottom: 84px;
             right: 24px;
-            width: 360px;
+            width: 380px;
             height: 480px;
             background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
             display: none;
             flex-direction: column;
-            z-index: 1000;
+            z-index: 200;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
             overflow: hidden;
         }
 
-        .leon-panel.open {
-            display: flex;
-        }
+        .leon-drawer.open { display: flex; }
 
-        .leon-header {
-            padding: 16px;
-            background: var(--primary);
-            color: white;
-            font-weight: 600;
+        .leon-drawer-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-subtle);
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-
-        .leon-body {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .leon-msg {
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            max-width: 85%;
-        }
-
-        .leon-msg.bot {
-            background: var(--bg-surface-hover);
-            color: var(--text-main);
-            align-self: flex-start;
-        }
-
-        .leon-msg.user {
-            background: var(--primary);
-            color: white;
-            align-self: flex-end;
-        }
-
-        .leon-footer {
-            padding: 12px;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 8px;
-        }
-
-        .leon-input {
-            flex: 1;
-            background: var(--bg-app);
-            border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            border-radius: 6px;
-            color: var(--text-main);
-            font-size: 13px;
-        }
-
-        /* Utility grid */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 24px;
+            font-family: var(--font-title);
+            font-weight: 700;
         }
     </style>
 </head>
 <body>
 
-    <!-- TOP NAVIGATION -->
-    <header>
-        <div class="logo-area">
-            <div class="logo-badge">BAT</div>
-            <span class="app-title">BATORYA Essentiel</span>
-        </div>
-        <nav class="chapters-nav">
-            <button class="chapter-btn active" onclick="switchChapter('accueil', this)">Accueil</button>
-            <button class="chapter-btn" onclick="switchChapter('crm', this)">CRM & Clients</button>
-            <button class="chapter-btn" onclick="switchChapter('commerce', this)">Commerce (Devis)</button>
-            <button class="chapter-btn" onclick="switchChapter('travaux', this)">Travaux & Chantiers</button>
-            <button class="chapter-btn" onclick="switchChapter('facturation', this)">Facturation</button>
-            <button class="chapter-btn" onclick="switchChapter('tresorerie', this)">Trésorerie</button>
-            <button class="chapter-btn" onclick="switchChapter('catalogue', this)">Catalogue</button>
-            <button class="chapter-btn" onclick="switchChapter('planning', this)">Planification</button>
-            <button class="chapter-btn" onclick="switchChapter('parametres', this)">Paramètres</button>
-        </nav>
-        <div class="header-right">
-            <button class="theme-toggle" onclick="toggleTheme()">Mode Sombre</button>
-            <div class="profile-menu-trigger" onclick="switchChapter('parametres', null)">
-                <div class="user-avatar">MC</div>
-                <span>Mathieu C.</span>
-            </div>
-        </div>
-    </header>
+    <!-- ARCHITECTURAL RAIL NAVIGATION (EXACTLY 9 OFFICIAL CHAPTERS) -->
+    <nav class="rail-nav">
+        <div class="rail-brand" title="BATORYA Essentiel V6">B6</div>
 
-    <!-- SUBNAV BAR -->
-    <div class="subnav-bar" id="subnav-container">
-        <button class="subnav-tab active">Synthèse globale</button>
-        <button class="subnav-tab">Actions rapides</button>
-        <button class="subnav-tab">Échéances de la semaine</button>
-    </div>
-
-    <!-- MAIN CONTENT : ACCUEIL -->
-    <div id="view-accueil" class="main-container active">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Tableau de bord</h1>
-                <p class="page-subtitle">Pilotez votre activité du bâtiment en un clin d'œil (Mode local & offline)</p>
+        <div class="chapters-list">
+            <!-- 1. CRM -->
+            <div class="chapter-node active" onclick="activateChapter('crm', this)">
+                <span class="chap-num">01</span>
+                <span class="chap-code">CRM</span>
+                <div class="chapter-tooltip">1. CRM & Prospects</div>
             </div>
-            <button class="btn" onclick="switchChapter('commerce', null)">+ Nouveau Devis</button>
+
+            <!-- 2. Commerce -->
+            <div class="chapter-node" onclick="activateChapter('commerce', this)">
+                <span class="chap-num">02</span>
+                <span class="chap-code">COM</span>
+                <div class="chapter-tooltip">2. Commerce (Devis)</div>
+            </div>
+
+            <!-- 3. Travaux -->
+            <div class="chapter-node" onclick="activateChapter('travaux', this)">
+                <span class="chap-num">03</span>
+                <span class="chap-code">TRV</span>
+                <div class="chapter-tooltip">3. Travaux & Chantiers</div>
+            </div>
+
+            <!-- 4. Facturation -->
+            <div class="chapter-node" onclick="activateChapter('facturation', this)">
+                <span class="chap-num">04</span>
+                <span class="chap-code">FAC</span>
+                <div class="chapter-tooltip">4. Facturation</div>
+            </div>
+
+            <!-- 5. Trésorerie -->
+            <div class="chapter-node" onclick="activateChapter('tresorerie', this)">
+                <span class="chap-num">05</span>
+                <span class="chap-code">TRS</span>
+                <div class="chapter-tooltip">5. Trésorerie & Dépenses</div>
+            </div>
+
+            <!-- 6. Catalogue -->
+            <div class="chapter-node" onclick="activateChapter('catalogue', this)">
+                <span class="chap-num">06</span>
+                <span class="chap-code">CAT</span>
+                <div class="chapter-tooltip">6. Catalogue Prestations</div>
+            </div>
+
+            <!-- 7. Documents -->
+            <div class="chapter-node" onclick="activateChapter('documents', this)">
+                <span class="chap-num">07</span>
+                <span class="chap-code">DOC</span>
+                <div class="chapter-tooltip">7. Documents & PDF</div>
+            </div>
+
+            <!-- 8. Planification -->
+            <div class="chapter-node" onclick="activateChapter('planification', this)">
+                <span class="chap-num">08</span>
+                <span class="chap-code">PLN</span>
+                <div class="chapter-tooltip">8. Planification</div>
+            </div>
+
+            <!-- 9. Paramètres -->
+            <div class="chapter-node" onclick="activateChapter('parametres', this)">
+                <span class="chap-num">09</span>
+                <span class="chap-code">PAR</span>
+                <div class="chapter-tooltip">9. Paramètres & Thème</div>
+            </div>
         </div>
 
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-label">Devis en attente</div>
-                <div class="kpi-value">12 450 €</div>
-                <div class="kpi-trend">4 devis en cours de validation</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Chantiers en cours</div>
-                <div class="kpi-value">3 chantiers</div>
-                <div class="kpi-trend">Planning respecté</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Factures impayées</div>
-                <div class="kpi-value">3 890 €</div>
-                <div class="kpi-trend" style="color: var(--warning);">2 relances à prévoir</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Encaissé ce mois</div>
-                <div class="kpi-value">18 200 €</div>
-                <div class="kpi-trend">+12% vs mois dernier</div>
-            </div>
+        <div class="rail-footer">
+            <button class="btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="toggleTheme()">Thème</button>
+            <div class="profile-avatar" title="Mathieu Construction" onclick="activateChapter('parametres', null)">MC</div>
         </div>
+    </nav>
 
-        <div class="grid-2">
-            <div class="data-card">
-                <div class="table-toolbar">
-                    <span style="font-weight: 600;">Chantiers récents</span>
-                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="switchChapter('travaux', null)">Voir tout</button>
+    <!-- WORKSPACE -->
+    <main class="workspace">
+        
+        <!-- DYNAMIC HEADER -->
+        <header class="workspace-header">
+            <div class="chapter-title-group">
+                <span class="chapter-meta" id="chap-meta">Chapitre 01 / Répertoire Client</span>
+                <h1 class="chapter-heading" id="chap-title">CRM & Prospects</h1>
+            </div>
+            <div class="workspace-actions">
+                <button class="btn-outline">Recherche Globale</button>
+                <button class="btn-creative" id="primary-action-btn">+ Créer une fiche</button>
+            </div>
+        </header>
+
+        <!-- CHAPTER 1: CRM -->
+        <section id="view-crm" class="workspace-body active">
+            <div class="editorial-grid">
+                <div class="sheet-container">
+                    <div class="sheet-row header">
+                        <span>Code Client</span>
+                        <span>Raison Sociale / Nom</span>
+                        <span>Téléphone</span>
+                        <span>Statut</span>
+                    </tr>
+                    </div>
+                    <div class="sheet-row">
+                        <span style="font-family: var(--font-mono);">CLI-2026-001</span>
+                        <span style="font-weight: 600;">SCI Les Oliviers</span>
+                        <span>06 12 34 56 78</span>
+                        <td><span class="tag-status tag-active">Chantier Actif</span></td>
+                    </div>
+                    <div class="sheet-row">
+                        <span style="font-family: var(--font-mono);">CLI-2026-002</span>
+                        <span style="font-weight: 600;">Marc Dubois</span>
+                        <span>06 98 76 54 32</span>
+                        <td><span class="tag-status tag-pending">Prospect</span></td>
+                    </div>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Chantier</th>
-                            <th>Client</th>
-                            <th>Avancement</th>
-                            <th>Statut</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr onclick="switchChapter('travaux', null)">
-                            <td>Rénovation SDB - 45 rue de Paris</td>
-                            <td>SCI Les Oliviers</td>
-                            <td>75%</td>
-                            <td><span class="badge badge-success">En cours</span></td>
-                        </tr>
-                        <tr onclick="switchChapter('travaux', null)">
-                            <td>Installation Tableau Électrique</td>
-                            <td>Marc Dubois</td>
-                            <td>30%</td>
-                            <td><span class="badge badge-warning">En attente pièces</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
 
-            <div class="data-card" style="padding: 20px;">
-                <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px;">Raccourcis Rapides</h3>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" onclick="switchChapter('crm', null)">👤 Créer une fiche client</button>
-                    <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" onclick="switchChapter('commerce', null)">📄 Rédiger un devis</button>
-                    <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" onclick="switchChapter('facturation', null)">💶 Établir une facture</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT : CRM -->
-    <div id="view-crm" class="main-container">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Clients et Prospects</h1>
-                <p class="page-subtitle">Gestion centralisée de vos contacts professionnels</p>
-            </div>
-            <button class="btn">+ Nouveau Client</button>
-        </div>
-        <div class="data-card">
-            <div class="table-toolbar">
-                <input type="text" class="search-input" placeholder="Rechercher un client...">
-                <span style="color: var(--text-muted); font-size: 13px;">42 contacts enregistrés</span>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nom / Entreprise</th>
-                        <th>Contact</th>
-                        <th>Téléphone</th>
-                        <th>Chantiers actifs</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>SCI Les Oliviers</strong></td>
-                        <td>Jean Dupont</td>
-                        <td>06 12 34 56 78</td>
-                        <td>1 chantier</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Dubois Électricité</strong></td>
-                        <td>Marc Dubois</td>
-                        <td>06 98 76 54 32</td>
-                        <td>2 chantiers</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Mme Martin</strong></td>
-                        <td>Sophie Martin</td>
-                        <td>06 45 67 89 01</td>
-                        <td>0 chantier</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT : COMMERCE -->
-    <div id="view-commerce" class="main-container">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Devis & Bons de commande</h1>
-                <p class="page-subtitle">Suivi des propositions commerciales avant engagement</p>
-            </div>
-            <button class="btn">+ Créer un devis</button>
-        </div>
-        <div class="data-card">
-            <table>
-                <thead>
-                    <tr>
-                        <th>N° Devis</th>
-                        <th>Client</th>
-                        <th>Objet</th>
-                        <th>Montant HT</th>
-                        <th>Statut</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>DEV-2026-089</td>
-                        <td>SCI Les Oliviers</td>
-                        <td>Rénovation complète plomberie</td>
-                        <td>4 500,00 €</td>
-                        <td><span class="badge badge-success">Validé / Signé</span></td>
-                    </tr>
-                    <tr>
-                        <td>DEV-2026-090</td>
-                        <td>Marc Dubois</td>
-                        <td>Mise aux normes tableau électrique</td>
-                        <td>1 850,00 €</td>
-                        <td><span class="badge badge-warning">En attente client</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT : TRAVAUX -->
-    <div id="view-travaux" class="main-container">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Travaux & Chantiers</h1>
-                <p class="page-subtitle">Suivi opérationnel et avancement des chantiers en cours</p>
-            </div>
-            <button class="btn">+ Nouveau Chantier</button>
-        </div>
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-label">Chantiers Actifs</div>
-                <div class="kpi-value">3</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Terminés ce mois</div>
-                <div class="kpi-value">5</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT : FACTURATION -->
-    <div id="view-facturation" class="main-container">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Facturation</h1>
-                <p class="page-subtitle">Émission des factures, acomptes et suivi des encaissements (Franchise de TVA)</p>
-            </div>
-            <button class="btn">+ Nouvelle Facture</button>
-        </div>
-        <div class="data-card">
-            <table>
-                <thead>
-                    <tr>
-                        <th>N° Facture</th>
-                        <th>Client</th>
-                        <th>Date</th>
-                        <th>Montant Net</th>
-                        <th>Statut Paiement</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>FAC-2026-041</td>
-                        <td>SCI Les Oliviers</td>
-                        <td>02/10/2026</td>
-                        <td>4 500,00 €</td>
-                        <td><span class="badge badge-success">Payée</span></td>
-                    </tr>
-                    <tr>
-                        <td>FAC-2026-042</td>
-                        <td>Sophie Martin</td>
-                        <td>08/10/2026</td>
-                        <td>1 200,00 €</td>
-                        <td><span class="badge badge-warning">En attente</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT : TRESORERIE -->
-    <div id="view-tresorerie" class="main-container">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Trésorerie & Dépenses</h1>
-                <p class="page-subtitle">Vue claire des flux financiers locaux</p>
-            </div>
-        </div>
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-label">Encaissements (Octobre)</div>
-                <div class="kpi-value" style="color: var(--success);">+ 18 200,00 €</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Dépenses / Achats</div>
-                <div class="kpi-value" style="color: var(--primary);">4 150,00 €</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT : CATALOGUE -->
-    <div id="view-catalogue" class="main-container">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Catalogue de Prestations</h1>
-                <p class="page-subtitle">Éléments réutilisables pour vos devis et factures</p>
-            </div>
-            <button class="btn">+ Ajouter une prestation</button>
-        </div>
-        <div class="data-card">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Libellé</th>
-                        <th>Unité</th>
-                        <th>Prix unitaire HT</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Pose de cloison placo standard</td>
-                        <td>m²</td>
-                        <td>45,00 €</td>
-                    </tr>
-                    <tr>
-                        <td>Remplacement tableau électrique 14 modules</td>
-                        <td>Forfait</td>
-                        <td>850,00 €</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT : PLANNING -->
-    <div id="view-planning" class="main-container">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Planification</h1>
-                <p class="page-subtitle">Calendrier local des interventions et chantiers</p>
-            </div>
-        </div>
-        <div class="data-card" style="padding: 40px; text-align: center; color: var(--text-muted);">
-            [ Vue Calendrier Hebdomadaire / Chantiers en cours ]<br>Aucune synchronisation cloud requise — Données stockées localement en SQLite.
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT : PARAMETRES -->
-    <div id="view-parametres" class="main-container">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Paramètres & Profil</h1>
-                <p class="page-subtitle">Configuration de votre entreprise et de l'application</p>
-            </div>
-        </div>
-        <div class="data-card" style="padding: 24px;">
-            <h3 style="margin-bottom: 16px; font-size: 16px;">Profil Professionnel</h3>
-            <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 24px;">
-                <div class="user-avatar" style="width: 60px; height: 60px; font-size: 20px;">MC</div>
-                <div>
-                    <div style="font-weight: 600; font-size: 16px;">Mathieu Construction</div>
-                    <div style="color: var(--text-muted); font-size: 13px;">Auto-entrepreneur — Gros œuvre & Second œuvre</div>
+                <div class="hero-statement">
+                    <div class="hero-label">Volume Portefeuille</div>
+                    <div class="hero-number">42</div>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-top: 12px;">Contacts qualifiés stockés localement sur votre machine (SQLite Base Local).</p>
                 </div>
             </div>
-            <div style="border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div style="font-weight: 500;">BATORYA Essentiel V6.0</div>
-                    <div style="color: var(--text-muted); font-size: 12px;">Mode local Tauri / SQLite actif (Offline-first)</div>
+        </section>
+
+        <!-- CHAPTER 2: COMMERCE -->
+        <section id="view-commerce" class="workspace-body">
+            <div class="editorial-grid">
+                <div class="sheet-container">
+                    <div class="sheet-row header">
+                        <span>Réf Devis</span>
+                        <span>Client</span>
+                        <span>Montant HT</span>
+                        <span>État</span>
+                    </div>
+                    <div class="sheet-row">
+                        <span style="font-family: var(--font-mono);">DEV-2026-089</span>
+                        <span style="font-weight: 600;">SCI Les Oliviers</span>
+                        <span style="font-family: var(--font-mono);">4 500,00 €</span>
+                        <td><span class="tag-status tag-active">Validé</span></td>
+                    </div>
                 </div>
-                <button class="btn btn-secondary">Vérifier les mises à jour</button>
+                <div class="hero-statement">
+                    <div class="hero-label">Devis en Attente</div>
+                    <div class="hero-number">12 450 €</div>
+                </div>
             </div>
-        </div>
-    </div>
+        </section>
+
+        <!-- CHAPTER 3: TRAVAUX -->
+        <section id="view-travaux" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">Suivi d'Exécution</div>
+                <div class="hero-number">03 Chantiers</div>
+                <p style="margin-top: 12px; color: var(--text-secondary);">Avancement en direct des travaux sur site.</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 4: FACTURATION -->
+        <section id="view-facturation" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">À Encaisser</div>
+                <div class="hero-number">3 890 €</div>
+                <p style="margin-top: 12px; color: var(--text-secondary);">Régime Auto-Entrepreneur : Franchise de TVA applicable.</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 5: TRESORERIE -->
+        <section id="view-tresorerie" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">Solde Cumulé Octobre</div>
+                <div class="hero-number" style="color: var(--brand-gold);">18 200 €</div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 6: CATALOGUE -->
+        <section id="view-catalogue" class="workspace-body">
+            <div class="sheet-container">
+                <div class="sheet-row header">
+                    <span>Code</span>
+                    <span>Libellé Prestation</span>
+                    <span>Unité</span>
+                    <span>Prix HT</span>
+                </div>
+                <div class="sheet-row">
+                    <span style="font-family: var(--font-mono);">PREST-01</span>
+                    <span>Pose cloison BA13 sur ossature</span>
+                    <span>m²</span>
+                    <span style="font-family: var(--font-mono);">45,00 €</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 7: DOCUMENTS -->
+        <section id="view-documents" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">Gestion Documentaire</div>
+                <p style="color: var(--text-secondary);">Tous les PDF générés sont accessibles localement dans le dossier de l'application.</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 8: PLANIFICATION -->
+        <section id="view-planification" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">Planning Local</div>
+                <p style="color: var(--text-secondary);">Calendrier d'intervention autonome hors-ligne.</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 9: PARAMETRES -->
+        <section id="view-parametres" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">Configuration BATORYA</div>
+                <h3 style="font-family: var(--font-title); font-size: 20px; margin: 12px 0;">Mathieu Construction</h3>
+                <p style="color: var(--text-secondary); font-size: 13px;">Moteur Desktop Tauri 2 + SQLite local — Version 6.0</p>
+            </div>
+        </section>
+
+    </main>
 
     <!-- ASSISTANT LEON -->
-    <button class="leon-trigger" onclick="toggleLeon()" title="Assistant Léon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-    </button>
+    <div class="leon-orb" onclick="toggleLeon()" title="Assistant Léon">
+        <div class="leon-orb-inner"></div>
+    </div>
 
-    <div class="leon-panel" id="leon-panel">
-        <div class="leon-header">
-            <span>Léon — Assistant local</span>
-            <button onclick="toggleLeon()" style="background:none; border:none; color:white; font-size:16px; cursor:pointer;">&times;</button>
+    <div class="leon-drawer" id="leon-drawer">
+        <div class="leon-drawer-header">
+            <span>Léon — Assistant Local</span>
+            <button onclick="toggleLeon()" style="background:none; border:none; color:var(--text-primary); cursor:pointer;">&times;</button>
         </div>
-        <div class="leon-body">
-            <div class="leon-msg bot">Bonjour Mathieu ! Je suis Léon, votre assistant BATORYA. Comment puis-je vous aider sur vos chantiers ou factures aujourd'hui ?</div>
-        </div>
-        <div class="leon-footer">
-            <input type="text" class="leon-input" placeholder="Posez une question à Léon...">
-            <button class="btn" style="padding: 8px 12px;">Envoyer</button>
+        <div style="padding: 20px; flex: 1; color: var(--text-secondary); font-size: 13px;">
+            Je suis à votre disposition pour vos requêtes locales sur BATORYA.
         </div>
     </div>
 
-    <!-- INTERACTION LOGIC -->
+    <!-- CONTROL SCRIPT -->
     <script>
-        function switchChapter(chapterId, element) {
-            // Hide all views
-            document.querySelectorAll('.main-container').forEach(el => el.classList.remove('active'));
-            // Show selected view
-            const targetView = document.getElementById('view-' + chapterId);
-            if (targetView) targetView.classList.add('active');
+        const chapterData = {
+            'crm': { meta: 'Chapitre 01 / Répertoire Client', title: 'CRM & Prospects', action: '+ Créer un contact' },
+            'commerce': { meta: 'Chapitre 02 / Négociation', title: 'Commerce & Devis', action: '+ Rédiger un devis' },
+            'travaux': { meta: 'Chapitre 03 / Opérationnel', title: 'Travaux & Chantiers', action: '+ Nouveau chantier' },
+            'facturation': { meta: 'Chapitre 04 / Émission', title: 'Facturation & Acomptes', action: '+ Créer une facture' },
+            'tresorerie': { meta: 'Chapitre 05 / Flux Financiers', title: 'Trésorerie & Dépenses', action: '+ Saisir une dépense' },
+            'catalogue': { meta: 'Chapitre 06 / Bibliothèque', title: 'Catalogue Prestations', action: '+ Ajouter prestation' },
+            'documents': { meta: 'Chapitre 07 / Archives', title: 'Documents & PDF', action: '+ Importer un document' },
+            'planification': { meta: 'Chapitre 08 / Agenda', title: 'Planification', action: '+ Programmer intervention' },
+            'parametres': { meta: 'Chapitre 09 / Préférences', title: 'Paramètres & Profil', action: 'Sauvegarder' }
+        };
 
-            // Update chapter buttons
-            if (element) {
-                document.querySelectorAll('.chapter-btn').forEach(btn => btn.classList.remove('active'));
-                element.classList.add('active');
-            } else {
-                // Find matching button if triggered programmatically
-                document.querySelectorAll('.chapter-btn').forEach(btn => {
-                    if (btn.getAttribute('onclick').includes(chapterId)) {
-                        btn.classList.add('active');
-                    } else {
-                        btn.classList.remove('active');
-                    }
-                });
+        function activateChapter(chapId, el) {
+            // Update Navigation Rail
+            document.querySelectorAll('.chapter-node').forEach(node => node.classList.remove('active'));
+            if (el) el.classList.add('active');
+
+            // Update Header Meta
+            const data = chapterData[chapId];
+            if (data) {
+                document.getElementById('chap-meta').textContent = data.meta;
+                document.getElementById('chap-title').textContent = data.title;
+                document.getElementById('primary-action-btn').textContent = data.action;
             }
+
+            // Switch Workspace View
+            document.querySelectorAll('.workspace-body').forEach(view => view.classList.remove('active'));
+            const targetView = document.getElementById('view-' + chapId);
+            if (targetView) targetView.classList.add('active');
         }
 
         function toggleTheme() {
             const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            html.setAttribute('data-theme', newTheme);
-            document.querySelector('.theme-toggle').textContent = newTheme === 'light' ? 'Mode Sombre' : 'Mode Clair';
+            const current = html.getAttribute('data-theme');
+            html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
         }
 
         function toggleLeon() {
-            const panel = document.getElementById('leon-panel');
-            panel.classList.toggle('open');
+            document.getElementById('leon-drawer').classList.toggle('open');
         }
     </script>
 </body>
