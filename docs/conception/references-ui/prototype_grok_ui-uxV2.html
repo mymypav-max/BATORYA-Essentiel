@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BATORYA Essentiel V6 — Lumen</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['Fraunces', 'Georgia', 'serif'],
+        sans: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
+      },
+      colors: {
+        ink: {
+          50: '#f7f6f4',
+          100: '#eceae6',
+          200: '#d9d5cd',
+          300: '#bfb8ab',
+          400: '#a39a89',
+          500: '#8c8170',
+          600: '#6f6658',
+          700: '#5a5248',
+          800: '#3d3832',
+          900: '#1f1c18',
+          950: '#141210',
+        },
+        clay: {
+          50: '#fdf6f0',
+          100: '#f9e9db',
+          200: '#f2d0b3',
+          300: '#e9b083',
+          400: '#df8a52',
+          500: '#d46f32',
+          600: '#c55728',
+          700: '#a44323',
+          800: '#843722',
+          900: '#6b2f1f',
+        },
+        moss: {
+          50: '#f3f6f4',
+          100: '#e2ebe5',
+          200: '#c5d7cc',
+          300: '#9dbbA8',
+          400: '#6f9a80',
+          500: '#4f7d64',
+          600: '#3d6450',
+          700: '#325142',
+          800: '#2a4237',
+          900: '#23362e',
+        },
+        paper: {
+          DEFAULT: '#F7F4EF',
+          card: '#FFFEFB',
+          dark: '#161411',
+          darkcard: '#1E1B17',
+        }
+      },
+      boxShadow: {
+        'soft': '0 1px 2px 0 rgb(31 28 24 / 0.04)',
+        'lift': '0 4px 16px -2px rgb(31 28 24 / 0.08)',
+        'inset-soft': 'inset 0 1px 0 0 rgb(255 255 255 / 0.06)',
+      }
+    }
+  }
+}
+</script>
+<style>
+  :root {
+    --radius: 10px;
+  }
+  body { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  .font-display { font-family: 'Fraunces', Georgia, serif; }
+  [data-view] { display: none; }
+  [data-view].active { display: block; animation: rise 0.28s ease; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .chapter-btn.active {
+    color: #1f1c18;
+    background: #FFFEFB;
+    box-shadow: 0 1px 3px rgb(31 28 24 / 0.08);
+  }
+  .dark .chapter-btn.active {
+    color: #f7f4ef;
+    background: #2a2621;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+  }
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  .status::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .leon-sheet {
+    transform: translateY(110%);
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .leon-sheet.open { transform: translateY(0); }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  .num { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+</style>
+</head>
+<body class="h-full bg-paper dark:bg-paper-dark text-ink-900 dark:text-ink-100 antialiased">
+<div id="app" class="h-full flex flex-col">
+
+  <!-- ========== TOP BAR ========== -->
+  <header class="shrink-0 z-30 border-b border-ink-200/60 dark:border-ink-800/80 bg-paper/90 dark:bg-paper-dark/90 backdrop-blur-md">
+    <div class="max-w-[1440px] mx-auto px-5 h-14 flex items-center gap-6">
+      <!-- Brand -->
+      <button onclick="go('home')" class="flex items-center gap-2.5 group">
+        <div class="w-8 h-8 rounded-lg bg-ink-900 dark:bg-ink-100 flex items-center justify-center">
+          <span class="font-display text-paper dark:text-ink-900 text-sm font-semibold tracking-tight">B</span>
+        </div>
+        <div class="hidden sm:block text-left">
+          <div class="font-display text-[15px] font-semibold leading-none tracking-tight">BATORYA</div>
+          <div class="text-[10px] uppercase tracking-[0.14em] text-ink-500 mt-0.5">Essentiel</div>
+        </div>
+      </button>
+
+      <!-- Search -->
+      <div class="flex-1 max-w-md">
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-5.2-5.2m0 0A7 7 0 103.5 10.5a7 7 0 0012.3 5.3z"/></svg>
+          <input type="search" placeholder="Rechercher client, devis, facture…" class="w-full h-9 pl-10 pr-3 rounded-lg bg-ink-100/70 dark:bg-ink-800/50 border-0 text-sm placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-moss-500/30" />
+        </div>
+      </div>
+
+      <!-- Right actions -->
+      <div class="flex items-center gap-2">
+        <button onclick="toggleTheme()" class="w-9 h-9 rounded-lg flex items-center justify-center text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800 transition" title="Thème">
+          <svg id="themeIcon" class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <button onclick="go('parametres')" class="hidden md:flex items-center gap-2 pl-1.5 pr-3 h-9 rounded-lg hover:bg-ink-100 dark:hover:bg-ink-800 transition">
+          <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Marc&backgroundColor=c0aede" class="w-7 h-7 rounded-full bg-ink-200" alt="" />
+          <span class="text-sm font-medium">Marc Dubois</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chapters -->
+    <div class="max-w-[1440px] mx-auto px-5 pb-3">
+      <nav class="flex gap-1 overflow-x-auto scrollbar-none py-1">
+        <button data-ch="home" onclick="go('home')" class="chapter-btn active shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium text-ink-500 hover:text-ink-800 dark:hover:text-ink-200 transition">Accueil</button>
+        <button data-ch="crm" onclick="go('crm')" class="chapter-btn shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium text-ink-500 hover:text-ink-800 dark:hover:text-ink-200 transition">CRM</button>
+        <button data-ch="commerce" onclick="go('commerce')" class="chapter-btn shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium text-ink-500 hover:text-ink-800 dark:hover:text-ink-200 transition">Commerce</button>
+        <button data-ch="travaux" onclick="go('travaux')" class="chapter-btn shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium text-ink-500 hover:text-ink-800 dark:hover:text-ink-200 transition">Travaux</button>
+        <button data-ch="facturation" onclick="go('facturation')" class="chapter-btn shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium text-ink-500 hover:text-ink-800 dark:hover:text-ink-200 transition">Facturation</button>
+        <button data-ch="tresorerie" onclick="go('tresorerie')" class="chapter-btn shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium text-ink-500 hover:text-ink-800 dark:hover:text-ink-200 transition">Trésorerie</button>
+        <button data-ch="catalogue" onclick="go('catalogue')" class="chapter-btn shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium text-ink-500 hover:text-ink-800 dark:hover:text-ink-200 transition">Catalogue</button>
+        <button data-ch="documents" onclick="go('documents')" class="chapter-btn shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium text-ink-500 hover:text-ink-800 dark:hover:text-ink-200 transition">Documents</button>
+        <button data-ch="planification" onclick="go('planification')" class="chapter-btn shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium text-ink-500 hover:text-ink-800 dark:hover:text-ink-200 transition">Planification</button>
+        <button data-ch="parametres" onclick="go('parametres')" class="chapter-btn shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium text-ink-500 hover:text-ink-800 dark:hover:text-ink-200 transition">Paramètres</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========== MAIN ========== -->
+  <main class="flex-1 overflow-auto">
+    <div class="max-w-[1440px] mx-auto px-5 py-7">
+
+      <!-- ========== HOME ========== -->
+      <div data-view="home" class="active">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8">
+          <div>
+            <p class="text-sm text-ink-500 mb-1">Lundi 12 octobre 2026</p>
+            <h1 class="font-display text-3xl md:text-4xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">Bonjour Marc</h1>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="go('commerce-new')" class="h-10 px-4 rounded-lg bg-clay-600 hover:bg-clay-700 text-white text-sm font-medium transition shadow-soft">Nouveau devis</button>
+            <button onclick="go('crm')" class="h-10 px-4 rounded-lg border border-ink-200 dark:border-ink-700 text-sm font-medium hover:bg-ink-50 dark:hover:bg-ink-800 transition">Nouveau client</button>
+          </div>
+        </div>
+
+        <!-- Hero metrics – asymmetric -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-8">
+          <div class="lg:col-span-5 bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-6 shadow-soft">
+            <p class="text-xs font-medium uppercase tracking-wider text-ink-500 mb-3">À encaisser</p>
+            <p class="font-display text-4xl md:text-5xl font-semibold tracking-tight num text-ink-900 dark:text-ink-50">8 320 <span class="text-2xl text-ink-400">€</span></p>
+            <p class="text-sm text-ink-500 mt-2">Dont <span class="text-clay-600 dark:text-clay-400 font-medium">1 890 €</span> en retard</p>
+            <button onclick="go('facturation')" class="mt-5 text-sm font-medium text-moss-600 dark:text-moss-400 hover:underline">Voir les factures →</button>
+          </div>
+          <div class="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+              <p class="text-xs font-medium uppercase tracking-wider text-ink-500">Devis en attente</p>
+              <p class="font-display text-3xl font-semibold mt-2 num">4</p>
+              <p class="text-sm text-ink-500 mt-1">12 450 €</p>
+            </div>
+            <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+              <p class="text-xs font-medium uppercase tracking-wider text-ink-500">Chantiers actifs</p>
+              <p class="font-display text-3xl font-semibold mt-2 num">3</p>
+              <p class="text-sm text-ink-500 mt-1">2 cette semaine</p>
+            </div>
+            <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft col-span-2 sm:col-span-1">
+              <p class="text-xs font-medium uppercase tracking-wider text-ink-500">Prochaine échéance</p>
+              <p class="font-display text-xl font-semibold mt-2">Demain</p>
+              <p class="text-sm text-ink-500 mt-1">Fin SDB Leroy</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+          <!-- Actions -->
+          <div class="xl:col-span-3 bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 shadow-soft overflow-hidden">
+            <div class="px-6 py-4 border-b border-ink-100 dark:border-ink-800 flex items-center justify-between">
+              <h2 class="font-display text-lg font-semibold">À traiter</h2>
+            </div>
+            <ul class="divide-y divide-ink-100 dark:divide-ink-800/80">
+              <li class="px-6 py-4 flex items-start gap-4 hover:bg-ink-50/50 dark:hover:bg-ink-900/30 transition cursor-pointer" onclick="go('commerce')">
+                <div class="mt-1 w-2 h-2 rounded-full bg-clay-500 shrink-0"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium">Relancer le devis D-2026-014</p>
+                  <p class="text-xs text-ink-500 mt-0.5">Dupont Sophie · 3 280 € · envoyé il y a 12 jours</p>
+                </div>
+                <span class="status text-clay-700 bg-clay-100 dark:bg-clay-900/40 dark:text-clay-300">Urgent</span>
+              </li>
+              <li class="px-6 py-4 flex items-start gap-4 hover:bg-ink-50/50 dark:hover:bg-ink-900/30 transition cursor-pointer" onclick="go('facturation')">
+                <div class="mt-1 w-2 h-2 rounded-full bg-red-500 shrink-0"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium">Facture F-2026-008 impayée</p>
+                  <p class="text-xs text-ink-500 mt-0.5">Martin Électricité · 1 890 € · +5 jours</p>
+                </div>
+                <span class="status text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-300">Retard</span>
+              </li>
+              <li class="px-6 py-4 flex items-start gap-4 hover:bg-ink-50/50 dark:hover:bg-ink-900/30 transition cursor-pointer" onclick="go('travaux')">
+                <div class="mt-1 w-2 h-2 rounded-full bg-moss-500 shrink-0"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium">Clôturer chantier Salle de bain Leroy</p>
+                  <p class="text-xs text-ink-500 mt-0.5">Fin prévue demain · 85 %</p>
+                </div>
+                <span class="status text-moss-700 bg-moss-50 dark:bg-moss-900/30 dark:text-moss-300">Demain</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Active works -->
+          <div class="xl:col-span-2 space-y-4">
+            <h2 class="font-display text-lg font-semibold px-1">Chantiers en cours</h2>
+            <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <p class="font-medium text-sm">Salle de bain — Leroy</p>
+                  <p class="text-xs text-ink-500">Écully</p>
+                </div>
+                <span class="text-xs font-medium text-moss-600">85 %</span>
+              </div>
+              <div class="h-1.5 bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden">
+                <div class="h-full bg-moss-500 rounded-full" style="width:85%"></div>
+              </div>
+            </div>
+            <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <p class="font-medium text-sm">Chauffage — Dupont</p>
+                  <p class="text-xs text-ink-500">Lyon 3e</p>
+                </div>
+                <span class="text-xs font-medium text-moss-600">40 %</span>
+              </div>
+              <div class="h-1.5 bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden">
+                <div class="h-full bg-moss-500 rounded-full" style="width:40%"></div>
+              </div>
+            </div>
+            <button onclick="go('travaux')" class="w-full text-center text-sm font-medium text-moss-600 dark:text-moss-400 hover:underline py-1">Tous les chantiers →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== CRM ========== -->
+      <div data-view="crm">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="font-display text-2xl font-semibold tracking-tight">Clients & Prospects</h1>
+            <p class="text-sm text-ink-500 mt-1">15 contacts · 12 clients</p>
+          </div>
+          <button class="h-10 px-4 rounded-lg bg-clay-600 hover:bg-clay-700 text-white text-sm font-medium transition">Nouveau client</button>
+        </div>
+        <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 shadow-soft overflow-hidden">
+          <div class="px-4 py-3 border-b border-ink-100 dark:border-ink-800 flex gap-3">
+            <input type="search" placeholder="Filtrer par nom…" class="flex-1 h-9 px-3 rounded-lg bg-ink-50 dark:bg-ink-900/40 text-sm border-0 focus:outline-none focus:ring-2 focus:ring-moss-500/30" />
+            <select class="h-9 px-3 rounded-lg bg-ink-50 dark:bg-ink-900/40 text-sm border-0">
+              <option>Tous</option>
+              <option>Clients</option>
+              <option>Prospects</option>
+            </select>
+          </div>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wider text-ink-500 border-b border-ink-100 dark:border-ink-800">
+                <th class="px-5 py-3 font-medium">Nom</th>
+                <th class="px-5 py-3 font-medium hidden md:table-cell">Contact</th>
+                <th class="px-5 py-3 font-medium hidden lg:table-cell">Ville</th>
+                <th class="px-5 py-3 font-medium">Type</th>
+                <th class="px-5 py-3"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-ink-50 dark:divide-ink-800/60">
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20 cursor-pointer" onclick="go('crm-detail')">
+                <td class="px-5 py-3.5"><span class="font-medium">Dupont Sophie</span><br><span class="text-xs text-ink-500">Particulier</span></td>
+                <td class="px-5 py-3.5 hidden md:table-cell text-ink-600 dark:text-ink-300">06 12 34 56 78</td>
+                <td class="px-5 py-3.5 hidden lg:table-cell">Lyon</td>
+                <td class="px-5 py-3.5"><span class="status text-moss-700 bg-moss-50 dark:bg-moss-900/30 dark:text-moss-300">Client</span></td>
+                <td class="px-5 py-3.5 text-right text-moss-600 text-xs font-medium">Ouvrir</td>
+              </tr>
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20 cursor-pointer" onclick="go('crm-detail')">
+                <td class="px-5 py-3.5"><span class="font-medium">Martin Électricité</span><br><span class="text-xs text-ink-500">Entreprise</span></td>
+                <td class="px-5 py-3.5 hidden md:table-cell text-ink-600 dark:text-ink-300">04 78 12 34 56</td>
+                <td class="px-5 py-3.5 hidden lg:table-cell">Villeurbanne</td>
+                <td class="px-5 py-3.5"><span class="status text-moss-700 bg-moss-50 dark:bg-moss-900/30 dark:text-moss-300">Client</span></td>
+                <td class="px-5 py-3.5 text-right text-moss-600 text-xs font-medium">Ouvrir</td>
+              </tr>
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20 cursor-pointer">
+                <td class="px-5 py-3.5"><span class="font-medium">Leroy Jean</span><br><span class="text-xs text-ink-500">Particulier</span></td>
+                <td class="px-5 py-3.5 hidden md:table-cell text-ink-600 dark:text-ink-300">06 98 76 54 32</td>
+                <td class="px-5 py-3.5 hidden lg:table-cell">Écully</td>
+                <td class="px-5 py-3.5"><span class="status text-moss-700 bg-moss-50 dark:bg-moss-900/30 dark:text-moss-300">Client</span></td>
+                <td class="px-5 py-3.5 text-right text-moss-600 text-xs font-medium">Ouvrir</td>
+              </tr>
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20 cursor-pointer">
+                <td class="px-5 py-3.5"><span class="font-medium">Boulangerie du Parc</span><br><span class="text-xs text-ink-500">Entreprise</span></td>
+                <td class="px-5 py-3.5 hidden md:table-cell text-ink-600 dark:text-ink-300">04 72 00 11 22</td>
+                <td class="px-5 py-3.5 hidden lg:table-cell">Lyon 6e</td>
+                <td class="px-5 py-3.5"><span class="status text-clay-700 bg-clay-100 dark:bg-clay-900/40 dark:text-clay-300">Prospect</span></td>
+                <td class="px-5 py-3.5 text-right text-moss-600 text-xs font-medium">Ouvrir</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========== CRM DETAIL ========== -->
+      <div data-view="crm-detail">
+        <button onclick="go('crm')" class="text-sm text-ink-500 hover:text-ink-800 dark:hover:text-ink-200 flex items-center gap-1 mb-5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          Clients
+        </button>
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-moss-100 dark:bg-moss-900/40 flex items-center justify-center font-display text-xl font-semibold text-moss-700 dark:text-moss-300">DS</div>
+            <div>
+              <h1 class="font-display text-2xl font-semibold">Dupont Sophie</h1>
+              <p class="text-sm text-ink-500">Particulier · Client depuis mars 2025</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="go('commerce-new')" class="h-10 px-4 rounded-lg bg-clay-600 hover:bg-clay-700 text-white text-sm font-medium">Nouveau devis</button>
+            <button class="h-10 px-4 rounded-lg border border-ink-200 dark:border-ink-700 text-sm font-medium">Modifier</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="space-y-4">
+            <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+              <h3 class="text-xs font-medium uppercase tracking-wider text-ink-500 mb-3">Coordonnées</h3>
+              <dl class="space-y-3 text-sm">
+                <div><dt class="text-ink-500 text-xs">Téléphone</dt><dd class="font-medium">06 12 34 56 78</dd></div>
+                <div><dt class="text-ink-500 text-xs">Email</dt><dd class="font-medium">sophie.dupont@email.fr</dd></div>
+                <div><dt class="text-ink-500 text-xs">Adresse</dt><dd class="font-medium">12 rue des Lilas<br>69003 Lyon</dd></div>
+              </dl>
+            </div>
+            <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+              <h3 class="text-xs font-medium uppercase tracking-wider text-ink-500 mb-3">Synthèse</h3>
+              <dl class="space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-ink-500">Devis</span><span class="font-medium">3</span></div>
+                <div class="flex justify-between"><span class="text-ink-500">Chantiers</span><span class="font-medium">1 actif</span></div>
+                <div class="flex justify-between"><span class="text-ink-500">Facturé</span><span class="font-medium num">6 450 €</span></div>
+                <div class="flex justify-between"><span class="text-ink-500">Restant dû</span><span class="font-medium num text-moss-600">0 €</span></div>
+              </dl>
+            </div>
+          </div>
+          <div class="lg:col-span-2 bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 shadow-soft">
+            <div class="px-5 py-3.5 border-b border-ink-100 dark:border-ink-800">
+              <h3 class="font-display font-semibold">Historique</h3>
+            </div>
+            <ul class="divide-y divide-ink-50 dark:divide-ink-800/60">
+              <li class="px-5 py-4 flex items-center gap-4">
+                <div class="w-9 h-9 rounded-lg bg-ink-100 dark:bg-ink-800 flex items-center justify-center text-xs font-semibold">D</div>
+                <div class="flex-1"><p class="text-sm font-medium">Devis D-2026-014</p><p class="text-xs text-ink-500">12 sept. 2026 · 3 280 €</p></div>
+                <span class="status text-clay-700 bg-clay-100 dark:bg-clay-900/40 dark:text-clay-300">En attente</span>
+              </li>
+              <li class="px-5 py-4 flex items-center gap-4">
+                <div class="w-9 h-9 rounded-lg bg-ink-100 dark:bg-ink-800 flex items-center justify-center text-xs font-semibold">F</div>
+                <div class="flex-1"><p class="text-sm font-medium">Facture F-2026-005</p><p class="text-xs text-ink-500">18 août 2026 · 2 170 €</p></div>
+                <span class="status text-moss-700 bg-moss-50 dark:bg-moss-900/30 dark:text-moss-300">Payée</span>
+              </li>
+              <li class="px-5 py-4 flex items-center gap-4">
+                <div class="w-9 h-9 rounded-lg bg-ink-100 dark:bg-ink-800 flex items-center justify-center text-xs font-semibold">C</div>
+                <div class="flex-1"><p class="text-sm font-medium">Chantier — Salle de bain</p><p class="text-xs text-ink-500">En cours depuis le 5 oct.</p></div>
+                <span class="status text-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300">En cours</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== COMMERCE ========== -->
+      <div data-view="commerce">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="font-display text-2xl font-semibold tracking-tight">Devis</h1>
+            <p class="text-sm text-ink-500 mt-1">8 devis · 4 en attente</p>
+          </div>
+          <button onclick="go('commerce-new')" class="h-10 px-4 rounded-lg bg-clay-600 hover:bg-clay-700 text-white text-sm font-medium transition">Nouveau devis</button>
+        </div>
+        <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 shadow-soft overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wider text-ink-500 border-b border-ink-100 dark:border-ink-800">
+                <th class="px-5 py-3 font-medium">Réf.</th>
+                <th class="px-5 py-3 font-medium">Client</th>
+                <th class="px-5 py-3 font-medium hidden md:table-cell">Date</th>
+                <th class="px-5 py-3 font-medium">Montant</th>
+                <th class="px-5 py-3 font-medium">Statut</th>
+                <th class="px-5 py-3"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-ink-50 dark:divide-ink-800/60">
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20">
+                <td class="px-5 py-3.5 font-medium num">D-2026-014</td>
+                <td class="px-5 py-3.5">Dupont Sophie</td>
+                <td class="px-5 py-3.5 hidden md:table-cell text-ink-500">12/09/2026</td>
+                <td class="px-5 py-3.5 font-medium num">3 280 €</td>
+                <td class="px-5 py-3.5"><span class="status text-clay-700 bg-clay-100 dark:bg-clay-900/40 dark:text-clay-300">Envoyé</span></td>
+                <td class="px-5 py-3.5 text-right text-moss-600 text-xs font-medium">Ouvrir</td>
+              </tr>
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20">
+                <td class="px-5 py-3.5 font-medium num">D-2026-013</td>
+                <td class="px-5 py-3.5">Leroy Jean</td>
+                <td class="px-5 py-3.5 hidden md:table-cell text-ink-500">05/09/2026</td>
+                <td class="px-5 py-3.5 font-medium num">1 890 €</td>
+                <td class="px-5 py-3.5"><span class="status text-moss-700 bg-moss-50 dark:bg-moss-900/30 dark:text-moss-300">Accepté</span></td>
+                <td class="px-5 py-3.5 text-right text-moss-600 text-xs font-medium">Ouvrir</td>
+              </tr>
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20">
+                <td class="px-5 py-3.5 font-medium num">D-2026-012</td>
+                <td class="px-5 py-3.5">Martin Électricité</td>
+                <td class="px-5 py-3.5 hidden md:table-cell text-ink-500">28/08/2026</td>
+                <td class="px-5 py-3.5 font-medium num">4 560 €</td>
+                <td class="px-5 py-3.5"><span class="status text-ink-600 bg-ink-100 dark:bg-ink-800 dark:text-ink-300">Brouillon</span></td>
+                <td class="px-5 py-3.5 text-right text-moss-600 text-xs font-medium">Ouvrir</td>
+              </tr>
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20">
+                <td class="px-5 py-3.5 font-medium num">D-2026-011</td>
+                <td class="px-5 py-3.5">Moreau Claire</td>
+                <td class="px-5 py-3.5 hidden md:table-cell text-ink-500">15/08/2026</td>
+                <td class="px-5 py-3.5 font-medium num">2 100 €</td>
+                <td class="px-5 py-3.5"><span class="status text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-300">Refusé</span></td>
+                <td class="px-5 py-3.5 text-right text-moss-600 text-xs font-medium">Ouvrir</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========== COMMERCE NEW ========== -->
+      <div data-view="commerce-new">
+        <button onclick="go('commerce')" class="text-sm text-ink-500 hover:text-ink-800 flex items-center gap-1 mb-5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          Devis
+        </button>
+        <h1 class="font-display text-2xl font-semibold mb-6">Nouveau devis</h1>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 space-y-5">
+            <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+              <label class="text-xs font-medium uppercase tracking-wider text-ink-500">Client</label>
+              <select class="mt-2 w-full h-11 px-3 rounded-lg bg-ink-50 dark:bg-ink-900/40 text-sm border-0 focus:outline-none focus:ring-2 focus:ring-moss-500/30">
+                <option value="">Sélectionner…</option>
+                <option>Dupont Sophie</option>
+                <option>Martin Électricité</option>
+                <option>Leroy Jean</option>
+              </select>
+            </div>
+            <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-display font-semibold">Prestations</h3>
+                <button class="text-xs font-medium text-moss-600 hover:underline">+ Catalogue</button>
+              </div>
+              <div class="border border-ink-100 dark:border-ink-800 rounded-xl overflow-hidden">
+                <table class="w-full text-sm">
+                  <thead class="bg-ink-50/80 dark:bg-ink-900/40 text-xs text-ink-500">
+                    <tr>
+                      <th class="px-3 py-2.5 text-left font-medium">Désignation</th>
+                      <th class="px-3 py-2.5 text-right font-medium w-16">Qté</th>
+                      <th class="px-3 py-2.5 text-right font-medium w-20">P.U.</th>
+                      <th class="px-3 py-2.5 text-right font-medium w-20">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border-t border-ink-100 dark:border-ink-800">
+                      <td class="px-3 py-2.5">Remplacement chauffe-eau 200L</td>
+                      <td class="px-3 py-2.5 text-right"><input type="number" value="1" class="w-12 text-right bg-transparent border border-ink-200 dark:border-ink-700 rounded px-1 py-0.5" /></td>
+                      <td class="px-3 py-2.5 text-right num">890 €</td>
+                      <td class="px-3 py-2.5 text-right font-medium num">890 €</td>
+                    </tr>
+                    <tr class="border-t border-ink-100 dark:border-ink-800">
+                      <td class="px-3 py-2.5">Main d'œuvre installation</td>
+                      <td class="px-3 py-2.5 text-right"><input type="number" value="4" class="w-12 text-right bg-transparent border border-ink-200 dark:border-ink-700 rounded px-1 py-0.5" /></td>
+                      <td class="px-3 py-2.5 text-right num">55 €</td>
+                      <td class="px-3 py-2.5 text-right font-medium num">220 €</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+              <p class="text-xs font-medium uppercase tracking-wider text-ink-500 mb-2">Total</p>
+              <p class="font-display text-3xl font-semibold num">1 110 €</p>
+              <p class="text-xs text-ink-400 mt-1">Sans TVA · franchise en base</p>
+            </div>
+            <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft space-y-3">
+              <div>
+                <label class="text-xs text-ink-500">Validité</label>
+                <input type="date" value="2026-11-15" class="mt-1 w-full h-10 px-3 rounded-lg bg-ink-50 dark:bg-ink-900/40 text-sm border-0" />
+              </div>
+              <div>
+                <label class="text-xs text-ink-500">Notes</label>
+                <textarea rows="2" class="mt-1 w-full px-3 py-2 rounded-lg bg-ink-50 dark:bg-ink-900/40 text-sm border-0 resize-none" placeholder="Optionnel"></textarea>
+              </div>
+            </div>
+            <button onclick="alert('Devis enregistré (simulation)')" class="w-full h-11 rounded-lg bg-clay-600 hover:bg-clay-700 text-white text-sm font-medium transition">Enregistrer</button>
+            <button class="w-full h-11 rounded-lg border border-ink-200 dark:border-ink-700 text-sm font-medium">Aperçu PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== TRAVAUX ========== -->
+      <div data-view="travaux">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="font-display text-2xl font-semibold tracking-tight">Travaux & Chantiers</h1>
+            <p class="text-sm text-ink-500 mt-1">3 en cours</p>
+          </div>
+          <button class="h-10 px-4 rounded-lg bg-clay-600 hover:bg-clay-700 text-white text-sm font-medium">Nouveau chantier</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+            <div class="flex justify-between mb-3">
+              <span class="status text-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300">En cours</span>
+              <span class="text-xs font-medium text-ink-500">85 %</span>
+            </div>
+            <h3 class="font-display font-semibold text-lg">Salle de bain — Leroy</h3>
+            <p class="text-sm text-ink-500 mt-1">Écully · Leroy Jean</p>
+            <div class="mt-4 h-1.5 bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden">
+              <div class="h-full bg-moss-500 rounded-full" style="width:85%"></div>
+            </div>
+            <div class="mt-3 flex justify-between text-xs text-ink-500">
+              <span>05/10 → 12/10</span>
+            </div>
+          </div>
+          <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+            <div class="flex justify-between mb-3">
+              <span class="status text-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300">En cours</span>
+              <span class="text-xs font-medium text-ink-500">40 %</span>
+            </div>
+            <h3 class="font-display font-semibold text-lg">Chauffage — Dupont</h3>
+            <p class="text-sm text-ink-500 mt-1">Lyon 3e · Dupont Sophie</p>
+            <div class="mt-4 h-1.5 bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden">
+              <div class="h-full bg-moss-500 rounded-full" style="width:40%"></div>
+            </div>
+            <div class="mt-3 flex justify-between text-xs text-ink-500">
+              <span>08/10 → 25/10</span>
+            </div>
+          </div>
+          <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+            <div class="flex justify-between mb-3">
+              <span class="status text-clay-700 bg-clay-100 dark:bg-clay-900/40 dark:text-clay-300">Planifié</span>
+              <span class="text-xs font-medium text-ink-500">0 %</span>
+            </div>
+            <h3 class="font-display font-semibold text-lg">Cuisine — Moreau</h3>
+            <p class="text-sm text-ink-500 mt-1">Caluire · Moreau Claire</p>
+            <div class="mt-4 h-1.5 bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden">
+              <div class="h-full bg-ink-300 rounded-full" style="width:0%"></div>
+            </div>
+            <div class="mt-3 flex justify-between text-xs text-ink-500">
+              <span>20/10 → 05/11</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== FACTURATION ========== -->
+      <div data-view="facturation">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="font-display text-2xl font-semibold tracking-tight">Factures</h1>
+            <p class="text-sm text-ink-500 mt-1">À encaisser : <span class="font-medium text-clay-600">8 320 €</span></p>
+          </div>
+          <button class="h-10 px-4 rounded-lg bg-clay-600 hover:bg-clay-700 text-white text-sm font-medium">Nouvelle facture</button>
+        </div>
+        <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 shadow-soft overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wider text-ink-500 border-b border-ink-100 dark:border-ink-800">
+                <th class="px-5 py-3 font-medium">Réf.</th>
+                <th class="px-5 py-3 font-medium">Client</th>
+                <th class="px-5 py-3 font-medium hidden md:table-cell">Date</th>
+                <th class="px-5 py-3 font-medium">Montant</th>
+                <th class="px-5 py-3 font-medium">Statut</th>
+                <th class="px-5 py-3"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-ink-50 dark:divide-ink-800/60">
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20">
+                <td class="px-5 py-3.5 font-medium num">F-2026-009</td>
+                <td class="px-5 py-3.5">Leroy Jean</td>
+                <td class="px-5 py-3.5 hidden md:table-cell text-ink-500">02/10/2026</td>
+                <td class="px-5 py-3.5 font-medium num">4 120 €</td>
+                <td class="px-5 py-3.5"><span class="status text-clay-700 bg-clay-100 dark:bg-clay-900/40 dark:text-clay-300">Partiel</span></td>
+                <td class="px-5 py-3.5 text-right text-moss-600 text-xs font-medium">Détail</td>
+              </tr>
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20">
+                <td class="px-5 py-3.5 font-medium num">F-2026-008</td>
+                <td class="px-5 py-3.5">Martin Électricité</td>
+                <td class="px-5 py-3.5 hidden md:table-cell text-ink-500">25/09/2026</td>
+                <td class="px-5 py-3.5 font-medium num">1 890 €</td>
+                <td class="px-5 py-3.5"><span class="status text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-300">Impayée</span></td>
+                <td class="px-5 py-3.5 text-right text-moss-600 text-xs font-medium">Détail</td>
+              </tr>
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20">
+                <td class="px-5 py-3.5 font-medium num">F-2026-007</td>
+                <td class="px-5 py-3.5">Dupont Sophie</td>
+                <td class="px-5 py-3.5 hidden md:table-cell text-ink-500">18/09/2026</td>
+                <td class="px-5 py-3.5 font-medium num">2 310 €</td>
+                <td class="px-5 py-3.5"><span class="status text-moss-700 bg-moss-50 dark:bg-moss-900/30 dark:text-moss-300">Payée</span></td>
+                <td class="px-5 py-3.5 text-right text-moss-600 text-xs font-medium">Détail</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========== TRESORERIE ========== -->
+      <div data-view="tresorerie">
+        <h1 class="font-display text-2xl font-semibold tracking-tight mb-6">Trésorerie</h1>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+            <p class="text-xs uppercase tracking-wider text-ink-500">Encaissements 30 j</p>
+            <p class="font-display text-3xl font-semibold mt-2 num text-moss-600">+ 9 640 €</p>
+          </div>
+          <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+            <p class="text-xs uppercase tracking-wider text-ink-500">Dépenses 30 j</p>
+            <p class="font-display text-3xl font-semibold mt-2 num">− 3 210 €</p>
+          </div>
+          <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+            <p class="text-xs uppercase tracking-wider text-ink-500">À recevoir</p>
+            <p class="font-display text-3xl font-semibold mt-2 num text-clay-600">8 320 €</p>
+          </div>
+        </div>
+        <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 shadow-soft p-5">
+          <h3 class="font-display font-semibold mb-4">Derniers mouvements</h3>
+          <ul class="space-y-3 text-sm">
+            <li class="flex justify-between py-2 border-b border-ink-50 dark:border-ink-800"><span>Règlement F-2026-007 · Dupont</span><span class="font-medium text-moss-600 num">+ 2 310 €</span></li>
+            <li class="flex justify-between py-2 border-b border-ink-50 dark:border-ink-800"><span>Achat fournitures</span><span class="font-medium num">− 186 €</span></li>
+            <li class="flex justify-between py-2"><span>Règlement F-2026-006 · Moreau</span><span class="font-medium text-moss-600 num">+ 980 €</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ========== CATALOGUE ========== -->
+      <div data-view="catalogue">
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="font-display text-2xl font-semibold tracking-tight">Catalogue</h1>
+          <button class="h-10 px-4 rounded-lg bg-clay-600 hover:bg-clay-700 text-white text-sm font-medium">Nouvelle prestation</button>
+        </div>
+        <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 shadow-soft overflow-hidden">
+          <div class="px-4 py-3 border-b border-ink-100 dark:border-ink-800">
+            <input type="search" placeholder="Rechercher une prestation…" class="w-full max-w-sm h-9 px-3 rounded-lg bg-ink-50 dark:bg-ink-900/40 text-sm border-0 focus:outline-none focus:ring-2 focus:ring-moss-500/30" />
+          </div>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wider text-ink-500 border-b border-ink-100 dark:border-ink-800">
+                <th class="px-5 py-3 font-medium">Libellé</th>
+                <th class="px-5 py-3 font-medium">Unité</th>
+                <th class="px-5 py-3 font-medium">Prix</th>
+                <th class="px-5 py-3 font-medium hidden md:table-cell">Catégorie</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-ink-50 dark:divide-ink-800/60">
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20"><td class="px-5 py-3">Remplacement chauffe-eau 200L</td><td class="px-5 py-3">u</td><td class="px-5 py-3 font-medium num">890 €</td><td class="px-5 py-3 hidden md:table-cell text-ink-500">Chauffage</td></tr>
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20"><td class="px-5 py-3">Main d'œuvre installation</td><td class="px-5 py-3">h</td><td class="px-5 py-3 font-medium num">55 €</td><td class="px-5 py-3 hidden md:table-cell text-ink-500">Main d'œuvre</td></tr>
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20"><td class="px-5 py-3">Déplacement forfaitaire</td><td class="px-5 py-3">u</td><td class="px-5 py-3 font-medium num">45 €</td><td class="px-5 py-3 hidden md:table-cell text-ink-500">Frais</td></tr>
+              <tr class="hover:bg-ink-50/60 dark:hover:bg-ink-900/20"><td class="px-5 py-3">Remplacement tableau électrique</td><td class="px-5 py-3">u</td><td class="px-5 py-3 font-medium num">1 450 €</td><td class="px-5 py-3 hidden md:table-cell text-ink-500">Électricité</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========== DOCUMENTS ========== -->
+      <div data-view="documents">
+        <h1 class="font-display text-2xl font-semibold tracking-tight mb-6">Documents</h1>
+        <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 shadow-soft p-5">
+          <ul class="space-y-2">
+            <li class="flex items-center gap-3 p-3 rounded-xl hover:bg-ink-50 dark:hover:bg-ink-900/30 cursor-pointer transition">
+              <div class="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 flex items-center justify-center text-[10px] font-bold">PDF</div>
+              <div><p class="text-sm font-medium">Devis_D-2026-014_Dupont.pdf</p><p class="text-xs text-ink-500">12 sept. 2026 · 245 Ko</p></div>
+            </li>
+            <li class="flex items-center gap-3 p-3 rounded-xl hover:bg-ink-50 dark:hover:bg-ink-900/30 cursor-pointer transition">
+              <div class="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 flex items-center justify-center text-[10px] font-bold">PDF</div>
+              <div><p class="text-sm font-medium">Facture_F-2026-008_Martin.pdf</p><p class="text-xs text-ink-500">25 sept. 2026 · 198 Ko</p></div>
+            </li>
+            <li class="flex items-center gap-3 p-3 rounded-xl hover:bg-ink-50 dark:hover:bg-ink-900/30 cursor-pointer transition">
+              <div class="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 flex items-center justify-center text-[10px] font-bold">PDF</div>
+              <div><p class="text-sm font-medium">Facture_F-2026-007_Dupont.pdf</p><p class="text-xs text-ink-500">18 sept. 2026 · 210 Ko</p></div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ========== PLANIFICATION ========== -->
+      <div data-view="planification">
+        <h1 class="font-display text-2xl font-semibold tracking-tight mb-2">Planification</h1>
+        <p class="text-sm text-ink-500 mb-6">Semaine du 6 au 12 octobre 2026</p>
+        <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 shadow-soft overflow-hidden">
+          <div class="grid grid-cols-7 text-center text-xs font-medium text-ink-500 border-b border-ink-100 dark:border-ink-800">
+            <div class="py-3">Lun 6</div>
+            <div class="py-3">Mar 7</div>
+            <div class="py-3">Mer 8</div>
+            <div class="py-3">Jeu 9</div>
+            <div class="py-3 bg-moss-50 dark:bg-moss-900/20 text-moss-700 dark:text-moss-300">Ven 10</div>
+            <div class="py-3">Sam 11</div>
+            <div class="py-3">Dim 12</div>
+          </div>
+          <div class="grid grid-cols-7 min-h-[240px]">
+            <div class="border-r border-ink-50 dark:border-ink-800/60 p-2"></div>
+            <div class="border-r border-ink-50 dark:border-ink-800/60 p-2">
+              <div class="bg-moss-50 dark:bg-moss-900/30 text-moss-800 dark:text-moss-200 text-xs rounded-lg p-2 mb-1">SDB Leroy<br><span class="opacity-70">Journée</span></div>
+            </div>
+            <div class="border-r border-ink-50 dark:border-ink-800/60 p-2">
+              <div class="bg-moss-50 dark:bg-moss-900/30 text-moss-800 dark:text-moss-200 text-xs rounded-lg p-2 mb-1">SDB Leroy</div>
+              <div class="bg-clay-50 dark:bg-clay-900/30 text-clay-800 dark:text-clay-200 text-xs rounded-lg p-2">Chauffage Dupont</div>
+            </div>
+            <div class="border-r border-ink-50 dark:border-ink-800/60 p-2">
+              <div class="bg-clay-50 dark:bg-clay-900/30 text-clay-800 dark:text-clay-200 text-xs rounded-lg p-2">Chauffage Dupont</div>
+            </div>
+            <div class="border-r border-ink-50 dark:border-ink-800/60 p-2 bg-moss-50/40 dark:bg-moss-900/10">
+              <div class="bg-moss-100 dark:bg-moss-800/50 text-moss-800 dark:text-moss-200 text-xs rounded-lg p-2">Fin SDB Leroy</div>
+            </div>
+            <div class="border-r border-ink-50 dark:border-ink-800/60 p-2"></div>
+            <div class="p-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== PARAMETRES ========== -->
+      <div data-view="parametres">
+        <h1 class="font-display text-2xl font-semibold tracking-tight mb-6">Paramètres</h1>
+        <div class="max-w-lg space-y-5">
+          <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+            <h3 class="font-display font-semibold mb-4">Apparence</h3>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium">Thème</p>
+                <p class="text-xs text-ink-500">Clair ou sombre</p>
+              </div>
+              <button onclick="toggleTheme()" class="h-9 px-4 rounded-lg border border-ink-200 dark:border-ink-700 text-sm font-medium hover:bg-ink-50 dark:hover:bg-ink-800 transition">
+                <span id="themeLabel">Mode sombre</span>
+              </button>
+            </div>
+          </div>
+          <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+            <h3 class="font-display font-semibold mb-4">Entreprise</h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs text-ink-500">Nom</label>
+                <input type="text" value="Plomberie MD" class="mt-1 w-full h-10 px-3 rounded-lg bg-ink-50 dark:bg-ink-900/40 text-sm border-0" />
+              </div>
+              <div>
+                <label class="text-xs text-ink-500">SIRET</label>
+                <input type="text" value="123 456 789 00012" class="mt-1 w-full h-10 px-3 rounded-lg bg-ink-50 dark:bg-ink-900/40 text-sm border-0" />
+              </div>
+              <div>
+                <label class="text-xs text-ink-500">Adresse</label>
+                <input type="text" value="8 rue de la République, 69002 Lyon" class="mt-1 w-full h-10 px-3 rounded-lg bg-ink-50 dark:bg-ink-900/40 text-sm border-0" />
+              </div>
+            </div>
+          </div>
+          <div class="bg-paper-card dark:bg-paper-darkcard rounded-2xl border border-ink-200/70 dark:border-ink-800 p-5 shadow-soft">
+            <h3 class="font-display font-semibold mb-2">À propos</h3>
+            <p class="text-sm text-ink-500">BATORYA Essentiel V6 — Direction « Lumen »<br>Prototype indépendant · Données locales fictives</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ========== LÉON ========== -->
+  <button onclick="toggleLeon()" class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-ink-900 dark:bg-ink-100 text-paper dark:text-ink-900 shadow-lift flex items-center justify-center hover:scale-105 active:scale-95 transition" title="Léon">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+  </button>
+
+  <div id="leonSheet" class="leon-sheet fixed inset-x-0 bottom-0 z-50 max-w-lg mx-auto">
+    <div class="bg-paper-card dark:bg-paper-darkcard border border-ink-200 dark:border-ink-700 rounded-t-3xl shadow-lift overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-ink-100 dark:border-ink-800">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-ink-900 dark:bg-ink-100 text-paper dark:text-ink-900 flex items-center justify-center font-display font-semibold text-sm">L</div>
+          <div>
+            <p class="font-display font-semibold text-sm">Léon</p>
+            <p class="text-[11px] text-ink-500">Assistant local</p>
+          </div>
+        </div>
+        <button onclick="toggleLeon()" class="w-8 h-8 rounded-full hover:bg-ink-100 dark:hover:bg-ink-800 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-5 max-h-[50vh] overflow-y-auto space-y-4">
+        <div class="bg-ink-50 dark:bg-ink-900/50 rounded-2xl p-3.5 text-sm leading-relaxed">
+          Bonjour Marc. Je suis Léon. Je reste local sur votre ordinateur. Posez-moi une question sur vos devis, factures ou chantiers.
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="leonAsk(this)" class="text-xs px-3 py-1.5 rounded-full border border-ink-200 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800 transition">Devis en attente ?</button>
+          <button onclick="leonAsk(this)" class="text-xs px-3 py-1.5 rounded-full border border-ink-200 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800 transition">Montant à encaisser</button>
+          <button onclick="leonAsk(this)" class="text-xs px-3 py-1.5 rounded-full border border-ink-200 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800 transition">Prochains chantiers</button>
+        </div>
+        <div id="leonChat" class="space-y-3"></div>
+      </div>
+      <div class="p-4 border-t border-ink-100 dark:border-ink-800 flex gap-2">
+        <input id="leonInput" type="text" placeholder="Votre question…" class="flex-1 h-11 px-4 rounded-xl bg-ink-50 dark:bg-ink-900/40 text-sm border-0 focus:outline-none focus:ring-2 focus:ring-moss-500/30" onkeydown="if(event.key==='Enter')sendLeon()" />
+        <button onclick="sendLeon()" class="h-11 px-5 rounded-xl bg-ink-900 dark:bg-ink-100 text-paper dark:text-ink-900 text-sm font-medium">Envoyer</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function go(view) {
+    document.querySelectorAll('[data-view]').forEach(el => el.classList.remove('active'));
+    const target = document.querySelector(`[data-view="${view}"]`);
+    if (target) target.classList.add('active');
+
+    // Chapter active state
+    const chapterMap = {
+      home: 'home', crm: 'crm', 'crm-detail': 'crm',
+      commerce: 'commerce', 'commerce-new': 'commerce',
+      travaux: 'travaux', facturation: 'facturation',
+      tresorerie: 'tresorerie', catalogue: 'catalogue',
+      documents: 'documents', planification: 'planification',
+      parametres: 'parametres'
+    };
+    document.querySelectorAll('.chapter-btn').forEach(b => b.classList.remove('active'));
+    const ch = chapterMap[view] || 'home';
+    const btn = document.querySelector(`[data-ch="${ch}"]`);
+    if (btn) btn.classList.add('active');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleTheme() {
+    document.documentElement.classList.toggle('dark');
+    const isDark = document.documentElement.classList.contains('dark');
+    document.getElementById('themeLabel').textContent = isDark ? 'Mode clair' : 'Mode sombre';
+  }
+
+  function toggleLeon() {
+    document.getElementById('leonSheet').classList.toggle('open');
+  }
+
+  function leonAsk(btn) {
+    const q = btn.textContent;
+    const chat = document.getElementById('leonChat');
+    chat.innerHTML += `<div class="flex justify-end"><div class="bg-ink-900 dark:bg-ink-100 text-paper dark:text-ink-900 text-sm rounded-2xl px-3.5 py-2 max-w-[80%]">${q}</div></div>`;
+    setTimeout(() => {
+      let a = "Je regarde…";
+      if (q.includes('attente')) a = "4 devis en attente, total 12 450 €. Le plus ancien : D-2026-014 (Dupont Sophie, 3 280 €).";
+      else if (q.includes('encaisser')) a = "Il reste 8 320 € à encaisser, dont 1 890 € en retard (F-2026-008 — Martin Électricité).";
+      else if (q.includes('chantiers')) a = "Fin de la salle de bain Leroy demain, chauffage Dupont en cours, cuisine Moreau à partir du 20 octobre.";
+      chat.innerHTML += `<div class="bg-ink-50 dark:bg-ink-900/50 rounded-2xl p-3.5 text-sm max-w-[90%]">${a}</div>`;
+    }, 350);
+  }
+
+  function sendLeon() {
+    const input = document.getElementById('leonInput');
+    const q = input.value.trim();
+    if (!q) return;
+    const chat = document.getElementById('leonChat');
+    chat.innerHTML += `<div class="flex justify-end"><div class="bg-ink-900 dark:bg-ink-100 text-paper dark:text-ink-900 text-sm rounded-2xl px-3.5 py-2 max-w-[80%]">${q}</div></div>`;
+    input.value = '';
+    setTimeout(() => {
+      chat.innerHTML += `<div class="bg-ink-50 dark:bg-ink-900/50 rounded-2xl p-3.5 text-sm max-w-[90%]">Dans ce prototype je réponds aux questions simples sur devis, factures et chantiers. Essayez les suggestions.</div>`;
+    }, 350);
+  }
+
+  go('home');
+</script>
+</body>
+</html>
