@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BATORYA — Exploration d'identité visuelle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --serif:"Source Serif 4","Iowan Old Style",Charter,Cambria,Georgia,serif;
+  --sans:"Instrument Sans",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"DM Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --paper:#F6F6F2; --sheet:#FFFFFF; --wash:#EEEEE8;
+  --rule:#D6D6CC; --rule2:#E6E6DE;
+  --ink:#14161B; --ink2:#43464E; --ink3:#6C6F77;
+  --blue:#2B38D0;
+  --dark:#0E1016; --dsurf:#151821; --drule:#2A2F3D; --dtext:#E8E6DF; --dblue:#8F9CFF;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto;padding:52px 34px 110px}
+.serif{font-family:var(--serif)}
+.mono{font-family:var(--mono)}
+.eyebrow{font:500 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);margin:0}
+h1{font:600 46px/1.14 var(--serif);letter-spacing:-.01em;margin:14px 0 10px}
+.lead{font:300 19px/1.5 var(--serif);color:var(--ink2);max-width:62ch;margin:0 0 26px}
+p{margin:0 0 12px}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* ----- note méthode ----- */
+.note{border:1px solid var(--rule);border-left:3px solid var(--blue);background:var(--sheet);padding:18px 22px;margin:26px 0;font-size:13.5px;color:var(--ink2);max-width:88ch}
+.note h3{margin:0 0 6px;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+.note b{color:var(--ink)}
+
+/* ----- nav ----- */
+nav{display:flex;flex-wrap:wrap;gap:6px 18px;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);padding:12px 0;margin:30px 0 8px;font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+nav a{color:var(--ink2)} nav a:hover{color:var(--blue)}
+
+/* ----- planches ----- */
+section.planche{border-top:2px solid var(--ink);margin-top:60px;padding-top:16px}
+.ph{display:flex;gap:20px;align-items:baseline;flex-wrap:wrap}
+.pnum{font:300 52px/1 var(--serif);color:var(--blue)}
+.ph h2{font:600 30px/1.2 var(--serif);letter-spacing:-.01em;margin:0}
+.ph .intent{margin:4px 0 0;font-size:14px;color:var(--ink2);max-width:70ch}
+.sheets{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin:20px 0 6px}
+.sheet{background:var(--sheet);border:1px solid var(--rule2);border-radius:3px;padding:26px;margin:0;position:relative;display:flex;flex-direction:column;gap:16px;overflow:hidden}
+.sheet.dark{background:var(--dark);border-color:var(--dsurf);color:var(--dtext)}
+.sheet.paper{background:var(--paper)}
+.s4{grid-column:span 4}.s5{grid-column:span 5}.s7{grid-column:span 7}.s8{grid-column:span 8}.s12{grid-column:span 12}
+figcaption{margin-top:auto;padding-top:12px;border-top:1px dotted var(--rule);font:400 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.sheet.dark figcaption{border-top-color:var(--drule);color:#8A8D96}
+.lab{font:600 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+
+/* wordmarks */
+.logoserif{font-family:var(--serif);font-weight:600;fill:currentColor}
+.oo{font-style:italic;fill:var(--blue)}
+.sheet.dark .oo,.dark .oo{fill:var(--dblue)}
+.sq{fill:var(--blue)}
+.dark .sq,.sheet.dark .sq{fill:var(--dblue)}
+.mono-sq{font-family:var(--mono);letter-spacing:.16em;text-transform:uppercase}
+
+/* analyses */
+.analysis{display:grid;grid-template-columns:repeat(2,1fr);gap:0 36px;margin-top:14px}
+.an{border-top:1px solid var(--rule2);padding:13px 0 15px}
+.an h4{margin:0 0 5px;font:600 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+.an p{margin:0;font-size:13.5px;color:var(--ink2)}
+.an p b{color:var(--ink);font-weight:600}
+
+/* petites tailles */
+.strips{display:flex;flex-wrap:wrap;align-items:flex-end;gap:26px}
+.strip{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.strip .tag{font:400 10px var(--mono);color:var(--ink3)}
+
+/* login mockups */
+.duo{display:grid;grid-template-columns:1fr 1fr;min-height:400px}
+.duo>div{display:flex;flex-direction:column}
+.duo>.half-light{background:var(--paper);border-right:1px solid var(--rule2)}
+.duo>.half-dark{background:var(--dark);color:var(--dtext)}
+.login{width:100%;max-width:380px;margin:auto;padding:36px 30px;display:flex;flex-direction:column;gap:15px}
+.login .brandzone{margin-bottom:6px}
+.login h3{font:600 22px/1.25 var(--serif);margin:0 0 2px}
+.login .sub{font:400 12.5px var(--sans);color:var(--ink3)}
+.half-dark .login .sub{color:#8A8D96}
+.field label{display:block;font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:2px}
+.half-dark .field label{color:#8A8D96}
+.field input{width:100%;border:0;border-bottom:1px solid var(--rule);background:none;padding:8px 0 7px;font:15px var(--sans);color:var(--ink)}
+.half-dark .field input{border-bottom-color:var(--drule);color:var(--dtext)}
+.field input:focus{outline:none;border-bottom-color:var(--blue)}
+.half-dark .field input:focus{border-bottom-color:var(--dblue)}
+.btn{align-self:flex-start;background:var(--blue);color:#fff;border:0;border-radius:3px;padding:11px 18px;font:600 13.5px var(--sans);cursor:pointer;margin-top:4px}
+.half-dark .btn{background:var(--dblue);color:#0B0E1E}
+.loginfoot{margin-top:10px;font:400 10px var(--mono);letter-spacing:.08em;color:var(--ink3)}
+.half-dark .loginfoot{color:#8A8D96}
+
+/* gamme (piste 4) */
+.gamme{display:flex;flex-direction:column}
+.gamme .row{display:flex;align-items:baseline;gap:12px;padding:16px 2px;border-bottom:1px solid var(--rule2)}
+.gamme .row:last-child{border-bottom:0}
+.gamme .prod{font:500 13px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+
+/* baselines */
+.bl-list{border-top:2px solid var(--ink)}
+.bl{display:grid;grid-template-columns:1fr auto;gap:4px 22px;padding:17px 2px;border-bottom:1px solid var(--rule)}
+.bl .t{font:300 24px/1.2 var(--serif)}
+.bl .verdict{grid-column:2;grid-row:1;align-self:center;font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.bl .why{grid-column:1 / -1;font-size:13.5px;color:var(--ink2);max-width:90ch;margin:0}
+.bl.reco1 .t,.bl.reco2 .t,.bl.reco3 .t{color:var(--ink)}
+.bl .medal{font:500 10px var(--mono);letter-spacing:.12em;color:var(--blue)}
+.bl .pass{font-style:italic;color:var(--ink3)}
+
+/* comparatif */
+table.cmp{width:100%;border-collapse:collapse;border-top:2px solid var(--ink);margin-top:8px;font-size:12.5px}
+table.cmp th,table.cmp td{padding:11px 10px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+table.cmp th{font:600 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+table.cmp td.crit{font:600 12px var(--sans);white-space:nowrap}
+table.cmp td .dots{font-size:11px;letter-spacing:2px;color:var(--blue)}
+table.cmp td .cm{display:block;color:var(--ink3);font-size:11px;margin-top:2px}
+.podium{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+.pod{background:var(--sheet);border:1px solid var(--rule2);border-radius:3px;padding:16px 18px}
+.pod h4{margin:0 0 4px;font:600 14px var(--serif)}
+.pod p{margin:0;font-size:12.5px;color:var(--ink2)}
+.pod .rk{font:500 10px var(--mono);letter-spacing:.12em;color:var(--blue)}
+
+/* recommandation */
+.rec-hero{background:var(--sheet);border:1px solid var(--rule2);border-radius:3px;padding:44px 36px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.splash{background:var(--dark);color:var(--dtext);border-radius:3px;padding:60px 30px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.splash .rule{width:120px;border-top:1px solid var(--drule)}
+.navbar{background:var(--sheet);border:1px solid var(--rule2);border-radius:3px;padding:0;display:flex;align-items:center;gap:26px;padding:12px 18px}
+.navbar .item{font:500 12.5px var(--sans);color:var(--ink2)}
+.navbar .right{margin-left:auto;font:400 10.5px var(--mono);color:var(--ink3);letter-spacing:.08em}
+footer{border-top:2px solid var(--ink);margin-top:64px;padding-top:16px;font-size:12px;color:var(--ink3)}
+footer p{max-width:92ch}
+@media (max-width:900px){.s4,.s5,.s7,.s8{grid-column:span 12}.analysis{grid-template-columns:1fr}.duo{grid-template-columns:1fr}.podium{grid-template-columns:1fr}.pnum{font-size:36px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============================ MASTHEAD ============================ -->
+<header id="top">
+  <p class="eyebrow">BATORYA — Exploration d'identité visuelle — Octobre 2026</p>
+  <h1>Une signature, cinq manières de la tenir.</h1>
+  <p class="lead">Cinq planches d'identité distinctes pour BATORYA, pensées dans la continuité du prototype «&nbsp;Registre&nbsp;» V3&nbsp;: papier, encre, bleu cobalt, filets fins, typographie éditoriale. Chaque planche est un système complet&nbsp;— logotype, symbole éventuel, monochrome, thèmes clair et sombre, petites tailles, écran de connexion — accompagné d'une analyse argumentée.</p>
+
+  <div class="note">
+    <h3>Note de méthode — analyse du prototype V3</h3>
+    <p>Le code source du prototype <span class="mono">prototype_claude_ui-uxV3.html</span> a été lu directement. Ce que j'en retiens&nbsp;: l'esthétique «&nbsp;Registre&nbsp;» (papier &amp; encre outremer, filets fins, marge contextuelle, <b>pas de cartes, pas de sidebar</b>)&nbsp;; les tokens exacts (<span class="mono">#F6F6F2 / #14161B / #2B38D0</span>, thème sombre <span class="mono">#0E1016 / #151821 / #E8E6DF / #8F9CFF</span>)&nbsp;; le triplet typographique Source&nbsp;Serif&nbsp;4 / Instrument&nbsp;Sans / DM&nbsp;Mono&nbsp;; et surtout le <b>marqueur actuel</b>&nbsp;: un «&nbsp;B&nbsp;» en italique serif dans un carré encadré, avec un petit carré bleu posé au coin inférieur droit — repris et dépassé dans la planche&nbsp;02. Précision honnête&nbsp;: j'ai analysé le code et la charte qu'il contient, mais je n'ai pas observé le rendu visuel final pixel par pixel. Les planches s'appuient sur le code, sur la description détaillée du brief et sur les conventions du fichier. Une capture d'écran du prototype permettrait d'affiner les proportions fines.</p>
+    <p>Les polices web de ce document peuvent ne pas se charger dans certains environnements&nbsp;; les empilements de secours (Charter, Georgia, system-ui) restent dans l'esprit de la marque. Toutes les formes sont vectorielles et exportables en SVG.</p>
+  </div>
+
+  <nav>
+    <a href="#p1">01 · L'Encre</a>
+    <a href="#p2">02 · Le B pointé</a>
+    <a href="#p3">03 · Repère</a>
+    <a href="#p4">04 · Le point final</a>
+    <a href="#p5">05 · Aplomb</a>
+    <a href="#baselines">Baselines</a>
+    <a href="#cmp">Comparatif</a>
+    <a href="#rec">Recommandation</a>
+  </nav>
+</header>
+
+<!-- ============================ PLANCHE 01 ============================ -->
+<section class="planche" id="p1">
+  <header class="ph">
+    <div class="pnum">01</div>
+    <div>
+      <h2>« L'Encre »</h2>
+      <p class="intent">Signature typographique éditoriale. Le logotype est l'identité&nbsp;: BATORYA composé en serif éditorial, traversé d'un seul geste — l'O en italique, en cobalt. L'unique annotation manuscrite d'un registre imprimé.</p>
+    </div>
+  </header>
+
+  <div class="sheets">
+    <figure class="sheet s7">
+      <svg viewBox="0 0 620 128" style="width:100%" role="img" aria-label="BATORYA, logotype l'Encre">
+        <text x="310" y="92" text-anchor="middle" class="logoserif" font-size="78" letter-spacing="4">BAT<tspan class="oo">O</tspan>RYA</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+        <div style="border-top:1px solid var(--rule);width:220px"></div>
+        <div style="font:500 12px var(--sans);letter-spacing:.34em;text-transform:uppercase;color:var(--ink2)">Prenez la mesure.</div>
+      </div>
+      <figcaption>Logo principal — papier clair, avec option baseline · sans baseline à droite</figcaption>
+    </figure>
+
+    <figure class="sheet s5 paper">
+      <div style="display:flex;flex-direction:column;gap:26px;align-items:center;justify-content:center;flex:1">
+        <svg viewBox="0 0 620 128" style="width:100%" role="img" aria-label="BATORYA, sans baseline">
+          <text x="310" y="92" text-anchor="middle" class="logoserif" font-size="78" letter-spacing="4">BAT<tspan class="oo">O</tspan>RYA</text>
+        </svg>
+        <p style="font:400 12.5px var(--sans);color:var(--ink3);text-align:center;margin:0">Le mot seul suffit&nbsp;: le geste italique porte la signature même sans couleur ni baseline.</p>
+      </div>
+      <figcaption>Logotype seul, sans baseline</figcaption>
+    </figure>
+
+    <figure class="sheet s4 paper">
+      <div style="display:flex;flex:1;align-items:center;justify-content:center">
+        <svg viewBox="0 0 620 128" style="width:100%" role="img" aria-label="BATORYA monochrome">
+          <text x="310" y="92" text-anchor="middle" class="logoserif" font-size="78" letter-spacing="4">BAT<tspan font-style="italic">O</tspan>RYA</text>
+        </svg>
+      </div>
+      <figcaption>Monochrome — l'O reste italique, l'encre fait le reste</figcaption>
+    </figure>
+
+    <figure class="sheet s8">
+      <div class="strips" style="flex:1;align-items:center">
+        <div class="strip">
+          <svg viewBox="0 0 620 128" style="width:300px" class="logoserif" font-size="78" letter-spacing="4" role="img" aria-label="BATORYA 32px"><text x="310" y="92" text-anchor="middle" class="logoserif" font-size="78" letter-spacing="4">BAT<tspan class="oo">O</tspan>RYA</text></svg>
+          <span class="tag">≈ 32 px — barre de navigation</span>
+        </div>
+        <div class="strip">
+          <svg viewBox="0 0 620 128" style="width:190px" role="img" aria-label="BATORYA 20px"><text x="310" y="92" text-anchor="middle" class="logoserif" font-size="78" letter-spacing="4">BAT<tspan class="oo">O</tspan>RYA</text></svg>
+          <span class="tag">≈ 20 px</span>
+        </div>
+        <div class="strip">
+          <svg viewBox="0 0 620 128" style="width:130px" role="img" aria-label="BATORYA 14px"><text x="310" y="92" text-anchor="middle" class="logoserif" font-size="78" letter-spacing="4">BAT<tspan class="oo">O</tspan>RYA</text></svg>
+          <span class="tag">≈ 14 px — limite de lisibilité</span>
+        </div>
+        <div class="strip">
+          <svg viewBox="0 0 70 70" style="width:48px" role="img" aria-label="Favicon O">
+            <rect x="3" y="3" width="64" height="64" fill="none" stroke="currentColor" stroke-width="4"/>
+            <text x="35" y="50" text-anchor="middle" class="logoserif" font-size="44" font-style="italic" fill="var(--blue)">O</text>
+          </svg>
+          <span class="tag">Favicon dérivé — l'O italique cadré</span>
+        </div>
+      </div>
+      <figcaption>Petites tailles · le geste se perd sous 20 px, d'où le favicon dérivé</figcaption>
+    </figure>
+
+    <figure class="sheet s12" style="padding:0">
+      <div class="duo">
+        <div class="half-light">
+          <div class="login">
+            <div class="brandzone">
+              <svg viewBox="0 0 620 128" style="width:240px" role="img" aria-label="BATORYA"><text x="310" y="92" text-anchor="middle" class="logoserif" font-size="78" letter-spacing="4">BAT<tspan class="oo">O</tspan>RYA</text></svg>
+            </div>
+            <h3 class="serif">Votre registre vous attend.</h3>
+            <div class="sub">Espace de travail — micro-entreprise</div>
+            <div class="field"><label for="l1a">Identifiant</label><input id="l1a" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="l1b">Mot de passe</label><input id="l1b" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+        <div class="half-dark">
+          <div class="login">
+            <div class="brandzone">
+              <svg viewBox="0 0 620 128" style="width:240px" class="dark" role="img" aria-label="BATORYA sombre"><text x="310" y="92" text-anchor="middle" class="logoserif" font-size="78" letter-spacing="4" fill="#E8E6DF">BAT<tspan class="oo">O</tspan>RYA</text></svg>
+            </div>
+            <h3 class="serif">Votre registre vous attend.</h3>
+            <div class="sub">Espace de travail — micro-entreprise</div>
+            <div class="field"><label for="l1c">Identifiant</label><input id="l1c" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="l1d">Mot de passe</label><input id="l1d" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Écran de connexion — thèmes clair et sombre</figcaption>
+    </figure>
+  </div>
+
+  <div class="analysis">
+    <div class="an"><h4>Concept</h4><p>Un registre imprimé ne reçoit qu'une chose à la main&nbsp;: l'annotation. Ici, l'O de BATORYA est cette annotation — écrit «&nbsp;à l'encre&nbsp;», en italique cobalt, au milieu des capitales romaines. L'O est aussi l'œil&nbsp;: le regard que le professionnel porte sur son activité.</p></div>
+    <div class="an"><h4>Traitement typographique</h4><p>Source&nbsp;Serif&nbsp;4 SemiBold en référence, <b>à redessiner</b>&nbsp;: contreformes du B et du R plus ouvertes, empattements horizontaux sobres, jambage du Y ferme. Interlettrage légèrement positif (+40&nbsp;‰), compose en capitales. L'O italique doit être dessiné, pas seulement incliné.</p></div>
+    <div class="an"><h4>Palette</h4><p>Encre <span class="mono">#14161B</span> sur papier <span class="mono">#F6F6F2</span>. Le cobalt <span class="mono">#2B38D0</span> est réservé à l'O&nbsp;— un seul point de couleur, comme le carré du prototype. Thème sombre&nbsp;: <span class="mono">#8F9CFF</span>.</p></div>
+    <div class="an"><h4>Forces</h4><p>La plus grande fidélité à l'esprit «&nbsp;Registre&nbsp;»&nbsp;; sobriété maximale, durabilité maximale&nbsp;; survit parfaitement au noir et blanc (l'italique suffit à signer)&nbsp;; aucune dépendance à un symbole&nbsp;; déclinaison documentaire élégante.</p></div>
+    <div class="an"><h4>Faiblesses</h4><p>Pas de symbole autonome&nbsp;: favicon et icône exigent une dérivation (l'O cadré), ce qui fragmente légèrement le système. Le geste «&nbsp;une lettre différente dans le mot&nbsp;» est un dispositif connu&nbsp;: son originalité repose entièrement sur la qualité du dessin de l'O.</p></div>
+    <div class="an"><h4>Extension aux produits BATORYA</h4><p>Excellente&nbsp;: le wordmark est stable, chaque produit se décline en dessous (noms en DM&nbsp;Mono, comme dans le prototype), sans toucher à la signature. Mais la reconnaissance repose tout entière sur la typographie&nbsp;— elle exige un dessin vraiment propriétaire pour ne pas rester «&nbsp;belle composition&nbsp;».</p></div>
+    <div class="an"><h4>Risques &amp; ressemblances</h4><p>Dispositif «&nbsp;lettre-signal&nbsp;» utilisé par plusieurs marques (lettres colorées ou basculées)&nbsp;; sans dessin propre, risque de «&nbsp;wordmark de fonderie&nbsp;». À vérifier&nbsp;: recherches INPI/EUIPO sur les wordmarks à lettre distincte en classe 9 et 42.</p></div>
+    <div class="an"><h4>Verdict</h4><p>Piste la plus sûre et la plus cohérente avec V3, mais la moins «&nbsp;propriétaire&nbsp;» des cinq si l'O n'est pas réellement redessiné. Sa force exacte&nbsp;: vieillir bien.</p></div>
+  </div>
+</section>
+
+<!-- ============================ PLANCHE 02 ============================ -->
+<section class="planche" id="p2">
+  <header class="ph">
+    <div class="pnum">02</div>
+    <div>
+      <h2>« Le B pointé »</h2>
+      <p class="intent">Monogramme distinctif. Prolongement assumé du marqueur du prototype V3&nbsp;: le B en italique d'encre dans son carré — mais raffiné, car le cadre se rompt au coin pour laisser entrer le point carré cobalt. Là où l'on écrit dans le registre.</p>
+    </div>
+  </header>
+
+  <div class="sheets">
+    <figure class="sheet s7">
+      <div style="display:flex;align-items:center;gap:20px;flex:1">
+        <svg viewBox="0 0 70 70" style="width:56px;flex:none" role="img" aria-label="Symbole B pointé">
+          <path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3"/>
+          <path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3"/>
+          <rect x="54" y="54" width="13" height="13" class="sq"/>
+          <text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text>
+        </svg>
+        <div>
+          <div class="logoserif" style="font-size:34px;letter-spacing:.02em">BATORYA</div>
+          <div class="mono-sq" style="font-size:10.5px;color:var(--ink3);margin-top:5px">LOGICIELS PROFESSIONNELS — FRANCE</div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--rule2);padding-top:16px;display:flex;align-items:center;gap:20px">
+        <svg viewBox="0 0 70 70" style="width:40px;flex:none" role="img" aria-label="B pointé petit">
+          <path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3"/>
+          <path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3"/>
+          <rect x="54" y="54" width="13" height="13" class="sq"/>
+          <text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text>
+        </svg>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div class="logoserif" style="font-size:23px">BATORYA</div>
+          <div class="mono-sq" style="font-size:9.5px;color:var(--blue)">ESSENTIEL — V6</div>
+        </div>
+      </div>
+      <figcaption>Logo principal (marque) et verrou produit (Essentiel) — papier clair</figcaption>
+    </figure>
+
+    <figure class="sheet s5 dark">
+      <div style="display:flex;align-items:center;gap:20px;flex:1">
+        <svg viewBox="0 0 70 70" style="width:56px;flex:none" role="img" aria-label="B pointé sombre">
+          <path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3"/>
+          <path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3"/>
+          <rect x="54" y="54" width="13" height="13" class="sq"/>
+          <text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic" fill="#E8E6DF">B</text>
+        </svg>
+        <div>
+          <div class="logoserif" style="font-size:30px;color:#E8E6DF">BATORYA</div>
+          <div class="mono-sq" style="font-size:10px;color:#8A8D96;margin-top:5px">VOS AFFAIRES, EN RÈGLE.</div>
+        </div>
+      </div>
+      <figcaption>Thème sombre — encre inversée, point en <span class="mono">#8F9CFF</span></figcaption>
+    </figure>
+
+    <figure class="sheet s4 paper">
+      <div style="display:flex;gap:22px;align-items:center;justify-content:center;flex:1">
+        <svg viewBox="0 0 70 70" style="width:64px" role="img" aria-label="B pointé monochrome">
+          <path d="M62 2H2V62H50" fill="none" stroke="#14161B" stroke-width="3"/>
+          <path d="M62 50V2" fill="none" stroke="#14161B" stroke-width="3"/>
+          <rect x="54" y="54" width="13" height="13" fill="#14161B"/>
+          <text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic" fill="#14161B">B</text>
+        </svg>
+        <svg viewBox="0 0 70 70" style="width:64px" role="img" aria-label="Construction">
+          <g stroke="#2B38D0" stroke-width=".7" opacity=".5" fill="none">
+            <path d="M35 0V70M0 35H70" stroke-dasharray="3 3"/>
+            <path d="M60.5 60.5H70V70" stroke-dasharray="3 3"/>
+          </g>
+          <path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3"/>
+          <path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3"/>
+          <rect x="54" y="54" width="13" height="13" class="sq"/>
+          <text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text>
+        </svg>
+      </div>
+      <figcaption>Monochrome et tracé de construction — optiquement centré, point en débord</figcaption>
+    </figure>
+
+    <figure class="sheet s8">
+      <div class="strips" style="flex:1;align-items:center">
+        <div class="strip"><svg viewBox="0 0 70 70" style="width:64px" role="img" aria-label="64"><path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3"/><path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3"/><rect x="54" y="54" width="13" height="13" class="sq"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text></svg><span class="tag">64 px — icône</span></div>
+        <div class="strip"><svg viewBox="0 0 70 70" style="width:40px" role="img" aria-label="40"><path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3"/><path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3"/><rect x="54" y="54" width="13" height="13" class="sq"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text></svg><span class="tag">40 px</span></div>
+        <div class="strip"><svg viewBox="0 0 70 70" style="width:24px" role="img" aria-label="24"><path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3.5"/><path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3.5"/><rect x="54" y="54" width="13" height="13" class="sq"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text></svg><span class="tag">24 px</span></div>
+        <div class="strip"><svg viewBox="0 0 70 70" style="width:16px" role="img" aria-label="16"><path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="4.5"/><path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="4.5"/><rect x="52" y="52" width="16" height="16" class="sq"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="44" font-style="italic">B</text></svg><span class="tag">16 px — favicon</span></div>
+        <div class="strip" style="margin-left:auto">
+          <svg viewBox="0 0 64 64" style="width:52px" role="img" aria-label="Icône app"><rect width="64" height="64" rx="6" fill="#14161B"/><path d="M56 10H10V56H45" fill="none" stroke="#E8E6DF" stroke-width="3"/><path d="M56 46V10" fill="none" stroke="#E8E6DF" stroke-width="3"/><rect x="48" y="48" width="12" height="12" fill="#8F9CFF"/><text x="28" y="33" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="38" font-style="italic" fill="#E8E6DF">B</text></svg>
+          <span class="tag">Icône applicative — fond encre</span>
+        </div>
+      </div>
+      <figcaption>Petites tailles — le point cobalt doit grossir quand la taille baisse</figcaption>
+    </figure>
+
+    <figure class="sheet s12" style="padding:0">
+      <div class="duo">
+        <div class="half-light">
+          <div class="login">
+            <div class="brandzone" style="display:flex;align-items:center;gap:14px">
+              <svg viewBox="0 0 70 70" style="width:44px" role="img" aria-label="B"><path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3"/><path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3"/><rect x="54" y="54" width="13" height="13" class="sq"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text></svg>
+              <div>
+                <div class="logoserif" style="font-size:24px">BATORYA</div>
+                <div class="mono-sq" style="font-size:9.5px;color:var(--ink3)">ESSENTIEL V6</div>
+              </div>
+            </div>
+            <h3 class="serif">Bon retour.</h3>
+            <div class="sub">Votre registre est à jour — 3 écritures ce matin.</div>
+            <div class="field"><label for="l2a">Identifiant</label><input id="l2a" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="l2b">Mot de passe</label><input id="l2b" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+        <div class="half-dark">
+          <div class="login">
+            <div class="brandzone" style="display:flex;align-items:center;gap:14px">
+              <svg viewBox="0 0 70 70" style="width:44px" role="img" aria-label="B sombre"><path d="M62 2H2V62H50" fill="none" stroke="#E8E6DF" stroke-width="3"/><path d="M62 50V2" fill="none" stroke="#E8E6DF" stroke-width="3"/><rect x="54" y="54" width="13" height="13" fill="#8F9CFF"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic" fill="#E8E6DF">B</text></svg>
+              <div>
+                <div class="logoserif" style="font-size:24px;color:#E8E6DF">BATORYA</div>
+                <div class="mono-sq" style="font-size:9.5px;color:#8A8D96">ESSENTIEL V6</div>
+              </div>
+            </div>
+            <h3 class="serif">Bon retour.</h3>
+            <div class="sub">Votre registre est à jour — 3 écritures ce matin.</div>
+            <div class="field"><label for="l2c">Identifiant</label><input id="l2c" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="l2d">Mot de passe</label><input id="l2d" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Écran de connexion — thèmes clair et sombre</figcaption>
+    </figure>
+  </div>
+
+  <div class="analysis">
+    <div class="an"><h4>Concept</h4><p>Le prototype V3 porte déjà ce marqueur&nbsp;: B italique encadré, carré bleu au coin. La piste le fait devenir une marque&nbsp;: le cadre est <b>rompu</b> au coin inférieur droit — le point cobalt n'est plus posé <i>sur</i> le cadre mais en marque l'ouverture. Le registre est un cadre ouvert&nbsp;: on y écrit, à cet angle.</p></div>
+    <div class="an"><h4>Traitement typographique</h4><p>B en italique serif (dessin propre recommandé&nbsp;: contraste modéré, panse large), optiquement centré dans le carré. Le wordmark reprend la même famille que la planche 01. Sous-titres produits en DM&nbsp;Mono, comme dans V3.</p></div>
+    <div class="an"><h4>Palette</h4><p>Encre et papier portent tout&nbsp;; le cobalt n'apparaît que sur le point — jamais sur les traits. En monochrome, le point devient encre&nbsp;: la rupture du coin reste lisible.</p></div>
+    <div class="an"><h4>Forces</h4><p>Continuité parfaite avec l'existant (adoption facile, cohérence V3 immédiate)&nbsp;; excellentes petites tailles&nbsp;; icône, favicon et avatar naturels&nbsp;; monochrome robuste&nbsp;; le seul monogramme des cinq qui fonctionne tel quel à 16&nbsp;px.</p></div>
+    <div class="an"><h4>Faiblesses</h4><p>Le monogramme encadré est un dispositif classique (édition, banque, luxe)&nbsp;: sa singularité repose sur la rupture du coin et l'italique — sinon il devient «&nbsp;B dans un carré&nbsp;» générique. Le B seul ne raconte pas la gamme de produits&nbsp;: il faut la discipline des sous-titres mono.</p></div>
+    <div class="an"><h4>Extension aux produits BATORYA</h4><p>Bonne, par système de sous-titres&nbsp;: le symbole reste, le produit change (ESSENTIEL, puis les suivants). Limite&nbsp;: à terme, le public peut lire «&nbsp;Batorya Essentiel&nbsp;» comme une marque à part si le sous-titre domine trop.</p></div>
+    <div class="an"><h4>Risques &amp; ressemblances</h4><p>Monogrammes à lettre encadrée fréquents (éditeurs, maisons, banques)&nbsp;; vérifier INPI/EUIPO les «&nbsp;B dans un carré&nbsp;» en classes 9/35/42 — le champ est dense. La rupture de coin + point carré est l'élément différenciant à sécuriser.</p></div>
+    <div class="an"><h4>Verdict</h4><p>La plus utile immédiatement, la plus fidèle au prototype, mais la moins renversante. Parfaite si l'objectif prioritaire est l'icône applicative dès V6.</p></div>
+  </div>
+</section>
+
+<!-- ============================ PLANCHE 03 ============================ -->
+<section class="planche" id="p3">
+  <header class="ph">
+    <div class="pnum">03</div>
+    <div>
+      <h2>« Repère »</h2>
+      <p class="intent">Signe abstrait de maîtrise et de structure. Quatre traits de coupe — ceux de l'imprimeur — délimitent un cadrage invisible&nbsp;; le point carré cobalt pose le repère, la donnée qui compte. Cadrer, mesurer, tenir.</p>
+    </div>
+  </header>
+
+  <div class="sheets">
+    <figure class="sheet s7">
+      <div style="display:flex;align-items:center;gap:28px;flex:1">
+        <svg viewBox="0 0 84 84" style="width:84px;flex:none" role="img" aria-label="Repère">
+          <g stroke="currentColor" stroke-width="2.5" fill="none">
+            <path d="M4 20H16M20 16V4M68 20H80M64 16V4M4 64H16M20 68V80M68 64H80M64 68V80"/>
+          </g>
+          <rect x="37" y="37" width="10" height="10" class="sq"/>
+        </svg>
+        <div>
+          <div class="logoserif" style="font-size:34px;letter-spacing:.02em">BATORYA</div>
+          <div style="font:500 12px var(--sans);letter-spacing:.3em;text-transform:uppercase;color:var(--ink2);margin-top:8px">Prenez la mesure.</div>
+        </div>
+      </div>
+      <p style="font:400 12.5px var(--sans);color:var(--ink3);margin:0">Le signe ne dessine rien de littéral&nbsp;: il encadre une surface et y pose un point. C'est le geste du professionnel qui met au cordeau.</p>
+      <figcaption>Logo principal — symbole + logotype + baseline</figcaption>
+    </figure>
+
+    <figure class="sheet s5 dark">
+      <div style="display:flex;align-items:center;gap:28px;flex:1">
+        <svg viewBox="0 0 84 84" style="width:84px;flex:none" role="img" aria-label="Repère sombre">
+          <g stroke="#E8E6DF" stroke-width="2.5" fill="none">
+            <path d="M4 20H16M20 16V4M68 20H80M64 16V4M4 64H16M20 68V80M68 64H80M64 68V80"/>
+          </g>
+          <rect x="37" y="37" width="10" height="10" fill="#8F9CFF"/>
+        </svg>
+        <div class="logoserif" style="font-size:30px;color:#E8E6DF">BATORYA</div>
+      </div>
+      <figcaption>Thème sombre — le cadrage reste, le point s'éclaire</figcaption>
+    </figure>
+
+    <figure class="sheet s4 paper">
+      <div style="display:flex;gap:26px;align-items:center;justify-content:center;flex:1">
+        <svg viewBox="0 0 84 84" style="width:72px" role="img" aria-label="Repère monochrome">
+          <g stroke="#14161B" stroke-width="2.5" fill="none">
+            <path d="M4 20H16M20 16V4M68 20H80M64 16V4M4 64H16M20 68V80M68 64H80M64 68V80"/>
+          </g>
+          <rect x="37" y="37" width="10" height="10" fill="#14161B"/>
+        </svg>
+        <svg viewBox="0 0 84 84" style="width:72px" role="img" aria-label="Repère variante compacte">
+          <rect x="18" y="18" width="48" height="48" fill="none" stroke="#14161B" stroke-width="3"/>
+          <rect x="37" y="37" width="10" height="10" fill="#2B38D0"/>
+        </svg>
+      </div>
+      <figcaption>Monochrome · variante compacte pour très petites tailles</figcaption>
+    </figure>
+
+    <figure class="sheet s8">
+      <div class="strips" style="flex:1;align-items:center">
+        <div class="strip"><svg viewBox="0 0 84 84" style="width:64px" role="img" aria-label="64"><g stroke="currentColor" stroke-width="2.5" fill="none"><path d="M4 20H16M20 16V4M68 20H80M64 16V4M4 64H16M20 68V80M68 64H80M64 68V80"/></g><rect x="37" y="37" width="10" height="10" class="sq"/></svg><span class="tag">64 px</span></div>
+        <div class="strip"><svg viewBox="0 0 84 84" style="width:40px" role="img" aria-label="40"><g stroke="currentColor" stroke-width="2.5" fill="none"><path d="M4 20H16M20 16V4M68 20H80M64 16V4M4 64H16M20 68V80M68 64H80M64 68V80"/></g><rect x="37" y="37" width="10" height="10" class="sq"/></svg><span class="tag">40 px</span></div>
+        <div class="strip"><svg viewBox="0 0 84 84" style="width:24px" role="img" aria-label="24 compact"><rect x="18" y="18" width="48" height="48" fill="none" stroke="currentColor" stroke-width="4"/><rect x="36" y="36" width="12" height="12" class="sq"/></svg><span class="tag">24 px — variante compacte</span></div>
+        <div class="strip"><svg viewBox="0 0 84 84" style="width:16px" role="img" aria-label="16 compact"><rect x="16" y="16" width="52" height="52" fill="none" stroke="currentColor" stroke-width="6"/><rect x="35" y="35" width="14" height="14" class="sq"/></svg><span class="tag">16 px — favicon</span></div>
+        <div class="strip" style="margin-left:auto">
+          <svg viewBox="0 0 64 64" style="width:52px" role="img" aria-label="Icône app repère"><rect width="64" height="64" rx="6" fill="#2B38D0"/><g stroke="#F6F6F2" stroke-width="3" fill="none"><path d="M8 22H18M22 18V8M46 22H56M42 18V8M8 42H18M22 46V56M46 42H56M42 46V56"/></g><rect x="27" y="27" width="10" height="10" fill="#F6F6F2"/></svg>
+          <span class="tag">Icône applicative — repère sur cobalt</span>
+        </div>
+      </div>
+      <figcaption>Petites tailles — sous 32 px, basculer sur la variante compacte</figcaption>
+    </figure>
+
+    <figure class="sheet s12" style="padding:0">
+      <div class="duo">
+        <div class="half-light">
+          <div class="login">
+            <div class="brandzone" style="display:flex;align-items:center;gap:16px">
+              <svg viewBox="0 0 84 84" style="width:52px" role="img" aria-label="Repère"><g stroke="currentColor" stroke-width="2.5" fill="none"><path d="M4 20H16M20 16V4M68 20H80M64 16V4M4 64H16M20 68V80M68 64H80M64 68V80"/></g><rect x="37" y="37" width="10" height="10" class="sq"/></svg>
+              <div>
+                <div class="logoserif" style="font-size:24px">BATORYA</div>
+                <div class="mono-sq" style="font-size:9.5px;color:var(--ink3)">LOGICIELS PROFESSIONNELS</div>
+              </div>
+            </div>
+            <h3 class="serif">Ouvrir la séance.</h3>
+            <div class="sub">Écritures du jour · rapprochement · relances</div>
+            <div class="field"><label for="l3a">Identifiant</label><input id="l3a" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="l3b">Mot de passe</label><input id="l3b" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+        <div class="half-dark">
+          <div class="login">
+            <div class="brandzone" style="display:flex;align-items:center;gap:16px">
+              <svg viewBox="0 0 84 84" style="width:52px" role="img" aria-label="Repère sombre"><g stroke="#E8E6DF" stroke-width="2.5" fill="none"><path d="M4 20H16M20 16V4M68 20H80M64 16V4M4 64H16M20 68V80M68 64H80M64 68V80"/></g><rect x="37" y="37" width="10" height="10" fill="#8F9CFF"/></svg>
+              <div>
+                <div class="logoserif" style="font-size:24px;color:#E8E6DF">BATORYA</div>
+                <div class="mono-sq" style="font-size:9.5px;color:#8A8D96">LOGICIELS PROFESSIONNELS</div>
+              </div>
+            </div>
+            <h3 class="serif">Ouvrir la séance.</h3>
+            <div class="sub">Écritures du jour · rapprochement · relances</div>
+            <div class="field"><label for="l3c">Identifiant</label><input id="l3c" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="l3d">Mot de passe</label><input id="l3d" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Écran de connexion — thèmes clair et sombre</figcaption>
+    </figure>
+  </div>
+
+  <div class="analysis">
+    <div class="an"><h4>Concept</h4><p>Les traits de coupe appartiennent à la culture de l'imprimé&nbsp;: ils disent «&nbsp;ici commence le cadre juste&nbsp;». Le point carré cobalt est le repère posé — la donnée, l'entrée, le jour qui compte. Ensemble&nbsp;: <b>cadrer son activité et savoir ce qui compte</b>. Aucune littérature&nbsp;: ni maison, ni toit, ni outil.</p></div>
+    <div class="an"><h4>Traitement typographique</h4><p>Le logotype reste la composante serif éditoriale (planche 01)&nbsp;; le signe la précède avec un entre-deux généreux. Le blanc du cadrage fait partie du dessin&nbsp;: il faut l'interdire de remplissage.</p></div>
+    <div class="an"><h4>Palette</h4><p>Traits en encre, point en cobalt&nbsp;; en icône, inversion assumée (fond cobalt, traits papier). Deux couleurs suffisent toujours&nbsp;— le signe est le plus «&nbsp;flamboyant&nbsp;» des cinq en restant sobre.</p></div>
+    <div class="an"><h4>Forces</h4><p>Concept riche et culturellement juste pour une marque de registres et de documents&nbsp;; singularité forte (peu de marques software osent le vide)&nbsp;; dérive graphique puissante&nbsp;: le «&nbsp;point repéré&nbsp;» peut marquer, dans l'interface, la donnée du jour — le logo devient langage.</p></div>
+    <div class="an"><h4>Faiblesses</h4><p>Le sens exige une phrase d'explication — un signe d'identité qui se raconte est plus fragile en mémorisation spontanée. À petites tailles, la version complète bave&nbsp;: la variante compacte est obligatoire, ce qui fait deux dessins à gouverner. Risque de lecture «&nbsp;viseur / appareil photo&nbsp;» si les traits sont épais.</p></div>
+    <div class="an"><h4>Extension aux produits BATORYA</h4><p>Très bonne en théorie&nbsp;: chaque produit pourrait hériter d'un cadrage et placer «&nbsp;son&nbsp;» point — une grammaire de gamme élégante. Mais elle demande une discipline de marque élevée pour rester lisible.</p></div>
+    <div class="an"><h4>Risques &amp; ressemblances</h4><p>Traits de coupe = registre d'imprimerie mais aussi visées/viseurs et crop marks d'applications photo&nbsp;; le point-in-frame est un motif en vogue dans l'identité tech minimaliste. Vérifier INPI/EUIPO, notamment classes 9 et 42 pour les marques à «&nbsp;cadre + point&nbsp;».</p></div>
+    <div class="an"><h4>Verdict</h4><p>La plus conceptuelle. Superbe en planche et en système documentaire&nbsp;; en revanche la plus exigeante à faire vivre correctement dans un logiciel quotidien.</p></div>
+  </div>
+</section>
+
+<!-- ============================ PLANCHE 04 ============================ -->
+<section class="planche" id="p4">
+  <header class="ph">
+    <div class="pnum">04</div>
+    <div>
+      <h2>« Le point final »</h2>
+      <p class="intent">Identité hybride, système natif. Le point carré cobalt remplace le point final de chaque écriture de la marque&nbsp;: le logotype, la baseline, chaque nom de produit. Ce qui est écrit est réglé, pointé, tenu. L'architecture de gamme est dans le dessin même.</p>
+    </div>
+  </header>
+
+  <div class="sheets">
+    <figure class="sheet s7">
+      <div class=" gamme" style="flex:1">
+        <div class="row" style="align-items:center">
+          <span class="logoserif" style="font-size:38px">BATORYA</span>
+          <svg viewBox="0 0 14 14" style="width:13px;height:13px" role="img" aria-label="point"><rect width="14" height="14" class="sq"/></svg>
+        </div>
+        <div class="row" style="align-items:baseline">
+          <span class="logoserif" style="font-size:24px">BATORYA</span>
+          <span class="prod">Essentiel</span>
+          <svg viewBox="0 0 14 14" style="width:9px;height:9px" role="img" aria-label="point"><rect width="14" height="14" class="sq"/></svg>
+        </div>
+        <div class="row" style="align-items:baseline">
+          <span class="logoserif" style="font-size:24px;color:var(--ink2)">BATORYA</span>
+          <span class="prod" style="color:var(--ink3)">Registre · Devis · Relances</span>
+          <svg viewBox="0 0 14 14" style="width:9px;height:9px" role="img" aria-label="point"><rect width="14" height="14" fill="#D6D6CC"/></svg>
+          <span style="font:400 10px var(--mono);color:var(--ink3)">produits d'illustration</span>
+        </div>
+        <div class="row" style="align-items:baseline">
+          <span style="font:500 13px var(--sans);letter-spacing:.3em;text-transform:uppercase;color:var(--ink2)">Pour que tout tienne</span>
+          <svg viewBox="0 0 14 14" style="width:9px;height:9px" role="img" aria-label="point"><rect width="14" height="14" class="sq"/></svg>
+        </div>
+      </div>
+      <figcaption>Architecture de gamme — le point carré clôt chaque écriture de la marque</figcaption>
+    </figure>
+
+    <figure class="sheet s5 dark">
+      <div style="display:flex;flex-direction:column;gap:20px;flex:1;justify-content:center">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="logoserif" style="font-size:30px;color:#E8E6DF">BATORYA</span>
+          <svg viewBox="0 0 14 14" style="width:11px;height:11px" role="img" aria-label="point"><rect width="14" height="14" fill="#8F9CFF"/></svg>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:12px">
+          <span class="logoserif" style="font-size:20px;color:#E8E6DF">BATORYA</span>
+          <span class="prod" style="color:#8A8D96">Essentiel</span>
+          <svg viewBox="0 0 14 14" style="width:8px;height:8px" role="img" aria-label="point"><rect width="14" height="14" fill="#8F9CFF"/></svg>
+        </div>
+      </div>
+      <figcaption>Thème sombre — le point s'éclaire, l'écriture reste</figcaption>
+    </figure>
+
+    <figure class="sheet s4 paper">
+      <div style="display:flex;gap:24px;align-items:center;justify-content:center;flex:1">
+        <svg viewBox="0 0 64 64" style="width:72px" role="img" aria-label="Icône point"><rect width="64" height="64" rx="6" fill="#F6F6F2"/><rect x="22" y="22" width="20" height="20" fill="#2B38D0"/></svg>
+        <svg viewBox="0 0 64 64" style="width:48px" role="img" aria-label="Icône point sombre"><rect width="64" height="64" rx="6" fill="#151821"/><rect x="22" y="22" width="20" height="20" fill="#8F9CFF"/></svg>
+        <svg viewBox="0 0 64 64" style="width:24px" role="img" aria-label="Icône point 24"><rect width="64" height="64" rx="8" fill="#F6F6F2"/><rect x="20" y="20" width="24" height="24" fill="#2B38D0"/></svg>
+      </div>
+      <figcaption>Le symbole&nbsp;: le point seul — une audace, tenue avec le carré</figcaption>
+    </figure>
+
+    <figure class="sheet s8">
+      <div class="strips" style="flex:1;align-items:center">
+        <div class="strip"><div style="display:flex;align-items:center;gap:8px"><span class="logoserif" style="font-size:22px">BATORYA</span><svg viewBox="0 0 14 14" style="width:8px;height:8px"><rect width="14" height="14" class="sq"/></svg></div><span class="tag">Barre de navigation</span></div>
+        <div class="strip"><div style="display:flex;align-items:center;gap:8px"><span class="logoserif" style="font-size:16px">BATORYA</span><svg viewBox="0 0 14 14" style="width:6px;height:6px"><rect width="14" height="14" class="sq"/></svg></div><span class="tag">≈ 16 px — pied de document</span></div>
+        <div class="strip"><svg viewBox="0 0 64 64" style="width:40px" role="img" aria-label="icône"><rect width="64" height="64" rx="6" fill="#F6F6F2"/><rect x="22" y="22" width="20" height="20" fill="#2B38D0"/></svg><span class="tag">40 px</span></div>
+        <div class="strip"><svg viewBox="0 0 64 64" style="width:16px" role="img" aria-label="favicon"><rect width="64" height="64" rx="10" fill="#F6F6F2"/><rect x="18" y="18" width="28" height="28" fill="#2B38D0"/></svg><span class="tag">16 px — favicon</span></div>
+      </div>
+      <figcaption>Petites tailles — le point ne se dégrade jamais</figcaption>
+    </figure>
+
+    <figure class="sheet s12" style="padding:0">
+      <div class="duo">
+        <div class="half-light">
+          <div class="login">
+            <div class="brandzone" style="display:flex;align-items:center;gap:12px">
+              <svg viewBox="0 0 64 64" style="width:40px" role="img" aria-label="point"><rect width="64" height="64" rx="6" fill="#F6F6F2"/><rect x="22" y="22" width="20" height="20" fill="#2B38D0"/></svg>
+              <div style="display:flex;align-items:baseline;gap:10px">
+                <span class="logoserif" style="font-size:24px">BATORYA</span>
+                <svg viewBox="0 0 14 14" style="width:9px;height:9px"><rect width="14" height="14" class="sq"/></svg>
+              </div>
+            </div>
+            <h3 class="serif">Pour que tout tienne.</h3>
+            <div class="sub">Essentiel — connexion à votre espace</div>
+            <div class="field"><label for="l4a">Identifiant</label><input id="l4a" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="l4b">Mot de passe</label><input id="l4b" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+        <div class="half-dark">
+          <div class="login">
+            <div class="brandzone" style="display:flex;align-items:center;gap:12px">
+              <svg viewBox="0 0 64 64" style="width:40px" role="img" aria-label="point sombre"><rect width="64" height="64" rx="6" fill="#151821"/><rect x="22" y="22" width="20" height="20" fill="#8F9CFF"/></svg>
+              <div style="display:flex;align-items:baseline;gap:10px">
+                <span class="logoserif" style="font-size:24px;color:#E8E6DF">BATORYA</span>
+                <svg viewBox="0 0 14 14" style="width:9px;height:9px"><rect width="14" height="14" fill="#8F9CFF"/></svg>
+              </div>
+            </div>
+            <h3 class="serif">Pour que tout tienne.</h3>
+            <div class="sub">Essentiel — connexion à votre espace</div>
+            <div class="field"><label for="l4c">Identifiant</label><input id="l4c" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="l4d">Mot de passe</label><input id="l4d" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Écran de connexion — le point ouvre la séance</figcaption>
+    </figure>
+  </div>
+
+  <div class="analysis">
+    <div class="an"><h4>Concept</h4><p>Dans un registre, on «&nbsp;pointe&nbsp;» ce qui est réglé. Le point carré cobalt devient la ponctuation de la marque&nbsp;: il clôt le nom, la baseline, chaque produit. L'identité n'est pas un objet ajouté au nom — c'est <b>une manière d'écrire</b>. C'est la seule piste dont l'architecture multi-produits est native.</p></div>
+    <div class="an"><h4>Traitement typographique</h4><p>Wordmark serif éditorial, noms de produits en DM&nbsp;Mono tracked (grammaire directe du prototype). Le point carré suit typographiquement le mot&nbsp;: même chasse qu'un point, poids d'un empattement. C'est de la ponctuation dessinée, pas un ornement.</p></div>
+    <div class="an"><h4>Palette</h4><p>Le carré cobalt est le seul élément de couleur de tout le système — la fonction identitaire la plus pure du cobalt de V3. Monochrome&nbsp;: le carré devient encre&nbsp;; sombre&nbsp;: il devient <span class="mono">#8F9CFF</span>.</p></div>
+    <div class="an"><h4>Forces</h4><p>Système complet et extensible par construction&nbsp;; symbole ultra-robuste à toutes tailles (un carré ne se dégrade pas)&nbsp;; cohérence parfaite avec l'interface (le «&nbsp;pointé&nbsp;» peut devenir le langage de validation du logiciel)&nbsp;; logotype seul reste beau sans le point, le point n'ajoute jamais de bruit.</p></div>
+    <div class="an"><h4>Faiblesses</h4><p>Le point seul comme icône est d'une audace qui divise&nbsp;: il repose entièrement sur la cohérence et la répétition pour être reconnu. Les «&nbsp;wordmarks ponctués&nbsp;» sont une mode identitaire — il faut assumer le risque de banalité et le compenser par le carré (pas un point rond) et l'usage systémique.</p></div>
+    <div class="an"><h4>Extension aux produits BATORYA</h4><p>La meilleure des cinq&nbsp;: gamme, éditions, modules et même fonctionnalités UI (une écriture pointée&nbsp;= réglée) partagent le même geste. La marque gagne en grammaire ce qu'elle perd en figuratif.</p></div>
+    <div class="an"><h4>Risques &amp; ressemblances</h4><p>Marques à «&nbsp;point final&nbsp;» et à carré-coloré existent dans la tech&nbsp;; différenciateur&nbsp;: le carré, la tenue typographique serif (rare en software) et l'usage de gamme. Vérifier INPI/EUIPO classes 9/42.</p></div>
+    <div class="an"><h4>Verdict</h4><p>La plus stratégique. Moins spectaculaire en planche, la plus durable en exploitation&nbsp;: elle transforme le logo en système d'écriture, exactement ce que demande une famille de logiciels.</p></div>
+  </div>
+</section>
+
+<!-- ============================ PLANCHE 05 ============================ -->
+<section class="planche" id="p5">
+  <header class="ph">
+    <div class="pnum">05</div>
+    <div>
+      <h2>« Aplomb »</h2>
+      <p class="intent">Piste inattendue. Le Y de BATORYA descend sous la ligne de base comme un fil à plomb — et se termine par le plomb, en cobalt. L'aplomb&nbsp;: la verticale juste du geste de mesure, et le sang-froid du professionnel. Ce qui tient, tient droit.</p>
+    </div>
+  </header>
+
+  <div class="sheets">
+    <figure class="sheet s7">
+      <div style="flex:1;display:flex;align-items:flex-start;justify-content:center;padding-top:6px">
+        <svg viewBox="0 0 380 168" style="width:min(430px,100%)" role="img" aria-label="BATORYA, logotype Aplomb">
+          <text x="0" y="64" class="logoserif" font-size="60" letter-spacing="2">BATOR</text>
+          <text x="245" y="64" text-anchor="middle" class="logoserif" font-size="60">Y</text>
+          <path d="M245 66V102" stroke="currentColor" stroke-width="3.4" fill="none"/>
+          <path d="M245 100C255 100 255 118 245 133C235 118 235 100 245 100Z" class="sq"/>
+          <text x="272" y="64" class="logoserif" font-size="60" letter-spacing="2">A</text>
+        </svg>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+        <div style="border-top:1px solid var(--rule);width:220px"></div>
+        <div style="font:500 12px var(--sans);letter-spacing:.34em;text-transform:uppercase;color:var(--ink2)">Pour que tout tienne.</div>
+      </div>
+      <figcaption>Logo principal — le Y porte le fil à plomb (esquisse vectorielle, Y à finaliser en dessin propre)</figcaption>
+    </figure>
+
+    <figure class="sheet s5 dark">
+      <div style="flex:1;display:flex;align-items:flex-start;justify-content:center;padding-top:6px">
+        <svg viewBox="0 0 380 168" style="width:min(330px,100%)" role="img" aria-label="BATORYA sombre">
+          <text x="0" y="64" class="logoserif" font-size="60" letter-spacing="2" fill="#E8E6DF">BATOR</text>
+          <text x="245" y="64" text-anchor="middle" class="logoserif" font-size="60" fill="#E8E6DF">Y</text>
+          <path d="M245 66V102" stroke="#E8E6DF" stroke-width="3.4" fill="none"/>
+          <path d="M245 100C255 100 255 118 245 133C235 118 235 100 245 100Z" fill="#8F9CFF"/>
+          <text x="272" y="64" class="logoserif" font-size="60" letter-spacing="2" fill="#E8E6DF">A</text>
+        </svg>
+      </div>
+      <figcaption>Thème sombre — le plomb s'éclaire</figcaption>
+    </figure>
+
+    <figure class="sheet s4 paper">
+      <div style="display:flex;gap:24px;align-items:center;justify-content:center;flex:1">
+        <svg viewBox="0 0 70 90" style="width:64px" role="img" aria-label="Y à plomb seul">
+          <text x="35" y="38" text-anchor="middle" class="logoserif" font-size="52">Y</text>
+          <path d="M35 40V62" stroke="currentColor" stroke-width="3.4" fill="none"/>
+          <path d="M35 60C43 60 43 74 35 85C27 74 27 60 35 60Z" fill="#2B38D0"/>
+        </svg>
+        <svg viewBox="0 0 64 64" style="width:56px" role="img" aria-label="Icône aplomb">
+          <rect width="64" height="64" rx="6" fill="#F6F6F2"/>
+          <text x="32" y="30" text-anchor="middle" class="logoserif" font-size="36">Y</text>
+          <path d="M32 32V44" stroke="#14161B" stroke-width="2.6" fill="none"/>
+          <path d="M32 43C38 43 38 52 32 59C26 52 26 43 32 43Z" fill="#2B38D0"/>
+        </svg>
+      </div>
+      <figcaption>Le Y à plomb seul — glyphes candidats pour l'icône applicative</figcaption>
+    </figure>
+
+    <figure class="sheet s8">
+      <div style="display:flex;flex-wrap:wrap;gap:26px;flex:1;align-items:flex-end">
+        <div class="strip">
+          <svg viewBox="0 0 380 168" style="width:210px" role="img" aria-label="Aplomb 28px"><text x="0" y="64" class="logoserif" font-size="60" letter-spacing="2">BATOR</text><text x="245" y="64" text-anchor="middle" class="logoserif" font-size="60">Y</text><path d="M245 66V102" stroke="currentColor" stroke-width="3.4" fill="none"/><path d="M245 100C255 100 255 118 245 133C235 118 235 100 245 100Z" class="sq"/><text x="272" y="64" class="logoserif" font-size="60" letter-spacing="2">A</text></svg>
+          <span class="tag">≈ 28 px — navigation</span>
+        </div>
+        <div class="strip">
+          <div style="border:1px dashed var(--rule);padding:10px 14px 34px;position:relative;display:inline-block">
+            <div style="display:flex;align-items:baseline;gap:8px">
+              <span class="logoserif" style="font-size:17px">BATORYA</span>
+              <span style="width:7px;height:9px;background:var(--blue);display:inline-block;transform:translateY(9px)"></span>
+            </div>
+            <div style="position:absolute;left:10px;right:14px;top:calc(100% - 28px);border-top:1px dashed var(--rule)"></div>
+            <span style="position:absolute;bottom:8px;left:12px;font:400 9px var(--mono);color:var(--ink3)">CLAIRANCE SOUS LA LIGNE DE BASE ≈ 0,45 × HAUTEUR DE CAPITALE</span>
+          </div>
+          <span class="tag">Contrainte&nbsp;: réserve du plomb</span>
+        </div>
+        <div class="strip" style="margin-left:auto">
+          <div style="font:400 12.5px var(--sans);color:var(--ink2);max-width:30ch">En monochrome, le plomb devient encre&nbsp;: le geste, lui, reste — c'est le test décisif de cette piste.</div>
+        </div>
+      </div>
+      <figcaption>Petites tailles &amp; contrainte de mise en page — le plomb descend, tout doit en tenir compte</figcaption>
+    </figure>
+
+    <figure class="sheet s12" style="padding:0">
+      <div class="duo">
+        <div class="half-light">
+          <div class="login">
+            <div class="brandzone" style="padding-bottom:8px">
+              <svg viewBox="0 0 380 168" style="width:200px" role="img" aria-label="BATORYA aplomb"><text x="0" y="64" class="logoserif" font-size="60" letter-spacing="2">BATOR</text><text x="245" y="64" text-anchor="middle" class="logoserif" font-size="60">Y</text><path d="M245 66V102" stroke="currentColor" stroke-width="3.4" fill="none"/><path d="M245 100C255 100 255 118 245 133C235 118 235 100 245 100Z" class="sq"/><text x="272" y="64" class="logoserif" font-size="60" letter-spacing="2">A</text></svg>
+            </div>
+            <h3 class="serif">Bonjour, et bon travail.</h3>
+            <div class="sub">Le registre du jour est prêt — 2 relances en attente.</div>
+            <div class="field"><label for="l5a">Identifiant</label><input id="l5a" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="l5b">Mot de passe</label><input id="l5b" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+        <div class="half-dark">
+          <div class="login">
+            <div class="brandzone" style="padding-bottom:8px">
+              <svg viewBox="0 0 380 168" style="width:200px" role="img" aria-label="BATORYA aplomb sombre"><text x="0" y="64" class="logoserif" font-size="60" letter-spacing="2" fill="#E8E6DF">BATOR</text><text x="245" y="64" text-anchor="middle" class="logoserif" font-size="60" fill="#E8E6DF">Y</text><path d="M245 66V102" stroke="#E8E6DF" stroke-width="3.4" fill="none"/><path d="M245 100C255 100 255 118 245 133C235 118 235 100 245 100Z" fill="#8F9CFF"/><text x="272" y="64" class="logoserif" font-size="60" letter-spacing="2" fill="#E8E6DF">A</text></svg>
+            </div>
+            <h3 class="serif">Bonjour, et bon travail.</h3>
+            <div class="sub">Le registre du jour est prêt — 2 relances en attente.</div>
+            <div class="field"><label for="l5c">Identifiant</label><input id="l5c" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="l5d">Mot de passe</label><input id="l5d" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Écran de connexion — le plomb tombe, la page respire autour</figcaption>
+    </figure>
+  </div>
+
+  <div class="analysis">
+    <div class="an"><h4>Concept</h4><p>Le fil à plomb est l'outil le plus ancien de la verticale juste — et «&nbsp;garder l'aplomb&nbsp;» désigne le sang-froid. La piste installe la maîtrise <b>dans</b> le mot&nbsp;: le Y descend, mesure, et pose son plomb. Ni toit, ni outil dessiné&nbsp;: un geste typographique qui signifie.</p></div>
+    <div class="an"><h4>Traitement typographique</h4><p>Mêmes bases serif que les autres pistes, mais le Y doit être <b>redessiné</b> (jonction basse prolongée, rencontre avec le fil nette) — c'est la seule piste qui impose un vrai travail de dessin de caractère. Esquisse vectorielle ici&nbsp;; production&nbsp;: police de marque ou jeu de glypes.</p></div>
+    <div class="an"><h4>Palette</h4><p>Encre sur papier&nbsp;; le plomb en cobalt. C'est la piste où le cobalt a le plus de sens&nbsp;: il est littéralement le point de mesure. Sommeil du thème sombre&nbsp;: <span class="mono">#8F9CFF</span>.</p></div>
+    <div class="an"><h4>Forces</h4><p>La plus singulière&nbsp;: une lettre-outil rare, immédiatement mémorisable, profondément française (l'aplomb). Le geste survit au monochrome. Le Y à plomb seul offre un monogramme de secours (icône, favicon) cohérent.</p></div>
+    <div class="an"><h4>Faiblesses</h4><p>Le plomb descend sous la ligne de base&nbsp;: toute composition doit réserver ~45&nbsp;% de hauteur supplémentaire — une contrainte permanente en barres de navigation et en documents. À 16&nbsp;px, le fil et le plomb se confondent. Coût&nbsp;: dessin de caractère dédié, non optionnel.</p></div>
+    <div class="an"><h4>Extension aux produits BATORYA</h4><p>Bonne&nbsp;: le wordmark est unique et stable, les produits se déclarent en dessous. Le fil à plomb offre aussi un langage d'interface (alignements, indicateurs) — mais plus discret que le point carré de la planche 04.</p></div>
+    <div class="an"><h4>Risques &amp; ressemblances</h4><p>Lettres à jambage outil&nbsp;: peu d'équivalents directs connus — à confirmer par INPI/EUIPO. Risque principal&nbsp;: une exécution moyenne du Y rendrait le geste «&nbsp;bricolé&nbsp;». Cette piste exige le meilleur dessinateur des cinq.</p></div>
+    <div class="an"><h4>Verdict</h4><p>La plus forte en signature, la plus exigeante en exécution. Si BATORYA veut une marque qu'on reconnaît à la forme d'une seule lettre, c'est elle.</p></div>
+  </div>
+</section>
+
+<!-- ============================ BASELINES ============================ -->
+<section class="planche" id="baselines">
+  <header class="ph">
+    <div class="pnum">§</div>
+    <div>
+      <h2>La baseline de marque</h2>
+      <p class="intent">La baseline parle de BATORYA tout entier — pas d'Essentiel V6. «&nbsp;Maîtrisez l'essentiel&nbsp;» reste une signature <b>produit</b>&nbsp;: elle est notée ci-dessous pour être distinguée, pas adoptée. Formules testées, de la plus forte à la plus faible.</p>
+    </div>
+  </header>
+
+  <div class="bl-list" style="margin-top:22px">
+    <div class="bl reco1">
+      <span class="t">Pour que tout tienne.</span>
+      <span class="verdict"><span class="medal">RECOMMANDÉE — N°1</span></span>
+      <p class="why">Porte la structure, la fiabilité et la chaleur en six mots. «&nbsp;Tenir&nbsp;» dit à la fois&nbsp;: la compta tient, le planning tient, l'entreprise tient — et le professionnel tient bon. Aucune promesse creuse, aucun mot de jargon, naturelle à prononcer. S'écrit avec le point carré cobalt de la planche 04 — la baseline devient le système. Large pour toute la gamme de logiciels&nbsp;; ne vieillira pas.</p>
+    </div>
+    <div class="bl reco2">
+      <span class="t">Prenez la mesure.</span>
+      <span class="verdict"><span class="medal">RECOMMANDÉE — N°2</span></span>
+      <p class="why">Maîtrise et précision, avec une double lecture élégante&nbsp;: comprendre («&nbsp;prendre la mesure d'une situation&nbsp;») et mesurer (le geste du professionnel exact). Très éditoriale, courte, posée. Seule réserve&nbsp;: légère teinte «&nbsp;mesure/controle&nbsp;» qui convient mieux à l'outillage qu'au sang-froid&nbsp;; idéale si BATORYA assume un ton plus technique.</p>
+    </div>
+    <div class="bl reco3">
+      <span class="t">Vos affaires, en règle.</span>
+      <span class="verdict"><span class="medal">RECOMMANDÉE — N°3</span></span>
+      <p class="why">«&nbsp;Affaires&nbsp;»&nbsp;: le business et les chantiers. «&nbsp;En règle&nbsp;»&nbsp;: l'ordre tenu et la conformité — un souci quotidien réel des micro-entrepreneurs. Résonne parfaitement avec l'univers «&nbsp;Registre&nbsp;». Réserve&nbsp;: centre la marque sur l'administratif&nbsp;; elle servira moins bien un futur logiciel moins lié à la conformité.</p>
+    </div>
+    <div class="bl">
+      <span class="t">Gardez l'aplomb.</span>
+      <span class="verdict"><span class="pass">Fort — mais lié à la planche 05</span></span>
+      <p class="why">Confiance et sang-froid&nbsp;; ne fonctionne à plein que si l'identité retenue porte le geste du fil à plomb, sinon l'image manque. À garder comme signature de campagne plutôt que de marque.</p>
+    </div>
+    <div class="bl">
+      <span class="t">Le fil de votre activité.</span>
+      <span class="verdict"><span class="pass">Correct, attendu</span></span>
+      <p class="why">Lisible, pertinent, mais «&nbsp;fil&nbsp;» + «&nbsp;activité&nbsp;» est un couple très parcouru&nbsp;; mémorisation moyenne. Bon remplaçant en contexte produit.</p>
+    </div>
+    <div class="bl">
+      <span class="t">L'activité, en clair.</span>
+      <span class="verdict"><span class="pass">Plat</span></span>
+      <p class="why">La clarté est bien l'intention, mais la formule ne mord pas&nbsp;: elle décrit, elle ne signe pas.</p>
+    </div>
+    <div class="bl">
+      <span class="t">Pilotez au clair.</span>
+      <span class="verdict"><span class="pass">Écartée</span></span>
+      <p class="why">Invention syntaxique qui demande une explication — une baseline ne s'explique pas.</p>
+    </div>
+    <div class="bl">
+      <span class="t" style="color:var(--ink3)">Maîtrisez l'essentiel.</span>
+      <span class="verdict"><span class="pass">Signature produit — pas de marque</span></span>
+      <p class="why">Bonne formule, mauvais périmètre&nbsp;: elle parle d'un produit, pas de la marque. À réserver à BATORYA <b>Essentiel</b>, à l'exclusion de toute communication de marque générale.</p>
+    </div>
+    <div class="bl">
+      <span class="t" style="color:var(--ink3);text-decoration:line-through;text-decoration-thickness:1px">Votre partenaire de confiance. — L'innovation au service de votre réussite. — La technologie autrement.</span>
+      <span class="verdict"><span class="pass">Écartées d'office</span></span>
+      <p class="why">Génériques interchangeables — exactement ce que BATORYA refuse d'être.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ COMPARATIF ============================ -->
+<section class="planche" id="cmp">
+  <header class="ph">
+    <div class="pnum">§</div>
+    <div>
+      <h2>Classement comparatif</h2>
+      <p class="intent">Note qualitative de direction artistique (●●●●● = excellent). Le classement défend un parti&nbsp;: la marque doit vivre d'abord dans un logiciel.</p>
+    </div>
+  </header>
+
+  <table class="cmp">
+    <thead>
+      <tr><th>Critère</th><th>01 · L'Encre</th><th>02 · B pointé</th><th>03 · Repère</th><th>04 · Point final</th><th>05 · Aplomb</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="crit">Singularité</td>
+        <td><span class="dots">●●●○○</span><span class="cm">dispositif connu</span></td>
+        <td><span class="dots">●●●○○</span><span class="cm">classique, sauf le coin</span></td>
+        <td><span class="dots">●●●●○</span><span class="cm">rare, mais à expliquer</span></td>
+        <td><span class="dots">●●●●○</span><span class="cm">mode ponctuée à surveiller</span></td>
+        <td><span class="dots">●●●●●</span><span class="cm">une lettre-outil unique</span></td>
+      </tr>
+      <tr>
+        <td class="crit">Cohérence prototype V3</td>
+        <td><span class="dots">●●●●●</span><span class="cm">l'esprit même du Registre</span></td>
+        <td><span class="dots">●●●●●</span><span class="cm">prolonge le marqueur</span></td>
+        <td><span class="dots">●●●●○</span><span class="cm">culture de l'imprimé</span></td>
+        <td><span class="dots">●●●●●</span><span class="cm">le cobalt en système</span></td>
+        <td><span class="dots">●●●●○</span><span class="cm">serif, encre, mesure</span></td>
+      </tr>
+      <tr>
+        <td class="crit">Lisibilité &amp; mémorisation</td>
+        <td><span class="dots">●●●●○</span><span class="cm">mot lisible, geste discret</span></td>
+        <td><span class="dots">●●●●●</span><span class="cm">icône mémorable</span></td>
+        <td><span class="dots">●●●○○</span><span class="cm">beau, mais se raconte</span></td>
+        <td><span class="dots">●●●●○</span><span class="cm">mot lisible, système mémorable</span></td>
+        <td><span class="dots">●●●●●</span><span class="cm">un geste qu'on retient</span></td>
+      </tr>
+      <tr>
+        <td class="crit">Usage logiciel (icônes, nav, documents)</td>
+        <td><span class="dots">●●●○○</span><span class="cm">pas de symbole natif</span></td>
+        <td><span class="dots">●●●●●</span><span class="cm">16 px → écran</span></td>
+        <td><span class="dots">●●●○○</span><span class="cm">double dessin à gouverner</span></td>
+        <td><span class="dots">●●●●●</span><span class="cm">indestructible à toute taille</span></td>
+        <td><span class="dots">●●●○○</span><span class="cm">clairance permanente</span></td>
+      </tr>
+      <tr>
+        <td class="crit">Représenter la marque durablement / la gamme</td>
+        <td><span class="dots">●●●●○</span><span class="cm">stable, typographie à tenir</span></td>
+        <td><span class="dots">●●●○○</span><span class="cm">B seul ≠ gamme</span></td>
+        <td><span class="dots">●●●●○</span><span class="cm">grammaire élégante possible</span></td>
+        <td><span class="dots">●●●●●</span><span class="cm">native&nbsp;: le point est le système</span></td>
+        <td><span class="dots">●●●●○</span><span class="cm">signe fort, système discret</span></td>
+      </tr>
+      <tr>
+        <td class="crit">Baseline associée</td>
+        <td><span class="dots">●●●●○</span><span class="cm">« Prenez la mesure. »</span></td>
+        <td><span class="dots">●●●●○</span><span class="cm">« Vos affaires, en règle. »</span></td>
+        <td><span class="dots">—</span><span class="cm">présentée sans baseline</span></td>
+        <td><span class="dots">●●●●●</span><span class="cm">« Pour que tout tienne. » + point</span></td>
+        <td><span class="dots">●●●○○</span><span class="cm">« Gardez l'aplomb. » liée au geste</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="podium">
+    <div class="pod"><span class="rk">PODIUM — VISION STRATÉGIQUE</span><h4>04 · Le point final</h4><p>La seule piste dont l'identité est une architecture&nbsp;: ce que la gamme de produits BATORYA demande en priorité.</p></div>
+    <div class="pod"><span class="rk">PODIUM — SIGNATURE</span><h4>05 · Aplomb</h4><p>La plus distinctive et mémorisable, si l'on accepte le dessin de caractère et la contrainte de clairance.</p></div>
+    <div class="pod"><span class="rk">PODIUM — EXÉCUTION IMMÉDIATE</span><h4>02 · Le B pointé</h4><p>La plus opérationnelle dès V6&nbsp;: continuité avec le prototype, icône native, adoption sans friction.</p></div>
+  </div>
+</section>
+
+<!-- ============================ RECOMMANDATION ============================ -->
+<section class="planche" id="rec">
+  <header class="ph">
+    <div class="pnum">→</div>
+    <div>
+      <h2>Recommandation — « Aplomb &amp; point »</h2>
+      <p class="intent">Le meilleur de la planche 04 et de la planche 05, sous une seule grammaire&nbsp;: un logotype signé par le Y à plomb <b>terminé par le point carré cobalt</b> (le plomb devient le point de la marque), une gamme ponctuée par ce même point, et le monogramme «&nbsp;B pointé&nbsp;» de la planche 02 pour l'icône applicative. Trois niveaux, un seul langage&nbsp;: encre, serif, carré cobalt.</p>
+    </div>
+  </header>
+
+  <div class="sheets">
+    <figure class="sheet s12">
+      <div class="rec-hero">
+        <svg viewBox="0 0 380 168" style="width:min(440px,90%)" role="img" aria-label="BATORYA, recommandation">
+          <text x="0" y="64" class="logoserif" font-size="60" letter-spacing="2">BATOR</text>
+          <text x="245" y="64" text-anchor="middle" class="logoserif" font-size="60">Y</text>
+          <path d="M245 66V104" stroke="currentColor" stroke-width="3.4" fill="none"/>
+          <rect x="239" y="102" width="12" height="12" class="sq"/>
+          <text x="272" y="64" class="logoserif" font-size="60" letter-spacing="2">A</text>
+        </svg>
+        <div style="font:500 12px var(--sans);letter-spacing:.34em;text-transform:uppercase;color:var(--ink2)">Pour que tout tienne.</div>
+        <p style="font:300 15.5px var(--serif);color:var(--ink2);max-width:56ch;text-align:center;margin:2px 0 0">Le fil du Y descend et se termine par le point carré&nbsp;: le plomb <i>est</i> le point. En monochrome, tout devient encre — le geste reste.</p>
+      </div>
+      <figcaption>Signature de marque — logotype + baseline de marque</figcaption>
+    </figure>
+
+    <figure class="sheet s7">
+      <div class="gamme" style="flex:1">
+        <div class="row" style="align-items:baseline">
+          <span class="logoserif" style="font-size:24px">BATORYA</span>
+          <span class="prod">Essentiel</span>
+          <svg viewBox="0 0 14 14" style="width:9px;height:9px"><rect width="14" height="14" class="sq"/></svg>
+          <span style="font:400 10px var(--mono);color:var(--ink3)">produit prioritaire</span>
+        </div>
+        <div class="row" style="align-items:baseline">
+          <span class="logoserif" style="font-size:24px">BATORYA</span>
+          <span class="prod">Registre</span>
+          <svg viewBox="0 0 14 14" style="width:9px;height:9px"><rect width="14" height="14" class="sq"/></svg>
+          <span style="font:400 10px var(--mono);color:var(--ink3)">produits d'illustration</span>
+        </div>
+        <div class="row" style="align-items:baseline">
+          <span class="logoserif" style="font-size:24px">BATORYA</span>
+          <span class="prod">Devis — Factures</span>
+          <svg viewBox="0 0 14 14" style="width:9px;height:9px"><rect width="14" height="14" class="sq"/></svg>
+        </div>
+        <div class="row" style="align-items:center;gap:18px">
+          <svg viewBox="0 0 70 70" style="width:40px;flex:none" role="img" aria-label="B pointé"><path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3"/><path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3"/><rect x="54" y="54" width="13" height="13" class="sq"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text></svg>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span class="logoserif" style="font-size:19px">BATORYA</span>
+            <span class="mono-sq" style="font-size:9px;color:var(--ink3)">LOGICIELS PROFESSIONNELS</span>
+          </div>
+        </div>
+      </div>
+      <figcaption>Architecture de gamme + verrou institutionnel (symbole « B pointé »)</figcaption>
+    </figure>
+
+    <figure class="sheet s5">
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:center;flex:1">
+        <svg viewBox="0 0 70 70" style="width:64px" role="img" aria-label="B 64"><path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3"/><path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3"/><rect x="54" y="54" width="13" height="13" class="sq"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text></svg>
+        <svg viewBox="0 0 70 70" style="width:32px" role="img" aria-label="B 32"><path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3.5"/><path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3.5"/><rect x="54" y="54" width="13" height="13" class="sq"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text></svg>
+        <svg viewBox="0 0 70 70" style="width:18px" role="img" aria-label="B 18"><path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="5"/><path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="5"/><rect x="51" y="51" width="17" height="17" class="sq"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="44" font-style="italic">B</text></svg>
+        <div style="width:1px;height:60px;background:var(--rule)"></div>
+        <svg viewBox="0 0 64 64" style="width:52px" role="img" aria-label="Icône app"><rect width="64" height="64" rx="6" fill="#14161B"/><path d="M56 10H10V56H45" fill="none" stroke="#E8E6DF" stroke-width="3"/><path d="M56 46V10" fill="none" stroke="#E8E6DF" stroke-width="3"/><rect x="48" y="48" width="12" height="12" fill="#8F9CFF"/><text x="28" y="33" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="38" font-style="italic" fill="#E8E6DF">B</text></svg>
+      </div>
+      <figcaption>Symbole applicatif « B pointé » — 64/32/18 px + icône fond encre</figcaption>
+    </figure>
+
+    <figure class="sheet s12" style="padding:0">
+      <div class="duo">
+        <div class="half-light">
+          <div class="login">
+            <div class="brandzone" style="display:flex;align-items:center;gap:14px">
+              <svg viewBox="0 0 70 70" style="width:44px;flex:none" role="img" aria-label="B"><path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3"/><path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3"/><rect x="54" y="54" width="13" height="13" class="sq"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text></svg>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="display:flex;align-items:baseline;gap:10px">
+                  <span class="logoserif" style="font-size:24px">BATORYA</span>
+                  <span class="prod" style="font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--blue)">Essentiel</span>
+                  <svg viewBox="0 0 14 14" style="width:8px;height:8px"><rect width="14" height="14" class="sq"/></svg>
+                </div>
+                <span style="font:500 12px var(--sans);letter-spacing:.28em;text-transform:uppercase;color:var(--ink2)">Pour que tout tienne.</span>
+              </div>
+            </div>
+            <h3 class="serif">Écrire, pointer, avancer.</h3>
+            <div class="sub">3 écritures ce matin · 2 relances en attente · TVA à jour</div>
+            <div class="field"><label for="r1">Identifiant</label><input id="r1" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="r2">Mot de passe</label><input id="r2" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+        <div class="half-dark">
+          <div class="login">
+            <div class="brandzone" style="display:flex;align-items:center;gap:14px">
+              <svg viewBox="0 0 70 70" style="width:44px;flex:none" role="img" aria-label="B sombre"><path d="M62 2H2V62H50" fill="none" stroke="#E8E6DF" stroke-width="3"/><path d="M62 50V2" fill="none" stroke="#E8E6DF" stroke-width="3"/><rect x="54" y="54" width="13" height="13" fill="#8F9CFF"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic" fill="#E8E6DF">B</text></svg>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="display:flex;align-items:baseline;gap:10px">
+                  <span class="logoserif" style="font-size:24px;color:#E8E6DF">BATORYA</span>
+                  <span style="font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#8F9CFF">Essentiel</span>
+                  <svg viewBox="0 0 14 14" style="width:8px;height:8px"><rect width="14" height="14" fill="#8F9CFF"/></svg>
+                </div>
+                <span style="font:500 12px var(--sans);letter-spacing:.28em;text-transform:uppercase;color:#B8B7B1">Pour que tout tienne.</span>
+              </div>
+            </div>
+            <h3 class="serif">Écrire, pointer, avancer.</h3>
+            <div class="sub">3 écritures ce matin · 2 relances en attente · TVA à jour</div>
+            <div class="field"><label for="r3">Identifiant</label><input id="r3" type="text" placeholder="prenom.nom"></div>
+            <div class="field"><label for="r4">Mot de passe</label><input id="r4" type="password" placeholder="••••••••"></div>
+            <button class="btn">Se connecter</button>
+            <div class="loginfoot">BATORYA · FR · ESSENTIEL V6.0 — ÉD. 2026</div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Écran de connexion — les trois niveaux à l'œuvre&nbsp;: symbole, gamme, baseline</figcaption>
+    </figure>
+
+    <figure class="sheet s8 dark">
+      <div class="splash">
+        <svg viewBox="0 0 70 70" style="width:64px" role="img" aria-label="B splash"><path d="M62 2H2V62H50" fill="none" stroke="#E8E6DF" stroke-width="3"/><path d="M62 50V2" fill="none" stroke="#E8E6DF" stroke-width="3"/><rect x="54" y="54" width="13" height="13" fill="#8F9CFF"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic" fill="#E8E6DF">B</text></svg>
+        <div class="rule"></div>
+        <div style="font:400 11px var(--mono);letter-spacing:.22em;text-transform:uppercase;color:#8A8D96">BATORYA — ESSENTIEL V6.0 — ÉD. 2026</div>
+      </div>
+      <figcaption>Écran de démarrage (splash) — un symbole, un filet, une version</figcaption>
+    </figure>
+
+    <figure class="sheet s4">
+      <div class="navbar" style="flex:1;border:0;padding:0;background:none">
+        <svg viewBox="0 0 70 70" style="width:30px;flex:none" role="img" aria-label="B"><path d="M62 2H2V62H50" fill="none" stroke="currentColor" stroke-width="3"/><path d="M62 50V2" fill="none" stroke="currentColor" stroke-width="3"/><rect x="54" y="54" width="13" height="13" class="sq"/><text x="31" y="36" text-anchor="middle" dominant-baseline="central" class="logoserif" font-size="42" font-style="italic">B</text></svg>
+        <span class="logoserif" style="font-size:17px">BATORYA</span>
+        <span class="item">Registre</span>
+        <span class="item">Clients</span>
+        <span class="item">Chantiers</span>
+        <span class="item">Devis</span>
+        <span class="item">Factures</span>
+        <span class="right">V6 — 2026</span>
+      </div>
+      <figcaption>Barre de navigation — le symbole tient à 30 px sans le mot</figcaption>
+    </figure>
+  </div>
+
+  <div class="analysis">
+    <div class="an"><h4>Pourquoi cette synthèse</h4><p>La planche 04 apporte l'architecture (le point carré clôt chaque écriture — gamme native), la planche 05 la signature (le Y à plomb — mémorisation immédiate), la planche 02 l'outil (icône applicative prête dès V6, continuité avec le prototype). Les trois partagent un seul langage&nbsp;: encre, serif, carré cobalt, papier. Aucun élément n'est décoratif&nbsp;; chacun a un poste défini.</p></div>
+    <div class="an"><h4>Et si l'on ne retient qu'une seule piste</h4><p>Sans synthèse, je recommande la <b>planche 04</b>&nbsp;: c'est la seule identité qui est déjà un système, donc la seule qui grandira avec la gamme de logiciels sans revoir la marque. La planche 02 est le choix de prudence, la 05 le choix d'audace.</p></div>
+    <div class="an"><h4>Travaux à engager avant adoption</h4><p>1)&nbsp;Dessin propre du Y (rencontre fil/lettre, poids optique)&nbsp;; 2)&nbsp;confirmation typographique (Source&nbsp;Serif&nbsp;4 en licence OFL, ou serif dessinée)&nbsp;; 3)&nbsp;planche d'usages noir/blanc, 1&nbsp;couleur, broderie/tampon&nbsp;; 4)&nbsp;tests à l'écran réel de l'application, thèmes clair et sombre.</p></div>
+    <div class="an"><h4>Points de vigilance assumés</h4><p>Deux gestes lettrés (Y du logotype, B du symbole) supposent une exécution typographique irréprochable&nbsp;; la clairance sous le Y doit être chartée. Si le budget dessin n'est pas au rendez-vous, préférer la planche 04 pure, qui n'exige aucun dessin de caractère.</p></div>
+  </div>
+</section>
+
+<footer>
+  <p><b>Disponibilité juridique.</b> Aucune disponibilité de marque n'est affirmée ici&nbsp;: ces propositions sont des parti pris de direction artistique. Avant toute adoption&nbsp;: recherches d'antériorité INPI (France) et EUIPO/TMview (Union européenne), classes 9 (logiciels) et 42 (services logiciels) au minimum&nbsp;; vérification des noms de domaine <span class="mono">batorya.fr</span>, <span class="mono">batorya.com</span>, <span class="mono">batorya.eu</span> et des profils sociaux. Signaux relevés lors d'une recherche rapide&nbsp;: aucune marque «&nbsp;Batorya&nbsp;» identifiée dans le logiciel en français&nbsp;; à distinguer de «&nbsp;BATORAY&nbsp;» (distributeur américain, autre secteur) et du nom de famille hongrois Báthory (sans usage commercial pertinent identifié). Les polices Source&nbsp;Serif&nbsp;4, Instrument&nbsp;Sans et DM&nbsp;Mono sont libres (SIL&nbsp;OFL) mais leur usage ne garantit pas la distinctivité juridique du dessin final.</p>
+  <p style="margin-top:10px"><span class="mono" style="font-size:10.5px;letter-spacing:.12em">BATORYA — EXPLORATION D'IDENTITÉ · 5 PLANCHES · DOCUMENT DE TRAVAIL · 2026</span></p>
+</footer>
+
+</div>
+</body>
+</html>
