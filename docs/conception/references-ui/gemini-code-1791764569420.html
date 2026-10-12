@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BATORYA Essentiel V6 — Creative Concept</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- DESIGN SYSTEM & CREATIVE VARIABLES --- */
+        :root[data-theme="dark"] {
+            --bg-canvas: #0C0E12;
+            --bg-surface: #14171F;
+            --bg-surface-elevated: #1C212D;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(217, 91, 61, 0.4);
+            --text-primary: #F1F5F9;
+            --text-secondary: #8E9BAE;
+            --text-accent: #D95B3D; /* Terracotta cuit */
+            --brand-gold: #D4AF37; /* Laiton */
+            --accent-glow: rgba(217, 91, 61, 0.15);
+            --font-title: 'Syne', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        :root[data-theme="light"] {
+            --bg-canvas: #F4F1EA; /* Papier Archival / Sable */
+            --bg-surface: #FFFFFF;
+            --bg-surface-elevated: #EAE5DC;
+            --border-subtle: rgba(0, 0, 0, 0.08);
+            --border-accent: rgba(194, 77, 48, 0.4);
+            --text-primary: #12151C;
+            --text-secondary: #5A6474;
+            --text-accent: #C24D30;
+            --brand-gold: #B08D26;
+            --accent-glow: rgba(194, 77, 48, 0.08);
+            --font-title: 'Syne', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-body);
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* --- LEFT ARCHITECTURAL NAVIGATION RAIL (9 CHAPTERS) --- */
+        .rail-nav {
+            width: 80px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0;
+            z-index: 100;
+        }
+
+        .rail-brand {
+            width: 44px;
+            height: 44px;
+            background: var(--text-accent);
+            color: #FFF;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-title);
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: -1px;
+            box-shadow: 0 4px 20px var(--accent-glow);
+            cursor: pointer;
+        }
+
+        .chapters-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .chapter-node {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .chapter-node:hover {
+            color: var(--text-primary);
+            background: var(--bg-surface-elevated);
+        }
+
+        .chapter-node.active {
+            color: var(--text-accent);
+            background: var(--accent-glow);
+            border-color: var(--border-accent);
+        }
+
+        .chapter-node .chap-num {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            opacity: 0.6;
+        }
+
+        .chapter-node .chap-code {
+            font-family: var(--font-title);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .chapter-tooltip {
+            position: absolute;
+            left: 88px;
+            background: var(--bg-surface-elevated);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            border: 1px solid var(--border-subtle);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .chapter-node:hover .chapter-tooltip {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .rail-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .profile-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--brand-gold);
+            background: #2D3748;
+            color: #FFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* --- MAIN WORKSPACE --- */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* DYNAMIC WORKSPACE HEADER */
+        .workspace-header {
+            padding: 24px 40px 12px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .chapter-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .chapter-meta {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-accent);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .chapter-heading {
+            font-family: var(--font-title);
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .workspace-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-creative {
+            background: var(--text-accent);
+            color: #FFF;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        .btn-creative:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-surface-elevated);
+        }
+
+        /* WORKSPACE CONTENT AREA */
+        .workspace-body {
+            flex: 1;
+            padding: 32px 40px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .workspace-body.active {
+            display: block;
+        }
+
+        /* CREATIVE EDITORIAL LAYOUTS */
+        .editorial-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 32px;
+        }
+
+        .hero-statement {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-statement::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--text-accent);
+        }
+
+        .hero-number {
+            font-family: var(--font-mono);
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -2px;
+        }
+
+        .hero-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* CUSTOM DATA SHEET TABLE */
+        .sheet-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .sheet-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr 1fr;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-subtle);
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .sheet-row.header {
+            background: var(--bg-surface-elevated);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sheet-row:hover:not(.header) {
+            background: var(--bg-surface-elevated);
+            cursor: pointer;
+        }
+
+        .tag-status {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .tag-active { background: rgba(16, 185, 129, 0.15); color: #10B981; }
+        .tag-pending { background: rgba(245, 158, 11, 0.15); color: #F59E0B; }
+
+        /* FLOATING LEON ASSISTANT */
+        .leon-orb {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-accent);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            z-index: 200;
+        }
+
+        .leon-orb-inner {
+            width: 12px;
+            height: 12px;
+            background: var(--text-accent);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--text-accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .leon-drawer {
+            position: fixed;
+            bottom: 84px;
+            right: 24px;
+            width: 380px;
+            height: 480px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            display: none;
+            flex-direction: column;
+            z-index: 200;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        .leon-drawer.open { display: flex; }
+
+        .leon-drawer-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-title);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ARCHITECTURAL RAIL NAVIGATION (EXACTLY 9 OFFICIAL CHAPTERS) -->
+    <nav class="rail-nav">
+        <div class="rail-brand" title="BATORYA Essentiel V6">B6</div>
+
+        <div class="chapters-list">
+            <!-- 1. CRM -->
+            <div class="chapter-node active" onclick="activateChapter('crm', this)">
+                <span class="chap-num">01</span>
+                <span class="chap-code">CRM</span>
+                <div class="chapter-tooltip">1. CRM & Prospects</div>
+            </div>
+
+            <!-- 2. Commerce -->
+            <div class="chapter-node" onclick="activateChapter('commerce', this)">
+                <span class="chap-num">02</span>
+                <span class="chap-code">COM</span>
+                <div class="chapter-tooltip">2. Commerce (Devis)</div>
+            </div>
+
+            <!-- 3. Travaux -->
+            <div class="chapter-node" onclick="activateChapter('travaux', this)">
+                <span class="chap-num">03</span>
+                <span class="chap-code">TRV</span>
+                <div class="chapter-tooltip">3. Travaux & Chantiers</div>
+            </div>
+
+            <!-- 4. Facturation -->
+            <div class="chapter-node" onclick="activateChapter('facturation', this)">
+                <span class="chap-num">04</span>
+                <span class="chap-code">FAC</span>
+                <div class="chapter-tooltip">4. Facturation</div>
+            </div>
+
+            <!-- 5. Trésorerie -->
+            <div class="chapter-node" onclick="activateChapter('tresorerie', this)">
+                <span class="chap-num">05</span>
+                <span class="chap-code">TRS</span>
+                <div class="chapter-tooltip">5. Trésorerie & Dépenses</div>
+            </div>
+
+            <!-- 6. Catalogue -->
+            <div class="chapter-node" onclick="activateChapter('catalogue', this)">
+                <span class="chap-num">06</span>
+                <span class="chap-code">CAT</span>
+                <div class="chapter-tooltip">6. Catalogue Prestations</div>
+            </div>
+
+            <!-- 7. Documents -->
+            <div class="chapter-node" onclick="activateChapter('documents', this)">
+                <span class="chap-num">07</span>
+                <span class="chap-code">DOC</span>
+                <div class="chapter-tooltip">7. Documents & PDF</div>
+            </div>
+
+            <!-- 8. Planification -->
+            <div class="chapter-node" onclick="activateChapter('planification', this)">
+                <span class="chap-num">08</span>
+                <span class="chap-code">PLN</span>
+                <div class="chapter-tooltip">8. Planification</div>
+            </div>
+
+            <!-- 9. Paramètres -->
+            <div class="chapter-node" onclick="activateChapter('parametres', this)">
+                <span class="chap-num">09</span>
+                <span class="chap-code">PAR</span>
+                <div class="chapter-tooltip">9. Paramètres & Thème</div>
+            </div>
+        </div>
+
+        <div class="rail-footer">
+            <button class="btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="toggleTheme()">Thème</button>
+            <div class="profile-avatar" title="Mathieu Construction" onclick="activateChapter('parametres', null)">MC</div>
+        </div>
+    </nav>
+
+    <!-- WORKSPACE -->
+    <main class="workspace">
+        
+        <!-- DYNAMIC HEADER -->
+        <header class="workspace-header">
+            <div class="chapter-title-group">
+                <span class="chapter-meta" id="chap-meta">Chapitre 01 / Répertoire Client</span>
+                <h1 class="chapter-heading" id="chap-title">CRM & Prospects</h1>
+            </div>
+            <div class="workspace-actions">
+                <button class="btn-outline">Recherche Globale</button>
+                <button class="btn-creative" id="primary-action-btn">+ Créer une fiche</button>
+            </div>
+        </header>
+
+        <!-- CHAPTER 1: CRM -->
+        <section id="view-crm" class="workspace-body active">
+            <div class="editorial-grid">
+                <div class="sheet-container">
+                    <div class="sheet-row header">
+                        <span>Code Client</span>
+                        <span>Raison Sociale / Nom</span>
+                        <span>Téléphone</span>
+                        <span>Statut</span>
+                    </tr>
+                    </div>
+                    <div class="sheet-row">
+                        <span style="font-family: var(--font-mono);">CLI-2026-001</span>
+                        <span style="font-weight: 600;">SCI Les Oliviers</span>
+                        <span>06 12 34 56 78</span>
+                        <td><span class="tag-status tag-active">Chantier Actif</span></td>
+                    </div>
+                    <div class="sheet-row">
+                        <span style="font-family: var(--font-mono);">CLI-2026-002</span>
+                        <span style="font-weight: 600;">Marc Dubois</span>
+                        <span>06 98 76 54 32</span>
+                        <td><span class="tag-status tag-pending">Prospect</span></td>
+                    </div>
+                </div>
+
+                <div class="hero-statement">
+                    <div class="hero-label">Volume Portefeuille</div>
+                    <div class="hero-number">42</div>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-top: 12px;">Contacts qualifiés stockés localement sur votre machine (SQLite Base Local).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 2: COMMERCE -->
+        <section id="view-commerce" class="workspace-body">
+            <div class="editorial-grid">
+                <div class="sheet-container">
+                    <div class="sheet-row header">
+                        <span>Réf Devis</span>
+                        <span>Client</span>
+                        <span>Montant HT</span>
+                        <span>État</span>
+                    </div>
+                    <div class="sheet-row">
+                        <span style="font-family: var(--font-mono);">DEV-2026-089</span>
+                        <span style="font-weight: 600;">SCI Les Oliviers</span>
+                        <span style="font-family: var(--font-mono);">4 500,00 €</span>
+                        <td><span class="tag-status tag-active">Validé</span></td>
+                    </div>
+                </div>
+                <div class="hero-statement">
+                    <div class="hero-label">Devis en Attente</div>
+                    <div class="hero-number">12 450 €</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 3: TRAVAUX -->
+        <section id="view-travaux" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">Suivi d'Exécution</div>
+                <div class="hero-number">03 Chantiers</div>
+                <p style="margin-top: 12px; color: var(--text-secondary);">Avancement en direct des travaux sur site.</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 4: FACTURATION -->
+        <section id="view-facturation" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">À Encaisser</div>
+                <div class="hero-number">3 890 €</div>
+                <p style="margin-top: 12px; color: var(--text-secondary);">Régime Auto-Entrepreneur : Franchise de TVA applicable.</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 5: TRESORERIE -->
+        <section id="view-tresorerie" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">Solde Cumulé Octobre</div>
+                <div class="hero-number" style="color: var(--brand-gold);">18 200 €</div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 6: CATALOGUE -->
+        <section id="view-catalogue" class="workspace-body">
+            <div class="sheet-container">
+                <div class="sheet-row header">
+                    <span>Code</span>
+                    <span>Libellé Prestation</span>
+                    <span>Unité</span>
+                    <span>Prix HT</span>
+                </div>
+                <div class="sheet-row">
+                    <span style="font-family: var(--font-mono);">PREST-01</span>
+                    <span>Pose cloison BA13 sur ossature</span>
+                    <span>m²</span>
+                    <span style="font-family: var(--font-mono);">45,00 €</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 7: DOCUMENTS -->
+        <section id="view-documents" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">Gestion Documentaire</div>
+                <p style="color: var(--text-secondary);">Tous les PDF générés sont accessibles localement dans le dossier de l'application.</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 8: PLANIFICATION -->
+        <section id="view-planification" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">Planning Local</div>
+                <p style="color: var(--text-secondary);">Calendrier d'intervention autonome hors-ligne.</p>
+            </div>
+        </section>
+
+        <!-- CHAPTER 9: PARAMETRES -->
+        <section id="view-parametres" class="workspace-body">
+            <div class="hero-statement">
+                <div class="hero-label">Configuration BATORYA</div>
+                <h3 style="font-family: var(--font-title); font-size: 20px; margin: 12px 0;">Mathieu Construction</h3>
+                <p style="color: var(--text-secondary); font-size: 13px;">Moteur Desktop Tauri 2 + SQLite local — Version 6.0</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ASSISTANT LEON -->
+    <div class="leon-orb" onclick="toggleLeon()" title="Assistant Léon">
+        <div class="leon-orb-inner"></div>
+    </div>
+
+    <div class="leon-drawer" id="leon-drawer">
+        <div class="leon-drawer-header">
+            <span>Léon — Assistant Local</span>
+            <button onclick="toggleLeon()" style="background:none; border:none; color:var(--text-primary); cursor:pointer;">&times;</button>
+        </div>
+        <div style="padding: 20px; flex: 1; color: var(--text-secondary); font-size: 13px;">
+            Je suis à votre disposition pour vos requêtes locales sur BATORYA.
+        </div>
+    </div>
+
+    <!-- CONTROL SCRIPT -->
+    <script>
+        const chapterData = {
+            'crm': { meta: 'Chapitre 01 / Répertoire Client', title: 'CRM & Prospects', action: '+ Créer un contact' },
+            'commerce': { meta: 'Chapitre 02 / Négociation', title: 'Commerce & Devis', action: '+ Rédiger un devis' },
+            'travaux': { meta: 'Chapitre 03 / Opérationnel', title: 'Travaux & Chantiers', action: '+ Nouveau chantier' },
+            'facturation': { meta: 'Chapitre 04 / Émission', title: 'Facturation & Acomptes', action: '+ Créer une facture' },
+            'tresorerie': { meta: 'Chapitre 05 / Flux Financiers', title: 'Trésorerie & Dépenses', action: '+ Saisir une dépense' },
+            'catalogue': { meta: 'Chapitre 06 / Bibliothèque', title: 'Catalogue Prestations', action: '+ Ajouter prestation' },
+            'documents': { meta: 'Chapitre 07 / Archives', title: 'Documents & PDF', action: '+ Importer un document' },
+            'planification': { meta: 'Chapitre 08 / Agenda', title: 'Planification', action: '+ Programmer intervention' },
+            'parametres': { meta: 'Chapitre 09 / Préférences', title: 'Paramètres & Profil', action: 'Sauvegarder' }
+        };
+
+        function activateChapter(chapId, el) {
+            // Update Navigation Rail
+            document.querySelectorAll('.chapter-node').forEach(node => node.classList.remove('active'));
+            if (el) el.classList.add('active');
+
+            // Update Header Meta
+            const data = chapterData[chapId];
+            if (data) {
+                document.getElementById('chap-meta').textContent = data.meta;
+                document.getElementById('chap-title').textContent = data.title;
+                document.getElementById('primary-action-btn').textContent = data.action;
+            }
+
+            // Switch Workspace View
+            document.querySelectorAll('.workspace-body').forEach(view => view.classList.remove('active'));
+            const targetView = document.getElementById('view-' + chapId);
+            if (targetView) targetView.classList.add('active');
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+        }
+
+        function toggleLeon() {
+            document.getElementById('leon-drawer').classList.toggle('open');
+        }
+    </script>
+</body>
+</html>
