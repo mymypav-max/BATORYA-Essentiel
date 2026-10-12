@@ -1,6 +1,6 @@
 # BATORYA Essentiel V6 — Conventions techniques et de code
 
-**Version : 0.6 (en relecture, 2026-10-04) — document évolutif**  
+**Version : 0.6 (en relecture, 2026-10-04) — document évolutif ; statuts de la chaîne des migrations (§5) mis à jour le 2026-10-12, sans nouvelle règle**  
 **Périmètre : conventions techniques de développement V6**
 
 ## 1. Objet
@@ -100,7 +100,7 @@ src-tauri/migrations/metier/003_devis.sql
 src-tauri/migrations/metier/004_bons_commande.sql
 ```
 
-Ces quatre fichiers sont les seules migrations métier **existantes** (rangs 1 à 4). Les migrations suivantes sont décrites dans la chaîne ordonnée ci-dessous ; elles n'existent pas encore.
+Ces quatre fichiers sont les premières migrations métier (rangs 1 à 4). Les migrations 005 à 009 (rangs 5 à 12, correctives comprises) existent également ; la suivante, 010 (rang 13), n'existe pas encore. La chaîne complète est décrite ci-dessous.
 
 Règles :
 
@@ -127,15 +127,15 @@ Règles :
 | 2 | `002_fournisseurs.sql` | tranche | livrée |
 | 3 | `003_devis.sql` | tranche | livrée |
 | 4 | `004_bons_commande.sql` | tranche | livrée |
-| 5 | `005_depenses.sql` | tranche (Dépenses) | prévue, non créée |
-| 6 | `005a_corrections_v313.sql` | corrective (M-A) | prévue, non créée ; contenu en proposition (modèle §17.1, PT-20) |
-| 7 | `005b_bc_multi_devis.sql` | corrective (M-B) | prévue, non créée ; contenu en proposition |
+| 5 | `005_depenses.sql` | tranche (Dépenses) | livrée (test T-44) |
+| 6 | `005a_corrections_v313.sql` | corrective (M-A) | livrée (test T-45) ; contenu en proposition (modèle §17.1, PT-20) |
+| 7 | `005b_bc_multi_devis.sql` | corrective (M-B) | livrée (test T-46) ; contenu en proposition |
 | 8 | `005c_bc_annule_caches_financiers.sql` | corrective (D-56) | livrée (test T-47) ; adaptation de `tr_12_bons_commande_annule` (modèle §17.1, PT-16) |
-| 9 | `006_facturation.sql` | tranche (Facturation) | prévue |
-| 10 | `007_reglements.sql` | tranche (Règlements) | prévue |
-| 11 | `008_garanties.sql` | tranche (Garanties) | prévue |
-| 12 | `009_pv.sql` | tranche (PV) | prévue |
-| 13 | `010_planification.sql` | tranche (Planification) | prévue |
+| 9 | `006_facturation.sql` | tranche (Facturation) | livrée (test T-48) |
+| 10 | `007_reglements.sql` | tranche (Règlements) | livrée (test T-49) |
+| 11 | `008_garanties.sql` | tranche (Garanties) | livrée (test T-50) |
+| 12 | `009_pv.sql` | tranche (PV) | livrée (test T-51) |
+| 13 | `010_planification.sql` | tranche (Planification) | prévue, non créée ; cadrage 010 en cours (test T-52 prévu) |
 
 - L'**ordre métier réservé** des tranches est 001 Initial → 002 Fournisseurs → 003 Devis → 004 Bons de commande → 005 Dépenses → 006 Facturation → 007 Règlements → 008 Garanties → 009 PV → 010 Planification (V-1). Les noms des tranches 006 à 010 sont des **réservations** d'ordre ; l'intitulé exact du fichier sera fixé à sa création, avec le modèle (§17.1).
 - Les correctives M-A et M-B s'exécutent **après 005 et avant 006** (V-4) ; la corrective 005c (D-56) s'exécute après 005b et avant 006.
@@ -151,7 +151,7 @@ Règles :
 3. l'historique est immuable : les anciens contenus ne sont jamais réécrits (déjà posé ci-dessus) ;
 4. ces règles sont nécessaires au déterminisme : pour une même base à un rang donné, la même suite de migrations doit s'appliquer sur toute installation et à chaque restauration.
 
-*Conséquence documentaire* : tant qu'aucune de 005/005a/005b/005c/006… n'est livrée, la liste du tableau ci-dessus peut encore être ajustée par décision ; **après livraison d'une migration, cette ligne est figée**. La ligne de la corrective `005c` (rang 8) est figée : la migration est livrée.
+*Conséquence documentaire* : tant qu'aucune de 005/005a/005b/005c/006… n'est livrée, la liste du tableau ci-dessus peut encore être ajustée par décision ; **après livraison d'une migration, cette ligne est figée**. La ligne de la corrective `005c` (rang 8) est figée : la migration est livrée. Les lignes des rangs 5 à 12 (005 à 009, correctives comprises) sont figées : ces migrations sont livrées. Seule la ligne du rang 13 (010) peut encore être ajustée par décision.
 
 **Algorithme de sélection des migrations à appliquer** (installation, mise à jour de l'application, restauration). Soit `k` = `PRAGMA user_version` de la base, `N` = rang maximal supporté par l'application (longueur de sa liste) :
 1. si `k > N` : **refus** (base produite par une version plus récente de l'application) ; aucune écriture ;
