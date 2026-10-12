@@ -20,7 +20,7 @@ Il n'existe pas de dossier `migration/` autonome à ce stade. La migration V2 �
 - `conception/invariants.md` — invariants fonctionnels et techniques validés
 - `conception/conventions-techniques-v6.md` — conventions techniques et de code V6
 - `conception/modèle-métier-V6.md` — modèle métier V6
-- `conception/modèle-données-sqlite-v6-v3.13.md` — modèle de données SQLite **V3.13 (2026-10-03, révisée en place le 2026-10-12, en relecture)** : intègre les arbitrages métier Q1–Q27 et A–D ; **devient la version courante après validation** ; remplace la V3.12
+- `conception/modèle-données-sqlite-v6-v3.13.md` — modèle de données SQLite **V3.13 (2026-10-03, en relecture)** : intègre les arbitrages métier Q1–Q27 et A–D ; **devient la version courante après validation** ; remplace la V3.12
 - `conception/modèle-données-sqlite-v6-v3.12.md` — modèle de données SQLite V3.12, **dernière version validée** (conception de la tranche Bons de commande incluse), conservée jusqu'à la validation de la V3.13
 
 ### Décisions

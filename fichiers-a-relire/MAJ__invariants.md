@@ -32,7 +32,7 @@ Statut : **pièce obligatoire du modèle de données**
 
 | INV | Énoncé | Garde | Cas |
 |---|---|---|---|
-| INV-10 | Dates métier `YYYY-MM-DD` (date réelle) ; timestamps `*_at` ISO UTC ; planning en heure locale (`YYYY-MM-DD` ou `YYYY-MM-DDTHH:MM` : date réelle du calendrier grégorien proleptique, heures 00–23, minutes 00–59 ; modèle §2.2, D-57) ; une date métier n'est jamais déduite d'un timestamp | SQL | |
+| INV-10 | Dates métier `YYYY-MM-DD` (date réelle) ; timestamps `*_at` ISO UTC ; planning en heure locale (`YYYY-MM-DD` ou `YYYY-MM-DDTHH:MM` : date réelle du calendrier grégorien proleptique (convention du projet, modèle §2.2), heures 00–23, minutes 00–59 ; D-57) ; une date métier n'est jamais déduite d'un timestamp | SQL | |
 | INV-11 | Aucun `REAL` pour un montant ; TEXT canonique contrôlé (familles D2, D2S, DL, P2) | SQL | C-14 |
 | INV-12 | Arithmétique SQL des montants uniquement par centimes entiers ; jamais `CAST REAL`, `SUM` ou `ORDER BY` sur TEXT décimal | SVC, revue de DDL | |
 | INV-13 | Arrondi HALF_UP (valeur absolue), un seul arrondi par ligne ; total = Σ lignes arrondies − remise globale arrondie | SVC | C-14 à C-17 |
@@ -244,7 +244,7 @@ Lignes ajoutées par l'alignement documentaire du cadrage de la tranche 005 « D
 
 ## P. Tranche Planification — arbitrages du 2026-10-12 (cadrage 010)
 
-Ligne ajoutée par l'alignement documentaire de la tranche 010 « Planification » (arbitrages de Rémy du 2026-10-12, cadrage 010 ; D-57 à D-61 du modèle). La ligne énonce une **règle validée** ; elle ne crée aucune règle générale. Le test `test_INV_202` reste à écrire (T-52, prévu).
+Ligne ajoutée par l'alignement documentaire de la tranche 010 « Planification » (arbitrages de Rémy du 2026-10-12, cadrage 010 ; D-57 à D-61 du modèle). La ligne énonce une **règle arbitrée par Rémy le 2026-10-12** ; elle ne crée aucune règle générale. Le test `test_INV_202` reste à écrire (T-52, prévu).
 
 | INV | Énoncé | Garde | Cas |
 |---|---|---|---|
@@ -322,7 +322,7 @@ Ligne ajoutée par l'alignement documentaire de la tranche 010 « Planification 
 | 2026-10-04 | INV-193 | **Précisé** : renvoi à INV-200 pour le principe d'exclusion des dépenses annulées des calculs actifs. Aucun changement de sens ; ancien énoncé : « …est exclue des totaux et calculs opérationnels concernés, et peut rester liée à un BC annulé… » | Le principe est validé (cadrage 005, DV-4) ; seules les formules détaillées de chaque analyse restent à spécifier (PT-14) | Cadrage 005 (DV-4) ; passe documentaire finale |
 | 2026-10-05 | INV-173 | **Précisé** : dans « contenu contractuel (…, montants) reste intact », « montants » désigne les montants **contractuels** du BC ; les caches financiers dérivés (`montant_deja_facture_ht`, `avancement`, `date_100_facture`) évoluent sur un BC annulé avec les opérations de correction de documents existants. Aucun changement de sens ; ancien énoncé : « …(lignes, garanties de ligne, snapshots, montants) reste intact… » | Corrective 005c (`tr_12_bons_commande_annule` aligné sur INV-173 et INV-188) : levée de l'ambiguïté relevée à l'audit de 005c | D-56 ; INV-188 ; PT-16 |
 | 2026-10-12 | INV-202 | **Ajouté** (section P) | Titre d'un événement de planning : non vide, non composé uniquement d'espaces ordinaires (U+0020), sans normalisation. Aucune règle générale de normalisation ni invariant NUL global n'est créé | Arbitrages de Rémy du 2026-10-12 (D-58, D-59) ; cadrage 010 |
-| 2026-10-12 | INV-10 | **Précisé** : « planning en heure locale » désigne `YYYY-MM-DD` ou `YYYY-MM-DDTHH:MM` ; date réelle du calendrier grégorien proleptique, heures 00–23, minutes 00–59. Aucun changement de sens ; ancien énoncé : « …planning en heure locale… » | Le contrôle strict des dates locales du planning est décidé (arbitrages du 2026-10-12) | D-57 ; cadrage 010 |
+| 2026-10-12 | INV-10 | **Précisé** : « planning en heure locale » désigne `YYYY-MM-DD` ou `YYYY-MM-DDTHH:MM` ; date réelle du calendrier grégorien proleptique (convention du projet, modèle §2.2), heures 00–23, minutes 00–59. Aucun changement de sens ; ancien énoncé : « …planning en heure locale… » | Le contrôle strict des dates locales du planning est décidé (arbitrages du 2026-10-12) | D-57 ; cadrage 010 |
 | 2026-10-12 | INV-177 | **Précisé** : le contrôle `GLOB` + `date(x) IS x` vise les dates des familles D ; les dates locales du planning (DL_LOCAL) ont leur contrôle propre. Aucun changement de sens pour les familles D ; ancien énoncé : « …le contrôle SQL des dates reste `GLOB` + `date(x) IS x`… » | `date(x) IS x` ne convient pas à `YYYY-MM-DDTHH:MM` (constat du 2026-10-12, modèle §2.2) | D-57 ; cadrage 010 |
 
 ## Contrôle de non-régression (à exécuter à chaque nouvelle version du modèle)

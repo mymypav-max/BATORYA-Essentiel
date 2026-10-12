@@ -1,6 +1,6 @@
 # BATORYA Essentiel V6 — Conventions techniques et de code
 
-**Version : 0.6 (en relecture, 2026-10-04) — document évolutif ; statuts de la chaîne des migrations (§5) mis à jour le 2026-10-12, sans nouvelle règle**  
+**Version : 0.6 (en relecture, 2026-10-04) — document évolutif ; statuts de la chaîne des migrations (§5), arborescence (§4) et références aux migrations 001 à 004 périmées mis à jour le 2026-10-12, sans nouvelle règle**  
 **Périmètre : conventions techniques de développement V6**
 
 ## 1. Objet
@@ -42,7 +42,7 @@ Les fichiers temporaires de travail ne doivent pas être ajoutés au dépôt sou
 
 ## 4. Arborescence technique actuelle
 
-L’arborescence technique actuellement validée est volontairement minimale :
+L’arborescence technique actuellement validée est volontairement minimale (état mis à jour le 2026-10-12 : migrations et tests métier 005 à 009 livrés, sans nouvelle règle) :
 
 ```text
 src-tauri/
@@ -53,7 +53,15 @@ src-tauri/
 │       ├── 001_initial.sql
 │       ├── 002_fournisseurs.sql
 │       ├── 003_devis.sql
-│       └── 004_bons_commande.sql
+│       ├── 004_bons_commande.sql
+│       ├── 005_depenses.sql
+│       ├── 005a_corrections_v313.sql
+│       ├── 005b_bc_multi_devis.sql
+│       ├── 005c_bc_annule_caches_financiers.sql
+│       ├── 006_facturation.sql
+│       ├── 007_reglements.sql
+│       ├── 008_garanties.sql
+│       └── 009_pv.sql
 │
 └── tests/
     ├── machine/
@@ -62,7 +70,15 @@ src-tauri/
         ├── test_001_initial.py
         ├── test_002_fournisseurs.py
         ├── test_003_devis.py
-        └── test_004_bons_commande.py
+        ├── test_004_bons_commande.py
+        ├── test_005_depenses.py
+        ├── test_005a_corrections_v313.py
+        ├── test_005b_bc_multi_devis.py
+        ├── test_005c_bc_annule_caches_financiers.py
+        ├── test_006_facturation.py
+        ├── test_007_reglements.py
+        ├── test_008_garanties.py
+        └── test_009_pv.py
 ```
 
 Cette arborescence sera complétée lorsque les premières implémentations Rust, SQLite métier et interfaces applicatives seront réellement introduites.
@@ -98,9 +114,17 @@ src-tauri/migrations/metier/001_initial.sql
 src-tauri/migrations/metier/002_fournisseurs.sql
 src-tauri/migrations/metier/003_devis.sql
 src-tauri/migrations/metier/004_bons_commande.sql
+src-tauri/migrations/metier/005_depenses.sql
+src-tauri/migrations/metier/005a_corrections_v313.sql
+src-tauri/migrations/metier/005b_bc_multi_devis.sql
+src-tauri/migrations/metier/005c_bc_annule_caches_financiers.sql
+src-tauri/migrations/metier/006_facturation.sql
+src-tauri/migrations/metier/007_reglements.sql
+src-tauri/migrations/metier/008_garanties.sql
+src-tauri/migrations/metier/009_pv.sql
 ```
 
-Ces quatre fichiers sont les premières migrations métier (rangs 1 à 4). Les migrations 005 à 009 (rangs 5 à 12, correctives comprises) existent également ; la suivante, 010 (rang 13), n'existe pas encore. La chaîne complète est décrite ci-dessous.
+Ces fichiers sont les migrations métier existantes (rangs 1 à 12, correctives comprises) ; la suivante, 010 (rang 13), n'existe pas encore. La chaîne ordonnée est décrite ci-dessous.
 
 Règles :
 
@@ -117,7 +141,7 @@ Règles :
 
 ### Chaîne ordonnée, rang et `user_version`
 
-*Nature : décisions V-1 à V-5 validées le 2026-10-04 (règles de versionnement) ; l'algorithme de sélection est une Déduction technique de ces règles. Le runner n'existant pas, rien de ce qui suit n'est encore exécuté ; les tests existants (001–004) émulent le runner et posent `PRAGMA user_version = {numéro}`, ce qui est exact pour les rangs 1 à 4.*
+*Nature : décisions V-1 à V-5 validées le 2026-10-04 (règles de versionnement) ; l'algorithme de sélection est une Déduction technique de ces règles. Le runner n'existant pas, rien de ce qui suit n'est encore exécuté ; les tests 001–004 émulent le runner et posent `PRAGMA user_version = {numéro}`, ce qui est exact pour les rangs 1 à 4 ; les tests 005 à 009 émulent le runner dans la transaction et posent le **rang** avant le `COMMIT`.*
 
 **Chaîne ordonnée de la base métier.** La liste ci-dessous est la liste de référence. Le **rang** est la position dans la liste (à partir de 1) :
 
@@ -151,7 +175,7 @@ Règles :
 3. l'historique est immuable : les anciens contenus ne sont jamais réécrits (déjà posé ci-dessus) ;
 4. ces règles sont nécessaires au déterminisme : pour une même base à un rang donné, la même suite de migrations doit s'appliquer sur toute installation et à chaque restauration.
 
-*Conséquence documentaire* : tant qu'aucune de 005/005a/005b/005c/006… n'est livrée, la liste du tableau ci-dessus peut encore être ajustée par décision ; **après livraison d'une migration, cette ligne est figée**. La ligne de la corrective `005c` (rang 8) est figée : la migration est livrée. Les lignes des rangs 5 à 12 (005 à 009, correctives comprises) sont figées : ces migrations sont livrées. Seule la ligne du rang 13 (010) peut encore être ajustée par décision.
+*Conséquence documentaire* : une ligne du tableau ci-dessus peut encore être ajustée par décision tant que sa migration n'est pas livrée ; **après livraison d'une migration, cette ligne est figée**. Les lignes des rangs 5 à 12 (005, 005a, 005b, 005c et 006 à 009) sont figées : ces migrations sont livrées. Seule la ligne du rang 13 (010) peut encore être ajustée par décision.
 
 **Algorithme de sélection des migrations à appliquer** (installation, mise à jour de l'application, restauration). Soit `k` = `PRAGMA user_version` de la base, `N` = rang maximal supporté par l'application (longueur de sa liste) :
 1. si `k > N` : **refus** (base produite par une version plus récente de l'application) ; aucune écriture ;
@@ -174,7 +198,7 @@ BEGIN → exécution du SQL de la migration → contrôles → PRAGMA user_versi
 - un échec (SQL ou contrôle) entraîne un `ROLLBACK` intégral : le schéma **et** `user_version` reviennent à leur valeur d'avant ;
 - cette règle supprime la fenêtre où un arrêt entre le `COMMIT` et l'écriture de `user_version` laisserait une base migrée avec un rang périmé (la migration serait alors rejouée au démarrage suivant) ;
 - `nouveau_rang` est le **rang** de la migration dans la chaîne, jamais son préfixe de fichier ;
-- les fichiers de migration restent sans `BEGIN`, `COMMIT` ni `PRAGMA` : tout ce paragraphe est de la responsabilité du runner. Les en-têtes de 001–004 indiquent « `user_version` posé par le runner après succès » ; ils sont **immuables** (migrations livrées) et doivent se lire désormais selon cette règle. De même, les fonctions d'application des tests 001–004 (émulation du runner : `COMMIT` puis `PRAGMA user_version = {numéro}`) restent inchangées : elles décrivent l'ancien ordre « après succès » et un rang égal au numéro de fichier (exact pour les rangs 1 à 4) ; l'écriture dans la transaction et le rang des migrations suivantes seront exercés par les tests du runner (chantier V-5) et par les helpers des tests des futures migrations, qui poseront le **rang**.
+- les fichiers de migration restent sans `BEGIN`, `COMMIT` ni `PRAGMA` : tout ce paragraphe est de la responsabilité du runner. Les en-têtes de 001–004 indiquent « `user_version` posé par le runner après succès » ; ils sont **immuables** (migrations livrées) et doivent se lire désormais selon cette règle. De même, les fonctions d'application des tests 001–004 (émulation du runner : `COMMIT` puis `PRAGMA user_version = {numéro}`) restent inchangées : elles décrivent l'ancien ordre « après succès » et un rang égal au numéro de fichier (exact pour les rangs 1 à 4) ; l'écriture dans la transaction et le rang des migrations suivantes seront exercés par les tests du runner (chantier V-5) ; les helpers des tests 005 à 009 posent déjà le **rang** dans la transaction, avant le `COMMIT`. Il en ira de même des tests des migrations suivantes.
 
 ### Protocole de reconstruction de table
 
