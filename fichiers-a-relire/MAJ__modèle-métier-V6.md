@@ -4,7 +4,7 @@
 
 Produit : BATORYA Essentiel
 Version : V6
-Statut : Modèle métier — **mis à jour le 2026-10-03, alignements Dépenses du 2026-10-04 (en relecture)** : intègre les arbitrages Q1–Q27 et A–D (errata E-10 à E-20, invariants INV-179 à INV-196) et les règles de la tranche Dépenses (cadrage 005, invariants INV-197 à INV-201) ; aligné sur le modèle de données SQLite **V3.13 (en relecture)**, le registre des invariants (v9) et les errata E-01 à E-20. Les passages dont le **mécanisme technique** reste à concevoir (exécution, remise détaillée) sont signalés comme tels et renvoient aux propositions techniques PT-xx du modèle de données §19 (PT-1 est tranché, PT-21 validé sur le principe).
+Statut : Modèle métier — **mis à jour le 2026-10-03, alignements Dépenses du 2026-10-04, alignement Planification (tranche 010) du 2026-10-12 (en relecture)** : intègre les arbitrages Q1–Q27 et A–D (errata E-10 à E-20, invariants INV-179 à INV-196) et les règles de la tranche Dépenses (cadrage 005, invariants INV-197 à INV-201) ; aligné sur le modèle de données SQLite **V3.13 (en relecture)**, le registre des invariants (v11) et les errata E-01 à E-20. Les passages dont le **mécanisme technique** reste à concevoir (exécution, remise détaillée) sont signalés comme tels et renvoient aux propositions techniques PT-xx du modèle de données §19 (PT-1 est tranché, PT-21 validé sur le principe).
 Périmètre : Micro-entrepreneur BTP — prestations de services — franchise en base de TVA
 
 ⸻
@@ -558,6 +558,8 @@ Le module s'appelle **Planification** (et non « Planning ») et comporte deux o
 * `intervention` et `travaux` sont **obligatoirement rattachés à un BC** ;
 * `congé` et `indisponibilité` n'ont **jamais** de BC ;
 * les autres types peuvent être rattachés ou non à un BC.
+* Le **titre** est obligatoire : il n'est pas vide et n'est pas composé uniquement d'espaces ordinaires (U+0020) ; il n'est pas normalisé (INV-202).
+* En **journée entière**, le début et la fin sont deux dates ; **avec horaires**, ce sont deux dates-heures locales (heures 00 à 23, minutes 00 à 59). Ce sont des dates réelles du calendrier ; la fin n'est pas antérieure au début ; une journée entière et un horaire ne se mélangent pas (INV-10, INV-101).
 
 **Gantt**
 
