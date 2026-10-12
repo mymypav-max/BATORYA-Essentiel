@@ -1,0 +1,416 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BATORYA — Planche d’identité · exploration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..600&display=swap" rel="stylesheet">
+<style>
+:root{--serif:"Source Serif 4","Source Serif Pro",ui-serif,Georgia,serif;--sans:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:#E9E9E3;color:#14161B;font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+.top{max-width:1320px;margin:0 auto;padding:44px 32px 8px}
+.top .k{font:600 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#6C6F77}
+.top h1{font:400 40px/1.15 var(--serif);letter-spacing:-.015em;margin:8px 0 10px}
+.top p{max-width:820px;color:#43464E;margin:0 0 6px}
+.warn{display:inline-block;margin-top:10px;padding:6px 10px;border-left:3px solid #9E6B0B;background:#F4E9CF;font-size:13.5px}
+main{max-width:1320px;margin:0 auto;padding:10px 32px 80px}
+.sh{font:italic 400 26px var(--serif);margin:46px 0 14px;padding-top:14px;border-top:3px double #D6D6CC}
+.concept{margin-top:56px;padding-top:18px;border-top:3px double #C9C9BF}
+.ch{display:flex;gap:18px;align-items:baseline}
+.ch .num{font:300 64px/.9 var(--serif);color:#6C6F77}
+.ch h2{margin:0;font:400 36px/1.1 var(--serif)}
+.ch .kind{font:600 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:#6C6F77}
+.intent{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin:14px 0 18px;max-width:1100px}
+.intent p{margin:0;color:#43464E}
+.pans{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #14161B}
+.pan{padding:24px 26px 26px;display:flex;flex-direction:column;gap:22px;min-width:0}
+.pl{--paper:#F6F6F2;--sheet:#FFFFFF;--ink:#14161B;--ink2:#43464E;--ink3:#6C6F77;--blue:#2B38D0;--rule:#D6D6CC;--tile:#FFFFFF;background:var(--paper);color:var(--ink)}
+.pd{--paper:#0E1016;--sheet:#151821;--ink:#E8E6DF;--ink2:#B8B7B1;--ink3:#8A8D96;--blue:#8F9CFF;--rule:#2A2F3D;--tile:#151821;background:var(--paper);color:var(--ink)}
+.lab{font:600 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);padding-bottom:10px;border-bottom:1px solid var(--rule)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.cell{display:flex;flex-direction:column;gap:14px;min-width:0}
+.cap{font:500 11px var(--mono);color:var(--ink3);letter-spacing:.02em}
+svg.lock{width:100%;max-width:300px;height:auto;overflow:visible}
+svg.lock.wide{max-width:330px}
+.ink{fill:var(--ink)} .blue{fill:var(--blue)} .paper{fill:var(--paper)} .tile{fill:var(--tile)}
+.st-ink{fill:none;stroke:var(--ink)} .st-paper{fill:none;stroke:var(--paper)} .st-tile{fill:none;stroke:var(--tile)}
+.serif{font-family:var(--serif)} .sans{font-family:var(--sans)} .mono{font-family:var(--mono)}
+.wm1{font-size:50px;font-weight:600;fill:var(--ink)}
+.wm2{font-size:42px;font-weight:600;fill:var(--ink)}
+.wm3{font-size:54px;font-weight:500;fill:var(--ink);letter-spacing:-.01em}
+.prod{font-size:13px;font-weight:600;fill:var(--ink2);letter-spacing:.2em}
+.prod2{font-size:13px;font-weight:500;fill:var(--ink2);letter-spacing:.12em}
+.prod3{font-style:italic;font-weight:400;fill:var(--ink2)}
+.base{font-size:16px;fill:var(--ink2)}
+.ib{font-size:38px;font-weight:600;fill:var(--ink)}
+.icwrap{display:flex;flex-direction:column;gap:12px}
+.icons{display:flex;align-items:flex-end;gap:18px;padding:14px 16px;border:1px solid var(--rule)}
+.isz{display:block;flex:none} .isz svg{width:100%;height:100%;display:block}
+.tl-paper{--tile:#FFFFFF}
+.tl-ink{--tile:#14161B;--ink:#F6F6F2;--paper:#14161B;--blue:#8F9CFF;background:#F6F6F2}
+.tl-dsurf{--tile:#151821}
+.tl-dpaper{--tile:#F6F6F2;--ink:#14161B;--paper:#F6F6F2;--blue:#2B38D0}
+.ovp{flex-direction:row;flex-wrap:wrap;gap:30px;align-items:flex-end}
+.ov{display:flex;flex-direction:column;gap:12px;flex:1 1 200px;min-width:0}
+.ovi{width:56px;height:56px} .ovi svg{width:100%;height:100%}
+table{width:100%;border-collapse:collapse;margin-top:6px;background:#F6F6F2;border:1px solid #14161B}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #E6E6DE;vertical-align:top;font-size:14px}
+th{font:600 10.5px var(--sans);letter-spacing:.11em;text-transform:uppercase;color:#6C6F77;border-bottom:1px solid #14161B}
+td:first-child{font-weight:600;white-space:nowrap}
+.foot{margin-top:40px;font-size:13px;color:#6C6F77}
+@media (max-width:900px){.pans,.row2,.intent{grid-template-columns:1fr}}
+</style></head><body>
+<header class="top"><span class="k">BATORYA · identité de marque · phase 1 — exploration</span>
+<h1>Trois directions pour la marque BATORYA</h1>
+<p>Chaque concept est montré sur fond Papier et sur fond Encre, avec et sans baseline, en déclinaisons produit, en monochrome et en icône d’application de 128 à 16 px. Les couleurs sont celles de la charte 0.5 : encre #14161B / #E8E6DF, outremer #2B38D0 / #8F9CFF.</p>
+<span class="warn">Aucun concept n’est validé. Les mots-symboles sont composés en texte avec les polices de la charte ; la version finale devra être vectorisée et ajustée lettre à lettre.</span></header>
+<main><section class="overview"><h2 class="sh">Vue d’ensemble</h2><div class="pans"><div class="pan pl ovp"><div class="ov"><span class="cap">1 · Arrêté</span><svg viewBox="0 0 310 92" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/></svg><div class="ovi"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></div></div><div class="ov"><span class="cap">2 · Cote</span><svg viewBox="0 0 310 80" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text></svg><div class="ovi"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></div></div><div class="ov"><span class="cap">3 · Signet</span><svg viewBox="0 0 310 84" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text></svg><div class="ovi"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></div></div></div><div class="pan pd ovp"><div class="ov"><span class="cap">1 · Arrêté</span><svg viewBox="0 0 310 92" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/></svg><div class="ovi"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></div></div><div class="ov"><span class="cap">2 · Cote</span><svg viewBox="0 0 310 80" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text></svg><div class="ovi"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></div></div><div class="ov"><span class="cap">3 · Signet</span><svg viewBox="0 0 310 84" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text></svg><div class="ovi"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></div></div></div></div></section><section class="concept" id="arrete">
+  <header class="ch"><span class="num">1</span><div><h2>Arrêté</h2><span class="kind">Mot-symbole typographique</span></div></header>
+  <div class="intent"><p><b>Idée.</b> Dans un registre, le double trait sous un total signifie que le compte est arrêté : vérifié, juste, clos. Le logo reprend ce geste de comptable — un filet d’encre et un filet outremer sous le nom — pour dire «&nbsp;les comptes sont tenus&nbsp;».</p><p><b>Principe.</b> Le nom en capitales sérif, souligné du double trait. Symbole d’application : la capitale B posée sur le même double trait.</p></div>
+  <div class="pans"><div class="pan pl "><div class="lab">Papier — fond clair #F6F6F2</div>
+        <div class="row2"><div class="cell"><span class="cap">Logo principal avec baseline</span><svg viewBox="0 0 310 126" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/><text class="sans base" x="0" y="114">L’activité bien tenue.</text></svg></div>
+        <div class="cell"><span class="cap">Logo sans baseline</span><svg viewBox="0 0 310 92" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/></svg></div></div>
+        <div class="row2"><div class="cell"><span class="cap">Déclinaisons produit</span><svg viewBox="0 0 310 118" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/><text class="sans prod" x="0" y="110">ESSENTIEL</text></svg><svg viewBox="0 0 310 118" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/><text class="sans prod" x="0" y="110">ENTREPRISE</text></svg></div>
+        <div class="cell"><span class="cap">Version monochrome (sans outremer)</span><svg viewBox="0 0 310 92" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="ink" x="0" y="75" width="300" height="7"/></svg></div></div>
+        <div class="cell"><span class="cap">Symbole seul · icône d’application · 128 / 64 / 32 / 16 px</span><div class="icwrap"><div class="icons tl-paper"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span></div><div class="icons tl-ink"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span></div></div></div></div><div class="pan pd "><div class="lab">Encre — fond sombre #0E1016</div>
+        <div class="row2"><div class="cell"><span class="cap">Logo principal avec baseline</span><svg viewBox="0 0 310 126" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/><text class="sans base" x="0" y="114">L’activité bien tenue.</text></svg></div>
+        <div class="cell"><span class="cap">Logo sans baseline</span><svg viewBox="0 0 310 92" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/></svg></div></div>
+        <div class="row2"><div class="cell"><span class="cap">Déclinaisons produit</span><svg viewBox="0 0 310 118" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/><text class="sans prod" x="0" y="110">ESSENTIEL</text></svg><svg viewBox="0 0 310 118" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/><text class="sans prod" x="0" y="110">ENTREPRISE</text></svg></div>
+        <div class="cell"><span class="cap">Version monochrome (sans outremer)</span><svg viewBox="0 0 310 92" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="ink" x="0" y="75" width="300" height="7"/></svg></div></div>
+        <div class="cell"><span class="cap">Symbole seul · icône d’application · 128 / 64 / 32 / 16 px</span><div class="icwrap"><div class="icons tl-dsurf"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span></div><div class="icons tl-dpaper"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/>
+  <text class="serif ib" x="32" y="40" text-anchor="middle">B</text>
+  <rect class="ink" x="17" y="45.5" width="30" height="1.6"/><rect class="blue" x="17" y="49.5" width="30" height="4.5"/></svg></span></div></div></div></div></div></section><section class="concept" id="cote">
+  <header class="ch"><span class="num">2</span><div><h2>Cote</h2><span class="kind">Symbole géométrique + mot-symbole technique</span></div></header>
+  <div class="intent"><p><b>Idée.</b> Sur un plan, une cote mesure ; «&nbsp;être dans la cote&nbsp;», c’est être dans la tolérance, ni plus ni moins. Le carré outremer posé au centre de la cote dit la juste mesure, la précision tenue.</p><p><b>Principe.</b> Une ligne de cote à deux butées, avec un carré outremer exactement au centre (au-dessus du O). Symbole d’application : la cote réduite, lue comme [■].</p></div>
+  <div class="pans"><div class="pan pl "><div class="lab">Papier — fond clair #F6F6F2</div>
+        <div class="row2"><div class="cell"><span class="cap">Logo principal avec baseline</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text><text class="sans base" x="0" y="102">L’activité bien tenue.</text></svg></div>
+        <div class="cell"><span class="cap">Logo sans baseline</span><svg viewBox="0 0 310 80" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text></svg></div></div>
+        <div class="row2"><div class="cell"><span class="cap">Déclinaisons produit</span><svg viewBox="0 0 310 104" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text><text class="mono prod2" x="0" y="94">— ESSENTIEL</text></svg><svg viewBox="0 0 310 104" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text><text class="mono prod2" x="0" y="94">— ENTREPRISE</text></svg></div>
+        <div class="cell"><span class="cap">Version monochrome (sans outremer)</span><svg viewBox="0 0 310 80" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="ink" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text></svg></div></div>
+        <div class="cell"><span class="cap">Symbole seul · icône d’application · 128 / 64 / 32 / 16 px</span><div class="icwrap"><div class="icons tl-paper"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span></div><div class="icons tl-ink"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span></div></div></div></div><div class="pan pd "><div class="lab">Encre — fond sombre #0E1016</div>
+        <div class="row2"><div class="cell"><span class="cap">Logo principal avec baseline</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text><text class="sans base" x="0" y="102">L’activité bien tenue.</text></svg></div>
+        <div class="cell"><span class="cap">Logo sans baseline</span><svg viewBox="0 0 310 80" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text></svg></div></div>
+        <div class="row2"><div class="cell"><span class="cap">Déclinaisons produit</span><svg viewBox="0 0 310 104" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text><text class="mono prod2" x="0" y="94">— ESSENTIEL</text></svg><svg viewBox="0 0 310 104" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text><text class="mono prod2" x="0" y="94">— ENTREPRISE</text></svg></div>
+        <div class="cell"><span class="cap">Version monochrome (sans outremer)</span><svg viewBox="0 0 310 80" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="ink" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text></svg></div></div>
+        <div class="cell"><span class="cap">Symbole seul · icône d’application · 128 / 64 / 32 / 16 px</span><div class="icwrap"><div class="icons tl-dsurf"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span></div><div class="icons tl-dpaper"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(0 0) scale(1.0)">
+  <path class="st-ink" stroke-width="3" d="M13 32H51"/><path class="st-ink" stroke-width="3.6" stroke-linecap="square" d="M13 21V43M51 21V43"/>
+  <rect class="tile" x="21" y="23" width="22" height="18"/><rect class="blue" x="24" y="24" width="16" height="16"/></g></svg></span></div></div></div></div></div></section><section class="concept" id="signet">
+  <header class="ch"><span class="num">3</span><div><h2>Signet</h2><span class="kind">Symbole figuratif + mot-symbole éditorial</span></div></header>
+  <div class="intent"><p><b>Idée.</b> Le registre relié porte un signet : le ruban qui marque où l’on en est. Il exprime la continuité, la reprise facile, le fil tenu jour après jour — quel que soit le logiciel.</p><p><b>Principe.</b> Une page au trait d’encre traversée par un ruban outremer qui dépasse en queue d’aronde. Mot-symbole en sérif, minuscules, plus doux.</p></div>
+  <div class="pans"><div class="pan pl "><div class="lab">Papier — fond clair #F6F6F2</div>
+        <div class="row2"><div class="cell"><span class="cap">Logo principal avec baseline</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text><text class="sans base" x="84" y="100">L’activité bien tenue.</text></svg></div>
+        <div class="cell"><span class="cap">Logo sans baseline</span><svg viewBox="0 0 310 84" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text></svg></div></div>
+        <div class="row2"><div class="cell"><span class="cap">Déclinaisons produit</span><svg viewBox="0 0 470 84" class="lock wide" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya<tspan class="prod3" dx="10">Essentiel</tspan></text></svg><svg viewBox="0 0 470 84" class="lock wide" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya<tspan class="prod3" dx="10">Entreprise</tspan></text></svg></div>
+        <div class="cell"><span class="cap">Version monochrome (sans outremer)</span><svg viewBox="0 0 310 84" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="ink" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text></svg></div></div>
+        <div class="cell"><span class="cap">Symbole seul · icône d’application · 128 / 64 / 32 / 16 px</span><div class="icwrap"><div class="icons tl-paper"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span></div><div class="icons tl-ink"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span></div></div></div></div><div class="pan pd "><div class="lab">Encre — fond sombre #0E1016</div>
+        <div class="row2"><div class="cell"><span class="cap">Logo principal avec baseline</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text><text class="sans base" x="84" y="100">L’activité bien tenue.</text></svg></div>
+        <div class="cell"><span class="cap">Logo sans baseline</span><svg viewBox="0 0 310 84" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text></svg></div></div>
+        <div class="row2"><div class="cell"><span class="cap">Déclinaisons produit</span><svg viewBox="0 0 470 84" class="lock wide" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya<tspan class="prod3" dx="10">Essentiel</tspan></text></svg><svg viewBox="0 0 470 84" class="lock wide" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya<tspan class="prod3" dx="10">Entreprise</tspan></text></svg></div>
+        <div class="cell"><span class="cap">Version monochrome (sans outremer)</span><svg viewBox="0 0 310 84" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="ink" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text></svg></div></div>
+        <div class="cell"><span class="cap">Symbole seul · icône d’application · 128 / 64 / 32 / 16 px</span><div class="icwrap"><div class="icons tl-dsurf"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span></div><div class="icons tl-dpaper"><span class="isz" style="width:128px;height:128px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:64px;height:64px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:32px;height:32px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span><span class="isz" style="width:16px;height:16px"><svg viewBox="0 0 64 64" class="ico"><rect class="tile" width="64" height="64" rx="7"/><g transform="translate(2 2) scale(0.9375)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-tile" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g></svg></span></div></div></div></div></div></section><section><h2 class="sh">Comparaison</h2><table><tr><th>Critère</th><th>1 · Arrêté</th><th>2 · Cote</th><th>3 · Signet</th></tr><tr><td>Reconnaissable sans le nom</td><td>Moyenne : le double trait seul évoque « = »</td><td>Bonne : [■] est simple et propre</td><td>Très bonne : page + ruban</td></tr><tr><td>Lisibilité à 16 px</td><td>Bonne (B + barre bleue)</td><td>Très bonne</td><td>Bonne (le ruban reste lisible)</td></tr><tr><td>Cohérence avec Registre</td><td>Très forte : reprend le double filet de l’interface</td><td>Forte avec le plan coté de la connexion ; plus froide</td><td>Forte : registre relié, ton éditorial</td></tr><tr><td>Risque de banalité</td><td>Wordmark en capitales sérif proche des cabinets / banques</td><td>Faible, mais lecture « ingénierie / BTP »</td><td>Faible ; vigilance vis-à-vis des apps de notes/marque-pages</td></tr><tr><td>Plusieurs produits</td><td>Bon : le double trait reste constant</td><td>Bon : la cote peut mesurer d’autres étendues</td><td>Très bon : un registre par produit, même ruban</td></tr><tr><td>Fonctionne sans couleur</td><td>Oui (monochrome testé)</td><td>Oui</td><td>Oui</td></tr></table></section><section class="bl"><h2 class="sh">Baselines finalistes · avec le concept Signet</h2><div class="pans"><div class="pan pl "><div class="cell"><span class="cap">Finaliste 1</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text><text class="sans base" x="84" y="100">L’activité bien tenue.</text></svg></div><div class="cell"><span class="cap">Finaliste 2</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text><text class="sans base" x="84" y="100">Voir clair, décider juste.</text></svg></div><div class="cell"><span class="cap">Finaliste 3</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text><text class="sans base" x="84" y="100">Garder la main sur son activité.</text></svg></div></div><div class="pan pd "><div class="cell"><span class="cap">Finaliste 1</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text><text class="sans base" x="84" y="100">L’activité bien tenue.</text></svg></div><div class="cell"><span class="cap">Finaliste 2</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text><text class="sans base" x="84" y="100">Voir clair, décider juste.</text></svg></div><div class="cell"><span class="cap">Finaliste 3</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text><text class="sans base" x="84" y="100">Garder la main sur son activité.</text></svg></div></div></div>
+  <h2 class="sh">Baseline recommandée · sur les trois concepts</h2><div class="pans"><div class="pan pl "><div class="cell"><span class="cap">1 · Arrêté</span><svg viewBox="0 0 310 126" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/><text class="sans base" x="0" y="114">L’activité bien tenue.</text></svg></div><div class="cell"><span class="cap">2 · Cote</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text><text class="sans base" x="0" y="102">L’activité bien tenue.</text></svg></div><div class="cell"><span class="cap">3 · Signet</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text><text class="sans base" x="84" y="100">L’activité bien tenue.</text></svg></div></div><div class="pan pd "><div class="cell"><span class="cap">1 · Arrêté</span><svg viewBox="0 0 310 126" class="lock" role="img" aria-label="BATORYA">
+  <text class="serif wm1" x="0" y="56" textLength="300" lengthAdjust="spacing">BATORYA</text>
+  <rect class="ink" x="0" y="68" width="300" height="2"/>
+  <rect class="blue" x="0" y="75" width="300" height="7"/><text class="sans base" x="0" y="114">L’activité bien tenue.</text></svg></div><div class="cell"><span class="cap">2 · Cote</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="BATORYA">
+  <path class="st-ink" stroke-width="1.6" d="M1 14H299"/><path class="st-ink" stroke-width="2.2" stroke-linecap="square" d="M1 5V23M299 5V23"/>
+  <rect class="paper" x="140" y="6" width="20" height="16"/><rect class="blue" x="143" y="7" width="14" height="14"/>
+  <text class="sans wm2" x="0" y="66" textLength="300" lengthAdjust="spacing">BATORYA</text><text class="sans base" x="0" y="102">L’activité bien tenue.</text></svg></div><div class="cell"><span class="cap">3 · Signet</span><svg viewBox="0 0 310 114" class="lock" role="img" aria-label="Batorya">
+  <g transform="translate(0 6) scale(1.125)">
+  <rect class="st-ink" x="13" y="7" width="36" height="46" rx="2" stroke-width="3.6"/>
+  <path class="st-paper" stroke-width="3.4" stroke-linejoin="miter" d="M32 49V60L37 55L42 60V49"/>
+  <path class="blue" d="M32 5.2H42V60L37 55L32 60Z"/></g>
+  <text class="serif wm3" x="84" y="60">Batorya</text><text class="sans base" x="84" y="100">L’activité bien tenue.</text></svg></div></div></div></section>
+<p class="foot">Planche générée pour comparaison. Les icônes sont dessinées sur une grille de 64 unités ; les tuiles « encre » utilisent l’outremer clair #8F9CFF pour garder le contraste.</p></main></body></html>
