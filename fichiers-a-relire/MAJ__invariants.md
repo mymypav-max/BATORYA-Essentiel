@@ -1,6 +1,6 @@
 # BATORYA Essentiel V6 — Registre des invariants
 
-Version du registre : 10 — 2026-10-05 (INV-173 précisé : « montants » = montants contractuels, les caches financiers dérivés évoluent ; INV-197 à INV-201 ajoutés — section O, tranche Dépenses, cadrage 005 ; INV-103, INV-188 et INV-193 précisés : BC annulé, renvoi à INV-200 ; INV-08 et INV-141 précisés : chaîne de migrations à rang ; rattaché au modèle SQLite V3.13, en relecture, non validé ; arbitrages métier Q1–Q27 : section N et journal ; V6 : tranche Bons de commande, V5 : dépenses tardives sur BC, V4 : compte local et `machine.db`, V3 : high-water, V2 : migration V2 externalisée)
+Version du registre : 11 — 2026-10-12 (INV-202 ajouté — section P, tranche Planification (cadrage 010) ; INV-10 et INV-177 précisés pour les dates locales du planning (DL_LOCAL) ; rattaché à la révision en place du 2026-10-12 du modèle SQLite V3.13, toujours en relecture, non validée ; version 10 du 2026-10-05 : INV-173 précisé : « montants » = montants contractuels, les caches financiers dérivés évoluent ; INV-197 à INV-201 ajoutés — section O, tranche Dépenses, cadrage 005 ; INV-103, INV-188 et INV-193 précisés : BC annulé, renvoi à INV-200 ; INV-08 et INV-141 précisés : chaîne de migrations à rang ; rattaché au modèle SQLite V3.13, en relecture, non validé ; arbitrages métier Q1–Q27 : section N et journal ; V6 : tranche Bons de commande, V5 : dépenses tardives sur BC, V4 : compte local et `machine.db`, V3 : high-water, V2 : migration V2 externalisée)
 Statut : **pièce obligatoire du modèle de données**
 
 ## Mode d'emploi
@@ -32,13 +32,13 @@ Statut : **pièce obligatoire du modèle de données**
 
 | INV | Énoncé | Garde | Cas |
 |---|---|---|---|
-| INV-10 | Dates métier `YYYY-MM-DD` (date réelle) ; timestamps `*_at` ISO UTC ; planning en heure locale ; une date métier n'est jamais déduite d'un timestamp | SQL | |
+| INV-10 | Dates métier `YYYY-MM-DD` (date réelle) ; timestamps `*_at` ISO UTC ; planning en heure locale (`YYYY-MM-DD` ou `YYYY-MM-DDTHH:MM` : date réelle du calendrier grégorien proleptique, heures 00–23, minutes 00–59 ; modèle §2.2, D-57) ; une date métier n'est jamais déduite d'un timestamp | SQL | |
 | INV-11 | Aucun `REAL` pour un montant ; TEXT canonique contrôlé (familles D2, D2S, DL, P2) | SQL | C-14 |
 | INV-12 | Arithmétique SQL des montants uniquement par centimes entiers ; jamais `CAST REAL`, `SUM` ou `ORDER BY` sur TEXT décimal | SVC, revue de DDL | |
 | INV-13 | Arrondi HALF_UP (valeur absolue), un seul arrondi par ligne ; total = Σ lignes arrondies − remise globale arrondie | SVC | C-14 à C-17 |
 | INV-14 | Précision libre uniquement pour `quantite`, `prix_unitaire_ht`, remise « montant » de ligne, taux ; tout autre montant : 2 décimales ; négatifs limités à `facture_lignes.montant_ht` (déduction), `ca_encaisse`, `ecart`, `urssaf_details.base`, `montant_retenu` | SQL | |
 | INV-15 | Import : tout montant du fichier `import-v6.json` est à la précision de sa famille décimale, sinon le fichier est rejeté ; V6 ne réarrondit pas à l'import (l'arrondi des totaux V2 non arrondis est fait par le convertisseur) | SVC, CK | T-21 |
-| INV-177 | Borne d'année 2001 à 2099 **limitée aux dates de numérotation annuelle** (création du devis, enregistrement du BC, émission de la facture, réception du PV, date de la dépense), car `yy = 00` est impossible dans les séquences (`annee = 0` réservé à CLI/FOU) ; contrôle du service uniquement, jamais un CHECK ; aucune borne d'année sur les autres dates (validité, acceptation, historiques ou importées) ; le contrôle SQL des dates reste `GLOB` + `date(x) IS x` ; application à l'import : contrat d'import (P-04) | SVC | |
+| INV-177 | Borne d'année 2001 à 2099 **limitée aux dates de numérotation annuelle** (création du devis, enregistrement du BC, émission de la facture, réception du PV, date de la dépense), car `yy = 00` est impossible dans les séquences (`annee = 0` réservé à CLI/FOU) ; contrôle du service uniquement, jamais un CHECK ; aucune borne d'année sur les autres dates (validité, acceptation, historiques ou importées) ; le contrôle SQL des dates reste `GLOB` + `date(x) IS x` (familles D ; les dates locales du planning, DL_LOCAL, ont leur contrôle propre : modèle §2.2, D-57) ; application à l'import : contrat d'import (P-04) | SVC | |
 
 ## C. Numérotation
 
@@ -242,6 +242,16 @@ Lignes ajoutées par l'alignement documentaire du cadrage de la tranche 005 « D
 
 ---
 
+## P. Tranche Planification — arbitrages du 2026-10-12 (cadrage 010)
+
+Ligne ajoutée par l'alignement documentaire de la tranche 010 « Planification » (arbitrages de Rémy du 2026-10-12, cadrage 010 ; D-57 à D-61 du modèle). La ligne énonce une **règle validée** ; elle ne crée aucune règle générale. Le test `test_INV_202` reste à écrire (T-52, prévu).
+
+| INV | Énoncé | Garde | Cas |
+|---|---|---|---|
+| INV-202 | **Titre d'un événement de planning** (`planning_evenements.titre`) : obligatoire ; non vide et **non composé uniquement d'espaces ordinaires** (U+0020 exclusivement). Aucune normalisation : tabulation, saut de ligne, espace insécable (U+00A0), autres espaces et caractères Unicode ne sont ni retirés ni assimilés à un espace ; la valeur est stockée telle quelle. L'octet NUL brut est refusé (garde locale à la table, modèle §4.12, D-59). Règle propre à cette colonne : elle n'instaure aucune règle de normalisation des textes | SQL | |
+
+---
+
 ## Journal des retraits et modifications
 
 | Date | INV | Changement | Motif | Décision |
@@ -311,6 +321,9 @@ Lignes ajoutées par l'alignement documentaire du cadrage de la tranche 005 « D
 | 2026-10-04 | INV-103, INV-188 | **Précisés** : INV-103 — la règle des 30 jours vise les BC non annulés (aucun délai ni confirmation pour un BC annulé) ; une modification sans changement de BC n'est pas un nouveau rattachement. INV-188 — une dépense peut être créée, rattachée ultérieurement ou rester liée à un BC annulé. Anciens énoncés : INV-103 « Après 30 jours calendaires à compter de `date_100_facture`, un nouveau rattachement de dépense au BC nécessite une confirmation explicite ; cette confirmation suffit et aucun délai maximal de rattachement tardif n'existe » ; INV-188 (fin de l'énoncé) « une dépense peut y être créée ou y rester liée » | Cohérence avec le cadrage 005 (la règle des 30 jours ne vise pas les BC annulés ; rattachement ultérieur à un BC annulé autorisé) ; aucune règle nouvelle | Cadrage 005 (DV-6, DV-7, C-1) ; alignements C-S et C-R |
 | 2026-10-04 | INV-193 | **Précisé** : renvoi à INV-200 pour le principe d'exclusion des dépenses annulées des calculs actifs. Aucun changement de sens ; ancien énoncé : « …est exclue des totaux et calculs opérationnels concernés, et peut rester liée à un BC annulé… » | Le principe est validé (cadrage 005, DV-4) ; seules les formules détaillées de chaque analyse restent à spécifier (PT-14) | Cadrage 005 (DV-4) ; passe documentaire finale |
 | 2026-10-05 | INV-173 | **Précisé** : dans « contenu contractuel (…, montants) reste intact », « montants » désigne les montants **contractuels** du BC ; les caches financiers dérivés (`montant_deja_facture_ht`, `avancement`, `date_100_facture`) évoluent sur un BC annulé avec les opérations de correction de documents existants. Aucun changement de sens ; ancien énoncé : « …(lignes, garanties de ligne, snapshots, montants) reste intact… » | Corrective 005c (`tr_12_bons_commande_annule` aligné sur INV-173 et INV-188) : levée de l'ambiguïté relevée à l'audit de 005c | D-56 ; INV-188 ; PT-16 |
+| 2026-10-12 | INV-202 | **Ajouté** (section P) | Titre d'un événement de planning : non vide, non composé uniquement d'espaces ordinaires (U+0020), sans normalisation. Aucune règle générale de normalisation ni invariant NUL global n'est créé | Arbitrages de Rémy du 2026-10-12 (D-58, D-59) ; cadrage 010 |
+| 2026-10-12 | INV-10 | **Précisé** : « planning en heure locale » désigne `YYYY-MM-DD` ou `YYYY-MM-DDTHH:MM` ; date réelle du calendrier grégorien proleptique, heures 00–23, minutes 00–59. Aucun changement de sens ; ancien énoncé : « …planning en heure locale… » | Le contrôle strict des dates locales du planning est décidé (arbitrages du 2026-10-12) | D-57 ; cadrage 010 |
+| 2026-10-12 | INV-177 | **Précisé** : le contrôle `GLOB` + `date(x) IS x` vise les dates des familles D ; les dates locales du planning (DL_LOCAL) ont leur contrôle propre. Aucun changement de sens pour les familles D ; ancien énoncé : « …le contrôle SQL des dates reste `GLOB` + `date(x) IS x`… » | `date(x) IS x` ne convient pas à `YYYY-MM-DDTHH:MM` (constat du 2026-10-12, modèle §2.2) | D-57 ; cadrage 010 |
 
 ## Contrôle de non-régression (à exécuter à chaque nouvelle version du modèle)
 
@@ -319,4 +332,4 @@ Lignes ajoutées par l'alignement documentaire du cadrage de la tranche 005 « D
 3. Vérifier que chaque INV a un test nommé `test_INV_xx` dans la suite de tests SQL/domaine.
 4. Rejouer les cas chiffrés C-01 à C-29.
 5. Vérifier qu'aucun INV de la section L ne décrit un « lecteur V2 » dans V6 : toute règle V2 vit dans le document du convertisseur.
-6. Vérifier qu'aucun motif `GLOB` n'utilise de quantificateur `{n}` (non supporté par SQLite) et qu'aucun contrôle de date réelle n'est écrit `date(x) = x` (utiliser `GLOB` + `date(x) IS x`).
+6. Vérifier qu'aucun motif `GLOB` n'utilise de quantificateur `{n}` (non supporté par SQLite) et qu'aucun contrôle de date réelle n'est écrit `date(x) = x` (utiliser `GLOB` + `date(x) IS x` pour les dates des familles D ; les dates locales du planning, DL_LOCAL, suivent le contrôle du modèle §2.2, D-57).
