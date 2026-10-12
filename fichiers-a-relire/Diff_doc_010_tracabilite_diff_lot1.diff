@@ -1,0 +1,10 @@
+diff --git a/fichiers-a-relire/Diff_010_corrections_documentaires.diff b/fichiers-a-relire/DIFF_DOC__010_corrections_documentaires.diff
+similarity index 99%
+rename from fichiers-a-relire/Diff_010_corrections_documentaires.diff
+rename to fichiers-a-relire/DIFF_DOC__010_corrections_documentaires.diff
+index 5706f77..a95920d 100644
+--- a/fichiers-a-relire/Diff_010_corrections_documentaires.diff
++++ b/fichiers-a-relire/DIFF_DOC__010_corrections_documentaires.diff
+@@ -196 +196,2 @@ index d9068dc..4cc4f67 100644
+ +* En **journée entière**, le début et la fin sont deux dates ; **avec horaires**, ce sont deux dates-heures locales (heures 00 à 23, minutes 00 à 59). Ce sont des dates réelles du calendrier ; la fin n'est pas antérieure au début ; une journée entière et un horaire ne se mélangent pas (INV-10, INV-101).
++
