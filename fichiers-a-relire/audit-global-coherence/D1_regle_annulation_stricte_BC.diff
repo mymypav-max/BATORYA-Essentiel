@@ -1,0 +1,52 @@
+diff --git a/docs/conception/invariants.md b/docs/conception/invariants.md
+index b35aa50..e43a710 100644
+--- a/docs/conception/invariants.md
++++ b/docs/conception/invariants.md
+@@ -76,5 +76,5 @@ Statut : **pièce obligatoire du modèle de données**
+ | INV-42 | BC `termine` ⇔ solde actif ET Σ reste dû des factures actives hors avoir = 0 ; un solde à 0.00 ne suffit pas ; l'avoir n'est pas un encaissement mais réduit le reste dû via `absorbe` | SVC, CK-06, SQL (`termine ⇔ completed_at`) | C-05, C-08, C-10 |
+ | INV-43 | `date_100_facture` = date d'émission du premier solde actif ; conservée par avoir, règlement, remboursement ; `NULL` seulement à l'annulation du solde ; distincte de `garanties.date_declenchement` | SVC, CK-06 | C-07, C-20 |
+-| INV-44 | Annulation directe du BC : interdite si encaissement actif, ou si une situation a été émise (même annulée) ; autorisée avec acompte non réglé, annulé dans la même transaction ; toute autre facture interdit l'annulation (décision D-05) | SVC, test | C-01, C-19 |
++| INV-44 | Annulation directe du BC : interdite dès qu'au moins une facture lui est rattachée, quel que soit son type (acompte, situation, solde, avoir) et son état (réglée ou non, avoir total compris) ; un acompte prévu au devis, sans facture émise, ne bloque pas (décision D-05) | TRG (TR-103), SVC, test | C-01, C-19 |
+ | INV-45 | BC annulé : devis `annule` (BC d'abord, puis devis, dans la même transaction : TR-18), PDF du devis dans `Devis/Annule`, exclu du CA engagé, aucune nouvelle facturation ; CA engagé = Σ max(0, (contractuel − avoirs) − (encaissements − remboursements)) des BC `en_cours` | SVC, TRG (TR-18), test | C-13, C-28 |
+ | INV-46 | Caches BC (`montant_deja_facture_ht`, `avancement`, `date_100_facture`, `statut`, `completed_at`) recalculés par un service financier unique, même transaction ; source de vérité = factures + règlements ; écrits en un seul `UPDATE` ; aucune contrainte `montant_deja_facture_ht <= montant_contractuel_ht` (transitoirement fausse) ; seuls des CHECK de cohérence sûrs : `termine` ⇒ gelé, `date_100_facture` ⇒ gelé et `avancement = 100.00` | SVC, CK-06, SQL (CHECK) | |
+@@ -252,4 +252,5 @@ Flux : sauvegarde JSON V2 → **convertisseur externe** → `import-v6.json` →
+ | 2026-10-02 | INV-07, INV-141, INV-175, INV-177 | Précisés (seconde passe V3.12) : convention REPLACE vérifiée par les tests 001–003 renforcés (INV-07) ; échec de la restauration si un contrôle obligatoire ou CK-13 échoue, retour par la sauvegarde de sécurité (INV-141) ; TR-17 sans comparaison complète avec le devis, le service construit la cohérence et CK-13 la détecte (INV-175) ; borne d'année 2001–2099 limitée aux dates de numérotation annuelle (INV-177) | La borne ne devait pas devenir une contrainte générale sur les dates ; la logique métier reste au service ; la restauration doit avoir un comportement défini en cas d'incohérence | D-36, D-38, D-39 |
+ | 2026-10-02 | INV-22 | Précisé (seconde passe V3.12, application de D-39) : `tr_96_numerotation_sequences_no_delete` ajouté par la migration 004 ; avec `tr_95` il couvre UPDATE et DELETE, direct ou implicite par REPLACE | Un REPLACE ne déclenche pas les triggers `UPDATE` (vérifié) ; `001_initial.sql` est immuable ; la protection ne doit pas reposer sur la seule convention | D-39 (précision technique, sans nouvelle décision) |
++| 2026-10-13 | INV-44 | Modifié : l'annulation directe du BC est interdite dès qu'au moins une facture lui est rattachée (tout type, tout état) ; exception de l'acompte non réglé supprimée ; garde SQL ajoutée en plus du service | Règle confirmée par le propriétaire du produit le 2026-10-13 | D-05 (révisée) |
+ 
+ ## Contrôle de non-régression (à exécuter à chaque nouvelle version du modèle)
+diff --git "a/docs/conception/mod\303\250le-m\303\251tier-V6.md" "b/docs/conception/mod\303\250le-m\303\251tier-V6.md"
+index 6e60722..9b2ab90 100644
+--- "a/docs/conception/mod\303\250le-m\303\251tier-V6.md"
++++ "b/docs/conception/mod\303\250le-m\303\251tier-V6.md"
+@@ -246,5 +246,5 @@ L'avancement mesure la facturation, jamais l'avancement physique du chantier. Fa
+ * **Terminé** ⇔ un **solde actif** existe **et** la somme des restes dus des factures actives (hors avoirs) est nulle. Un solde à 0 € ne suffit pas tant qu'un acompte ou une situation reste dû. Un avoir n'est pas un encaissement ; il intervient par la réduction du reste dû.
+ * Le BC repasse En cours si un règlement ou un avoir est annulé et que la condition n'est plus remplie.
+-* **Annulation** : interdite directement dès qu'une facture autre qu'un acompte non réglé existe ; une situation émise (même annulée) l'interdit toujours ; un encaissement l'interdit. Un acompte non réglé est annulé avec le BC. La correction passe sinon par avoir ou annulation de facture.
++* **Annulation** : interdite directement dès qu'au moins une facture est rattachée au BC (acompte, situation, solde ou avoir ; réglée ou non) ; un acompte simplement prévu au devis, sans facture émise, ne bloque pas ; un avoir, même total, ne rétablit pas le droit d'annuler. La correction passe sinon par avoir ou annulation de facture.
+ * Un BC annulé reste conservé dans l'historique et ne participe plus au CA engagé.
+ * Le BC n'est pas un document PDF autonome.
+@@ -799,5 +799,5 @@ Le modèle V6 garantit notamment que :
+ 4. le devis et le BC sont gelés, irréversiblement, au premier encaissement actif d'un acompte, à l'émission d'une situation ou à l'émission du solde ;
+ 5. un acompte non réglé est annulé automatiquement si le devis ou le BC est modifié avant le gel ;
+-6. un BC dont la facturation dépasse un acompte non réglé ne peut pas être annulé directement ; une situation émise (même annulée) l'interdit toujours ;
++6. un BC portant au moins une facture (acompte, situation, solde ou avoir) ne peut pas être annulé directement ;
+ 7. le solde est toujours la facture finale ; un solde à 0 € est autorisé ; aucune situation, aucun acompte et aucun nouvel avoir-solde après un solde actif ;
+ 8. une facture peut recevoir plusieurs règlements ; le reste à payer est calculé, jamais saisi ; un encaissement ne dépasse pas le reste dû ;
+diff --git a/docs/specifications/cdc-fonctionnel-architectural-v6.md b/docs/specifications/cdc-fonctionnel-architectural-v6.md
+index 9e8df51..48b0e40 100644
+--- a/docs/specifications/cdc-fonctionnel-architectural-v6.md
++++ b/docs/specifications/cdc-fonctionnel-architectural-v6.md
+@@ -510,5 +510,5 @@ Le passage à Terminé est dérivé du service métier et n’est pas librement
+ L’annulation du BC est possible uniquement dans les conditions prévues.
+ 
+-Annulation directe interdite dès qu’une facture autre qu’un acompte non réglé existe, notamment lorsqu’un solde impayé existe sans situation.
++Annulation directe interdite dès qu’au moins une facture est rattachée au BC, quel que soit son type (acompte, situation, solde ou avoir) et son état (réglée ou non). Un acompte simplement prévu au devis, sans facture émise, n’interdit pas l’annulation.
+ 
+ Un acompte non réglé peut être annulé automatiquement avec le BC lorsqu’une modification autorisée du devis/BC l’exige.
+@@ -541,5 +541,4 @@ Lorsqu’un BC peut légalement être annulé :
+ * son PDF est placé dans Devis/Annule ;
+ * le BC reste conservé ;
+-* la facture d’acompte annulée reste conservée lorsqu’elle existe ;
+ * aucune nouvelle opération de facturation ne peut être effectuée sur ce BC.
+ 

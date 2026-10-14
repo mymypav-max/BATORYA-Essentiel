@@ -1,0 +1,29 @@
+diff --git a/docs/README.md b/docs/README.md
+index 47a5a63..7eaf10f 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -21,5 +21,5 @@ Il n'existe pas de dossier `migration/` autonome à ce stade. La migration V2 
+ - `conception/conventions-techniques-v6.md` — conventions techniques et de code V6
+ - `conception/modèle-métier-V6.md` — modèle métier V6
+-- `conception/modèle-données-sqlite-v6-v3.12.md` — modèle de données SQLite V3.12, en relecture (non validée)
++- `conception/modèle-données-sqlite-v6-v3.12.md` — modèle de données SQLite V3.12, dernière version validée
+ 
+ ### Décisions
+@@ -35,5 +35,5 @@ Le CDC V6 doit être lu conjointement avec les documents de référence ci-dessu
+ Les décisions validées dans les invariants, le modèle métier, le modèle de données SQLite et les errata doivent être cohérentes avec le CDC. Lorsqu'une décision validée a été intégrée au CDC, le CDC présente directement la règle courante ; les documents de décisions conservent la traçabilité des corrections.
+ 
+-Le modèle de données SQLite V3.12 est la version courante en relecture et remplace la V3.11 lors de sa validation. Les modèles V3.6 à V3.11 restent historiques et ne doivent pas être réintroduits comme versions courantes.
++Le modèle de données SQLite V3.12 est la dernière version validée et remplace la V3.11. Les modèles V3.6 à V3.11 restent historiques et ne doivent pas être réintroduits comme versions courantes. Toute proposition de version ultérieure (par exemple la V3.13 conservée dans `fichiers-a-relire/`) n'est pas une source de vérité tant qu'elle n'est pas validée.
+ 
+ ## Périmètre
+diff --git a/docs/conception/invariants.md b/docs/conception/invariants.md
+index b35aa50..ecd8f0d 100644
+--- a/docs/conception/invariants.md
++++ b/docs/conception/invariants.md
+@@ -1,5 +1,5 @@
+ # BATORYA Essentiel V6 — Registre des invariants
+ 
+-Version du registre : 6 — 2026-10-02, seconde passe (rattaché au modèle SQLite V3.12, en relecture, non validé ; V2 : migration V2 externalisée, V3 : high-water, V4 : compte local et initialisation de `machine.db`, V5 : dépenses tardives sur BC, V6 : tranche Bons de commande, voir le journal en bas)
++Version du registre : 6 — 2026-10-02, seconde passe (rattaché au modèle SQLite V3.12, dernière version validée ; V2 : migration V2 externalisée, V3 : high-water, V4 : compte local et initialisation de `machine.db`, V5 : dépenses tardives sur BC, V6 : tranche Bons de commande, voir le journal en bas)
+ Statut : **pièce obligatoire du modèle de données**
+ 
