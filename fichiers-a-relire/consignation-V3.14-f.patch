@@ -1,3 +1,91 @@
+diff --git a/fichiers-a-relire/AUDIT__conformite_sql_chaine_finale_revision_F.md b/fichiers-a-relire/AUDIT__conformite_sql_chaine_finale_revision_F.md
+new file mode 100644
+index 0000000..740f389
+--- /dev/null
++++ b/fichiers-a-relire/AUDIT__conformite_sql_chaine_finale_revision_F.md
+@@ -0,0 +1,82 @@
++# AUDIT — Conformité du SQL de la chaîne complète (001 → 009a) aux décisions métier validées
++
++**Date** : 2026-10-17 · **Nature** : document de travail (relecture), non officiel, aucun fichier sous `docs/` modifié · **Référence intangible** : décisions métier validées de la révision F (2.1 à 2.4, 3.1 à 3.4, 4) et règles déjà validées du registre d'invariants.
++
++## 1. Méthode
++
++1. Schéma réel du **rang 13** extrait d'une base construite par l'émulation du runner (001 → 009 puis 009a) : tous les triggers, contraintes et index actifs ont été relus, pas seulement ceux de 009a.
++2. **Rejeu différentiel** : les 1110 tests existants de 006, 007, 008 et 009 ont été rejoués sur une base portée au rang 13. Tout échec a été classé : règle volontairement remplacée par 009a, structure/rang (attendus), ou régression. Résultat : aucune régression ; les échecs restants relèvent de quatre causes (motif d'avoir en liste fermée, situation à 100 %, plafond de l'acompte, solde à 0.00, plus les contrôles de rang et de schéma). En complément, le test `test_009a_seuls_les_triggers_annonces_changent…` établit que **tous les autres triggers** (règlements, PV, devis, BC, dépenses…) sont identiques au caractère près à ceux du rang 12.
++3. Les divergences ont été corrigées **dans 009a** (migration non encore intégrée à `main`, donc modifiable ; 006 et 008 sont inchangées).
++4. Tests : `test_009a_acompte_garanties_manuelles.py` (91 tests, base réellement migrée au rang 13, sections K à N ajoutées par l'audit) ; **mutations** : 16 sabotages ciblés de 009a, 16 détectés.
++
++## 2. Divergences relevées par l'audit et corrigées
++
++| # | Divergence constatée sur la chaîne finale | Correction (009a) |
++|---|---|---|
++| A1 | Le **motif d'avoir** (liste fermée validée, INV-76) n'était contrôlé nulle part : `motif_avoir` est un texte libre dans 006 | `tr_23_factures_avoir` recréé : motif ∈ {`correction_erreur`, `prestation_non_realisee`} pour tout nouvel avoir |
++| A2 | Un **avoir « prestations non réalisées » sur un acompte** était accepté (INV-76 : un avoir sur acompte ne corrige qu'une erreur) | même trigger : refus |
++| A3 | Le **solde** ne tenait pas compte du **contractuel final** : après un avoir total « prestations non réalisées » sur le solde, le même montant pouvait être refacturé (INV-58 : non refacturable) | `tr_22_factures_solde` : solde = (Σ devis − Σ avoirs `prestation_non_realisee` d'origine solde) − nette avant |
++| A4 | Un **acompte** pouvait porter la facturation nette à 100 % alors que l'acompte prévu du marché est inférieur à 100 % : plus aucun solde valide (strictement positif) ne pouvait clôturer le cycle (décision 2.3) | `tr_22_factures_acompte` : refus si la nette après acompte = contractuel et Σ acomptes prévus < contractuel. **Traduction déduite de la décision 2.3, à valider** |
++| A5 | Le **suivi actif** des garanties n'était qu'une notion documentaire | vue `v_garanties_suivi_actif` (lecture seule, sans donnée propre) |
++
++## 3. Tableau de conformité
++
++Légende résultat : **C** conforme · **C\*** conforme après correction de 009a (ou de l'audit) · **S** règle de service (non portable en SQL, voir motif) · **AC** À CONCEVOIR (empêche l'implémentation complète).
++Les noms de tests sont ceux de `test_009a_acompte_garanties_manuelles.py` (classes `Acompte`, `SituationEtSolde`, `AvoirsMotifs`, `ContractuelFinal`, `ClotureDuCycle`, `GarantiesManuelles`, `Retraits`, `SuiviActif`, `Chaine`, `Donnees`, `NonRegression`).
++
++| # | Décision validée | Implémentation SQL réelle (chaîne finale) | Tests | Résultat | Correction nécessaire |
++|---|---|---|---|---|---|
++| 1 | **2.1** Facture d'acompte ≤ acompte prévu du devis accepté ; marché de 1 000 € : prévu 30 % → 300 max (200 ok, 350 refusé), prévu 100 % → 1 000 max, aucun prévu → aucune facture d'acompte | `tr_22_factures_acompte` (009a, remplace 006) : CASE sur `devis.acompte_type` (aucun / montant / pourcentage HALF_UP en centimes) | `Acompte` : prévu_30, prévu_100, aucun, montant, arrondi_HALF_UP, deux devis | **C\*** | 006 ne contrôlait que ≤ total du devis |
++| 2 | **2.1** Acompte facultatif (pas de dépendance avec situation/solde) | Aucun trigger n'exige un acompte | `Acompte` : facultatif, solde_sans_acompte ; `SituationEtSolde` : aucune_exigence | **C** | — |
++| 3 | **2.1** Acompte à 100 % autorisé s'il est prévu à 100 % : ni blocage ni confirmation spéciale | Seul le plafond du devis s'applique ; la confirmation n'existe ni en SQL ni dans les documents (retirée) | `Acompte` : prévu_100 ; `ClotureDuCycle` : acompte_prevu_100… | **C** | Confirmation de la révision E retirée de tous les documents |
++| 4 | INV-52 Un acompte actif par devis ; INV-189 devis rattaché au BC ; INV-58 aucun acompte après un solde | `tr_22_factures_acompte` (repris de 006) | `Acompte` : règles_antérieures ; `AvoirsMotifs` : sur_acompte | **C** | — |
++| 5 | **2.2** Une situation ne porte jamais le cumul à 100 % (nette après < contractuel) | `tr_22_factures_situation` (009a) | `SituationEtSolde` : jamais_100 %, cumul_avec_acompte | **C\*** | 006 admettait `≤` |
++| 6 | **2.3** Acompte prévu < 100 % : seul un solde valide clôture le cycle | `tr_22_factures_solde` (solde > 0) **et** garde de clôture de `tr_22_factures_acompte` (un acompte ne porte pas la nette à 100 % si l'acompte prévu du marché < 100 %) | `ClotureDuCycle` : prévu_inférieur_à_100 (×2), marché_à_deux_devis, facultatif | **C\*** | A4 ; **déduit de 2.3, à valider** |
++| 7 | **2.3** Acompte prévu 100 % intégralement facturé : facture autorisée, pas de clôture automatique, pas de solde à 0 € ; suite À CONCEVOIR | Aucun trigger ne modifie le BC ; solde à 0.00 refusé (INV-55), solde positif refusé (INV-58), situation refusée | `ClotureDuCycle` : acompte_prevu_100 ; `SituationEtSolde` : acompte_à_100 % | **C** pour l'existant ; suite = **AC** | Voir § 4 (clôture explicite, état final, datation) |
++| 8 | **2.4** Distinguer plafond d'acompte / limite des situations / clôture | Trois contrôles distincts dans `tr_22` (acompte, situation, solde) | tests ci-dessus | **C\*** | Documents réécrits (métier §10-§12, invariants INV-57) |
++| 9 | INV-55 Aucun solde à 0.00 | `tr_22_factures_solde` (`total_ht = '0.00'` refusé) ; le `CHECK` de 006 (`type = 'solde' OR total_ht <> '0.00'`) est conservé (reconstruire `factures` n'est pas justifié) | `SituationEtSolde` : aucun_solde_à_0 ; `Donnees` : solde_0_00_historique | **C\*** | Un solde à 0.00 **historique** reste en base et actif (immuable, TR-20) : cas de données à arbitrer si une base le contient |
++| 10 | **2.4** / INV-58 Solde = contractuel **final** − nette avant solde ; avoirs « prestations non réalisées » sur solde non refacturables | `tr_22_factures_solde` (009a) : Σ devis − Σ avoirs `prestation_non_realisee` d'origine solde − nette | `ContractuelFinal` : 7 tests de comportement (total non réalisé → aucun nouveau solde ; total d'erreur → refacturable ; mixte ; partiel ; situation ; acompte+situation ; deux soldes) | **C\*** | A3 |
++| 11 | **2.4** Contractuel **courant** = accepté − réductions acceptées non annulées (moins-values) | **Non modélisé** : aucune table de réductions ; les triggers lisent le montant accepté | `ContractuelFinal` : limite documentée | **AC** | Voir § 4 (stockage des réductions) |
++| 12 | INV-76 Motif d'avoir obligatoire en liste fermée | `tr_23_factures_avoir` (009a) + CHECK 006 (motif non vide) | `AvoirsMotifs` : liste fermée, hors liste, absent | **C\*** | A1 ; les avoirs antérieurs au motif libre sont conservés et comptés comme corrections |
++| 13 | INV-76 Un avoir sur acompte ne corrige qu'une erreur | `tr_23_factures_avoir` | `AvoirsMotifs` : sur_acompte | **C\*** | A2 |
++| 14 | INV-76 Avoir « prestations non réalisées » sur situation : aucune réduction automatique ; correction d'erreur : aucune réduction | La formule du solde ne déduit que les avoirs d'origine solde ; `tr_51_bc_ligne_retraits_garantie_insert` (R2) | `ContractuelFinal` : avoir_sur_situation ; `Retraits` : sur_situation, erreur | **C** | — |
++| 15 | INV-76 Σ avoirs ≤ origine ; origine non avoir ; même BC ; avoir possible sur BC annulé/terminé | `tr_23_factures_avoir` (repris), `tr_16_factures_bc` (avoir exempté) | `AvoirsMotifs` : règles_antérieures ; `NonRegression` | **C** | — |
++| 16 | INV-58 Un avoir partiel ne rouvre pas la facturation ; un avoir total permet une nouvelle facture du même type ; aucun acompte/situation après un solde même crédité | `tr_22_factures_*` (« solde actif » = non totalement crédité ; tout solde bloque acompte et situation) ; `tr_99_bc_devis_apres_solde` | `ContractuelFinal` : avoir_partiel ; `Acompte` : règles_antérieures ; `ClotureDuCycle` | **C** | — |
++| 17 | INV-187 Aucun devis après un solde (même crédité) | `tr_99_bc_devis_apres_solde` | `ClotureDuCycle` : seul_un_solde_valide_clôture | **C** | — |
++| 18 | RAF, reste dû, CA engagé (dérivés non persistés) | Aucun objet SQL ; calculs de service | — | **S** | Ces valeurs sont des indicateurs dérivés (modèle §3.2, §3.6) ; leur calcul avec le contractuel courant dépend de la ligne 11 |
++| 19 | **3.1** Garanties déclenchées manuellement, indépendamment du solde, du cycle, du paiement | `garanties.facture_declenchement_id` nullable ; `tr_51_garanties_insert` sans condition d'état ; 008 ne crée aucune garantie automatiquement (aucun trigger de création) | `GarantiesManuelles` : sans_facture, avant_le_solde, date_libre, BC annulé/terminé, ancienne voie | **C\*** | 008 : référence de facture obligatoire (NOT NULL) levée par reconstruction |
++| 20 | **3.1** Périmètre = périmètre contractuel réel ; une prestation retirée ne peut plus être déclenchée | `bc_ligne_retraits_garantie` + garde G5 de `tr_51_garanties_insert` | `Retraits` : prestation_retirée_ne_peut_plus_être_déclenchée | **C\*** | — |
++| 21 | **3.2** Matrice : avoir d'erreur → aucun retrait ; avoir « non réalisées » sur situation → aucun retrait automatique ; avoir « non réalisées » sur solde → retrait à lui seul ; moins-value totale → retrait | `tr_51_bc_ligne_retraits_garantie_insert` : R1 ligne du BC, R2 avoir du BC, motif non réalisé, origine solde, R3 ligne de l'avoir désignant la prestation ; `UNIQUE(bc_ligne_id)` (aucun double retrait) | `Retraits` (matrice, désignation par ligne d'avoir, aucun double retrait, autre BC) | **C** pour l'avoir ; moins-value : **S** | La moins-value n'a aucune source en base (ligne 11) : le service écrit le retrait `moins_value`, la base ne peut pas le vérifier |
++| 22 | **3.3** Avertissement avant validation d'une moins-value (ou avoir) sur une prestation dont la garantie est déjà déclenchée | Aucun (interface/service) ; la vue `v_garanties_suivi_actif` permet de détecter le cas | — | **S** | — |
++| 23 | **3.3** Moins-value totale confirmée : seule la ligne de suivi de cette prestation sort du suivi actif ; autres lignes inchangées ; historique traçable (idem avoir sur solde) | Table append-only `bc_ligne_retraits_garantie` (TR-50) ; suivi actif = vue sans retrait ; `garanties` jamais modifiée | `SuiviActif` : vue, seule_la_prestation_retirée, autre_BC ; `Retraits` : seule_cette_ligne… | **C\*** | A5 (vue) |
++| 24 | **3.3** Moins-value partielle : ne supprime pas tout le suivi (détail À CONCEVOIR) | Aucun trigger ne supprime ni ne modifie une garantie ; le service n'écrit pas de retrait pour un cas partiel | `Retraits` : immuabilité, `GarantiesManuelles` : unicité_et_immuabilité | **C** pour la garantie préservée ; détail = **AC** | Voir § 4 |
++| 25 | **3.3** Une opération annulée ou non validée ne modifie pas le suivi | Un retrait par avoir exige l'avoir existant (R2, R3, CHECK) : annulé avec la transaction | `SuiviActif` : opération_non_validée, retrait_par_avoir_sans_avoir_valide | **C** pour les avoirs ; annulation d'une réduction acceptée = **AC** | Voir § 4 |
++| 26 | **3.4** Le modèle permet : identifier les prestations, associer une garantie à une prestation, déclencher sans solde, exclure les prestations retirées, retirer une seule ligne de suivi, conserver la traçabilité | `bc_lignes`, `bc_ligne_garanties(ligne_id)`, `garanties(bc_ligne_id)`, `bc_ligne_retraits_garantie`, vue du suivi actif | `Chaine` (schéma exact), `SuiviActif`, `Retraits` | **C\*** | Migration corrective 009a |
++| 27 | INV-87 Garantie immuable, `date_declenchement` immuable ; jamais recalculée | `tr_50_garanties_*` recréés à l'identique | `Chaine` : triggers_recréés ; `GarantiesManuelles` | **C** | — |
++| 28 | INV-134 Aucune garantie importée | Garde G3 de `tr_51_garanties_insert` (la garantie doit exister parmi `bc_ligne_garanties`) | `GarantiesManuelles` : G1_G3 | **C** | — |
++| 29 | **4** Écarts de 006 (acompte vs total devis ; situation jusqu'à 100 % ; solde 0 €) | Corrigés par 009a | lignes 1, 5, 9 | **C\*** | — |
++| 30 | **4** Écarts de 008 (génération au premier solde ; facture de déclenchement obligatoire ; tests liant garanties au solde ; schéma bloquant le retrait par prestation) | Génération : 008 SQL n'en contenait aucune (service) ; facture : nullable ; retrait : table dédiée ; tests 006/008 annotés (ils décrivent les rangs 9 à 12) | `Chaine`, `Donnees`, `GarantiesManuelles` | **C\*** | — |
++| 31 | **4** Migration testée sur base déjà migrée, données préservées, contraintes non désactivées globalement | 009a : gardes `foreign_keys=0` et `user_version=12`, copie technique avec ids, `sqlite_sequence`, `foreign_key_check`, `integrity_check`, ROLLBACK intégral | `Chaine` (atomicité, protocole), `Donnees` (garanties, séquences, factures, solde 0.00, avoir au motif libre) | **C** | — |
++
++## 4. Points À CONCEVOIR qui empêchent une implémentation complète
++
++1. **Stockage des réductions par ligne de BC (moins-values)** — bloque le *contractuel courant* en SQL (ligne 11) et donc le calcul exact du solde, de la limite des situations, du plafond de facturation et du reste à facturer après moins-value. Les textes validés eux-mêmes disent que le schéma est « À CONCEVOIR » et le rattachent à la couche d'exécution (PT-12). Sont indécidés : ce qu'une réduction porte (montant, quantité, prix), total ou partielle, son articulation avec l'exécution, l'enregistrement de la date et du motif d'annulation. Écrire une table maintenant reviendrait à inventer ce mécanisme. **Comportement actuel sûr** : aucune réduction ne peut exister en base ; un solde calculé par le service avec une réduction est refusé par `tr_22_factures_solde` (montant accepté) plutôt que d'être accepté à tort.
++2. **Cycle après un acompte prévu à 100 % intégralement facturé** : clôture explicite éventuelle, état final du BC, « 100 % facturé » et `date_100_facture`, datation. Aucun mécanisme de clôture ni changement de statut automatique n'est déduit.
++3. **Reste à facturer nul sans solde par moins-value** (révision D) : le mécanisme de clôture n'est pas décidé ; il est en tension avec « seul un solde valide clôture » et reste hors règle.
++4. **Moins-value ou avoir partiel sur une prestation suivie** : sort du suivi (la suppression de tout le suivi est exclue), granularité, périmètre résiduel.
++5. **Annulation d'une réduction dont le retrait de garantie est déjà acté** (dépend du point 1).
++6. **Mécanisme, granularité et date du déclenchement manuel** des garanties (service).
++7. **Retrait définitif de `facture_declenchement_id`** (colonne historique conservée, nullable).
++
++## 5. Choix techniques à relire
++
++- Amendement de 009a (non intégrée) plutôt qu'une migration 009b : évite un rang de plus (010 resterait au rang 14).
++- La garde de clôture de l'acompte (A4) est une **interprétation** de la décision 2.3.
++- La vue `v_garanties_suivi_actif` : nom proposé, hors familles d'identifiants officiels.
++- Le retrait par avoir désigne la prestation par une ligne de l'avoir référençant la ligne de BC (`facture_lignes.bc_ligne_id`).
++- Une proposition non officielle antérieure (`RAPPORT_FINAL__009a_proposition_finale_v2.md`, BC annulation / TR-103) revendique aussi le nom « 009a » et le rang 13 : à départager avant intégration.
++- Rang : 010 → 14 ; une éventuelle `010a_*` → 15.
++
++## 6. Vérifications non réalisables ici
++
++Exécution par le **vrai runner Rust** (il n'existe pas : les tests l'émulent) ; moteur SQLite embarqué de l'application ; état des bases locales de développement (aucune base n'est versionnée).
 diff --git a/fichiers-a-relire/MAJ__audit-fonctionnel-v5.16-v6.md b/fichiers-a-relire/MAJ__audit-fonctionnel-v5.16-v6.md
 index 8c831a8..afa4b88 100644
 --- a/fichiers-a-relire/MAJ__audit-fonctionnel-v5.16-v6.md
@@ -187,7 +275,7 @@ index be4ac8f..76930ae 100644
  **Algorithme de sélection des migrations à appliquer** (installation, mise à jour de l'application, restauration). Soit `k` = `PRAGMA user_version` de la base, `N` = rang maximal supporté par l'application (longueur de sa liste) :
  1. si `k > N` : **refus** (base produite par une version plus récente de l'application) ; aucune écriture ;
 diff --git a/fichiers-a-relire/MAJ__invariants.md b/fichiers-a-relire/MAJ__invariants.md
-index 94b8994..67a6857 100644
+index 94b8994..49d23aa 100644
 --- a/fichiers-a-relire/MAJ__invariants.md
 +++ b/fichiers-a-relire/MAJ__invariants.md
 @@ -1,6 +1,6 @@
@@ -229,8 +317,8 @@ index 94b8994..67a6857 100644
  | INV-56 | Facturation nette = Σ acomptes + situations + soldes − Σ avoirs (toutes factures validées ; la notion d'« actif » éventuelle relève de PT-9) | SVC, test | C-09 |
 -| INV-57 | Situation **globale au BC** (INV-190) : saisie en pourcentage ou en montant ; montant = valeur cumulée visée − facturation nette avant (arrondi HALF_UP) ; nette après ≤ contractuel ; acompte ≤ contractuel du devis concerné ; plus de règle « seule la dernière situation est annulable » | TRG (TR-22), SVC | C-03, C-09 |
 -| INV-58 | Solde = contractuel du BC − nette avant solde ; solde rédigé/validé ⇒ plus d'acompte ni de situation ; **un avoir partiel ne rouvre pas la facturation** ; un avoir total permet une nouvelle facture du même type avec un nouveau numéro (INV-185) ; un avoir sur le solde ne rouvre pas le BC à un nouveau devis (INV-187) | TRG (TR-22, TR-23), SVC | C-04, C-07, C-08, T-12 |
-+| INV-57 | Situation **globale au BC** (INV-190) : saisie en pourcentage ou en montant ; montant = valeur cumulée visée − facturation nette avant (arrondi HALF_UP) ; **limite générale** : nette après ≤ contractuel courant (blocage financier, distinct de l'alerte non bloquante « marché inférieur aux acomptes nets », modèle § 8) ; **limite propre à la situation** : une situation ne porte jamais le cumul à 100 % (nette après < contractuel courant) ; **trois notions distinctes** : le *plafond de l'acompte* (ci-dessous), la *limite des situations* (< 100 %) et la *clôture du cycle* (acompte prévu < 100 % : seul un solde valide, strictement positif, clôture le cycle ; **un solde à 0.00 n'est jamais émis**) ; **acompte ≤ acompte prévu au devis accepté concerné**, jusqu'à 100 % du marché si le devis le prévoit (INV-189 ; pour 1 000 € : prévu 30 % → max 300, prévu 100 % → max 1 000, aucun prévu → aucune facture d'acompte ; contrôle de la base et du service sur l'acompte effectivement prévu, jamais sur une règle générale du montant du marché ; facultatif : aucune dépendance entre acompte prévu, acompte facturé et autres types de factures) ; **acompte prévu à 100 % facturé en totalité : autorisé, ni blocage, ni confirmation spéciale, ni clôture automatique, ni solde à 0.00** (modèle § 10 ; état final, clôture explicite éventuelle et datation : À CONCEVOIR) ; plus de règle « seule la dernière situation est annulable » | TRG (TR-22, migration 009a), SVC | C-03, C-09 |
-+| INV-58 | Solde = contractuel final − nette avant solde, strictement positif (INV-57) (contractuel final = contractuel courant − avoirs « prestations non réalisées » portant sur un solde, INV-76) ; solde rédigé/validé ⇒ plus d'acompte ni de situation ; **un avoir partiel ne rouvre pas la facturation** ; un avoir total permet une nouvelle facture du même type avec un nouveau numéro (INV-185), les sommes d'un avoir « prestations non réalisées » sur solde n'étant pas refacturables ; un avoir sur le solde ne rouvre pas le BC à un nouveau devis (INV-187) | TRG (TR-22, TR-23), SVC | C-04, C-07, C-08, T-12 |
++| INV-57 | Situation **globale au BC** (INV-190) : saisie en pourcentage ou en montant ; montant = valeur cumulée visée − facturation nette avant (arrondi HALF_UP) ; **limite générale** : nette après ≤ contractuel courant (blocage financier, distinct de l'alerte non bloquante « marché inférieur aux acomptes nets », modèle § 8) ; **limite propre à la situation** : une situation ne porte jamais le cumul à 100 % (nette après < contractuel courant) ; **trois notions distinctes** : le *plafond de l'acompte* (ci-dessous), la *limite des situations* (< 100 %) et la *clôture du cycle* (acompte prévu < 100 % : seul un solde valide, strictement positif, clôture le cycle ; **un solde à 0.00 n'est jamais émis**) ; **acompte ≤ acompte prévu au devis accepté concerné**, jusqu'à 100 % du marché si le devis le prévoit (INV-189 ; pour 1 000 € : prévu 30 % → max 300, prévu 100 % → max 1 000, aucun prévu → aucune facture d'acompte ; contrôle de la base et du service sur l'acompte effectivement prévu, jamais sur une règle générale du montant du marché ; facultatif : aucune dépendance entre acompte prévu, acompte facturé et autres types de factures) ; **acompte prévu à 100 % facturé en totalité : autorisé, ni blocage, ni confirmation spéciale, ni clôture automatique, ni solde à 0.00** (traduction en base de la règle de clôture, **déduite de la décision 2.3 et à valider** : un acompte ne porte pas la facturation nette à 100 % du contractuel lorsque l'acompte prévu du marché est inférieur à 100 %, sinon aucun solde valide ne pourrait plus clôturer le cycle) (modèle § 10 ; état final, clôture explicite éventuelle et datation : À CONCEVOIR) ; plus de règle « seule la dernière situation est annulable » | TRG (TR-22, migration 009a), SVC | C-03, C-09 |
++| INV-58 | Solde = contractuel final − nette avant solde, strictement positif (INV-57) (contractuel final = contractuel courant − avoirs « prestations non réalisées » portant sur un solde, INV-76 ; en base, 009a : montants acceptés − ces avoirs, faute de stockage des réductions) ; solde rédigé/validé ⇒ plus d'acompte ni de situation ; **un avoir partiel ne rouvre pas la facturation** ; un avoir total permet une nouvelle facture du même type avec un nouveau numéro (INV-185), les sommes d'un avoir « prestations non réalisées » sur solde n'étant pas refacturables ; un avoir sur le solde ne rouvre pas le BC à un nouveau devis (INV-187) | TRG (TR-22, TR-23), SVC | C-04, C-07, C-08, T-12 |
  | INV-59 | `date_echeance` obligatoire hors avoir, NULL pour un avoir, ≥ `date_emission` | SQL | |
  | INV-60 | Le statut d'une facture n'est jamais persisté ; états dérivés : `en_attente`, `partiellement_reglee`, `reglee` (reste dû nul) ; `en_retard` est un indicateur transversal dérivé ; l'état « annulée » n'existe plus (E-14) ; l'état d'une facture entièrement créditée : PT-9 | SVC (pas de colonne) | C-02 |
  | INV-62 | Composition des lignes : acompte = 1 ligne `synthese` ; situation = 1 ligne `synthese` du montant de la situation ; solde = lignes BC + lignes `deduction` (une par remise globale de devis rattaché, et facturation antérieure) ; négatifs uniquement `deduction` ; composition avec exécution : PT-11, PT-12 | SQL, SVC | C-08 |
@@ -239,7 +327,7 @@ index 94b8994..67a6857 100644
  | INV-74 | Remboursement ≤ crédit disponible | TRG (TR-31) | C-06 |
  | INV-75 | Annulation d'un encaissement refusée si elle rend le crédit < Σ remboursements actifs | TRG (TR-33) | C-12 |
 -| INV-76 | Avoir : origine obligatoire, non avoir, même BC ; motif obligatoire ; Σ avoirs ≤ montant de l'origine ; pas d'imputation libre d'un crédit sur une autre facture ; un avoir reste possible sur un BC annulé (INV-188) | SQL, TRG (TR-23) |  |
-+| INV-76 | Avoir : origine obligatoire, non avoir, même BC ; motif obligatoire, en liste fermée (« correction d'une erreur de facturation » | « prestations non réalisées ») ; effet sur le montant contractuel déterminé par le motif et le type de l'origine (immuables) : correction d'erreur = aucune réduction du contractuel, quelle que soit l'origine ; prestations non réalisées sur une situation = pas de réduction automatique ; sur le solde = réduit le contractuel final, sommes non refacturables ; un avoir sur acompte ne corrige qu'une erreur de l'acompte initial (jamais une moins-value, un abandon ou un marché inférieur à l'acompte) ; Σ avoirs ≤ montant de l'origine ; pas d'imputation libre d'un crédit sur une autre facture ; un avoir reste possible sur un BC annulé (INV-188) ; **effet sur le périmètre des garanties** (INV-85, modèle § 24) : seul un avoir « prestations non réalisées » sur le solde retire la prestation concernée, à lui seul ; correction d'erreur et « prestations non réalisées » sur une situation ne retirent rien (le retrait est refusé en base si le motif ou l'origine ne l'autorise pas, TR-51) | SQL, TRG (TR-23, TR-51) ; contrôle de la liste fermée des motifs à l'émission de l'avoir : à concevoir |  |
++| INV-76 | Avoir : origine obligatoire, non avoir, même BC ; motif obligatoire, en liste fermée (« correction d'une erreur de facturation » | « prestations non réalisées ») ; effet sur le montant contractuel déterminé par le motif et le type de l'origine (immuables) : correction d'erreur = aucune réduction du contractuel, quelle que soit l'origine ; prestations non réalisées sur une situation = pas de réduction automatique ; sur le solde = réduit le contractuel final, sommes non refacturables ; un avoir sur acompte ne corrige qu'une erreur de l'acompte initial (jamais une moins-value, un abandon ou un marché inférieur à l'acompte) ; Σ avoirs ≤ montant de l'origine ; pas d'imputation libre d'un crédit sur une autre facture ; un avoir reste possible sur un BC annulé (INV-188) ; **effet sur le périmètre des garanties** (INV-85, modèle § 24) : seul un avoir « prestations non réalisées » sur le solde retire la prestation concernée, à lui seul ; correction d'erreur et « prestations non réalisées » sur une situation ne retirent rien (le retrait est refusé en base si le motif ou l'origine ne l'autorise pas, TR-51) | SQL, TRG (TR-23 dont le contrôle du motif et l'avoir sur acompte, migration 009a ; TR-51) |  |
  | INV-78 | L'avoir ne supprime ni ne modifie la facture d'origine ; une facture payée n'est jamais supprimée | TRG (TR-21) | |
  | INV-79 | L'annulation d'un règlement recalcule en chaîne facture et BC (`termine → en_cours`, `completed_at=NULL`, événement historique) ; l'annulation d'un avoir n'existe plus (E-14) | SVC, test | C-05, T-13 |
  | INV-80 | Un avoir n'est jamais « en retard » ; état dérivé : `credit_disponible`, `solde`, `annule` | SVC | |
@@ -282,7 +370,7 @@ index 94b8994..67a6857 100644
  | INV-191 | **Exécution** : couche distincte du contractuel (devis accepté inchangé) ; l'utilisateur renseigne l'état réel ; une ligne peut être réalisée, partiellement réalisée par quantité, totalement abandonnée, ou avoir un prix unitaire d'exécution différent lorsque le métier le justifie ; contractuel / exécuté / abandonné / restant / facturé / payé sont distinguables ; la partie abandonnée n'est plus à réaliser ni à facturer et reste visible ; si elle avait été facturée, la correction passe par un avoir ; une augmentation de périmètre passe par un nouveau devis. **Schéma, bornes de prix et de quantité, formule de base facturable : À CONCEVOIR (PT-12)** | SVC ; schéma : PT-12 | C-38, T-39 |
  | INV-192 | **Remise globale** : attachée au contrat initial, jamais recalculée sur le devis ; en cas d'exécution partielle, répartie **au prorata de la valeur exécutée/facturée** (10 000 € − remise 1 000 € − abandon 2 000 € → exécuté 8 000 €, remise affectée 800 €, net 7 200 €). Règle métier BATORYA, non obligation légale. Formule détaillée et cas particuliers : À CONCEVOIR (PT-13) | SVC ; formule : PT-13 | C-39, T-39 |
  | INV-193 | **Dépense** : corrigeable pour erreur de saisie ; annulable lorsqu'elle ne doit plus participer aux calculs métier ; une dépense annulée reste en base, conserve numéro, historique et relations, est exclue des totaux et calculs opérationnels concernés (principe détaillé : INV-200), et peut rester liée à un BC annulé ; aucune suppression d'une dépense numérotée | SVC ; colonnes : PT-14 | C-40, T-40 |
-@@ -324,6 +324,15 @@ Ligne ajoutée par l'alignement documentaire de la tranche 010 « Planification
+@@ -324,6 +324,16 @@ Ligne ajoutée par l'alignement documentaire de la tranche 010 « Planification
  | 2026-10-12 | INV-202 | **Ajouté** (section P) | Titre d'un événement de planning : non vide, non composé uniquement d'espaces ordinaires (U+0020), sans normalisation. Aucune règle générale de normalisation ni invariant NUL global n'est créé | Arbitrages de Rémy du 2026-10-12 (D-58, D-59) ; cadrage 010 |
  | 2026-10-12 | INV-10 | **Précisé** : « planning en heure locale » désigne `YYYY-MM-DD` ou `YYYY-MM-DDTHH:MM` ; date réelle du calendrier grégorien proleptique (convention du projet, modèle §2.2), heures 00–23, minutes 00–59. Aucun changement de sens ; ancien énoncé : « …planning en heure locale… » | Le contrôle strict des dates locales du planning est décidé (arbitrages du 2026-10-12) | D-57 ; cadrage 010 |
  | 2026-10-12 | INV-177 | **Précisé** : le contrôle `GLOB` + `date(x) IS x` vise les dates des familles D ; les dates locales du planning (DL_LOCAL) ont leur contrôle propre. Aucun changement de sens pour les familles D ; ancien énoncé : « …le contrôle SQL des dates reste `GLOB` + `date(x) IS x`… » | `date(x) IS x` ne convient pas à `YYYY-MM-DDTHH:MM` (constat du 2026-10-12, modèle §2.2) | D-57 ; cadrage 010 |
@@ -295,11 +383,12 @@ index 94b8994..67a6857 100644
 +| 2026-10-17 | INV-42, INV-55, INV-57, INV-58 | **Précisés** : une situation ne porte jamais le cumul à 100 % (nette après < contractuel courant) ; aucun solde à 0.00 (INV-55 : solde > 0.00, ancien énoncé « solde ≥ 0.00 ») ; reste à facturer nul sans solde = cas À CONCEVOIR (mécanisme de clôture non décidé ; la formulation « seul le solde peut porter le cumul à 100 % » a été retirée par la révision F : le plafond de l'acompte, la limite des situations et la clôture sont trois notions distinctes). Limite générale « nette ≤ contractuel courant » inchangée | Ancienne formulation : solde à 0.00 autorisé et situation pouvant atteindre le contractuel | Décision validée par le responsable du projet (2026-10-17) ; modèle § 12, § 13 ; modèle SQLite § 3.2, C-08 |
 +| 2026-10-17 | INV-57 | **Précisé (révision F, décision 2.1 à 2.4 ; remplace les décisions A et B de la révision E)** : l'acompte est plafonné par l'acompte prévu au devis accepté, jusqu'à 100 % du marché (ancien énoncé : « acompte ≤ contractuel du devis concerné ») ; sa facturation est facultative et sans dépendance avec les autres types de factures ; **la confirmation spéciale d'un acompte à 100 % (révision E, décision B) est retirée** : aucune confirmation, aucun blocage, aucune clôture automatique, aucun solde à 0.00 ; acompte prévu < 100 % : seul un solde valide clôture le cycle. Situation < 100 % et solde > 0 inchangés | Décisions validées par le responsable du projet (révision F) | Modèle § 10, § 12, § 13 ; migration 009a (TR-22 : plafond sur l'acompte prévu, situation < contractuel, aucun solde à 0.00) ; tests SQL `test_009a` ; cycle après acompte prévu à 100 % intégralement facturé : À CONCEVOIR |
 +| 2026-10-17 | INV-76, INV-85, INV-86, INV-87, INV-90, INV-134 | **Précisés (révisions E décision C, puis F décisions 3.1 à 3.4)** : déclenchement manuel des garanties, indépendant du solde et du cycle commercial ; périmètre contractuel réel (exclusion des prestations retirées par moins-value acceptée ou avoir « prestations non réalisées » sur le solde) ; matrice des avoirs ; retrait ciblé par prestation (avertissement préalable, seule la ligne de suivi concernée sort du suivi actif, historique conservé) ; facture de déclenchement retirée du modèle métier. Anciens énoncés : INV-85 « Le suivi démarre à l'émission d'un solde (100 % facturé) » ; INV-87 « date_declenchement = date d'émission du premier solde » ; INV-90 « ligne et facture de déclenchement NOT NULL » | Décision C du 2026-10-17 et révision F ; granularité, date, retrait d'une prestation partiellement réduite : À CONCEVOIR | Modèle § 8, § 14, § 24 ; modèle SQLite § 4.10, TR-50, TR-51 ; migration 009a (`facture_declenchement_id` nullable, table `bc_ligne_retraits_garantie`, garde de déclenchement) ; tests `test_009a` |
++| 2026-10-17 | INV-57, INV-58, INV-76, INV-87 | **Audit de conformité du SQL de la chaîne complète (révision F)** : le SQL de la migration corrective 009a est aligné sur les règles déjà validées — motif d'avoir en liste fermée et avoir sur acompte limité à `correction_erreur` (TR-23) ; solde égal au contractuel final, les avoirs « prestations non réalisées » sur solde n'étant pas refacturables (TR-22) ; un acompte ne porte pas la facturation à 100 % si l'acompte prévu du marché est < 100 % (traduction de la décision 2.3, **déduite et à valider**) ; suivi actif des garanties exposé par la vue `v_garanties_suivi_actif`. Aucune règle métier n'est modifiée | Écarts relevés par l'audit : motif d'avoir non contrôlé, formule du solde ne déduisant pas le contractuel final, clôture par acompte possible hors acompte prévu à 100 % | Décisions validées de la révision F ; audit `AUDIT__conformite_sql_chaine_finale_revision_F.md` ; le contractuel **courant** (réductions) reste non modélisé : stockage À CONCEVOIR |
  
  ## Contrôle de non-régression (à exécuter à chaque nouvelle version du modèle)
  
 diff --git a/fichiers-a-relire/MAJ__modèle-données-sqlite-v6-v3.13.md b/fichiers-a-relire/MAJ__modèle-données-sqlite-v6-v3.13.md
-index c040099..5f6e38d 100644
+index c040099..77b0fe4 100644
 --- a/fichiers-a-relire/MAJ__modèle-données-sqlite-v6-v3.13.md
 +++ b/fichiers-a-relire/MAJ__modèle-données-sqlite-v6-v3.13.md
 @@ -1,6 +1,6 @@
@@ -336,7 +425,7 @@ index c040099..5f6e38d 100644
 -solde.total_ht = contractuel − facturation_nette_avant_solde     (≥ 0, 0.00 autorisé)
 +solde.total_ht = contractuel_final − facturation_nette_avant_solde     (> 0.00 ; un solde à 0.00 n'est jamais émis)
 +contractuel_courant = Σ montants acceptés − Σ réductions acceptées non annulées
-+contractuel_final   = contractuel_courant − Σ avoirs « prestations non réalisées » dont l'origine est un solde
++contractuel_final   = contractuel_courant − Σ avoirs « prestations non réalisées » dont l'origine est un solde     (SQL 009a : contractuel_courant = montants acceptés, faute de stockage des réductions)
 +RAF (indicateur dérivé, non persisté) = 0 si un solde actif existe, sinon max(0, contractuel_final − facturation_nette)
  ```
 -
@@ -345,8 +434,8 @@ index c040099..5f6e38d 100644
 -- « 100 % facturé » = **présence d'un solde** : définition de calcul, utilisée pour l'avancement, `date_100_facture` et le suivi des garanties. **Elle n'intervient pas dans la règle de rattachement d'un devis à un BC** (INV-187), qui ne dépend que de la rédaction/validation du solde et de l'état du BC.
 +**[VALIDÉ — arbitrages du 2026-10-17]**
 +- **Alerte non bloquante** si `contractuel_courant` < acomptes facturés − avoirs sur acompte : « Attention : le montant du marché est inférieur à votre facture d'acompte. Vérifiez les montants saisis. » (aucun avoir, remboursement ni régularisation automatique ; la réduction n'est pas bloquée). **Blocage financier**, distinct : une facture qui ferait dépasser `contractuel_courant` à la facturation nette est refusée (TR-22 ; solde > 0.00).
-+- **Avoirs** : motif en liste fermée (identifiants techniques retenus pour les valeurs : `correction_erreur`, `prestation_non_realisee` ; les libellés utilisateur restent ceux des documents métier) ; effet sur le montant contractuel déterminé par le motif et le type de la facture d'origine (modèle § 14, INV-76). Le mécanisme de contrôle du motif et le stockage des réductions sont **À CONCEVOIR** : cette révision n'ajoute ni champ, ni contrainte, ni trigger.
-+- **État du SQL après la migration corrective 009a (rang 13, révision F)** : les triggers `tr_22_factures_acompte`, `tr_22_factures_situation` et `tr_22_factures_solde` sont remplacés et contrôlent désormais : le plafond de l'acompte sur l'`acompte_prevu` du devis (INV-57 ; `aucun` ⇒ plafond nul), au plus un acompte actif par devis, la nette après ≤ contractuel, une situation strictement inférieure au contractuel, un solde strictement positif et égal à la formule ci-dessous. **Écarts restants, non traités par 009a** : (a) le SQL calcule encore le contractuel comme Σ des `total_ht` des devis rattachés, sans réductions par ligne de BC ni avoirs « prestations non réalisées » (le `contractuel_courant` et le `contractuel_final` ne sont pas modélisés en SQL : PT-12) ; (b) le `CHECK` de `factures` livré par 006 (`type = 'solde' OR total_ht <> '0.00'`) n'est pas modifié (reconstruire `factures` n'est pas justifié) : le solde à 0.00 est refusé par le trigger, pas par ce `CHECK` ; (c) un solde à 0.00 déjà présent dans une base existante est conservé, jamais supprimé ni modifié ; (d) la liste fermée des motifs d'avoir n'est pas contrôlée à l'émission de l'avoir (elle l'est lors d'un retrait de prestation, §4.10).
++- **Avoirs** : motif en liste fermée (identifiants techniques retenus pour les valeurs : `correction_erreur`, `prestation_non_realisee` ; les libellés utilisateur restent ceux des documents métier) ; effet sur le montant contractuel déterminé par le motif et le type de la facture d'origine (modèle § 14, INV-76). *Mise à jour révision F (audit de conformité du SQL)* : le contrôle du motif est porté par le trigger `tr_23_factures_avoir` (migration 009a, pour tout nouvel avoir) et un avoir sur acompte n'est admis que pour `correction_erreur` ; l'effet « prestations non réalisées sur un solde » est porté par la formule du solde ci-dessous. Le **stockage des réductions** reste **À CONCEVOIR** (il empêche de modéliser le contractuel courant en SQL).
++- **État du SQL après la migration corrective 009a (rang 13, révision F)** : les triggers `tr_22_factures_acompte`, `tr_22_factures_situation`, `tr_22_factures_solde` et `tr_23_factures_avoir` sont remplacés et contrôlent désormais : le plafond de l'acompte sur l'`acompte_prevu` du devis (INV-57 ; `aucun` ⇒ plafond nul) ; au plus un acompte actif par devis ; la nette après ≤ contractuel ; **[DÉDUIT de la décision 2.3, à valider]** un acompte ne porte pas la facturation nette à 100 % du contractuel si l'acompte prévu du marché (Σ des acomptes prévus des devis rattachés) est inférieur à 100 % : seul un solde valide clôture alors le cycle, et un acompte à 100 % n'est donc admis que si tous les devis rattachés prévoient 100 % ; une situation strictement inférieure au contractuel ; un solde strictement positif, égal au **contractuel final** (montants acceptés − avoirs `prestation_non_realisee` dont l'origine est un solde) − facturation nette avant solde, de sorte que les sommes créditées au titre de prestations non réalisées ne sont pas refacturables ; un motif d'avoir dans la liste fermée. **Écarts restants** : (a) le **contractuel courant** (montants acceptés − réductions par ligne de BC acceptées non annulées) n'est pas modélisé en SQL : le stockage des réductions est À CONCEVOIR (PT-12, ci-dessus) ; aucune réduction ne pouvant exister en base, les triggers lisent le montant accepté et refuseraient un solde calculé avec une réduction, ce qui est le comportement sûr tant que ce stockage n'existe pas ; (b) le `CHECK` de `factures` livré par 006 (`type = 'solde' OR total_ht <> '0.00'`) n'est pas modifié (reconstruire `factures` n'est pas justifié) : le solde à 0.00 est refusé par le trigger, pas par ce `CHECK` ; (c) un solde à 0.00 déjà présent dans une base existante est conservé, jamais supprimé ni modifié ; (d) un avoir antérieur à 009a dont le motif est libre est conservé et n'est jamais compté comme « prestation non réalisée ».
 +
 +- Le **solde est strictement positif** : un solde à 0.00 n'existe pas et n'est jamais émis. **Trois notions distinctes** : le *plafond de l'acompte* (acompte prévu du devis, jusqu'à 100 % du marché, ci-dessous), la *limite des situations* (nette après < contractuel : une situation n'atteint jamais 100 %, modèle métier § 12) et la *clôture du cycle* (acompte prévu < 100 % : seul un solde valide clôture le cycle). Un acompte prévu à 100 % et intégralement facturé est autorisé sans confirmation ; il n'autorise ni solde à 0.00 ni situation à 100 %. Si le reste à facturer devient nul sans solde (acompte prévu à 100 % facturé en totalité, ou réduction par ligne de BC acceptée avant le solde), aucune facture n'est émise ; le mécanisme de clôture et ses effets sont **À CONCEVOIR**. Le solde, quand il existe, reste l'événement de clôture de facturation.
 +- Dès qu'un **solde est rédigé/validé** : nouvel acompte interdit, nouvelle situation interdite, et **un avoir partiel ne rouvre pas la facturation**. Un **avoir total** sur une facture permet de la remplacer par une nouvelle facture **du même type** avec un **nouveau numéro** (arbitrage B, INV-185), les sommes d'un avoir « prestations non réalisées » sur solde n'étant pas refacturables ; la facture initiale et son avoir restent conservés. Avant solde, un avoir sur acompte ou situation réduit la facturation nette et libère donc un montant refacturable (cas C-09).
@@ -422,7 +511,7 @@ index c040099..5f6e38d 100644
 +**`garanties`** : `id` PK · `bc_id` NN FK→bons_commande · `bc_ligne_id` NN FK→bc_lignes · `garantie_type` NN · `date_declenchement` D NN · `date_fin_suivi` D NN · `facture_declenchement_id` **NULL** FK→factures · `created_at`. **Révision F (migration 009a)** : le déclenchement n'étant plus lié à un solde ni à une facture, `facture_declenchement_id` est devenue **nullable** ; la colonne est conservée comme donnée historique (les valeurs existantes sont préservées ; aucune nouvelle garantie n'a besoin d'une facture). Son éventuel retrait définitif du schéma est **À CONCEVOIR**.
 +`UQ(bc_ligne_id, garantie_type)` (aucune garantie n'est importée : elles naissent uniquement d'un déclenchement manuel V6, INV-134). CHECK `date_fin_suivi > date_declenchement`. Pas de colonne statut. Aucun UPDATE ni DELETE. [INV-85 à INV-90]
 +
-+**`bc_ligne_retraits_garantie`** *(migration 009a ; révision F, décisions 3.3 et 3.4)* : `id` PK · `bc_id` NN FK→bons_commande · `bc_ligne_id` NN FK→bc_lignes **UNIQUE** · `motif_retrait` NN (`moins_value` | `avoir_prestation_non_realisee`) · `avoir_id` NULL FK→factures · `date_retrait` D NN · `created_at` ; CHECK : `avoir_id` renseigné si et seulement si le motif est `avoir_prestation_non_realisee` ; table `STRICT`, FK en `RESTRICT`. Table **append-only** (TR-50 : aucun UPDATE ni DELETE) qui désigne, par ligne de BC, une prestation **retirée du périmètre contractuel** ; une prestation n'est retirée qu'une fois. Un retrait porte sur une ligne de BC du BC indiqué ; lorsqu'il résulte d'un avoir (`motif_retrait = 'avoir_prestation_non_realisee'`), `avoir_id` désigne un avoir du même BC de motif `prestation_non_realisee` dont l'origine est un solde et dont une ligne référence la ligne de BC ; `avoir_id` est NULL pour une moins-value (qui n'a aucun stockage propre en SQL, § 8). **Suivi actif dérivé** : une garantie déclenchée est en suivi actif tant que sa ligne de BC ne figure pas dans `bc_ligne_retraits_garantie` ; le retrait d'une prestation ne modifie et ne supprime aucune ligne de `garanties` (historique conservé) et n'affecte que le suivi de cette prestation. TR-51 refuse le déclenchement d'une garantie sur une prestation retirée. Le service (non la base) écrit le retrait lorsqu'une moins-value totale ou un avoir « prestations non réalisées » sur le solde est confirmé, et n'écrit rien pour une opération annulée ou non validée. *Choix technique à relire* : la prestation retirée par un avoir est désignée par une ligne de l'avoir qui référence la ligne de BC (`facture_lignes.bc_ligne_id`), faute d'autre lien dans le modèle.
++**`bc_ligne_retraits_garantie`** *(migration 009a ; révision F, décisions 3.3 et 3.4)* : `id` PK · `bc_id` NN FK→bons_commande · `bc_ligne_id` NN FK→bc_lignes **UNIQUE** · `motif_retrait` NN (`moins_value` | `avoir_prestation_non_realisee`) · `avoir_id` NULL FK→factures · `date_retrait` D NN · `created_at` ; CHECK : `avoir_id` renseigné si et seulement si le motif est `avoir_prestation_non_realisee` ; table `STRICT`, FK en `RESTRICT`. Table **append-only** (TR-50 : aucun UPDATE ni DELETE) qui désigne, par ligne de BC, une prestation **retirée du périmètre contractuel** ; une prestation n'est retirée qu'une fois. Un retrait porte sur une ligne de BC du BC indiqué ; lorsqu'il résulte d'un avoir (`motif_retrait = 'avoir_prestation_non_realisee'`), `avoir_id` désigne un avoir du même BC de motif `prestation_non_realisee` dont l'origine est un solde et dont une ligne référence la ligne de BC ; `avoir_id` est NULL pour une moins-value (qui n'a aucun stockage propre en SQL, § 8). **Suivi actif dérivé** : une garantie déclenchée est en suivi actif tant que sa ligne de BC ne figure pas dans `bc_ligne_retraits_garantie` ; la vue de lecture `v_garanties_suivi_actif` (migration 009a, sans donnée propre, mêmes colonnes que `garanties`) expose exactement ces garanties ; le retrait d'une prestation ne modifie et ne supprime aucune ligne de `garanties` (historique conservé) et n'affecte que le suivi de cette prestation. TR-51 refuse le déclenchement d'une garantie sur une prestation retirée. Le service (non la base) écrit le retrait lorsqu'une moins-value totale ou un avoir « prestations non réalisées » sur le solde est confirmé, et n'écrit rien pour une opération annulée ou non validée. *Choix technique à relire* : la prestation retirée par un avoir est désignée par une ligne de l'avoir qui référence la ligne de BC (`facture_lignes.bc_ligne_id`), faute d'autre lien dans le modèle.
  
 -Création : à l'émission d'un solde actif, le service lit `bc_ligne_garanties` du BC et insère `INSERT OR IGNORE` (idempotent, la première date est conservée). `date_declenchement` = date d'émission de ce solde. `date_fin_suivi` = +1 an / +2 ans / +10 ans ; 29 février → 28 février si l'année cible n'est pas bissextile. Un avoir (même total) sur le solde, un règlement ne suppriment ni ne modifient une garantie. Un BC importé n'a aucune ligne `bc_ligne_garanties` (INV-134, D-16) : il ne génère aucune garantie native, faute de garantie de ligne à lire.
 +**Déclenchement [VALIDÉ — révisions E et F, 2026-10-17 ; INV-85]** : manuel, par l'utilisateur, indépendant de l'émission d'un solde, de l'état du cycle commercial, du règlement des factures et de leur paiement intégral. Le service propose les prestations du **périmètre contractuel réel** (lignes de `bc_ligne_garanties` du BC, hors prestations présentes dans `bc_ligne_retraits_garantie`, modèle § 24) et insère `INSERT OR IGNORE` (idempotent, la première date est conservée) ; la base refuse (TR-51) le déclenchement sur une prestation retirée. Un avoir `correction_erreur` ou `prestation_non_realisee` sur une situation ne retire aucune prestation. **Moins-value ou avoir sur une prestation dont la garantie est déjà déclenchée (F, 3.3)** : le service avertit l'utilisateur avant la validation ; à la confirmation d'un retrait total, seule la ligne de suivi de cette prestation sort du suivi actif, les autres restent inchangées et l'historique reste traçable. **À CONCEVOIR** : mécanisme et granularité du déclenchement, sens et origine de `date_declenchement`, traitement d'une moins-value ou d'un avoir **partiel** (la suppression de tout le suivi de la prestation n'est pas décidée), effet de l'annulation d'une réduction dont le retrait est acté. `date_fin_suivi` = +1 an / +2 ans / +10 ans ; 29 février → 28 février si l'année cible n'est pas bissextile. **Supersession de 008** : le SQL livré par 008 crée les garanties au premier solde, lie le déclenchement à un solde (`facture_declenchement_id` NOT NULL, TR-51 G2 et G4) ; la migration 009a, au rang 13, rend la référence de facture facultative et ne contrôle plus G2 et G4 que si elle est renseignée ; aucune garantie n'est plus générée par le solde. Un avoir (même total) sur le solde, un règlement ne suppriment ni ne modifient une garantie. Un BC importé n'a aucune ligne `bc_ligne_garanties` (INV-134, D-16) : il ne génère aucune garantie native, faute de garantie de ligne à lire.
@@ -441,16 +530,18 @@ index c040099..5f6e38d 100644
  Aucun effet sur le statut du BC. Le **Gantt lit `bons_commande.date_debut/date_fin`**, pas cette table ; un BC sans dates n'a pas de barre Gantt. [INV-101]
  
  **`bc_notes`** : `id` PK · `bc_id` NN FK · `contenu` NN · TS. Modifiables et supprimables ; ne touchent aucun montant. Table créée hors de la migration 004 (tranche BC).
-@@ -783,7 +795,8 @@ Les triggers ne servent que là où un `CHECK` ne suffit pas. Ils lèvent `RAISE
+@@ -783,8 +795,9 @@ Les triggers ne servent que là où un `CHECK` ne suffit pas. Ils lèvent `RAISE
  | TR-100 *(proposé, PT-21)* | devis_revisions / INSERT, UPDATE, DELETE | UPDATE et DELETE interdits (append-only) ; INSERT : le snapshot de la version initiale (`revision IS NULL`) une seule fois, puis `revision = max + 1` consécutif (`COALESCE(MAX(revision), 0) + 1`, comparaison par `IS`), seulement si le devis est `en_attente` avec `revision_en_cours = 1` ; l'index unique partiel garde en plus une seule version initiale | 196 |
  | TR-20 | factures / UPDATE | **à réécrire** : aucun UPDATE (la facture validée est immuable, y compris `client_id` ; plus d'annulation) | 53, 185 |
  | TR-21 | factures, facture_lignes / DELETE, facture_lignes / UPDATE | interdits | 6, 53 |
 -| TR-22 | factures / INSERT | acompte ≤ contractuel ; **un acompte par devis (PT-10)** ; situation : nette après ≤ contractuel et cumul cohérent ; solde = formule 3.2 ; aucun acompte/situation/solde si un solde est actif ; **unicité « active » : PT-9** | 55 à 58, 189 |
-+| TR-22 | factures / INSERT | acompte : devis rattaché au BC, **≤ acompte prévu de son devis** (jusqu'à 100 % ; `aucun` ⇒ refus), un acompte actif par devis (PT-10), aucun acompte après solde ; situation : nette avant exacte, nette après ≤ contractuel **et strictement < contractuel** ; solde : **> 0.00**, = formule 3.2, un seul solde actif ; aucun acompte/situation/solde si un solde est actif ; **unicité « active » : PT-9** ; contrôles livrés par 006 puis **remplacés par la migration 009a** (rang 13) ; limites restantes : §3.2 | 55 à 58, 189 |
+-| TR-23 | factures / INSERT (avoir) | origine non avoir, même BC ; Σ avoirs ≤ montant origine ; aucun nouveau solde par avoir **hors avoir total (arbitrage B : une nouvelle facture reste possible après avoir total)** ; ne rouvre pas le BC aux devis (INV-187) | 58, 76, 185 |
++| TR-22 | factures / INSERT | acompte : devis rattaché au BC, **≤ acompte prévu de son devis** (jusqu'à 100 % ; `aucun` ⇒ refus), un acompte actif par devis (PT-10), aucun acompte après solde, **pas de facturation nette à 100 % par un acompte si l'acompte prévu du marché est < 100 % [déduit de 2.3]** ; situation : nette avant exacte, nette après ≤ contractuel **et strictement < contractuel** ; solde : **> 0.00**, = **contractuel final** − nette avant, un seul solde actif ; aucun acompte/situation/solde si un solde est actif ; **unicité « active » : PT-9** ; contrôles livrés par 006 puis **remplacés par la migration 009a** (rang 13) ; limites restantes : §3.2 | 55 à 58, 189 |
 +| TR-51 | garanties, bc_ligne_retraits_garantie / INSERT | **garanties** : G1 ligne de BC du même BC ; G2 référence de facture facultative (si renseignée : solde du même BC) ; G3 couple (ligne, type) présent dans `bc_ligne_garanties` ; G4 date de déclenchement = date d'émission de la facture si elle est renseignée ; **G5 refus si la prestation a été retirée** ; **retraits** : R1 ligne de BC du BC indiqué ; R2 avoir du même BC, motif `prestation_non_realisee`, origine de type `solde` ; R3 une ligne de l'avoir référence la ligne de BC ; un seul retrait par ligne de BC (UNIQUE) | 76, 85, 86, 87, 90 |
- | TR-23 | factures / INSERT (avoir) | origine non avoir, même BC ; Σ avoirs ≤ montant origine ; aucun nouveau solde par avoir **hors avoir total (arbitrage B : une nouvelle facture reste possible après avoir total)** ; ne rouvre pas le BC aux devis (INV-187) | 58, 76, 185 |
++| TR-23 | factures / INSERT (avoir) | origine non avoir, même BC ; Σ avoirs ≤ montant origine ; **motif ∈ {`correction_erreur`, `prestation_non_realisee`}** ; **un avoir sur acompte n'est admis que pour `correction_erreur`** *(contrôles ajoutés par la migration 009a)* ; aucun nouveau solde par avoir **hors avoir total (arbitrage B : une nouvelle facture reste possible après avoir total)** ; ne rouvre pas le BC aux devis (INV-187) | 58, 76, 185 |
  | TR-24 | factures / UPDATE `cancelled_at` | **obsolète** : l'annulation de facture n'existe plus (E-14, INV-185). Le rôle de contrôle de cohérence glisse vers les règles de l'avoir (TR-23 : avoir total, avoir sur avoir interdit) *(planifié, jamais créé)* | 61, 77 |
  | TR-30 | reglements / INSERT | encaissement → facture hors avoir active ; remboursement → avoir actif | 71 |
+ | TR-31 | reglements / INSERT | encaissement ≤ `reste_du` ; remboursement ≤ `credit` | 72, 74 |
 @@ -792,7 +805,7 @@ Les triggers ne servent que là où un `CHECK` ne suffit pas. Ils lèvent `RAISE
  | TR-33 | reglements / UPDATE `cancelled_at` | annulation d'encaissement refusée si `credit` < Σ remboursements actifs | 75 |
  | TR-40 | pv / UPDATE, DELETE | interdits | 96 |
@@ -460,15 +551,16 @@ index c040099..5f6e38d 100644
  | TR-60 | historique / UPDATE, DELETE | interdits | 110 |
  | TR-70 | documents / UPDATE, DELETE | UPDATE limité à `chemin_relatif` ; DELETE interdit | 105 |
  | TR-80 | urssaf_referentiels / INSERT, UPDATE, DELETE | append-only ; `date_debut_effet` > toutes les précédentes | 121 |
-@@ -824,6 +837,7 @@ Un index **par clé étrangère** (l'index d'un `UNIQUE` qui commence par la FK
+@@ -824,6 +837,8 @@ Un index **par clé étrangère** (l'index d'un `UNIQUE` qui commence par la FK
  - facture_lignes(facture_id, ordre) · facture_lignes(bc_ligne_id)
  - reglements(facture_id) · reglements(date_evenement) · reglements(type)
  - garanties(bc_id) · garanties(bc_ligne_id) · garanties(facture_declenchement_id) · garanties(date_fin_suivi)
 +- bc_ligne_retraits_garantie(bc_id) · bc_ligne_retraits_garantie(avoir_id) *(migration 009a)*
++- Vue de lecture `v_garanties_suivi_actif` *(migration 009a ; nom proposé, §4.10)*
  - pv(bc_id) · pv(origine_pv_id)
  - depenses(bc_id) · depenses(fournisseur_id) · depenses(categorie_id) · depenses(date_depense)
  - planning_evenements(bc_id) · planning_evenements(date_debut) · planning_evenements(date_fin)
-@@ -871,12 +885,12 @@ Les règles de transformation V2 → `import-v6.json` (mapping complet, décisio
+@@ -871,12 +886,12 @@ Les règles de transformation V2 → `import-v6.json` (mapping complet, décisio
  ### 10.3 Contrat d'entrée `import-v6.json` (principes ; le schéma JSON détaillé est le point P-04)
  - **Enveloppe** : `format` = `"import-v6"` ; `contrat_version` (entier) ; `genere_par` (nom et version du convertisseur) ; `genere_le` (timestamp) ; `source` (type, version et date de la sauvegarde d'origine, informatifs) ; `controles` (totaux de contrôle, §10.8).
  - **Blocs acceptés** : `parametres_entreprise`, `categories_prestations`, `clients`, `prestations`, `devis` (avec `lignes`), `bons_commande` (avec `lignes`), `factures` (avec `lignes`), `reglements`, `pv`, `sequences`, `anomalies`.
@@ -483,7 +575,7 @@ index c040099..5f6e38d 100644
  
  ### 10.4 Exemption unique : numéros historiques [INV-131]
  Les devis, factures (acompte, situation, solde, avoir) et PV `origine='import'` conservent le `numero` qu'ils portaient quand ils ont été remis au client : un numéro déjà émis ne change jamais. Pour eux seulement, le format, le préfixe et l'année du `numero` ne sont pas contrôlés (non vide, unique, immuable par TR-01). Les CHECK de format restent conditionnés par `origine='v6'` sur `devis`, `factures` et `pv` uniquement.
-@@ -1012,16 +1026,16 @@ BATORYA propose une sauvegarde immédiate, réalisée dans l'**ancien** dossier
+@@ -1012,16 +1027,16 @@ BATORYA propose une sauvegarde immédiate, réalisée dans l'**ancien** dossier
  | C-01 | ~~Contractuel 1000.00 ; acompte 200.00 émis, non encaissé~~ | **OBSOLÈTE (E-10, INV-181, PT-8)** : plus de gel progressif ni d'annulation automatique d'acompte ; le devis accepté est verrouillé dans tous les cas (voir C-30). Conservé pour traçabilité. |
  | C-02 | Acompte encaissé 50.00 (partiel) | `reste_du` acompte = 150.00 ; `etat_paiement = partiellement_reglee` *(la mention « gel immédiat » de la V3.12 est supprimée, PT-8)* |
  | C-03 | Acompte 200.00 actif ; situation cumul 60 % | cible 600.00 ; nette avant = 200.00 ; **situation = 400.00** ; nette = 600.00 |
@@ -503,7 +595,7 @@ index c040099..5f6e38d 100644
  | C-14 | 3.333 × 10 | ligne = 33.33 |
  | C-15 | 2.5 × 10.005 | 25.0125 → 25.01 |
  | C-16 | 0.125 et −0.125 | 0.13 et −0.13 (HALF_UP en valeur absolue) |
-@@ -1071,7 +1085,7 @@ BATORYA propose une sauvegarde immédiate, réalisée dans l'**ancien** dossier
+@@ -1071,7 +1086,7 @@ BATORYA propose une sauvegarde immédiate, réalisée dans l'**ancien** dossier
  | T-11 | ~~solde → gel~~ **OBSOLÈTE** (PT-8) | ~~INV-33~~ |
  | T-12 | avoir → pas de réouverture du cycle de facturation | INV-58 |
  | T-13 | ~~annulation d'un avoir → recalcul financier~~ **OBSOLÈTE** (E-14 : un avoir n'est plus annulable) | ~~INV-79~~ |
@@ -512,7 +604,7 @@ index c040099..5f6e38d 100644
  | T-15 | levée de réserves → uniquement depuis un PV avec réserves | INV-96 |
  | T-16 | import d'un `import-v6.json` de référence → reste dû recalculé = totaux de contrôle du fichier (V3.4 : « migration V2 → comparaison du reste dû ») | INV-133 |
  | T-17 | période URSSAF verrouillée → modification directe refusée | INV-125 |
-@@ -1135,7 +1149,7 @@ Ces tests ne lisent jamais un fichier V2. Les tests du convertisseur (`TC-xx`) s
+@@ -1135,7 +1150,7 @@ Ces tests ne lisent jamais un fichier V2. Les tests du convertisseur (`TC-xx`) s
  | Insertion de lignes de facture hors transaction d'émission | service ; détection CK-05 |
  
  Requêtes de contrôle exécutées : en test, après import, après restauration, et sur demande :
@@ -521,7 +613,7 @@ index c040099..5f6e38d 100644
  
  **CK-13** est une **requête de contrôle**, pas une contrainte : un `CHECK` ne compare pas des lignes d'autres tables. Elle renvoie les lignes en violation de la règle du miroir (INV-175), **pour chaque devis rattaché à un BC via `bc_devis` (PT-6)** : `client_id` différent entre devis et BC ; `montant_contractuel_ht` ≠ Σ `total_ht` des devis rattachés ; `remise_*`, `acompte_*`, snapshots (contenus et versions) ou `date_acceptation` du devis d'origine différents ; lignes ou garanties de ligne non identiques (1:1) ; devis rattaché `annule` alors que son BC n'est pas `annule` ; devis `accepte` sans BC ; contractuel à `0.00`. *(V3.12 : « BC `annule` sans devis `annule` » est **supprimé** — l'annulation d'un BC n'annule pas ses devis, INV-188.)* **CK-14** (nouvelle, V3.13) vérifie le rattachement multi-devis : un devis dans un seul BC ; aucun devis rattaché après la rédaction du solde du BC (tranche Facturation) ; BC non annulé pour tout rattachement postérieur à son annulation. Ces requêtes sont exécutées après import (un résultat non vide annule l'import), après restauration (étape 9 du §11.2 : une incohérence fait échouer la restauration), dans les tests et sur demande. Elles ne modifient jamais les données.
  
-@@ -1193,7 +1207,7 @@ CK-01 numéros uniques, et conformes au format V6 sauf devis/factures/PV `origin
+@@ -1193,7 +1208,7 @@ CK-01 numéros uniques, et conformes au format V6 sauf devis/factures/PV `origin
  | D-44 | **`ON DELETE` examiné relation par relation** : pas de `RESTRICT` partout (la suppression d'un brouillon doit rester possible) ; CASCADE réservée aux données strictement dépendantes sans valeur historique autonome | RESTRICT systématique | **Validée** 2026-10-03 (Q12) ; mécanismes : PT-5 |
  | D-45 | **Facture validée** : aucun brouillon persistant ; jamais annulée ni supprimée ; correction par avoir ; nouvelle facture après avoir total (arbitrage B) | annulation de facture (E-14 remplace) | **Validée** 2026-10-03 (Q8, B) ; mécanisme : PT-9 |
  | D-46 | **BC annulé** : conservé avec ses devis (non annulés automatiquement), factures, avoirs, dépenses et historique ; plus de cycle commercial normal ; annulation sans condition de facturation | cascade vers les devis ; annulation conditionnée à la facturation (D-05) | **Validée** 2026-10-03 (Q18, Q21, correction PT-6) |
@@ -530,7 +622,7 @@ index c040099..5f6e38d 100644
  | D-48 | **Acompte par devis ; situation globale au BC en % ou en montant ; un règlement = une facture** | acompte unique par BC ; règlement multi-factures | **Validée** 2026-10-03 (Q19, Q20, Q24, Q27, arbitrage C) ; mécanismes : PT-10, PT-11 |
  | D-49 | **Exécution distincte du contractuel ; remise globale au prorata de la valeur exécutée/facturée** (principes) | réécriture du devis ; remise recalculée | **Principes validés** 2026-10-03 (Q22, Q25, Q26, arbitrage D) ; **schéma et formules À CONCEVOIR** (PT-12, PT-13) |
  | D-50 | **Dépense** : corrigeable puis annulable ; conservée ; sans fournisseur archivé | suppression ; aucune annulation | **Validée** 2026-10-03 (Q7) ; mécanisme : PT-14 |
-@@ -1202,12 +1216,12 @@ CK-01 numéros uniques, et conformes au format V6 sauf devis/factures/PV `origin
+@@ -1202,12 +1217,12 @@ CK-01 numéros uniques, et conformes au format V6 sauf devis/factures/PV `origin
  | D-53 | **Précisions du cycle de vie et révisions** : le devis `en_attente` n'est plus un point à décider (numéroté, modifiable). Le devis initial est la **version initiale**, **jamais une « révision 0 »** ; les révisions commencent à Révision 1. Toute modification du contenu présenté au client ou à impact quantitatif/financier crée une phase de révision ; une modification technique sans impact n'en crée pas. `notes` imprimées = contenu de la révision. `client_id` immuable après finalisation. Révision abandonnée = jamais historique, aucun numéro consommé, retour exact à la dernière version validée. Validation sans modification significative : pas de révision. Refus ou annulation pendant une révision : révision abandonnée. `documents.revision` identifie la version ; `numero_version` ne la remplace pas. `bc_devis.revision_acceptee` supprimée (redondante). Pas de reprise d'une ancienne révision à ce stade. **Stockage : A raffiné — tables vivantes + `devis_revisions` append-only (snapshots complets)** | pas de révision ; révision par modification élémentaire ; « révision 0 » ; tables relationnelles versionnées | **Validée** 2026-10-03 (second envoi pour les règles ; troisième envoi pour le stockage sur le principe et les 10 décisions) ; **représentation de la version initiale figée le 2026-10-03 : `revision IS NULL`** (`ordre_version` non retenu, aucune vue) ; autres détails = propositions |
  | D-54 | **Numérotation — priorité absolue** : un numéro définitif n'est jamais attribué deux fois ; un trou après crash ou rollback est acceptable et n'est jamais récupéré ; le compteur ne revient pas en arrière après un rollback. Ordre des priorités : aucun doublon, aucun numéro réservé réutilisé, protection rollback/crash/redémarrage, protection contre la restauration d'une ancienne base, trous non récupérés. **Mécanisme : PT-1 (tranché le 2026-10-03 : réservation committée avant l'objet, double garde compteur + high-water)** | α, ρ (rejetées) ; compteur restauré par rollback et réattribué (première lecture) | Règle **validée** 2026-10-03 (second envoi) ; mécanisme **tranché** 2026-10-03 (PT-1) |
  | D-55 | **Versionnement des migrations** (V-1 à V-5) : ordre métier réservé 001 → 010 ; deux catégories de noms, tranche `NNN_<objet>.sql` et corrective `NNNx_<objet>.sql` (rattachée à la dernière tranche exécutée avant elle) ; **`PRAGMA user_version` = rang** dans la chaîne ordonnée, pas numéro de fichier ; chaîne **append-only** ; `user_version` écrit dans la transaction de la migration avant `COMMIT` ; M-A et M-B = correctives `005a`/`005b` après 005 et avant 006 ; protocole de reconstruction de table et évolution du runner = chantier technique distinct de 005 | numérotation séquentielle simple (tranches renumérotées) ; `schema_version` dans chaque fichier (seconde source de vérité) | **Validée** 2026-10-04 (réponse de Rémy) |
@@ -545,7 +637,7 @@ index c040099..5f6e38d 100644
  
  **Décisions existantes complétées par la V3.12** (leur énoncé d'origine reste valable) :
  - **D-16** : en plus de l'absence de garantie native, le contrat n'accepte aucune garantie de ligne ; un BC importé n'a aucun `bc_ligne_garanties` (INV-134). La contradiction de la V3.11 (§10.5 : « devis (+ lignes + garanties de ligne) ») est corrigée.
-@@ -1269,7 +1283,7 @@ Le modèle est prêt pour le DDL lorsque :
+@@ -1269,7 +1284,7 @@ Le modèle est prêt pour le DDL lorsque :
  | 3 | `src-tauri/migrations/metier/003_devis.sql` | `devis`, `devis_lignes`, `devis_ligne_garanties` ; 11 triggers ; 4 index | V3.11 | T-28 |
  | 4 | `src-tauri/migrations/metier/004_bons_commande.sql` | `bons_commande`, `bc_lignes`, `bc_ligne_garanties` ; 15 triggers dont TR-96 sur `numerotation_sequences` ; 3 index | V3.12 | T-29 |
  
@@ -554,7 +646,7 @@ index c040099..5f6e38d 100644
  
  | Rang | Fichier | Catégorie | Contenu |
  |---|---|---|---|
-@@ -1281,9 +1295,10 @@ Le modèle est prêt pour le DDL lorsque :
+@@ -1281,9 +1296,10 @@ Le modèle est prêt pour le DDL lorsque :
  | 10 | `007_reglements.sql` | tranche métier | Règlements ; **livrée** (test T-49) |
  | 11 | `008_garanties.sql` | tranche métier | Garanties ; **livrée** (test T-50) |
  | 12 | `009_pv.sql` | tranche métier | PV ; **livrée** (test T-51) |
@@ -567,11 +659,11 @@ index c040099..5f6e38d 100644
  
  **Migrations correctives M-A et M-B (PT-20 ; place dans la chaîne validée, contenu PROPOSÉ et non validé, fichiers `005a` et `005b` livrés dans `main`)** : les migrations 001–004 étant appliquées et immuables, les écarts du §4.19 se corrigent par des migrations nouvelles, après passage du modèle à la version correspondante (conventions §5). M-A et M-B sont des **correctives** : elles ne sont pas des tranches métier, ne consomment aucun numéro de tranche et s'exécutent **après 005 et avant 006** (D-55). La corrective `005c` (D-56, rang 8) s'exécute après 005b et avant 006 : elle ne vient pas du §4.19 mais en complète la ligne 12 (adaptation finale de TR-12, PT-16). Le protocole de reconstruction de table et les évolutions du runner sont un **chantier technique distinct** de la tranche 005 (conventions §5).
  
-@@ -1292,10 +1307,11 @@ Une corrective future `010a_*` aurait le rang 14. Exemple : `user_version = 7` 
+@@ -1292,10 +1308,11 @@ Une corrective future `010a_*` aurait le rang 14. Exemple : `user_version = 7` 
  | `metier/005a_corrections_v313.sql` (M-A, rang 6) | reconstruction de `clients` sans `statut` ; retrait de `fournisseurs.statut` par `DROP INDEX` puis `DROP COLUMN`, **sans reconstruction** de `fournisseurs` (PT-3) ; gardes DELETE / `code` immuable (PT-4) ; reconstruction de `devis` avec statut `brouillon` et `numero` nullable, `devis_origine_id`, adaptation de `frozen_at`/TR-14 (PT-2, PT-7, PT-8) ; réécriture de TR-10/TR-11 (PT-2, PT-17, PT-21) ; colonnes `devis.revision`, `devis.revision_en_cours`, table `devis_revisions` + TR-100 (PT-21, validé sur le principe ; la colonne `documents.revision` relève de la future tranche Documents, **pas de M-A**) ; garde DELETE sur `devis` et cascade limitée au brouillon (PT-5) | §4.19 lignes 1 à 9 |
  | `metier/005b_bc_multi_devis.sql` (M-B, rang 7) | création de `bc_devis` ; migration des liens existants `bons_commande.devis_id` vers `bc_devis` ; reconstruction de `bons_commande` (retrait de `devis_id`, `remise_*`, `acompte_*`) ; adaptation de TR-12, TR-13, TR-17, TR-18 ; adaptation de `bc_ligne_garanties` (`RESTRICT`) (PT-5, PT-6, PT-7 ; l'adaptation de TR-12 pour PT-16 est reprise par la corrective 005c, D-56) | §4.19 lignes 10 à 18 |
  | `metier/005c_bc_annule_caches_financiers.sql` (corrective, rang 8, D-56) | remplacement de `tr_12_bons_commande_annule` (`DROP TRIGGER` puis `CREATE TRIGGER`, même nom) : `montant_deja_facture_ht`, `avancement` et `date_100_facture` ne sont plus gardés sur un BC annulé, les 22 autres colonnes restent gardées ; aucune reconstruction de table, aucun objet créé ou supprimé, aucun CHECK, aucun CK (PT-16) ; livrée avec son test `test_005c_bc_annule_caches_financiers.py` (T-47) | §4.19 ligne 12 (adaptation finale) |
-+| `metier/009a_acompte_garanties_manuelles.sql` (corrective, rang 13, révision F) | remplacement des triggers `tr_22_factures_acompte`, `tr_22_factures_situation`, `tr_22_factures_solde` ; reconstruction de `garanties` (`facture_declenchement_id` devient nullable ; ids, valeurs et `sqlite_sequence` préservés ; index recréés) ; création de `bc_ligne_retraits_garantie` (append-only) et de ses deux index ; remplacement de `tr_50_garanties_*`, `tr_51_garanties_insert` ; création de `tr_50_bc_ligne_retraits_garantie_*` et `tr_51_bc_ligne_retraits_garantie_insert` ; aucun `CHECK` de `factures` modifié ; protocole de reconstruction de la convention 005a ; livrée avec son test `test_009a_acompte_garanties_manuelles.py` | décisions de la révision F (2.1 à 2.4, 3.1 à 3.4, 4) |
++| `metier/009a_acompte_garanties_manuelles.sql` (corrective, rang 13, révision F) | remplacement des triggers `tr_22_factures_acompte`, `tr_22_factures_situation`, `tr_22_factures_solde`, `tr_23_factures_avoir` ; reconstruction de `garanties` (`facture_declenchement_id` devient nullable ; ids, valeurs et `sqlite_sequence` préservés ; index recréés) ; création de `bc_ligne_retraits_garantie` (append-only) et de ses deux index ; remplacement de `tr_50_garanties_*`, `tr_51_garanties_insert` ; création de `tr_50_bc_ligne_retraits_garantie_*`, `tr_51_bc_ligne_retraits_garantie_insert` et de la vue `v_garanties_suivi_actif` ; aucun `CHECK` de `factures` modifié ; protocole de reconstruction de la convention 005a ; livrée avec son test `test_009a_acompte_garanties_manuelles.py` | décisions de la révision F (2.1 à 2.4, 3.1 à 3.4, 4) |
  
 -*Numérotation des fichiers et ordre : validés le 2026-10-04 (D-55) et, pour 005c, le 2026-10-05 (D-56) ; contenu de `005c` : validé (D-56) et livré (T-47) ; contenu de `005a` et `005b` : propositions.* L'ordre des tranches de D-34 reste celui des tranches métier : 001 Initial → 002 Fournisseurs → 003 Devis → 004 Bons de commande → **005 Dépenses** → **006 Facturation** → 007 Règlements → 008 Garanties → 009 PV → 010 Planification. **Aucune tranche n'est renumérotée.** M-A (`005a`), M-B (`005b`) puis la corrective `005c` (D-56) s'exécutent entre 005 et 006. L'ordre des correctives entre elles (M-A avant M-B) est celui du tableau ; une dépendance dure de M-B envers M-A n'est démontrée que pour un éventuel `devis.devis_origine_id` (PT-7, non validé). La couche d'exécution (PT-12, PT-13) vient après la Facturation, une fois conçue. Aucun fichier de migration, aucun test et aucun code n'est modifié par la présente mise à jour documentaire.
 +*Numérotation des fichiers et ordre : validés le 2026-10-04 (D-55) et, pour 005c, le 2026-10-05 (D-56) ; contenu de `005c` : validé (D-56) et livré (T-47) ; contenu de `005a` et `005b` : propositions.* L'ordre des tranches de D-34 reste celui des tranches métier : 001 Initial → 002 Fournisseurs → 003 Devis → 004 Bons de commande → **005 Dépenses** → **006 Facturation** → 007 Règlements → 008 Garanties → 009 PV → 010 Planification. **Aucune tranche n'est renumérotée.** M-A (`005a`), M-B (`005b`) puis la corrective `005c` (D-56) s'exécutent entre 005 et 006. L'ordre des correctives entre elles (M-A avant M-B) est celui du tableau ; une dépendance dure de M-B envers M-A n'est démontrée que pour un éventuel `devis.devis_origine_id` (PT-7, non validé). La couche d'exécution (PT-12, PT-13) vient après la Facturation, une fois conçue. Cette phrase ne vaut que pour les mises à jour documentaires antérieures à la révision F, qui a ajouté la migration corrective `009a` et son test sans modifier aucune migration livrée.
@@ -581,7 +673,7 @@ index c040099..5f6e38d 100644
  
  **Tests 001–003 renforcés (copies en relecture, `fichiers-a-relire/`)** : chaque connexion de test pose explicitement `PRAGMA recursive_triggers=ON` ; un test vérifie que le réglage est actif ; un test ciblé vérifie qu'`INSERT OR REPLACE` ne contourne pas les triggers de protection applicables (001 : TR-90 ; 002 : CHECK de `fournisseurs` et TR-90 de la pile ; 003 : TR-11 lignes et garanties). Les migrations 001–003 ne sont pas modifiées. Nombre de tests : 001 = 28 (26 + 2), 002 = 18 (16 + 2), 003 = 68 (65 + 3). Les copies ont été exécutées dans une copie de travail hors dépôt ; les tests du dépôt GitHub n'ont pas été exécutés.
  
-@@ -1399,7 +1415,7 @@ Ces éléments sont des **propositions de conception** nées de la mise en œuvr
+@@ -1399,7 +1416,7 @@ Ces éléments sont des **propositions de conception** nées de la mise en œuvr
  | PT-16 | INV-188 | **Scindé** — (a) **TR-12** : adaptation pour les caches d'un BC annulé (`montant_deja_facture_ht`, `avancement`, `date_100_facture`) → corrective **005c** (D-56) ; (b) **TR-16/INV-47** : pas de nouvel acompte/situation/solde sur BC annulé ; avoirs et règlements sur documents existants possibles → tranche **006** | (a) 005c (D-56) ; (b) **Avoir sur un BC `termine` : à confirmer** — relève de 006, non traité par 005c |
  | PT-17 | INV-182 | Transition `refuse → en_attente` via TR-10 réécrit | Sort de `date_refus` et `motif_refus` à la réouverture |
  | PT-18 | INV-86, INV-87 (principe du CDC §24 inchangé) | **Aucun mécanisme** : la suppression complète d'une ligne de devis brouillon supprime avec elle ses garanties de ligne ; une ligne modifiée suit le principe existant | Aucun — conséquence de la suppression, non une règle à arbitrer |
@@ -854,17 +946,23 @@ index 4cc4f67..8aefdc9 100644
  Il ne définit pas les tables SQLite, les types SQL, les index, les repositories, les services TypeScript, les composants React ni les commandes Tauri : ces éléments relèvent des documents techniques correspondants.
 diff --git a/src-tauri/migrations/metier/009a_acompte_garanties_manuelles.sql b/src-tauri/migrations/metier/009a_acompte_garanties_manuelles.sql
 new file mode 100644
-index 0000000..a2e7dfb
+index 0000000..69f70ed
 --- /dev/null
 +++ b/src-tauri/migrations/metier/009a_acompte_garanties_manuelles.sql
-@@ -0,0 +1,384 @@
+@@ -0,0 +1,466 @@
 +-- =====================================================================
 +-- BATORYA Essentiel V6 — base métier — migration corrective 009a_acompte_garanties_manuelles
 +-- Corrective (rang 13, après 009_pv) : alignement du SQL livré sur les décisions
 +-- métier validées de la révision F (2026-10-17) :
 +--   * acompte : plafonné par l'acompte PRÉVU du devis (jusqu'à 100 % du marché) ;
 +--   * situation : jamais à 100 % du contractuel (nette après < contractuel) ;
-+--   * solde : strictement positif, aucun solde à 0.00 ;
++--   * solde : strictement positif, aucun solde à 0.00, égal au contractuel FINAL
++--     (contractuel moins avoirs « prestations non réalisées » portant sur un solde)
++--     moins la facturation nette avant le solde ;
++--   * avoirs : motif en liste fermée (correction_erreur | prestation_non_realisee) ;
++--     un avoir sur acompte ne corrige qu'une erreur ;
++--   * clôture du cycle : un acompte ne porte la facturation nette à 100 % que si
++--     l'acompte prévu du marché est de 100 % (sinon seul un solde valide clôture) ;
 +--   * garanties : déclenchement MANUEL, sans facture de solde ni facture de
 +--     déclenchement obligatoire ; périmètre contractuel réel (retrait ciblé d'une
 +--     prestation) ; traçabilité conservée.
@@ -880,9 +978,9 @@ index 0000000..a2e7dfb
 +--
 +-- Contenu :
 +--   1. gardes d'exécution (foreign_keys = 0, user_version = 12) ;
-+--   2. facturation : tr_22_factures_acompte, tr_22_factures_situation et
-+--      tr_22_factures_solde supprimés puis recréés (DROP TRIGGER / CREATE TRIGGER,
-+--      même nom). Aucune table de facturation n'est reconstruite : la clause
++--   2. facturation : tr_22_factures_acompte, tr_22_factures_situation,
++--      tr_22_factures_solde et tr_23_factures_avoir supprimés puis recréés
++--      (DROP TRIGGER / CREATE TRIGGER, même nom). Aucune table de facturation n'est reconstruite : la clause
 +--      CHECK « type = 'solde' OR total_ht <> '0.00' » de 006 reste en place (elle
 +--      n'est pas contradictoire pour un acompte, une situation ou un avoir) ; le
 +--      refus du solde à 0.00 est porté par le trigger. Les données existantes ne
@@ -909,13 +1007,16 @@ index 0000000..a2e7dfb
 +--   * une moins-value ou un avoir PARTIEL ne retire pas la prestation par défaut :
 +--     le traitement du périmètre résiduel est À CONCEVOIR ; seul le service écrit
 +--     un retrait ;
-+--   * le contractuel courant et final (réductions, avoirs « prestations non
-+--     réalisées » sur solde) : le SQL livré continue de lire Σ total_ht des devis
-+--     rattachés ; leur prise en compte reste une règle de service / phase
-+--     ultérieure ;
-+--   * le contrôle de la liste fermée des motifs d'avoir (motif_avoir est libre dans
-+--     006) : seule la ligne de retrait de motif « avoir » exige la valeur
-+--     'prestation_non_realisee'.
++--   * le contractuel COURANT (montants acceptés moins réductions par ligne de BC
++--     acceptées non annulées) : le stockage des réductions n'est pas défini (modèle
++--     SQLite §3.2 et §3.8, PT-12 : À CONCEVOIR) ; aucune réduction ne peut donc
++--     exister en base, et le contractuel lu par les triggers est Σ total_ht des
++--     devis rattachés (le montant accepté). Le contractuel FINAL, lui, déduit les
++--     avoirs « prestations non réalisées » sur solde, qui existent en base : il est
++--     porté par tr_22_factures_solde ;
++--   * historique : un avoir déjà présent dont le motif n'est pas dans la liste
++--     fermée (écrit sous 006, motif libre) est conservé tel quel ; il n'est jamais
++--     compté comme « prestation non réalisée ».
 +--
 +-- Exécution par le runner de migrations (côté Rust) — protocole de
 +-- reconstruction, conventions §5 :
@@ -970,6 +1071,7 @@ index 0000000..a2e7dfb
 +DROP TRIGGER tr_22_factures_acompte;
 +DROP TRIGGER tr_22_factures_situation;
 +DROP TRIGGER tr_22_factures_solde;
++DROP TRIGGER tr_23_factures_avoir;
 +
 +-- TR-22 [INV-52, INV-57, INV-58, INV-189] : acompte. Le devis d'origine est
 +-- rattaché au BC de la facture ; aucun solde n'existe sur le BC (même totalement
@@ -1012,6 +1114,26 @@ index 0000000..a2e7dfb
 +           + CAST(REPLACE(NEW.total_ht, '.', '') AS INTEGER)
 +         > (SELECT COALESCE(SUM(CAST(REPLACE(d.total_ht, '.', '') AS INTEGER)), 0)
 +              FROM bc_devis l JOIN devis d ON d.id = l.devis_id WHERE l.bc_id = NEW.bc_id);
++    -- Clôture du cycle (décision 2.3) : lorsque l'acompte prévu du marché est
++    -- inférieur à 100 %, seul un solde valide (strictement positif) clôture le
++    -- cycle : un acompte ne peut donc pas porter la facturation nette à 100 % du
++    -- contractuel, ce qui rendrait tout solde impossible (aucun solde à 0.00).
++    -- Si tous les devis rattachés prévoient 100 %, l'acompte à 100 % est admis.
++    SELECT RAISE(ABORT, 'INV-57: seul un solde strictement positif cloture le cycle : un acompte ne porte la facturation nette a 100 % du contractuel que si l''acompte prevu du marche est de 100 %')
++     WHERE (SELECT COALESCE(SUM(CASE WHEN f.type = 'avoir' THEN -CAST(REPLACE(f.total_ht, '.', '') AS INTEGER)
++                                     ELSE CAST(REPLACE(f.total_ht, '.', '') AS INTEGER) END), 0)
++              FROM factures f WHERE f.bc_id = NEW.bc_id)
++           + CAST(REPLACE(NEW.total_ht, '.', '') AS INTEGER)
++         = (SELECT COALESCE(SUM(CAST(REPLACE(d.total_ht, '.', '') AS INTEGER)), 0)
++              FROM bc_devis l JOIN devis d ON d.id = l.devis_id WHERE l.bc_id = NEW.bc_id)
++       AND (SELECT COALESCE(SUM(CASE d.acompte_type
++                                  WHEN 'aucun'   THEN 0
++                                  WHEN 'montant' THEN CAST(REPLACE(d.acompte_valeur, '.', '') AS INTEGER)
++                                  ELSE (CAST(REPLACE(d.total_ht, '.', '') AS INTEGER) * CAST(REPLACE(d.acompte_valeur, '.', '') AS INTEGER) + 5000) / 10000
++                                END), 0)
++              FROM bc_devis l JOIN devis d ON d.id = l.devis_id WHERE l.bc_id = NEW.bc_id)
++         < (SELECT COALESCE(SUM(CAST(REPLACE(d.total_ht, '.', '') AS INTEGER)), 0)
++              FROM bc_devis l JOIN devis d ON d.id = l.devis_id WHERE l.bc_id = NEW.bc_id);
 +END;
 +
 +-- TR-22 [INV-57, INV-58, INV-190] : situation. Aucun solde n'existe sur le BC
@@ -1043,10 +1165,15 @@ index 0000000..a2e7dfb
 +-- TR-22 [INV-52, INV-55, INV-58] : solde. Aucun solde actif sur le BC (un solde à
 +-- 0.00 historique n'est jamais neutralisé) ; le total est STRICTEMENT positif :
 +-- aucun solde à 0.00 n'est émis ; total_ht = contractuel du BC - facturation nette
-+-- avant, exactement. Lorsque la facturation nette atteint déjà le contractuel, le
-+-- reste à facturer est nul et aucun solde ne peut être émis. Après un solde
-+-- totalement crédité, un nouveau solde est possible. Aucun acompte préalable n'est
-+-- exigé.
++-- avant, exactement, où le contractuel FINAL = Σ total_ht des devis rattachés moins
++-- Σ des avoirs « prestation_non_realisee » dont l'origine est un solde du BC (les
++-- sommes de ces avoirs ne sont jamais refacturables, INV-58 ; un avoir
++-- « correction_erreur » ou un avoir sur situation ne réduit rien). Lorsque la
++-- facturation nette atteint déjà le contractuel final, le reste à facturer est nul
++-- et aucun solde ne peut être émis. Après un solde totalement crédité par un avoir
++-- de correction, un nouveau solde est possible ; il ne l'est pas pour la part
++-- créditée au titre de prestations non réalisées. Aucun acompte préalable n'est
++-- exigé. Le contractuel COURANT (réductions) n'est pas lu : voir « Hors périmètre ».
 +CREATE TRIGGER tr_22_factures_solde
 +BEFORE INSERT ON factures
 +WHEN NEW.type = 'solde'
@@ -1060,13 +1187,46 @@ index 0000000..a2e7dfb
 +                                   = CAST(REPLACE(s.total_ht, '.', '') AS INTEGER)));
 +    SELECT RAISE(ABORT, 'INV-55: un solde est strictement positif, aucun solde a 0.00 n''est emis')
 +     WHERE NEW.total_ht = '0.00';
-+    SELECT RAISE(ABORT, 'INV-58: le solde est le contractuel du bon de commande moins la facturation nette avant le solde')
++    SELECT RAISE(ABORT, 'INV-58: le solde est le contractuel final du bon de commande (moins les avoirs prestations non realisees sur solde) moins la facturation nette avant le solde')
 +     WHERE CAST(REPLACE(NEW.total_ht, '.', '') AS INTEGER) IS NOT
 +           (SELECT COALESCE(SUM(CAST(REPLACE(d.total_ht, '.', '') AS INTEGER)), 0)
 +              FROM bc_devis l JOIN devis d ON d.id = l.devis_id WHERE l.bc_id = NEW.bc_id)
++         - (SELECT COALESCE(SUM(CAST(REPLACE(a.total_ht, '.', '') AS INTEGER)), 0)
++              FROM factures a JOIN factures o ON o.id = a.origine_facture_id
++             WHERE a.bc_id = NEW.bc_id AND a.type = 'avoir'
++               AND a.motif_avoir = 'prestation_non_realisee' AND o.type = 'solde')
 +         - (SELECT COALESCE(SUM(CASE WHEN f.type = 'avoir' THEN -CAST(REPLACE(f.total_ht, '.', '') AS INTEGER)
 +                                     ELSE CAST(REPLACE(f.total_ht, '.', '') AS INTEGER) END), 0)
 +              FROM factures f WHERE f.bc_id = NEW.bc_id);
++END;
++
++
++-- TR-23 [INV-58, INV-76] : avoir. Contrôles de 006 conservés (l'origine n'est pas un
++-- avoir ; même bon de commande ; Σ des avoirs <= total de l'origine) ; s'y ajoutent,
++-- pour tout NOUVEL avoir : le motif appartient à la liste fermée (correction_erreur |
++-- prestation_non_realisee) ; un avoir sur un acompte ne corrige qu'une erreur de
++-- l'acompte (jamais une moins-value, un abandon ou un marché inférieur à l'acompte).
++-- Un motif absent reste refusé par le CHECK de factures. Les avoirs existants ne
++-- sont pas relus.
++CREATE TRIGGER tr_23_factures_avoir
++BEFORE INSERT ON factures
++WHEN NEW.type = 'avoir'
++BEGIN
++    SELECT RAISE(ABORT, 'INV-76: l''origine d''un avoir n''est pas un avoir')
++     WHERE EXISTS (SELECT 1 FROM factures o WHERE o.id = NEW.origine_facture_id AND o.type = 'avoir');
++    SELECT RAISE(ABORT, 'INV-76: l''avoir et sa facture d''origine appartiennent au meme bon de commande')
++     WHERE EXISTS (SELECT 1 FROM factures o WHERE o.id = NEW.origine_facture_id AND o.bc_id IS NOT NEW.bc_id);
++    SELECT RAISE(ABORT, 'INV-76: la somme des avoirs ne depasse pas le total de la facture d''origine')
++     WHERE CAST(REPLACE(NEW.total_ht, '.', '') AS INTEGER)
++           + (SELECT COALESCE(SUM(CAST(REPLACE(a.total_ht, '.', '') AS INTEGER)), 0)
++                FROM factures a WHERE a.origine_facture_id = NEW.origine_facture_id)
++         > (SELECT CAST(REPLACE(o.total_ht, '.', '') AS INTEGER) FROM factures o WHERE o.id = NEW.origine_facture_id);
++    SELECT RAISE(ABORT, 'INV-76: le motif d''un avoir est correction_erreur ou prestation_non_realisee')
++     WHERE NEW.motif_avoir IS NOT NULL
++       AND NEW.motif_avoir NOT IN ('correction_erreur', 'prestation_non_realisee');
++    SELECT RAISE(ABORT, 'INV-76: un avoir sur un acompte ne corrige qu''une erreur de l''acompte')
++     WHERE NEW.motif_avoir = 'prestation_non_realisee'
++       AND EXISTS (SELECT 1 FROM factures o WHERE o.id = NEW.origine_facture_id AND o.type = 'acompte');
 +END;
 +
 +
@@ -1242,6 +1402,20 @@ index 0000000..a2e7dfb
 +     WHERE NEW.avoir_id IS NOT NULL
 +       AND NOT EXISTS (SELECT 1 FROM facture_lignes fl WHERE fl.facture_id = NEW.avoir_id AND fl.bc_ligne_id = NEW.bc_ligne_id);
 +END;
++
++
++-- =====================================================================
++-- Suivi ACTIF des garanties (décision 3.3) — vue de lecture, sans donnée propre.
++-- Une garantie déclenchée est en suivi actif tant que sa ligne de BC (prestation)
++-- ne figure pas dans bc_ligne_retraits_garantie. Un retrait ne touche que la ligne
++-- de sa prestation : les autres garanties restent actives ; la garantie retirée
++-- n'est ni modifiée ni supprimée (elle reste dans garanties : historique).
++-- =====================================================================
++CREATE VIEW v_garanties_suivi_actif AS
++SELECT g.id, g.bc_id, g.bc_ligne_id, g.garantie_type, g.date_declenchement,
++       g.date_fin_suivi, g.facture_declenchement_id, g.created_at
++  FROM garanties g
++ WHERE NOT EXISTS (SELECT 1 FROM bc_ligne_retraits_garantie r WHERE r.bc_ligne_id = g.bc_ligne_id);
 diff --git a/src-tauri/tests/metier/test_006_facturation.py b/src-tauri/tests/metier/test_006_facturation.py
 index db23588..0827a77 100644
 --- a/src-tauri/tests/metier/test_006_facturation.py
@@ -1278,17 +1452,20 @@ index 7e43c56..8666929 100644
  C unicité et idempotence, D durées et 29/02, E FK et suppression des parents, F tr_50, G tr_51, H scénarios métier, I import, J diagnostics, K non-régression,
 diff --git a/src-tauri/tests/metier/test_009a_acompte_garanties_manuelles.py b/src-tauri/tests/metier/test_009a_acompte_garanties_manuelles.py
 new file mode 100644
-index 0000000..1733781
+index 0000000..7094d45
 --- /dev/null
 +++ b/src-tauri/tests/metier/test_009a_acompte_garanties_manuelles.py
-@@ -0,0 +1,747 @@
-+"""T-51a — Migration corrective 009a_acompte_garanties_manuelles (rang 13) ; révision F (2026-10-17).
+@@ -0,0 +1,1053 @@
++"""Migration corrective 009a_acompte_garanties_manuelles (rang 13) ; révision F (2026-10-17). Aucun identifiant de test T-xx nouveau n'est attribué ici.
 +
 +009a aligne le SQL livré (006, 008 — IMMUABLES) sur les décisions métier validées :
 +  * acompte : plafonné par l'acompte PRÉVU du devis (aucun / pourcentage / montant), jusqu'à 100 % du marché ; aucun plafond « générique » ;
 +    facturation facultative ; aucune confirmation spéciale à 100 % (le plafond du devis est la règle) ;
 +  * situation : jamais à 100 % du contractuel (nette après < contractuel) ;
-+  * solde : strictement positif, aucun solde à 0.00 ; aucun acompte préalable exigé ;
++  * solde : strictement positif, aucun solde à 0.00 ; égal au contractuel FINAL (contractuel moins avoirs « prestation_non_realisee » sur solde) moins la
++    facturation nette avant le solde ; aucun acompte préalable exigé ;
++  * avoirs : motif en liste fermée (correction_erreur | prestation_non_realisee), un avoir sur acompte ne corrige qu'une erreur ;
++  * clôture du cycle : un acompte ne porte la facturation nette à 100 % que si l'acompte prévu du marché est de 100 % (sinon seul un solde valide clôture) ;
 +  * garanties : déclenchement MANUEL, sans facture de solde (facture_declenchement_id nullable) ; périmètre contractuel réel : retrait ciblé d'une
 +    prestation (bc_ligne_retraits_garantie) par moins-value (écrite par le service) ou par avoir « prestations non réalisées » sur un SOLDE ;
 +    un avoir d'erreur ou un avoir sur situation ne retire rien ; aucun double retrait ; les garanties des autres prestations restent inchangées.
@@ -1298,8 +1475,10 @@ index 0000000..1733781
 +Responsabilités vérifiées ici : fichiers de la chaîne et rang ; protocole de reconstruction (foreign_keys, foreign_key_check, integrity_check, ROLLBACK intégral) ;
 +préservation des données (garanties existantes, soldes à 0.00 historiques, sqlite_sequence) ; schéma exact ; plafonds d'acompte ; situation < 100 % ;
 +solde > 0 ; indépendance des garanties vis-à-vis du solde et de l'état du BC ; retraits de prestation ; immuabilité.
-+Ne sont PAS dans le SQL (règles de service, hors de ces tests) : le déclenchement manuel lui-même, la date de déclenchement, la moins-value (aucune table),
-+le périmètre résiduel d'une moins-value ou d'un avoir partiel (À CONCEVOIR).
++Ne sont PAS dans le SQL (règles de service, hors de ces tests) : le déclenchement manuel lui-même, la date de déclenchement, la moins-value (aucune table : le
++stockage des réductions est À CONCEVOIR, donc le contractuel COURANT n'est pas modélisé), l'avertissement avant moins-value, le périmètre résiduel d'une
++moins-value ou d'un avoir partiel (À CONCEVOIR). Les sections K à N vérifient, sur la chaîne COMPLÈTE (001 à 009a), le contractuel final, les motifs d'avoir,
++la clôture du cycle et le suivi actif des garanties.
 +
 +Exécution : python3 src-tauri/tests/metier/test_009a_acompte_garanties_manuelles.py
 +"""
@@ -1325,7 +1504,8 @@ index 0000000..1733781
 +D_REF = "2026-10-05"
 +
 +TRIGGERS_AJOUTES = {"tr_50_bc_ligne_retraits_garantie_update", "tr_50_bc_ligne_retraits_garantie_no_delete", "tr_51_bc_ligne_retraits_garantie_insert"}
-+TRIGGERS_REMPLACES = {"tr_22_factures_acompte", "tr_22_factures_situation", "tr_22_factures_solde", "tr_51_garanties_insert"}
++TRIGGERS_REMPLACES = {"tr_22_factures_acompte", "tr_22_factures_situation", "tr_22_factures_solde", "tr_23_factures_avoir", "tr_51_garanties_insert"}
++VUES_AJOUTEES = {"v_garanties_suivi_actif"}
 +TRIGGERS_RECREES = {"tr_50_garanties_update", "tr_50_garanties_no_delete"}
 +INDEXES_RETRAITS = {"idx_bc_ligne_retraits_garantie_bc_id", "idx_bc_ligne_retraits_garantie_avoir_id"}
 +COLONNES_RETRAITS = ["id", "bc_id", "bc_ligne_id", "motif_retrait", "avoir_id", "date_retrait", "created_at"]
@@ -1445,9 +1625,43 @@ index 0000000..1733781
 +            self.assertNotIn("INV-", m)
 +
 +    def suivi_actif(self, b):
-+        """État dérivé : garanties dont la ligne de BC n'a pas de retrait."""
-+        return self.tous("SELECT g.id FROM garanties g WHERE g.bc_id=? AND NOT EXISTS "
-+                         "(SELECT 1 FROM bc_ligne_retraits_garantie r WHERE r.bc_ligne_id = g.bc_ligne_id) ORDER BY g.id", b)
++        """Suivi actif lu dans la vue v_garanties_suivi_actif (état dérivé : garanties dont la ligne de BC n'a pas de retrait)."""
++        return self.tous("SELECT id FROM v_garanties_suivi_actif WHERE bc_id=? ORDER BY id", b)
++
++    def cols_facture(self, bc, type_, total, **kw):
++        """Un avoir est « correction_erreur » par défaut (motif en liste fermée, TR-23) ; `kw` le remplace."""
++        if type_ == "avoir":
++            kw.setdefault("motif_avoir", "correction_erreur")
++        return super().cols_facture(bc, type_, total, **kw)
++
++    def monde_devis(self, specs):
++        """BC en cours à plusieurs devis : `specs` = (total, acompte_type, acompte_valeur) ; une ligne par devis."""
++        cli = self.client()
++        ds = []
++        for tot, ty, val in specs:
++            d = self.brouillon(client_id=cli, total_ht=tot, acompte_type=ty, acompte_valeur=val, remise_type="aucune")
++            lid = self.ligne(d, 1, designation="L", quantite="1", prix_unitaire_ht=dl(tot), total_ht=tot)
++            self.garantie(lid, "decennale")
++            self.finaliser(d)
++            self.accepter(d)
++            ds.append(d)
++        b = self.creer_bc(ds[0])
++        for d in ds[1:]:
++            self.rattacher(b, d)
++        return types.SimpleNamespace(b=b, cli=cli, d=ds)
++
++    def contractuel_final(self, b):
++        """Oracle (service) : contractuel moins les avoirs prestation_non_realisee dont l'origine est un solde ; en centimes."""
++        b = b.b if hasattr(b, "b") else b
++        nr = sum(c(t) for (t,) in self.tous("SELECT a.total_ht FROM factures a JOIN factures o ON o.id = a.origine_facture_id "
++                                            "WHERE a.bc_id=? AND a.type='avoir' AND a.motif_avoir='prestation_non_realisee' AND o.type='solde'", b))
++        return self.contractuel(b) - nr
++
++    def solde_final(self, bc, date=D_REF, **kw):
++        """Solde émis au montant du contractuel final moins la facturation nette (insertion brute, sans lignes)."""
++        total = self.contractuel_final(bc) - self.nette(bc)
++        kw.setdefault("date_echeance", date)
++        return self.facture(bc, "solde", eur(total), date_emission=date, **kw)
 +
 +
 +# --------------------------------------------------------------------------------------------------------------------
@@ -1532,6 +1746,9 @@ index 0000000..1733781
 +        idx_avant = {n for (n,) in avant.execute("SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%'")}
 +        self.assertEqual(idx - idx_avant, INDEXES_RETRAITS)
 +        self.assertEqual(idx_avant - idx, set())
++        vues = {n for (n,) in self.db.execute("SELECT name FROM sqlite_master WHERE type='view'")}
++        self.assertEqual(vues, VUES_AJOUTEES)
++        self.assertEqual({n for (n,) in avant.execute("SELECT name FROM sqlite_master WHERE type='view'")}, set())
 +
 +    def test_009a_seuls_les_triggers_annonces_changent_les_autres_sont_identiques_au_caractere_pres(self):
 +        avant = P.migrer12()
@@ -1898,10 +2115,11 @@ index 0000000..1733781
 +
 +    def test_009a_un_avoir_d_erreur_ne_retire_aucune_prestation(self):
 +        bc, s = self.monde_solde()
-+        for motif in ("correction_erreur", "Erreur de facturation", "autre"):
-+            av = self.avoir_motif(s, motif, "10.00", bc.lignes[0])
++        av = self.avoir_motif(s, "correction_erreur", "10.00", bc.lignes[0])
++        self.retrait_ko(bc.lignes[0], "avoir_prestation_non_realisee", av, "INV-76")
++        for motif in ("Erreur de facturation", "autre"):                                              # hors liste fermée : l'avoir lui-même est refusé (TR-23)
 +            with self.subTest(motif=motif):
-+                self.retrait_ko(bc.lignes[0], "avoir_prestation_non_realisee", av, "INV-76")
++                self.assertRegex(self.tente_f(bc, "avoir", "10.00", origine_facture_id=s, motif_avoir=motif), "INV-76")
 +
 +    def test_009a_un_avoir_pour_prestation_non_realisee_sur_situation_ne_retire_pas_automatiquement(self):
 +        bc = self.monde_g()
@@ -1912,7 +2130,8 @@ index 0000000..1733781
 +    def test_009a_un_avoir_sur_acompte_ne_retire_aucune_prestation(self):
 +        bc = self.monde_a(acompte_type="pourcentage", acompte_valeur="50.00")
 +        a = self.acompte(bc, bc.d[0], "100.00")
-+        av = self.avoir_motif(a, "prestation_non_realisee", "50.00", bc.lignes[0])
++        self.assertRegex(self.tente_f(bc, "avoir", "50.00", origine_facture_id=a, motif_avoir="prestation_non_realisee"), "INV-76")   # refusé dès l'avoir (TR-23)
++        av = self.avoir_motif(a, "correction_erreur", "50.00", bc.lignes[0])                           # même avec une ligne de BC : le motif d'erreur ne retire rien
 +        self.retrait_ko(bc.lignes[0], "avoir_prestation_non_realisee", av, "INV-76")
 +
 +    def test_009a_l_avoir_doit_designer_la_prestation_par_une_de_ses_lignes(self):
@@ -2025,6 +2244,267 @@ index 0000000..1733781
 +        bc = self.monde_a(acompte_type="pourcentage", acompte_valeur="30.00")
 +        self.assertIsNotNone(self.tente_f(bc, "acompte", "100.00", devis_id=OMIT))
 +        self.assertNotIn("INV-", self.tente_f(bc, "acompte", "0.00", devis_id=bc.d[0]))
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# K. Avoirs : motif en liste fermée (TR-23, INV-76) — comportement de la chaîne complète
++# --------------------------------------------------------------------------------------------------------------------
++class AvoirsMotifs(Base13):
++    def test_009a_les_deux_motifs_de_la_liste_fermee_sont_acceptes_sur_situation_et_sur_solde(self):
++        bc = self.monde_g()
++        sit = self.emettre_situation(bc, {bc.lignes[0]: 5000, bc.lignes[1]: 5000})
++        for origine in (sit,):
++            for motif in ("correction_erreur", "prestation_non_realisee"):
++                self.assertIsNone(self.tente_f(bc, "avoir", "10.00", origine_facture_id=origine, motif_avoir=motif), motif)
++        s = self.solde_final(bc)
++        for motif in ("correction_erreur", "prestation_non_realisee"):
++            self.assertIsNone(self.tente_f(bc, "avoir", "10.00", origine_facture_id=s, motif_avoir=motif), motif)
++
++    def test_009a_un_motif_hors_liste_est_refuse_par_la_base(self):
++        bc = self.monde_g()
++        s = self.solde_final(bc)
++        for motif in ("Erreur de facturation", "autre", "x", "CORRECTION_ERREUR", " correction_erreur", "prestations_non_realisees", "prestation non realisee", ""):
++            with self.subTest(motif=motif):
++                m = self.tente_f(bc, "avoir", "10.00", origine_facture_id=s, motif_avoir=motif)
++                self.assertIsNotNone(m)
++                self.assertRegex(m, "INV-76")
++
++    def test_009a_un_motif_absent_reste_refuse_par_le_CHECK(self):
++        bc = self.monde_g()
++        s = self.solde_final(bc)
++        m = self.tente_f(bc, "avoir", "10.00", origine_facture_id=s, motif_avoir=None)
++        self.assertIsNotNone(m)
++        self.assertNotIn("INV-", m)
++
++    def test_009a_un_avoir_sur_acompte_ne_corrige_qu_une_erreur(self):
++        bc = self.monde_a(acompte_type="pourcentage", acompte_valeur="50.00")
++        a = self.acompte(bc, bc.d[0], "400.00")
++        self.assertRegex(self.tente_f(bc, "avoir", "100.00", origine_facture_id=a, motif_avoir="prestation_non_realisee"), "INV-76")
++        self.assertIsNone(self.tente_f(bc, "avoir", "100.00", origine_facture_id=a, motif_avoir="correction_erreur"))
++        self.avoir(a)                                                                                 # avoir total d'erreur : un nouvel acompte redevient possible
++        self.acompte_ok(bc, "500.00")
++
++    def test_009a_les_regles_anterieures_de_l_avoir_sont_conservees(self):
++        bc = self.monde_a(acompte_type="pourcentage", acompte_valeur="30.00")
++        a = self.acompte(bc, bc.d[0], "300.00")
++        av = self.avoir(a, "100.00")
++        self.assertRegex(self.tente_f(bc, "avoir", "100.00", origine_facture_id=av), "INV-76")        # l'origine n'est pas un avoir
++        self.assertRegex(self.tente_f(bc, "avoir", "200.01", origine_facture_id=a), "INV-76")         # Σ avoirs <= origine
++        autre = self.monde_a(acompte_type="pourcentage", acompte_valeur="30.00")
++        self.assertRegex(self.tente_f(autre, "avoir", "10.00", origine_facture_id=a), "INV-76")       # même bon de commande
++
++    def test_009a_un_avoir_historique_au_motif_libre_est_conserve_et_compte_comme_une_correction(self):
++        t = P.Base12()
++        t.db = P.migrer12()
++        t._n = 0
++        t._npv = {}
++        t.desynchroniser_ids()
++        bc = t.monde_g()
++        s = t.solde_g(bc)
++        av = t.avoir(s)                                                                               # 006 : motif libre « Erreur de facturation »
++        self.assertEqual(t.un("SELECT motif_avoir FROM factures WHERE id=?", av)[0], "Erreur de facturation")
++        T.runner(t.db, RANG, SQL_009A)
++        self.assertEqual(t.un("SELECT motif_avoir, total_ht FROM factures WHERE id=?", av), ("Erreur de facturation", t.eur_solde(s)))
++        u = Base13._sur(t.db)
++        self.assertIsNone(u.tente_f(bc, "solde", t.eur_solde(s), date_emission="2026-10-06"))         # non compté comme prestation non réalisée : refacturable
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# L. Contractuel final : les avoirs « prestation_non_realisee » sur solde ne sont pas refacturables (INV-58)
++# --------------------------------------------------------------------------------------------------------------------
++class ContractuelFinal(Base13):
++    def test_009a_avoir_total_pour_prestations_non_realisees_sur_le_solde_aucun_nouveau_solde(self):
++        bc = self.monde_a(acompte_type="aucun")
++        s = self.solde_final(bc)
++        self.avoir_motif(s, "prestation_non_realisee", "1000.00", bc.lignes[0])
++        self.assertEqual(self.contractuel_final(bc), c("0.00"))
++        self.assertRegex(self.tente_f(bc, "solde", "1000.00"), "INV-58")
++        self.assertRegex(self.tente_f(bc, "solde", "0.01"), "INV-58")
++        self.assertRegex(self.tente_f(bc, "solde", "0.00"), "INV-55")
++
++    def test_009a_avoir_total_d_erreur_sur_le_solde_nouveau_solde_au_montant_complet(self):
++        bc = self.monde_a(acompte_type="aucun")
++        s = self.solde_final(bc)
++        self.avoir_motif(s, "correction_erreur", "1000.00")
++        self.assertIsNone(self.tente_f(bc, "solde", "1000.00"))
++        self.assertRegex(self.tente_f(bc, "solde", "999.99"), "INV-58")
++
++    def test_009a_avoir_mixte_seule_la_part_correction_est_refacturable(self):
++        bc = self.monde_a(acompte_type="aucun")
++        s = self.solde_final(bc)
++        self.avoir_motif(s, "prestation_non_realisee", "600.00", bc.lignes[0])
++        self.assertRegex(self.tente_f(bc, "solde", "400.00"), "INV-52")                                # le solde reste actif tant qu'il n'est pas totalement crédité
++        self.avoir_motif(s, "correction_erreur", "400.00")
++        self.assertIsNone(self.tente_f(bc, "solde", "400.00"))
++        self.assertRegex(self.tente_f(bc, "solde", "1000.00"), "INV-58")
++        self.assertRegex(self.tente_f(bc, "solde", "399.99"), "INV-58")
++
++    def test_009a_un_avoir_partiel_sur_le_solde_ne_rouvre_pas_la_facturation(self):
++        bc = self.monde_a(acompte_type="aucun")
++        s = self.solde_final(bc)
++        for motif in ("prestation_non_realisee", "correction_erreur"):
++            self.avoir_motif(s, motif, "100.00", bc.lignes[0] if motif == "prestation_non_realisee" else None)
++        self.assertRegex(self.tente_f(bc, "solde", "100.00"), "INV-52")
++        self.assertRegex(self.tente_f(bc, "acompte", "1.00", devis_id=bc.d[0]), "INV-58")
++        self.assertRegex(self.tente_f(bc, "situation", "1.00", situation_numero=1, montant_deja_facture_ht=eur(self.nette(bc))), "INV-58")
++
++    def test_009a_un_avoir_pour_prestations_non_realisees_sur_situation_ne_reduit_pas_le_contractuel(self):
++        bc = self.monde_a(acompte_type="aucun")
++        sit = self.facture(bc, "situation", "500.00", situation_numero=1, montant_deja_facture_ht="0.00")
++        self.avoir_motif(sit, "prestation_non_realisee", "200.00", bc.lignes[0])
++        self.assertEqual(self.contractuel_final(bc), c("1000.00"))
++        self.assertEqual(self.nette(bc), c("300.00"))
++        self.assertRegex(self.tente_f(bc, "solde", "500.00"), "INV-58")
++        self.assertIsNone(self.tente_f(bc, "solde", "700.00"))
++
++    def test_009a_avec_acompte_et_situation_le_contractuel_final_n_entre_que_par_le_solde(self):
++        bc = self.monde_a(acompte_type="pourcentage", acompte_valeur="30.00")
++        self.acompte(bc, bc.d[0], "300.00")
++        self.facture(bc, "situation", "200.00", situation_numero=1, montant_deja_facture_ht="300.00")
++        s = self.solde_final(bc)
++        self.assertEqual(self.eur_solde(s), "500.00")
++        self.avoir_motif(s, "prestation_non_realisee", "500.00", bc.lignes[0])
++        self.assertRegex(self.tente_f(bc, "solde", "500.00"), "INV-58")
++        self.assertRegex(self.tente_f(bc, "solde", "0.00"), "INV-55")
++
++    def test_009a_les_sommes_non_realisees_restent_deduites_d_un_solde_a_l_autre(self):
++        bc = self.monde_a(acompte_type="aucun")
++        s1 = self.solde_final(bc)
++        self.avoir_motif(s1, "prestation_non_realisee", "300.00", bc.lignes[0])
++        self.avoir_motif(s1, "correction_erreur", "700.00")
++        s2 = self.solde_final(bc, date="2026-10-06")
++        self.assertEqual(self.eur_solde(s2), "700.00")
++        self.avoir_motif(s2, "correction_erreur", "700.00", date_emission="2026-10-07")
++        self.assertEqual(self.contractuel_final(bc), c("700.00"))
++        self.assertIsNone(self.tente_f(bc, "solde", "700.00", date_emission="2026-10-08"))
++        self.assertRegex(self.tente_f(bc, "solde", "1000.00", date_emission="2026-10-08"), "INV-58")
++
++    def test_009a_un_solde_conforme_au_contractuel_accepte_est_refuse_si_une_reduction_etait_acceptee_a_concevoir(self):
++        """Documente la limite assumée : le contractuel COURANT (réductions acceptées) n'a pas de stockage (À CONCEVOIR) ; le SQL lit le montant ACCEPTÉ.
++        Un solde calculé par le service avec une réduction (accepté − réduction − nette) est donc refusé tant que le stockage n'existe pas."""
++        bc = self.monde_a(acompte_type="aucun")
++        self.assertRegex(self.tente_f(bc, "solde", "900.00"), "INV-58")                                # 1000 accepté − réduction 100 : non représentable en base
++        self.assertIsNone(self.tente_f(bc, "solde", "1000.00"))
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# M. Clôture du cycle commercial (décision 2.3) — chaîne complète
++# --------------------------------------------------------------------------------------------------------------------
++class ClotureDuCycle(Base13):
++    def test_009a_acompte_prevu_inferieur_a_100_un_acompte_ne_porte_pas_la_facturation_a_100(self):
++        bc = self.monde_a(acompte_type="pourcentage", acompte_valeur="50.00")
++        self.facture(bc, "situation", "500.00", situation_numero=1, montant_deja_facture_ht="0.00")
++        m = self.tente_f(bc, "acompte", "500.00", devis_id=bc.d[0])
++        self.assertIsNotNone(m)
++        self.assertRegex(m, "INV-57.*solde")
++        self.assertIsNone(self.tente_f(bc, "acompte", "499.99", devis_id=bc.d[0]))
++
++    def test_009a_acompte_prevu_inferieur_a_100_seul_un_solde_valide_cloture(self):
++        bc = self.monde_a(acompte_type="pourcentage", acompte_valeur="50.00")
++        self.acompte(bc, bc.d[0], "500.00")
++        self.facture(bc, "situation", "499.00", situation_numero=1, montant_deja_facture_ht="500.00")
++        self.assertRegex(self.tente_f(bc, "solde", "0.00"), "INV-55")
++        s = self.solde_final(bc)
++        self.assertEqual(self.eur_solde(s), "1.00")                                                   # solde valide, strictement positif
++        self.assertEqual(self.nette(bc), c("1000.00"))
++        d2 = self.monde_a(acompte_type="aucun").d[0]
++        with self.assertRaisesRegex(sqlite3.IntegrityError, "INV-187"):
++            self.rattacher(bc.b, d2)                                                                  # le solde clôture le cycle : plus de devis
++
++    def test_009a_acompte_prevu_100_toute_la_facturation_peut_passer_par_l_acompte_sans_confirmation_ni_cloture_automatique(self):
++        bc = self.monde_a(acompte_type="pourcentage", acompte_valeur="100.00")
++        a = self.acompte(bc, bc.d[0], "1000.00")
++        self.assertEqual(self.nette(bc), self.contractuel(bc))
++        self.assertEqual(self.tous("SELECT id FROM factures WHERE bc_id=? AND type='solde'", bc.b), [])
++        self.assertEqual(self.un("SELECT statut, date_100_facture FROM bons_commande WHERE id=?", bc.b), ("en_cours", None))
++        self.assertRegex(self.tente_f(bc, "solde", "0.00"), "INV-55")                                  # aucun solde à 0 €
++        self.assertRegex(self.tente_f(bc, "solde", "0.01"), "INV-58")
++        self.assertRegex(self.tente_f(bc, "situation", "0.01", situation_numero=1, montant_deja_facture_ht="1000.00"), "INV-57")
++        self.assertIsNone(self.tente_f(bc, "avoir", "100.00", origine_facture_id=a))                   # une correction reste possible
++
++    def test_009a_acompte_prevu_100_apres_une_situation_l_acompte_a_100_est_admis_si_le_marche_prevoit_100(self):
++        bc = self.monde_devis([("1000.00", "pourcentage", "100.00"), ("1000.00", "pourcentage", "100.00")])
++        self.facture(bc, "situation", "1000.00", situation_numero=1, montant_deja_facture_ht="0.00")
++        self.assertIsNone(self.tente_f(bc, "acompte", "1000.00", devis_id=bc.d[0]))                  # nette = 2000 = contractuel, acompte prévu du marché = 2000
++
++    def test_009a_marche_a_deux_devis_dont_un_sans_acompte_l_acompte_ne_cloture_pas(self):
++        bc = self.monde_devis([("1000.00", "pourcentage", "100.00"), ("1000.00", "aucun", None)])
++        self.facture(bc, "situation", "1000.00", situation_numero=1, montant_deja_facture_ht="0.00")
++        m = self.tente_f(bc, "acompte", "1000.00", devis_id=bc.d[0])
++        self.assertIsNotNone(m)
++        self.assertRegex(m, "INV-57")
++        self.assertIsNone(self.tente_f(bc, "acompte", "999.99", devis_id=bc.d[0]))
++
++    def test_009a_l_acompte_facultatif_n_est_jamais_exige_pour_cloturer(self):
++        bc = self.monde_a(acompte_type="pourcentage", acompte_valeur="100.00")
++        self.assertIsNone(self.tente_f(bc, "solde", "1000.00"))                                       # clôture directe par le solde, sans acompte
++        s = self.solde_final(bc)
++        self.assertEqual(self.eur_solde(s), "1000.00")
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# N. Suivi actif des garanties — vue v_garanties_suivi_actif (décisions 3.3 et 3.4)
++# --------------------------------------------------------------------------------------------------------------------
++class SuiviActif(Base13):
++    def test_009a_la_vue_est_la_garantie_sans_retrait_de_sa_prestation(self):
++        bc = self.monde_g()
++        for (l_, t_) in self.attendues(bc.b):
++            self.declenche(l_, t_)
++        cols = [r[1] for r in self.tous("PRAGMA table_info(v_garanties_suivi_actif)")]
++        self.assertEqual(cols, COLONNES_GARANTIES)
++        self.assertEqual(self.tous("SELECT * FROM v_garanties_suivi_actif ORDER BY id"), self.tous("SELECT * FROM garanties ORDER BY id"))
++        self.retrait(bc.lignes[0], "moins_value", None)
++        attendu = self.tous("SELECT * FROM garanties WHERE bc_ligne_id <> ? ORDER BY id", bc.lignes[0])
++        self.assertEqual(self.tous("SELECT * FROM v_garanties_suivi_actif ORDER BY id"), attendu)
++        self.assertTrue(attendu)
++
++    def test_009a_seule_la_prestation_retiree_sort_du_suivi_actif_ses_garanties_restent_dans_l_historique(self):
++        bc = self.monde_g()
++        for (l_, t_) in self.attendues(bc.b):
++            self.declenche(l_, t_)
++        avant = self.tous("SELECT * FROM garanties ORDER BY id")
++        self.retrait(bc.lignes[1], "moins_value", None)
++        self.assertEqual(avant, self.tous("SELECT * FROM garanties ORDER BY id"))                    # aucune garantie modifiée ni supprimée
++        actifs = {r[0] for r in self.suivi_actif(bc.b)}
++        self.assertEqual(actifs, {r[0] for r in avant if r[2] == bc.lignes[0]})
++        self.assertTrue(all(r[0] not in actifs for r in avant if r[2] == bc.lignes[1]))
++
++    def test_009a_un_retrait_ne_touche_pas_le_suivi_d_un_autre_bc(self):
++        bc, autre = self.monde_g(), self.monde_g()
++        for b in (bc, autre):
++            for (l_, t_) in self.attendues(b.b):
++                self.declenche(l_, t_)
++        n_autre = len(self.suivi_actif(autre.b))
++        for l_ in bc.lignes:
++            self.retrait(l_, "moins_value", None)
++        self.assertEqual(self.suivi_actif(bc.b), [])
++        self.assertEqual(len(self.suivi_actif(autre.b)), n_autre)
++
++    def test_009a_une_operation_non_validee_ne_modifie_pas_le_suivi(self):
++        bc = self.monde_g()
++        for (l_, t_) in self.attendues(bc.b):
++            self.declenche(l_, t_)
++        avant = self.suivi_actif(bc.b)
++        s = self.solde_final(bc)
++        self.db.execute("SAVEPOINT op")                                                                 # opération du service annulée avant validation
++        av = self.avoir_motif(s, "prestation_non_realisee", "100.00", bc.lignes[0])
++        self.retrait(bc.lignes[0], "avoir_prestation_non_realisee", av)
++        self.db.execute("ROLLBACK TO op")
++        self.db.execute("RELEASE op")
++        self.assertEqual(self.suivi_actif(bc.b), avant)
++        self.assertEqual(self.tous("SELECT id FROM bc_ligne_retraits_garantie"), [])
++
++    def test_009a_un_retrait_par_avoir_ne_peut_exister_sans_avoir_valide(self):
++        bc, s = self.monde_g(), None
++        s = self.solde_final(bc)
++        self.retrait_ko(bc.lignes[0], "avoir_prestation_non_realisee", None, "")                      # le CHECK exige l'avoir
++        self.assertIsNotNone(self.tente_retrait(bc.lignes[0], "avoir_prestation_non_realisee", s))
++
++    def test_009a_la_vue_est_en_lecture_seule(self):
++        for sql in ("INSERT INTO v_garanties_suivi_actif (bc_id) VALUES (1)", "DELETE FROM v_garanties_suivi_actif", "UPDATE v_garanties_suivi_actif SET bc_id = 1"):
++            with self.subTest(sql=sql):
++                with self.assertRaisesRegex(sqlite3.OperationalError, "view"):
++                    self.db.execute(sql)
 +
 +
 +if __name__ == "__main__":
