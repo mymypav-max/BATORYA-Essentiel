@@ -3,6 +3,8 @@
 **Nature** : document de proposition, **non officiel**, destiné à servir de base de validation. Il prépare la rédaction de `modèle-données-sqlite-v6-v3.14.md`. Il ne modifie ni `docs/`, ni SQL, ni test.
 **Date** : 2026-10-18 · **Remplace** la première version (commit 29cba9f).
 **Décisions fonctionnelles** : les 9 décisions validées par le propriétaire le 2026-10-18 (étude, §0.1). Elles ne sont pas rouvertes ici.
+**Suite (2026-10-18)** : proposition validée sur le fond par le propriétaire ; **rédaction officielle effectuée** dans `docs/conception/modèle-données-sqlite-v6-v3.14.md`, `invariants.md` et `modèle-métier-V6.md` (en relecture). Ce document est conservé comme trace de la validation ; **en cas d'écart, les documents officiels font foi**.
+**Identifiants attribués** (planchers du §2.2 adoptés le 2026-10-18) : INV-[a] = **INV-204** (couverture) · INV-[b] = **INV-205** (aucun acompte sur un devis couvert) · TR-[γ] = **TR-104** (insertion) · TR-[δ] = **TR-105** (UPDATE / DELETE) · CK-[α] = **CK-21** · CK-[β] = **CK-22** · D-[ε] = **D-62** · C-[η] = **C-43** · T-[ζ] = **T-53** (13 tests d'acceptation). Noms SQL : `tr_104_situation_devis_insert`, `tr_105_situation_devis_update`, `tr_105_situation_devis_delete`. Les numéros du texte ci-dessous restent écrits sous forme d'emplacements.
 **Notation** : `INV-[a]`, `TR-[γ]`, `CK-[α]`, `D-[ε]`, `C-[η]`, `T-[ζ]` sont des **emplacements** ; † désigne un identifiant de travail absent du registre officiel (§2). Le nom `situation_devis` reste provisoire.
 
 ---
@@ -255,7 +257,7 @@ La migration refuse de s'appliquer si `factures` contient au moins une ligne de 
 
 | # | Test d'acceptation |
 |---|---|
-| 1 | Acompte refusé sur un devis couvert (étapes 2 et 7 du cas C-[η]) ; **témoin** : accepté sans couverture |
+| 1 | Acompte refusé sur un devis couvert (étapes 2 et 7 du cas C-[η]), y compris avec des `created_at` identiques ou inversés ; **témoin** : accepté sans couverture |
 | 2 | Acompte autorisé sur un devis rattaché après la situation (étape 4) |
 | 3 | Nouvelle situation après A et B : couvre A et B ; l'ancienne garde {A} (**exhaustivité vérifiée par le test**) |
 | 4 | Situation entièrement créditée : couverture inchangée, acompte toujours refusé |
@@ -288,4 +290,4 @@ Dépendances ouvertes **non bloquantes** : AR-06 (rang et numéro de 009a / 009b
 
 ## 12. Conclusion
 
-**La proposition est prête à valider** : la base est la V3.12, les écarts V3.13 sont classés, les identifiants sont contrôlés sans réattribution silencieuse, et le cas chiffré découle de la seule couverture. La rédaction officielle de la V3.14 peut commencer avec les emplacements ; **une seule décision (B1) conditionne le passage au SQL**. Ordre : validation de la proposition → rédaction de la V3.14 (avec `invariants.md` et le modèle métier) → patch 009b révisé et ses tests → rejeu complet.
+**La proposition était prête à valider ; elle est validée (2026-10-18)** : la base est la V3.12, les écarts V3.13 sont classés, les identifiants sont contrôlés sans réattribution silencieuse, et le cas chiffré découle de la seule couverture. La rédaction officielle de la V3.14 peut commencer avec les emplacements ; **une seule décision (B1) conditionne le passage au SQL**. Ordre : validation de la proposition → rédaction de la V3.14 (avec `invariants.md` et le modèle métier) → patch 009b révisé et ses tests → rejeu complet.
