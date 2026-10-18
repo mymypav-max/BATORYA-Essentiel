@@ -4,7 +4,7 @@
 
 Produit : BATORYA Essentiel
 Version : V6
-Statut : Modèle métier — mis à jour le 2026-10-01, aligné sur le modèle de données SQLite V3.11, le registre des invariants (v6) et les errata E-01 à E-09
+Statut : Modèle métier — mis à jour le 2026-10-01, aligné sur le modèle de données SQLite V3.11, le registre des invariants (v6) et les errata E-01 à E-09 ; complété le 2026-10-18 par les règles de couverture des situations et d'ordre acompte / situation (§ 10 et § 12 ; modèle de données SQLite V3.14, invariants INV-204 et INV-205)
 Périmètre : Micro-entrepreneur BTP — prestations de services — franchise en base de TVA
 
 ⸻
@@ -312,6 +312,7 @@ Il n'existe pas de type `complete` en V6.
 * Une facture émise est immuable, sauf son annulation (une seule fois) et le rattachement client.
 * Numéros : `ACP-…` pour les acomptes, `AVO-…` pour les avoirs, `FAC-…` pour les situations et les soldes.
 * La somme des lignes est égale au montant HT de la facture.
+* Un acompte ne peut pas être émis sur un devis déjà couvert par une situation (§ 12).
 
 ⸻
 
@@ -358,6 +359,9 @@ Une Situation est une facture de type Situation, avec des informations permettan
 * Une situation atteignant 100 % n'existe pas : la facture finale est un **Solde**.
 * Une situation ne peut plus être émise dès qu'un solde actif existe.
 * Une situation n'est annulable que si c'est la dernière situation active, sans solde postérieur, et sans encaissement actif ni avoir actif sur elle.
+* Une situation couvre tous les devis rattachés à son BC au moment de son émission ; un devis rattaché ensuite n'est pas ajouté aux situations déjà émises, il est couvert par les situations émises après.
+* Aucun acompte ne peut être émis sur un devis couvert par une situation, quels que soient les avoirs, le montant net et l'avancement de cette situation. Un acompte émis avant la situation reste valide ; l'acompte d'un devis rattaché après une situation reste possible.
+* Une situation de montant nul n'existe pas ; un devis couvert peut cependant avoir un avancement propre de 0 %.
 
 ⸻
 
