@@ -1,42 +1,41 @@
-# Charte graphique BATORYA V6
+# Charte graphique BATORYA Essentiel V6
 
-**Version : 0.5**  
-**Statut : En construction — référence de conception**  
+**Version : 0.6**  
+**Statut : En construction — référence graphique de travail**  
 **Périmètre : BATORYA Essentiel V6**  
-**Prototype de référence :** `docs/conception/references-ui/prototype_claude_ui-uxV3.html`
+**Référence visuelle :** `docs/conception/references-ui/Prototype_mistral_ui-ux-modern.html` — prototype Mistral « Azur »
 
-> Document de référence graphique de BATORYA Essentiel V6. Cette version aligne la charte sur le prototype UI/UX V3 actuellement retenu. Elle distingue les choix visibles dans le prototype, les règles communes à appliquer et les éléments qui restent à concevoir. Elle ne définit pas l'architecture fonctionnelle de l'application.
+> Cette charte définit exclusivement les principes graphiques de BATORYA Essentiel V6 : direction artistique, palette, typographie, surfaces, formes, composants visuels, iconographie et mouvement. Elle ne spécifie ni les parcours, ni la navigation fonctionnelle, ni les règles métier, ni l'architecture technique. Ces sujets relèvent de documents distincts.
 
 ---
 
-## 1. Objet et statut de la charte
+## 1. Objet, périmètre et statut
 
-Cette charte décrit le langage visuel à utiliser pour concevoir puis implémenter l'interface de BATORYA Essentiel V6, en modes clair et sombre.
+Cette charte formalise le langage visuel à préserver lors de la conception puis de l'implémentation de BATORYA Essentiel V6, en thème clair et sombre.
 
 Elle vise à :
-- maintenir une identité visuelle cohérente dans l'application ;
-- fournir des références graphiques réutilisables plutôt que des styles propres à chaque écran ;
-- distinguer les décisions observables dans le prototype des règles encore à valider ;
-- permettre une déclinaison claire, sombre et, à terme, automatique.
+- donner à BATORYA une identité visuelle cohérente, reconnaissable et professionnelle ;
+- centraliser les choix graphiques partagés ;
+- maintenir une lecture confortable pendant de longues sessions ;
+- éviter la dérive vers des styles différents selon les écrans ou les composants ;
+- distinguer les principes graphiques retenus des valeurs encore à éprouver.
 
-La charte ne spécifie ni les fonctions métier, ni les règles de navigation, ni l'architecture du Shell. La présence d'un élément dans un prototype ne suffit pas à figer son comportement fonctionnel.
+Elle ne constitue pas un système de design exhaustif. Les valeurs relevées dans le prototype sont des références de départ ; elles pourront être ajustées après vérification sur des écrans représentatifs, sans perdre la direction artistique validée.
 
 ### 1.1. Versionnement
 
 - **0.x** : construction et validation progressive de la charte ;
-- **1.0** : première référence graphique considérée comme stable pour l'implémentation V6 ;
-- après 1.0 : toute évolution est tracée dans l'historique.
-
-Toute modification de fond doit entraîner une mise à jour de l'indice et de l'historique. Les versions antérieures restent consultables dans Git.
+- **1.0** : première référence graphique stabilisée pour l'implémentation V6 ;
+- après 1.0 : toute évolution de fond est tracée dans l'historique.
 
 ### 1.2. Hiérarchie des références graphiques
 
-Pour la conception graphique :
-1. la présente charte décrit les règles communes validées ;
-2. le prototype UI/UX V3 illustre leur application et sert de référence visuelle actuelle ;
-3. les autres fichiers de référence servent à l'inspiration ou à la comparaison, sauf validation explicite ultérieure.
+Pour les choix graphiques :
+1. la présente charte définit les principes communs formalisés ;
+2. le prototype Mistral « Azur » illustre la direction visuelle actuelle et constitue la référence de travail ;
+3. les autres prototypes servent à l'historique, à l'inspiration ou à la comparaison, sauf validation explicite ultérieure.
 
-Si une valeur précise du prototype diffère d'une ancienne règle de cette charte, les anciennes valeurs décrivant la palette, la typographie ou les formes ne doivent pas être conservées par simple inertie : la version 0.5 prend pour base le prototype V3.
+La charte doit être mise à jour si une décision graphique est validée et que le prototype ou les règles écrites ne la reflètent plus.
 
 ---
 
@@ -44,370 +43,466 @@ Si une valeur précise du prototype diffère d'une ancienne règle de cette char
 
 ### 2.1. Intention
 
-L'interface BATORYA Essentiel doit être :
-- professionnelle, contemporaine et lisible ;
-- éditoriale et structurée, sans apparence de logiciel de gestion traditionnel ;
-- sobre, avec une hiérarchie nette et des détails graphiques maîtrisés ;
-- dense lorsque le travail le demande, sans sacrifier la lecture ;
-- cohérente en clair comme en sombre.
+BATORYA Essentiel doit présenter une interface :
+- moderne, élégante et professionnelle ;
+- distinctive sans extravagance ;
+- confortable à regarder et à utiliser sur la durée ;
+- claire, hiérarchisée et visuellement apaisée ;
+- suffisamment vivante pour ne pas ressembler à un logiciel de gestion traditionnel ;
+- cohérente en thème clair comme en thème sombre.
 
-Le langage visuel du prototype V3 repose sur l'association **papier, encre et outremer** : fonds neutres légèrement chauds, texte très contrasté, bleu outremer pour l'action et les états actifs, filets fins et typographie à caractère éditorial.
+La direction « Azur » associe **verre dépoli, profondeur douce et nuances bleu glacier**. Les surfaces translucides, les ombres diffuses et les accents bleus créent une impression de légèreté et de profondeur. Ces effets doivent rester maîtrisés : ils servent la composition et la séparation visuelle, jamais l'ornement gratuit.
 
 ### 2.2. Principes de composition
 
-- Préférer la hiérarchie typographique, l'alignement, les espacements et les filets à une multiplication des cartes et des encadrements.
-- Utiliser les surfaces élevées ou les ombres uniquement lorsqu'elles apportent une séparation utile.
-- Réserver la couleur d'accent aux actions, aux états actifs et aux informations qui la justifient.
-- Éviter les dégradés décoratifs, halos lumineux, effets vitrés et accents orange hérités des anciens prototypes lorsqu'ils ne figurent pas dans la direction V3.
-- Ne pas généraliser les choix d'un écran à toute l'application sans vérifier leur cohérence avec le système graphique.
+- Privilégier une hiérarchie nette, des espacements cohérents et des contrastes lisibles.
+- Utiliser les surfaces translucides et le flou pour créer une profondeur subtile.
+- Employer les ombres avec mesure, en distinguant les surfaces qui semblent flotter du fond.
+- Utiliser le bleu comme couleur d'accent principale, sans colorer inutilement toutes les zones.
+- Préserver des fonds calmes pour que les contenus et les données restent prioritaires.
+- Éviter les dégradés saturés, les halos trop intenses, les contours lourds et les accumulations d'effets.
+- Ne pas appliquer systématiquement le verre dépoli à chaque composant : le contraste entre surfaces vitrées et surfaces opaques participe à la hiérarchie.
+- Éviter les combinaisons chromatiques ou les animations agressives susceptibles de fatiguer visuellement.
 
-### 2.3. Densité et rythme
+### 2.3. Identité graphique
 
-Le prototype expose une hauteur de ligne de référence de **48 px** pour la densité confort et une variante compacte de **38 px**. Ce sont des valeurs de prototype, pas encore une décision exhaustive pour tous les composants.
+La personnalité visuelle repose sur l'association de :
+- fonds gris bleuté et atmosphères bleu glacier ;
+- surfaces blanches ou bleu nuit semi-transparentes ;
+- reflets et bordures clairs très subtils ;
+- ombres étagées et diffuses ;
+- géométrie arrondie mais maîtrisée ;
+- typographie contemporaine, différenciée selon l'usage ;
+- bleu vif pour les actions et les repères importants.
 
-La densité doit rester adaptée à la tâche : les tableaux et listes peuvent être plus compacts que les formulaires ou les écrans d'accueil. Le comportement responsive et le choix définitif de densité restent à valider.
+L'identité ne dépend pas d'un effet isolé. Elle doit rester reconnaissable même lorsque le flou ou les ombres sont absents, notamment pour préserver la lisibilité et les performances.
 
 ---
 
 ## 3. Typographie
 
-Le prototype V3 utilise trois familles complémentaires.
+Le prototype « Azur » déclare trois familles complémentaires.
 
-| Usage | Famille déclarée dans le prototype | Rôle |
+| Usage | Famille | Rôle |
 |---|---|---|
-| Titres éditoriaux, grands titres et certains libellés de marque | **Source Serif 4** | Donner du caractère et établir la hiérarchie |
-| Interface, formulaires, navigation et texte courant | **Instrument Sans** | Lisibilité et neutralité fonctionnelle |
-| Données, nombres, repères et informations tabulaires | **DM Mono** | Alignement visuel et distinction des données |
+| Titres, grands chiffres éditoriaux et éléments de marque provisoires | **Outfit** | Donner une personnalité moderne et des titres expressifs sans excès |
+| Interface, navigation, libellés, formulaires et texte courant | **Manrope** | Assurer une lecture fluide et une tonalité contemporaine |
+| Données chiffrées, références, codes et informations tabulaires | **JetBrains Mono** | Distinguer les données techniques et stabiliser leur alignement |
 
 ### 3.1. Hiérarchie typographique
 
-- Les titres principaux utilisent la sérif avec une graisse mesurée ; l'italique peut servir d'accent éditorial ponctuel.
-- Le texte courant utilise la sans-sérif.
-- Les données chiffrées et repères courts peuvent utiliser la monospace, notamment avec des chiffres tabulaires.
-- Les petites étiquettes en capitales et à espacement augmenté sont réservées aux métadonnées ou aux catégories, pas au texte courant.
-- La hiérarchie doit d'abord reposer sur la taille, la graisse, l'espacement et le contraste, et non sur la multiplication des couleurs.
+- Outfit est la famille de titre ; elle doit rester lisible et ne pas être utilisée systématiquement pour les longs paragraphes.
+- Manrope constitue la base de lecture de l'interface.
+- JetBrains Mono est réservée aux données et repères pour lesquels une largeur régulière apporte un bénéfice.
+- Les graisses doivent être utilisées pour établir une hiérarchie claire, sans multiplier les niveaux.
+- Les capitales espacées conviennent aux petites catégories et métadonnées ; elles ne doivent pas devenir le style du texte courant.
+- Les montants et nombres comparables doivent privilégier les chiffres tabulaires lorsque cela améliore leur alignement.
+- La typographie doit conserver un contraste suffisant entre titres, texte secondaire et métadonnées.
 
-Les tailles typographiques complètes ne sont pas encore figées. Elles seront documentées avec les composants correspondants.
+Le prototype utilise une taille de texte de base proche de **14,5 px** avec un interlignage de **1,55**. Ces valeurs sont indicatives et devront être testées à l'échelle réelle de l'application, notamment sur les longues sessions et les écrans denses.
 
-### 3.2. Disponibilité des polices
+### 3.2. Distribution locale des polices
 
-Le HTML de référence charge ces familles depuis Google Fonts. **L'application finale ne doit pas dépendre d'un accès réseau pour afficher sa typographie**, compte tenu de son fonctionnement local et hors ligne.
+Le prototype charge les familles depuis Google Fonts. L'application finale étant conçue pour fonctionner localement et hors ligne, **l'affichage ne doit pas dépendre d'un accès réseau pour charger les polices**.
 
-Avant l'implémentation, vérifier les licences et la possibilité de distribuer les fichiers de police avec l'application. Si ces familles ne peuvent pas être embarquées, définir une solution de repli cohérente. Cette charte ne prescrit pas de téléchargement distant à l'exécution.
+Avant l'implémentation :
+- vérifier les licences et les conditions de distribution ;
+- privilégier l'intégration locale des fichiers de police si elle est compatible avec les licences ;
+- définir des piles de repli cohérentes.
 
-Piles de repli déclarées par le prototype :
-- sérif : `ui-serif, Georgia, "Times New Roman", serif` ;
-- sans-sérif : `ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif` ;
-- monospace : `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`.
+Piles de repli observées :
+- Outfit : `"Segoe UI", ui-sans-serif, system-ui, sans-serif` ;
+- Manrope : `"Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif` ;
+- JetBrains Mono : `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`.
 
 ---
 
-## 4. Palette — mode clair
+## 4. Palette — thème clair
 
-Les valeurs ci-dessous sont reprises des tokens CSS du prototype V3. Elles constituent la base graphique de cette version de la charte.
+Les valeurs ci-dessous sont reprises des tokens CSS du prototype Mistral « Azur ». Les couleurs transparentes sont intentionnelles : leur rendu dépend de la surface située derrière elles.
 
-| Token / rôle | Valeur | Usage |
+| Token / rôle | Valeur | Usage graphique |
 |---|---|---|
-| Papier / fond principal (`--paper`) | `#F6F6F2` | Fond général clair, légèrement chaud |
-| Surface (`--sheet`) | `#FFFFFF` | Surface de contenu |
-| Voile secondaire (`--wash`) | `#EEEEE8` | Survols et surfaces secondaires |
-| Voile renforcé (`--wash-2`) | `#E7E7E0` | Niveau secondaire plus marqué |
-| Filet principal (`--rule`) | `#D6D6CC` | Séparateurs et bordures |
-| Filet discret (`--rule-2`) | `#E6E6DE` | Séparateurs peu présents |
-| Encre principale (`--ink`) | `#14161B` | Texte principal et éléments forts |
-| Encre secondaire (`--ink-2`) | `#43464E` | Texte secondaire |
-| Encre tertiaire (`--ink-3`) | `#6C6F77` | Métadonnées et indications discrètes |
-| Texte sur encre (`--on-ink`) | `#F6F6F2` | Contraste sur surface encre |
-| Bleu outremer (`--blue`) | `#2B38D0` | Action principale, focus et état actif |
-| Bleu outremer renforcé (`--blue-2`) | `#1E29A8` | Survol de l'action bleue |
-| Voile bleu (`--blue-wash`) | `#E6E8FA` | Sélection ou état bleu en arrière-plan |
-| Texte sur bleu (`--blue-ink`) | `#FFFFFF` | Texte sur accent bleu |
-| Rouge fonctionnel (`--red`) | `#C23B24` | Erreur ou action destructive |
-| Fond rouge (`--red-wash`) | `#F7E1DB` | Fond d'état d'erreur |
-| Vert fonctionnel (`--green`) | `#287047` | Confirmation positive |
-| Fond vert (`--green-wash`) | `#DDEDE2` | Fond d'état positif |
-| Ambre fonctionnel (`--amber`) | `#9E6B0B` | Avertissement |
-| Fond ambre (`--amber-wash`) | `#F4E9CF` | Fond d'avertissement |
-| Surface documentaire (`--doc`) | `#FFFFFF` | Surface de document |
-| Encre documentaire (`--doc-ink`) | `#14161B` | Texte sur document |
-| Filet documentaire (`--doc-rule`) | `#E3E3DA` | Séparateurs sur document |
+| Fond principal (`--paper`) | `#F2F5F9` | Fond général gris bleuté très clair |
+| Surface (`--sheet`) | `rgba(255,255,255,.62)` | Surface claire semi-transparente |
+| Voile secondaire (`--wash`) | `rgba(47,109,235,.08)` | Fond secondaire et survol discret |
+| Voile renforcé (`--wash-2`) | `rgba(47,109,235,.15)` | Accent de fond un peu plus visible |
+| Filet principal (`--rule`) | `rgba(30,64,120,.16)` | Bordures et séparateurs |
+| Filet discret (`--rule-2`) | `rgba(30,64,120,.10)` | Séparateurs peu présents |
+| Encre principale (`--ink`) | `#1B2A41` | Texte principal bleu marine |
+| Encre secondaire (`--ink-2`) | `#4A5A74` | Texte secondaire |
+| Encre tertiaire (`--ink-3`) | `#7E8DA3` | Métadonnées et indications discrètes |
+| Texte sur encre (`--on-ink`) | `#FFFFFF` | Texte contrasté sur une surface sombre |
+| Bleu principal (`--acc`) | `#2F6BEB` | Accent, actions et repères importants |
+| Bleu clair (`--acc-2`) | `#5B9BF5` | Nuance secondaire et dégradés d'accent |
+| Voile bleu (`--acc-wash`) | `rgba(47,107,235,.13)` | Sélection et accent en arrière-plan |
+| Texte sur accent (`--acc-ink`) | `#FFFFFF` | Texte sur accent bleu |
+| Rouge fonctionnel (`--red`) | `#DE4D62` | Erreur ou état négatif |
+| Fond rouge (`--red-wash`) | `rgba(222,77,98,.12)` | Fond d'état négatif |
+| Vert fonctionnel (`--green`) | `#0E9A76` | Confirmation positive |
+| Fond vert (`--green-wash`) | `rgba(14,154,118,.13)` | Fond d'état positif |
+| Ambre fonctionnel (`--amber`) | `#C5851F` | Avertissement |
+| Fond ambre (`--amber-wash`) | `rgba(197,133,31,.14)` | Fond d'avertissement |
+| Surface documentaire (`--doc`) | `#FFFFFF` | Support documentaire clair |
+| Encre documentaire (`--doc-ink`) | `#1B2A41` | Texte documentaire |
+| Filet documentaire (`--doc-rule`) | `#E2E8F1` | Séparateurs documentaires |
 
-### 4.1. Ombres et voile
+### 4.1. Atmosphère bleu glacier
 
-Ombre déclarée par le prototype :
+Le prototype déclare plusieurs halos radiaux diffus, positionnés autour de la surface principale, dans des nuances de bleu, de cyan et de bleu lavande. Ils composent une atmosphère légère plutôt qu'un dégradé uniforme.
+
+Principes d'usage :
+- garder les halos peu saturés et très diffus ;
+- éviter qu'ils nuisent au contraste du texte ou aux couleurs d'état ;
+- conserver un fond lisible lorsque les effets de fond ne sont pas disponibles ;
+- ne pas transformer chaque carte ou panneau en dégradé décoratif.
+
+### 4.2. Ombres et transparence
+
+Ombre principale observée :
 
 ```css
-0 1px 1px rgba(20,22,27,.04),
-0 12px 32px -12px rgba(20,22,27,.18)
+0 1px 2px rgba(27,42,65,.06),
+0 14px 36px -14px rgba(27,42,65,.22)
 ```
 
-Voile d'arrière-plan déclaré : `rgba(20,22,27,.28)`.
-
-Ces valeurs sont des références à appliquer avec discernement, pas une autorisation à ombrer chaque élément. La composition privilégie les filets et le contraste entre surfaces.
-
----
-
-## 5. Palette — mode sombre
-
-Le mode sombre est une déclinaison de la même identité. Il ne doit pas être obtenu par inversion mécanique des couleurs du mode clair.
-
-| Token / rôle | Valeur | Usage |
-|---|---|---|
-| Papier / fond principal (`--paper`) | `#0E1016` | Fond général sombre |
-| Surface (`--sheet`) | `#151821` | Surface principale |
-| Voile secondaire (`--wash`) | `#191D27` | Surface secondaire et survol |
-| Voile renforcé (`--wash-2`) | `#212634` | Niveau secondaire plus marqué |
-| Filet principal (`--rule`) | `#2A2F3D` | Bordures et séparateurs |
-| Filet discret (`--rule-2`) | `#1F2330` | Séparateurs discrets |
-| Encre principale (`--ink`) | `#E8E6DF` | Texte principal |
-| Encre secondaire (`--ink-2`) | `#B8B7B1` | Texte secondaire |
-| Encre tertiaire (`--ink-3`) | `#8A8D96` | Métadonnées |
-| Texte sur encre (`--on-ink`) | `#0E1016` | Texte sur élément clair |
-| Bleu outremer (`--blue`) | `#8F9CFF` | Accent et état actif |
-| Bleu outremer renforcé (`--blue-2`) | `#AAB4FF` | Survol ou accent renforcé |
-| Voile bleu (`--blue-wash`) | `rgba(143,156,255,.12)` | Sélection bleue discrète |
-| Texte sur bleu (`--blue-ink`) | `#0B0E1E` | Texte sur accent bleu |
-| Rouge fonctionnel (`--red`) | `#F0897A` | Erreur ou action destructive |
-| Fond rouge (`--red-wash`) | `rgba(240,137,122,.13)` | Fond d'erreur |
-| Vert fonctionnel (`--green`) | `#7DC79A` | Confirmation positive |
-| Fond vert (`--green-wash`) | `rgba(125,199,154,.12)` | Fond d'état positif |
-| Ambre fonctionnel (`--amber`) | `#E0B460` | Avertissement |
-| Fond ambre (`--amber-wash`) | `rgba(224,180,96,.12)` | Fond d'avertissement |
-| Surface documentaire (`--doc`) | `#EAE8E1` | Surface de document |
-| Encre documentaire (`--doc-ink`) | `#14161B` | Texte sur document |
-| Filet documentaire (`--doc-rule`) | `#CFCDC4` | Séparateurs sur document |
-
-Ombre déclarée par le prototype :
+Ombre flottante observée :
 
 ```css
-0 1px 1px rgba(0,0,0,.3),
-0 16px 40px -12px rgba(0,0,0,.6)
+0 10px 26px -10px rgba(27,42,65,.18),
+0 28px 64px -28px rgba(37,107,220,.30)
 ```
 
-Voile d'arrière-plan déclaré : `rgba(0,0,0,.5)`.
+Surface vitrée observée : `rgba(255,255,255,.60)`.  
+Bordure claire de surface vitrée : `rgba(255,255,255,.70)`.
 
-Les couleurs fonctionnelles du thème sombre ne doivent pas être utilisées comme décoration. Vérifier le contraste des textes et états lors de la réalisation des composants.
-
----
-
-## 6. Surfaces, filets et profondeur
-
-### 6.1. Fonds et surfaces
-
-- Le fond clair est `#F6F6F2`, pas le gris bleuté des anciens prototypes.
-- Les surfaces de contenu sont principalement blanches en thème clair et bleu-noir très sombre en thème sombre.
-- Les surfaces secondaires utilisent les tokens `--wash` et `--wash-2`.
-- Les documents peuvent utiliser les tokens dédiés `--doc`, `--doc-ink` et `--doc-rule`.
-
-### 6.2. Filets
-
-Les filets fins constituent un élément structurant du style V3. Ils séparent les zones et établissent la hiérarchie sans enfermer systématiquement le contenu dans des cartes.
-
-Le prototype utilise notamment une séparation double pour certains titres de page. Ce motif peut être réutilisé lorsqu'il correspond à la hiérarchie du contenu, sans devenir un ornement obligatoire.
-
-### 6.3. Ombres
-
-Les ombres sont secondaires. Elles servent à distinguer une surface réellement élevée ou un voile, pas à donner artificiellement du relief à chaque section. Les contours lourds, les ombres décoratives et les effets vitrés hérités des anciens prototypes ne sont pas la référence de cette direction artistique.
+Ces valeurs constituent une référence visuelle, pas une obligation de les appliquer à chaque élément.
 
 ---
 
-## 7. Formes et dimensions de référence
+## 5. Palette — thème sombre
 
-| Élément | Valeur observée dans le prototype V3 |
-|---|---:|
-| Rayon commun (`--r`) | 3 px |
-| Hauteur de ligne confort (`--row`) | 48 px |
-| Hauteur de ligne compacte | 38 px |
-| Largeur de marge contextuelle (`--marg`) | 240 px |
-| Hauteur de topbar du prototype | 64 px |
+Le thème sombre conserve l'identité bleu glacier, mais utilise des fonds bleu nuit, des surfaces translucides profondes et des accents plus lumineux. Il ne doit pas être produit par inversion mécanique du thème clair.
 
-Ces valeurs décrivent la composition actuelle du prototype, pas une spécification fonctionnelle de la navigation ni une obligation d'appliquer ces dimensions à chaque écran. Les rayons et dimensions définitifs des composants restent à confirmer pendant la conception du système UI.
+| Token / rôle | Valeur | Usage graphique |
+|---|---|---|
+| Fond principal (`--paper`) | `#0C1422` | Fond bleu nuit |
+| Surface (`--sheet`) | `rgba(20,32,54,.62)` | Surface sombre semi-transparente |
+| Voile secondaire (`--wash`) | `rgba(140,180,255,.09)` | Surface secondaire |
+| Voile renforcé (`--wash-2`) | `rgba(140,180,255,.15)` | Accent de fond plus visible |
+| Filet principal (`--rule`) | `rgba(160,190,235,.20)` | Bordures et séparateurs |
+| Filet discret (`--rule-2`) | `rgba(160,190,235,.11)` | Séparateurs discrets |
+| Encre principale (`--ink`) | `#EAF0F9` | Texte principal clair |
+| Encre secondaire (`--ink-2`) | `#B4C2D9` | Texte secondaire |
+| Encre tertiaire (`--ink-3`) | `#8494AE` | Métadonnées |
+| Texte sur encre (`--on-ink`) | `#0C1422` | Texte sur élément clair |
+| Bleu principal (`--acc`) | `#6BA6FF` | Accent et états importants |
+| Bleu clair (`--acc-2`) | `#93C2FF` | Accent secondaire |
+| Voile bleu (`--acc-wash`) | `rgba(107,166,255,.16)` | Sélection et accent en arrière-plan |
+| Texte sur accent (`--acc-ink`) | `#0A1830` | Texte sur accent bleu |
+| Rouge fonctionnel (`--red`) | `#FF8296` | Erreur ou état négatif |
+| Fond rouge (`--red-wash`) | `rgba(255,130,150,.14)` | Fond d'état négatif |
+| Vert fonctionnel (`--green`) | `#4AD9A4` | Confirmation positive |
+| Fond vert (`--green-wash`) | `rgba(74,217,164,.13)` | Fond d'état positif |
+| Ambre fonctionnel (`--amber`) | `#EFC276` | Avertissement |
+| Fond ambre (`--amber-wash`) | `rgba(239,194,118,.14)` | Fond d'avertissement |
+| Surface documentaire (`--doc`) | `#F2F5FA` | Support documentaire clair |
+| Encre documentaire (`--doc-ink`) | `#1B2A41` | Texte documentaire |
+| Filet documentaire (`--doc-rule`) | `#D5DEEC` | Séparateurs documentaires |
 
-Le rayon de 3 px donne une géométrie plutôt nette. Les boutons, champs et surfaces ne doivent donc pas revenir automatiquement aux grandes formes arrondies des anciens prototypes.
+Ombre principale observée :
+
+```css
+0 1px 1px rgba(0,0,0,.4),
+0 18px 46px -12px rgba(0,0,0,.7)
+```
+
+Ombre flottante observée :
+
+```css
+0 10px 26px -10px rgba(0,0,0,.5),
+0 30px 70px -28px rgba(0,0,0,.8)
+```
+
+Surface vitrée observée : `rgba(24,36,60,.58)`.  
+Bordure claire subtile : `rgba(255,255,255,.12)`.
+
+Les couleurs fonctionnelles doivent rester réservées aux états qui les justifient. Vérifier le contraste réel de chaque combinaison pendant la conception des composants.
 
 ---
 
-## 8. Composants graphiques
+## 6. Surfaces, verre dépoli et profondeur
+
+### 6.1. Surfaces vitrées
+
+Le verre dépoli est un marqueur important de la direction « Azur ». Le prototype combine :
+- une couleur de surface translucide ;
+- un flou d'arrière-plan ;
+- une légère saturation des couleurs derrière la surface ;
+- une bordure discrète ;
+- une ombre douce lorsque la surface doit sembler élevée.
+
+Référence CSS du prototype : `blur(16px) saturate(1.5)`.
+
+Le rendu doit rester subtil. Une surface vitrée doit permettre de distinguer clairement le contenu qu'elle porte et ne doit pas créer de bruit visuel avec des fonds trop contrastés.
+
+### 6.2. Hiérarchie des surfaces
+
+Le système graphique peut combiner :
+- le fond général avec son atmosphère bleu glacier ;
+- des surfaces principales translucides ;
+- des surfaces opaques lorsque le contraste ou la lisibilité le demande ;
+- des surfaces secondaires légèrement teintées ;
+- des surfaces flottantes avec une ombre plus marquée.
+
+Toutes les surfaces ne doivent pas avoir le même niveau de transparence, de flou ou d'ombre. Leur différence doit contribuer à la hiérarchie visuelle.
+
+### 6.3. Bordures et reflets
+
+- Préférer des bordures fines et peu contrastées.
+- Sur les surfaces vitrées claires, un reflet clair peut renforcer subtilement le contour.
+- En thème sombre, privilégier une bordure claire très transparente.
+- Éviter les contours épais ou très lumineux qui donneraient un aspect néon.
+- Ne pas utiliser une bordure comme seul moyen de signaler un état important.
+
+### 6.4. Compatibilité et sobriété
+
+La lisibilité ne doit pas dépendre du flou d'arrière-plan. Lorsque cet effet n'est pas disponible ou doit être réduit, le fond et la bordure doivent suffire à distinguer la surface. Les ombres et les effets translucides doivent rester modérés pour ne pas nuire à la performance ou au confort visuel.
+
+---
+
+## 7. Formes, dimensions et espacement
+
+| Élément | Valeur observée dans le prototype | Statut |
+|---|---:|---|
+| Rayon commun (`--r`) | 12 px | Référence visuelle à éprouver |
+| Hauteur de ligne confortable (`--row`) | 48 px | Référence visuelle à éprouver |
+| Hauteur de ligne compacte | 38 px | Variante visuelle du prototype |
+| Largeur de marge de page (`--marg`) | 240 px | Dimension de composition du prototype |
+| Hauteur de barre supérieure | 64 px | Dimension de composition du prototype |
+| Flou de surface (`--blur`) | 16 px | Référence visuelle |
+| Focus visible | 2 px, décalage de 2 px | Référence d'accessibilité visuelle |
+
+Les valeurs de composition ci-dessus ne définissent pas la structure fonctionnelle de l'application. Elles servent à reproduire et à tester le langage visuel du prototype.
+
+### 7.1. Géométrie
+
+- Privilégier les rayons arrondis de manière cohérente.
+- Réserver les très grands rayons aux composants qui s'y prêtent, comme certains boutons, filtres ou champs.
+- Éviter le mélange de formes très anguleuses et de capsules sans logique visuelle.
+- Maintenir des espacements réguliers entre les groupes d'éléments.
+- Ne pas réduire les zones de lecture au seul motif de conserver davantage d'informations à l'écran.
+
+---
+
+## 8. Principes graphiques des composants
+
+Cette section décrit uniquement leur apparence. Elle ne spécifie ni les actions, ni les états métier, ni le comportement de navigation.
 
 ### 8.1. Boutons
 
-Le prototype V3 distingue notamment :
-- **primaire** : fond bleu outremer, bordure de même couleur et texte contrasté ;
-- **secondaire** : fond transparent et bordure encre ;
-- **discret** : bordure neutre, avec fond secondaire au survol ;
-- **destructif** : texte rouge et état de survol associé au rouge fonctionnel.
+Le prototype emploie notamment :
+- **primaire** : dégradé bleu, texte contrasté, sans bordure lourde et avec une ombre d'accent discrète ;
+- **secondaire** : surface translucide, bordure légère et texte principal ;
+- **discret** : fond transparent, qui se teinte légèrement au survol ;
+- **destructif** : accent rouge réservé à l'action ou à l'état concerné.
 
-Les boutons sont compacts, rectilignes et utilisent le rayon commun du prototype. Le survol et l'activation doivent rester discrets. L'orange n'est plus l'accent principal de cette direction graphique.
+Les boutons sont généralement arrondis en capsule. La hauteur standard observée est de 38 px, avec une variante compacte de 30 px. Ces mesures sont des références de prototype à vérifier sur les écrans réels.
 
 ### 8.2. Champs et formulaires
 
-Le prototype métier utilise des champs à fond transparent et à soulignement fin plutôt que des champs systématiquement placés dans des capsules ou des rectangles fortement arrondis.
+Le prototype utilise des champs légèrement teintés, arrondis, avec une bordure discrète au repos et un accent bleu au focus.
 
-Références observées :
-- hauteur de champ de 38 px ;
-- libellé en petites capitales, avec espacement augmenté ;
-- filet neutre au repos ;
-- filet bleu au focus ;
-- filet rouge pour l'état d'erreur ;
-- fond transparent lorsque le contexte le permet.
+Références visuelles :
+- fond secondaire légèrement teinté ;
+- hauteur de champ proche de 40 px ;
+- rayon de 12 px ;
+- focus bleu avec un halo fin et discret ;
+- fond et contour rouges pour l'erreur ;
+- libellés en Manrope, généralement en petites capitales espacées.
 
-Ces choix doivent être adaptés au contexte. Le prototype de connexion peut utiliser une présentation de formulaire différente si elle reste cohérente avec la palette, la typographie et la géométrie globale.
+Le style doit rester calme et suffisamment contrasté. Les fonds de champs ne doivent pas se confondre avec ceux des surfaces environnantes.
 
-### 8.3. Navigation, onglets et commandes
+### 8.3. Sélecteurs, filtres et contrôles segmentés
 
-Les contrôles de navigation du prototype sont sobres, sans fond permanent pour chaque entrée. L'état actif est principalement indiqué par le contraste, la couleur du repère et un filet bleu.
-
-Cette observation décrit le prototype ; elle ne fige pas l'organisation définitive des chapitres, modules, onglets ou commandes de l'application.
+- Les sélecteurs et filtres utilisent des formes arrondies et des fonds légers.
+- L'élément actif se distingue par un fond bleu translucide et le texte d'accent.
+- Les contrôles segmentés peuvent utiliser une surface intérieure claire ou translucide pour marquer la sélection.
+- Les transitions de couleur et de fond restent courtes et discrètes.
 
 ### 8.4. Listes et tableaux
 
-- Privilégier les alignements réguliers et les séparateurs fins.
-- Aligner à droite les montants et nombres lorsque la lecture comparative l'exige.
-- Utiliser les chiffres tabulaires pour stabiliser les colonnes numériques.
-- Réserver les couleurs fonctionnelles aux états qui le nécessitent.
-- Ne pas encadrer chaque ligne dans une carte.
+- Préférer des séparateurs fins plutôt que des bordures épaisses autour de chaque cellule.
+- Utiliser les fonds de survol avec parcimonie.
+- Maintenir une hiérarchie typographique claire entre en-têtes, contenu et métadonnées.
+- Aligner les nombres et montants pour faciliter la comparaison.
+- Utiliser JetBrains Mono et les chiffres tabulaires lorsque cela améliore la lecture.
+- Réserver les couleurs fonctionnelles aux états qui le justifient.
+- Conserver des lignes confortables et une variante compacte lorsque la densité de données le demande.
 
-Les composants complets de tableaux et de listes restent à définir au fil de la conception des écrans.
+### 8.5. Cartes, panneaux et surfaces flottantes
 
-### 8.5. Focus et accessibilité
+Les cartes peuvent utiliser une surface vitrée, une bordure discrète et une ombre douce. L'intensité dépend de leur importance visuelle :
+- surface de contenu ordinaire : contraste et ombre modérés ;
+- panneau secondaire : relief faible ;
+- élément flottant : ombre plus prononcée, sans halo excessif.
 
-Le prototype définit un focus visible de 2 px avec décalage de 2 px, porté par la couleur d'accent du thème. Le focus clavier doit rester visible et ne peut pas être supprimé au seul motif esthétique.
+Toutes les sections ne doivent pas être enfermées dans des cartes. La composition doit alterner les surfaces et les espaces libres pour conserver une lecture aérée.
 
-Les états ne doivent pas dépendre exclusivement de la couleur : le contexte, le libellé, l'icône ou la forme doivent également permettre de comprendre l'état lorsque cela est nécessaire.
+### 8.6. Badges et états colorés
 
----
+Les états positifs, négatifs et d'avertissement utilisent respectivement les familles vert, rouge et ambre. Les fonds associés sont translucides et peu saturés.
 
-## 9. Iconographie et logo
+- Ne pas utiliser ces couleurs à des fins purement décoratives.
+- Ne pas communiquer une information uniquement par la couleur.
+- Maintenir une lisibilité suffisante en thème clair et sombre.
+- Éviter d'afficher simultanément trop de badges ou d'accents concurrents.
 
-### 9.1. Marque provisoire du prototype
+### 8.7. Focus et accessibilité visuelle
 
-Le prototype V3 utilise un signe provisoire composé d'un **B sérif dans un cadre fin**, accompagné d'un petit carré bleu décalé. Le mot-symbole « Batorya » est composé en sérif et la mention « Essentiel V6 » en monospace.
+Le prototype utilise un focus visible de 2 px avec un décalage de 2 px, porté par la couleur d'accent. Le focus doit rester perceptible et ne peut pas être supprimé pour des raisons esthétiques.
 
-Ce signe est une solution de prototypage et **n'est pas le logo définitif**. Il ne doit pas être présenté comme une identité de marque finalisée.
-
-### 9.2. Chantier du logo définitif
-
-La création d'un nouveau logo BATORYA adapté à cette direction graphique est un chantier distinct, à mener ultérieurement. Cette version de la charte ne préjuge pas de sa forme définitive.
-
-Lorsqu'il sera conçu, le logo devra être évalué sur sa lisibilité, sa reconnaissance, son utilisation à petite taille, son rendu en clair et en sombre et sa capacité à être utilisé sans effets décoratifs obligatoires. La charte sera alors mise à jour avec les variantes et règles d'utilisation validées.
-
-### 9.3. Icônes
-
-Le prototype utilise des icônes SVG simples, au trait, avec une épaisseur de trait homogène. La famille définitive d'icônes et les règles de taille restent à confirmer.
-
-Ne pas mélanger des icônes pleines, des pictogrammes très détaillés et des styles de trait différents sans raison fonctionnelle.
+Les contrastes, les tailles de texte et la visibilité des états devront être vérifiés sur les composants réels, en clair comme en sombre.
 
 ---
 
-## 10. Animation et mouvement
+## 9. Iconographie et identité de marque
 
-L'animation doit aider à comprendre un changement d'état, pas ralentir l'usage.
+### 9.1. Icônes
 
-### 10.1. Référence de mouvement
+Le prototype utilise des icônes SVG au trait, simples, avec une épaisseur homogène d'environ 1,5 px et une taille courante de 16 px.
 
-Le prototype déclare la courbe suivante :
+Principes :
+- privilégier des icônes lisibles et peu détaillées ;
+- conserver une épaisseur de trait homogène ;
+- utiliser la couleur du texte ou de l'accent selon la hiérarchie ;
+- éviter de mélanger sans raison des icônes pleines, des pictogrammes détaillés et des styles de trait différents.
 
-```css
-cubic-bezier(.22,.7,.2,1)
-```
+La famille d'icônes définitive et l'ensemble de ses tailles restent à confirmer lors de la conception du système UI.
 
-Il utilise notamment des transitions courtes d'environ 150 ms pour certains états et une apparition de contenu d'environ 300 ms. Ces valeurs constituent des références observées, pas des durées obligatoires pour tous les composants.
+### 9.2. Marque provisoire du prototype
 
-### 10.2. Principes
+Le prototype « Azur » présente un signe provisoire : un **B dans un carré arrondi bleu en dégradé**, accompagné du mot-symbole Batorya. Ce signe illustre le prototype ; il ne constitue pas le logo définitif.
 
-- Utiliser des transitions courtes pour les survols, focus et changements d'état simples.
-- Réserver les animations plus longues aux changements de vue qui gagnent réellement en compréhension.
-- Ne pas animer les données ou les contrôles sans bénéfice pour l'utilisateur.
-- Respecter la préférence de réduction des animations du système. Lorsque la réduction est demandée, supprimer ou réduire fortement les mouvements non essentiels sans perdre l'information portée par l'état.
+### 9.3. Logo définitif
 
----
+La recherche d'un signe distinctif BATORYA reste un chantier séparé. Cette charte ne préjuge pas de la forme finale du logo.
 
-## 11. Écran de connexion et premier accès
-
-Le point d'entrée doit être cohérent avec le langage graphique du prototype V3 : palette papier/encre/outremer, typographie éditoriale, filets fins et formes maîtrisées.
-
-Le prototype présente les deux parcours **« Se connecter »** et **« Créer mon espace »** dans une même interface, avec les champs d'identification et de sécurité adaptés au parcours sélectionné. Il s'agit de la référence de conception actuelle pour cette entrée.
-
-Les règles suivantes s'appliquent :
-- conserver la cohérence avec la palette et la typographie générales ;
-- distinguer clairement connexion et création d'espace ;
-- rendre les libellés, erreurs, focus et actions compréhensibles ;
-- adapter la mise en page aux largeurs d'écran réellement prises en charge ;
-- ne pas considérer les interactions de démonstration du HTML comme une authentification fonctionnelle.
-
-Le prototype peut contenir des transitions de démonstration ou un écran de démarrage. Leur présence ne fige ni la séquence technique de démarrage, ni le comportement de sécurité, ni les opérations métier. Ces aspects doivent être spécifiés séparément avant implémentation.
-
-Les anciens prototypes Login + Splash basés sur le bleu glacier, les halos et l'orange ne sont plus la référence graphique courante. Ils peuvent rester dans le dépôt comme historique, mais ne doivent pas servir de base à de nouveaux écrans sans validation explicite.
+Une fois le logo choisi, ses variantes devront être documentées : symbole seul, mot-symbole, versions claire et sombre, tailles minimales et règles d'utilisation sur les fonds de l'interface.
 
 ---
 
-## 12. Gestion des thèmes
+## 10. Animation et mouvement — principes visuels
 
-Le système graphique doit permettre :
-- **Automatique** : suivre la préférence clair/sombre du système d'exploitation ;
-- **Clair** : forcer le thème clair ;
-- **Sombre** : forcer le thème sombre.
+L'animation doit renforcer la perception de qualité sans distraire ni fatiguer.
 
-La préférence système peut être détectée à l'aide de `prefers-color-scheme`. La valeur par défaut recommandée reste **Automatique**, sous réserve de validation lors de la conception des préférences utilisateur.
+Références déclarées dans le prototype :
+- courbe : `cubic-bezier(.22,.7,.2,1)` ;
+- transitions courtes d'environ 150 ms ;
+- apparition de contenu autour de 300 ms.
 
-Le choix explicite de l'utilisateur devra être mémorisé localement. La charte décrit le rendu des thèmes ; elle ne fixe pas le mécanisme technique de stockage.
+Principes :
+- utiliser des transitions discrètes pour les changements de couleur, de fond et de relief ;
+- éviter les déplacements amples, les rebonds et les effets spectaculaires ;
+- ne pas multiplier les animations simultanées ;
+- respecter la préférence de réduction des animations ;
+- conserver la compréhension visuelle lorsque les animations sont réduites ou absentes.
 
----
-
-## 13. Tokens et centralisation
-
-Les couleurs et valeurs communes doivent être centralisées dans des tokens de thème plutôt que redéfinies arbitrairement dans chaque composant.
-
-Les noms présents dans le prototype comprennent notamment :
-- `--paper`, `--sheet`, `--wash`, `--wash-2` ;
-- `--rule`, `--rule-2` ;
-- `--ink`, `--ink-2`, `--ink-3`, `--on-ink` ;
-- `--blue`, `--blue-2`, `--blue-wash`, `--blue-ink` ;
-- `--red`, `--red-wash`, `--green`, `--green-wash`, `--amber`, `--amber-wash` ;
-- `--doc`, `--doc-ink`, `--doc-rule`, `--shadow`, `--scrim`.
-
-Ces noms décrivent les tokens du prototype. Ils peuvent être renommés pendant l'intégration, à condition de conserver une correspondance explicite entre tokens et usages.
-
-> Un choix graphique partagé doit pouvoir être ajusté à un endroit central et se répercuter de façon cohérente dans l'interface.
-
-La centralisation des tokens est une règle de conception. Elle ne prescrit pas à elle seule l'organisation des fichiers ou l'architecture technique de l'application.
+Cette section fixe une tonalité de mouvement, pas les comportements fonctionnels qui déclenchent les animations.
 
 ---
 
-## 14. Éléments restant à définir
+## 11. Présentation graphique de l'écran d'entrée
 
-Cette version 0.5 aligne la charte sur le prototype V3, mais ne constitue pas encore un système de design complet.
+L'écran de connexion et de premier accès doit utiliser le même langage visuel que le reste de BATORYA Essentiel :
+- fond gris bleuté et atmosphère légère ;
+- surfaces vitrées ou panneaux translucides lorsque cela sert la composition ;
+- typographie Outfit et Manrope ;
+- accent bleu et ombres douces ;
+- contrastes et états de focus lisibles.
 
-Restent notamment à confirmer ou concevoir :
-- les tailles typographiques et l'échelle d'espacement complètes ;
-- les dimensions et rayons définitifs des composants ;
-- les règles responsive complètes ;
-- les composants de navigation définitifs ;
-- les variantes complètes de boutons, champs et sélecteurs ;
-- les tableaux, badges, alertes, modales, menus et infobulles ;
-- les états vides, de chargement, de succès, d'erreur et d'avertissement ;
-- les règles d'accessibilité et de contraste à vérifier sur l'ensemble des composants ;
-- la distribution locale et les licences des familles typographiques ;
+Cette charte décrit uniquement l'apparence. Les parcours de connexion, la création d'espace, les règles de sécurité et les étapes de démarrage doivent être spécifiés séparément.
+
+---
+
+## 12. Thèmes clair et sombre
+
+Les deux thèmes sont des expressions de la même identité graphique.
+
+### Thème clair
+- fond gris bleuté `#F2F5F9` ;
+- surfaces blanches translucides ;
+- texte bleu marine ;
+- accent bleu vif et bleu ciel ;
+- ombres diffuses et reflets clairs.
+
+### Thème sombre
+- fond bleu nuit `#0C1422` ;
+- surfaces bleu nuit translucides ;
+- texte clair bleuté ;
+- accent bleu lumineux ;
+- bordures claires discrètes et ombres plus profondes.
+
+Les composants doivent conserver une hiérarchie comparable dans les deux thèmes. Le thème sombre ne doit ni éblouir par des accents trop lumineux ni rendre les surfaces indiscernables. Les couleurs et transparences devront être vérifiées sur les fonds réellement utilisés.
+
+La manière dont le thème est choisi ou mémorisé ne relève pas de cette charte graphique.
+
+---
+
+## 13. Tokens et centralisation des styles
+
+Les valeurs graphiques communes doivent être centralisées dans des tokens plutôt que redéfinies arbitrairement dans chaque composant.
+
+Les tokens présents dans le prototype comprennent notamment :
+- fonds et surfaces : `--paper`, `--sheet`, `--wash`, `--wash-2` ;
+- bordures : `--rule`, `--rule-2` ;
+- texte : `--ink`, `--ink-2`, `--ink-3`, `--on-ink` ;
+- accents : `--acc`, `--acc-2`, `--acc-wash`, `--acc-ink` ;
+- états : `--red`, `--red-wash`, `--green`, `--green-wash`, `--amber`, `--amber-wash` ;
+- documents : `--doc`, `--doc-ink`, `--doc-rule` ;
+- profondeur : `--shadow`, `--float`, `--glass`, `--edge`, `--scrim`, `--aur` ;
+- géométrie et mouvement : `--r`, `--row`, `--blur`, `--ease`.
+
+Les noms peuvent évoluer pendant l'intégration technique à condition de conserver une correspondance explicite entre les tokens et leurs usages graphiques.
+
+La centralisation est un principe de cohérence visuelle ; cette charte ne prescrit pas l'organisation des fichiers CSS ou des composants.
+
+---
+
+## 14. Éléments graphiques restant à définir ou à vérifier
+
+Cette version aligne la charte sur le prototype « Azur », mais ne constitue pas encore un système de design complet.
+
+Restent notamment à éprouver ou à documenter :
+- l'échelle typographique complète et les tailles minimales ;
+- l'échelle d'espacement ;
+- les rayons et dimensions définitifs des composants ;
+- les variantes complètes des boutons, champs, sélecteurs et cartes ;
+- les tableaux et listes à forte densité ;
+- les badges, alertes, modales, menus et infobulles ;
+- les états vides et les traitements graphiques de chargement ;
+- les contrastes en clair et en sombre ;
+- le comportement visuel sur les tailles de fenêtre prises en charge ;
+- les polices embarquées et leurs licences ;
 - la famille d'icônes définitive ;
-- le nouveau logo BATORYA ;
-- les variantes et règles d'usage du logo une fois celui-ci validé.
+- le logo BATORYA définitif.
 
-Les éléments ci-dessus ne doivent pas être inventés simplement pour compléter la charte. Ils seront ajoutés lorsqu'ils auront été conçus et validés.
+Ces points ne doivent pas être inventés pour compléter artificiellement la charte. Ils seront ajoutés au fur et à mesure de leur conception et de leur validation.
 
 ---
 
-## 15. Règle de cohérence
+## 15. Règle de cohérence graphique
 
-Toute nouvelle interface BATORYA Essentiel V6 doit s'appuyer sur cette charte et sur le prototype V3 comme référence visuelle actuelle.
+Toute nouvelle interface BATORYA Essentiel V6 doit préserver la direction artistique « Azur » et respecter les tokens partagés.
 
-Lorsqu'un besoin nécessite une règle graphique qui n'est pas couverte :
-1. concevoir le composant dans son contexte d'usage ;
-2. définir les états nécessaires et leur rendu en clair et en sombre ;
-3. vérifier la lisibilité, l'accessibilité et la cohérence avec les tokens ;
-4. compléter la charte ;
-5. incrémenter la version et renseigner l'historique.
+Lorsqu'un besoin graphique n'est pas couvert :
+1. concevoir son apparence dans le contexte visuel où il sera utilisé ;
+2. définir ses variantes en thème clair et sombre ;
+3. vérifier lisibilité, contraste, densité et cohérence avec les composants existants ;
+4. centraliser les nouveaux tokens ou règles réutilisables ;
+5. compléter la charte et incrémenter sa version.
 
-La charte reste un document vivant. Elle ne doit pas devenir un catalogue de règles métier ou de décisions d'architecture.
+Une évolution graphique peut être proposée à partir d'un prototype ou d'un besoin métier. Elle doit toutefois être explicitement validée avant de devenir une règle commune.
 
 ---
 
@@ -419,23 +514,22 @@ La charte reste un document vivant. Elle ne doit pas devenir un catalogue de rè
 | 0.2 | 2026-10-05 | Version intermédiaire ; détail des changements non consigné dans l'historique source. |
 | 0.3 | 2026-10-09 | Documentation des comportements visuels des prototypes Login + Splash alors retenus. |
 | 0.4 | 2026-10-09 | Mise à jour des palettes et tokens des anciens prototypes Login + Splash. |
-| 0.5 | 2026-10-12 | Refonte de la référence graphique pour l'aligner sur le prototype UI/UX V3 : palette papier/encre/outremer, typographie Source Serif 4 / Instrument Sans / DM Mono, filets fins, géométrie compacte, mode sombre et statut provisoire du signe de marque. Correction des références obsolètes et de l'incohérence de version. |
+| 0.5 | 2026-10-12 | Alignement temporaire de la référence graphique sur le prototype Claude V3 : palette papier/encre/outremer et typographie Source Serif 4 / Instrument Sans / DM Mono. |
+| 0.6 | 2026-10-18 | Nouvelle référence graphique de travail : alignement sur le prototype Mistral « Azur », palette bleu glacier, surfaces vitrées, ombres douces, formes arrondies et typographie Outfit / Manrope / JetBrains Mono. Clarification du périmètre : charte strictement graphique, sans règles de navigation, de comportement métier ou d'architecture. |
 
 ---
 
-## 17. Références
+## 17. Référence visuelle
 
 ### Prototype de référence actuel
 
-`docs/conception/references-ui/prototype_claude_ui-uxV3.html`
+`docs/conception/references-ui/Prototype_mistral_ui-ux-modern.html`
 
-### Références antérieures
+Le prototype sert de référence visuelle de travail. Il ne constitue pas à lui seul une spécification fonctionnelle ou une architecture technique.
 
-Les anciens fichiers Login + Splash présents dans `docs/conception/references-ui/` restent des références historiques. Ils ne priment pas sur le prototype V3 pour les nouveaux travaux graphiques.
-
-Les autres références visuelles du dossier peuvent servir à l'inspiration et à la comparaison, mais ne remplacent pas les règles de la présente charte.
+Les autres fichiers présents dans `docs/conception/references-ui/` restent consultables comme références historiques ou sources d'inspiration, mais ne priment pas sur la présente charte pour les nouveaux travaux graphiques.
 
 ---
 
-**Statut actuel :** charte en construction.  
-**Version courante : 0.5**
+**Statut actuel :** charte graphique en construction.  
+**Version courante : 0.6**
