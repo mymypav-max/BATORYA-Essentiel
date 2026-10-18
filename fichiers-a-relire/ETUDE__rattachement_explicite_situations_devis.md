@@ -2,6 +2,7 @@
 
 **Nature** : document de travail (relecture), **non officiel**. Aucun fichier SQL, test, `docs/` ni migration n'est modifié.
 **Date** : 2026-10-18 · **Remplace** la révision 3 (commit d8a7afc). Révision 4 : base documentaire V3.12, H7 ramené à un fait vérifié, `WITHOUT ROWID` retiré, citations INV-180 / INV-190 retirées, blocages réduits à un seul.
+**Clôture (2026-10-18)** : cadrage clos ; modèle officiel V3.14 rédigé (en relecture) ; identifiants attribués : INV-204, INV-205, TR-104, TR-105, CK-21, CK-22, D-62, C-43, T-53 ; D1 / D2 deviennent CK-21 / CK-22. En cas d'écart, les documents officiels font foi.
 **Suite** : la proposition de modification du modèle SQLite est dans `fichiers-a-relire/PROPOSITION__modele_sqlite_v3.14_situation_devis.md`.
 **Identifiants** : le nom `situation_devis` et tous les numéros (`INV-`, `TR-`, `CK-`, `D-`, `C-`, `T-`) restent **provisoires** jusqu'à leur inscription dans le modèle.
 
@@ -179,7 +180,7 @@ La migration s'arrête avec un message explicite si `factures` contient au moins
 
 | # | Test | Attendu |
 |---|---|---|
-| 1 | S1 sur A, puis acompte sur A | refusé |
+| 1 | S1 sur A, puis acompte sur A (y compris `created_at` identiques ou inversés) ; témoin sans couverture | refusé ; témoin accepté |
 | 2 | S1 sur A, rattachement de B, acompte sur B | autorisé si les autres règles le sont |
 | 3 | Situation émise après A et B | couvre A et B ; S1 garde {A} |
 | 4 | Situation entièrement créditée | couverture inchangée ; acompte sur le devis refusé |
@@ -190,24 +191,21 @@ La migration s'arrête avec un message explicite si `factures` contient au moins
 | 9 | Échec injecté entre l'`INSERT` facture et l'`INSERT … SELECT` | aucune situation, aucune couverture ; trou de numérotation toléré |
 | 10 | Plafonds d'acompte et autres contrôles existants ; situation de montant nul toujours refusée (V7) | aucune régression |
 | 11 | Garde V6 : base avec une situation / sans situation | migration refusée, base inchangée / acceptée |
-| 12 | Indépendance vis-à-vis des horodatages (mêmes `created_at`, ordre inversé) | même résultat que 1 et 2 |
-| 13 | D1 et D2 | signalent respectivement une situation sans couverture et une couverture non monotone |
-| 14 | Rejeu du cas chiffré de la proposition (§4.7) sur la chaîne, avec **témoin** sans couverture (acompte sur A accepté) ; rejeu de la chaîne 001 → 009a → 009b depuis une base vide et depuis le rang 12 ; empreintes de 001 à 009 identiques à GitHub ; campagne de mutation | tout vert |
+| 12 | CK-21 et CK-22 (anciens D1 et D2) | signalent respectivement une situation sans couverture et une couverture non monotone |
+| 13 | Rejeu du cas chiffré (§4.7 de la proposition) avec témoin ; rejeu de la chaîne 001 → 009a → 009b depuis une base vide et depuis le rang 12 ; empreintes de 001 à 009 identiques à GitHub ; campagne de mutation | tout vert |
+
+**13 tests**, comme dans la proposition et dans le modèle officiel (T-53). L'ancien test « indépendance vis-à-vis des horodatages » est intégré au test 1.
 
 (Les anciens tests relatifs à M3 — cohérence avec la règle de synthèse — sortent du chantier.)
 
 ---
 
-## 7. Blocage réel restant avant le SQL
+## 7. Blocages
 
-| # | Blocage | Portée |
-|---|---|---|
-| B1 | **Attribution des identifiants** (INV, TR, CK, D, C, T) : valider les planchers de non-collision de la proposition (§2) ou arbitrer AR-01 | Ne bloque pas la rédaction du texte (emplacements provisoires). Bloque le **SQL** : les noms de triggers `tr_<NN>_…` dépendent des numéros TR |
-
-Les anciens blocages sont levés : **B1 (base de rédaction)** est tranché (V3.12, 2026-10-18 03:30) ; **B2 (H7)** est ramené à un fait vérifié (§1.3). Dépendances ouvertes non bloquantes : AR-06 (rang de 009a / 009b), AR-08 (partie « solde » de TR-22), PT-11 / M3 (hors périmètre).
+**Aucun blocage restant** : B1 (identifiants) est levé par l'attribution des planchers de non-collision le 2026-10-18 ; la base de rédaction (V3.12) et H7 étaient déjà tranchés. Dépendances ouvertes non bloquantes : AR-06 (rang de 009a / 009b), AR-08 (partie « solde » de TR-22), PT-11 / M3 (hors périmètre), coordination des numéros T-53 / C-43 / D-62 avec les plans de travail 009a (V3) et 011, non validés.
 
 ---
 
 ## 8. Recommandation
 
-**Le cadrage est clos.** Ordre : validation de la proposition (`fichiers-a-relire/PROPOSITION__modele_sqlite_v3.14_situation_devis.md`) → décision B1 sur les identifiants → rédaction de la V3.14 sur la base V3.12 → patch 009b révisé et ses tests → rejeu complet. L'implémentation SQL ne commence qu'après validation du modèle V3.14 (conventions §5). Rien n'est validé tant que ce n'est pas implémenté et testé.
+**Le cadrage documentaire est clos et le modèle officiel V3.14 est rédigé (en relecture).** Étape suivante : patch 009b révisé (table, index, triggers TR-104 / TR-105, garde d'acompte de TR-22 fondée sur la couverture, garde de migration) et ses 13 tests T-53, puis rejeu complet de la chaîne. Rien n'est validé tant que ce n'est pas implémenté et testé.
