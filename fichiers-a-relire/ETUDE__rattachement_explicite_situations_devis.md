@@ -1,7 +1,7 @@
-# ÉTUDE DE CONCEPTION — Rattachement explicite des situations aux devis (révision 3, cadrage clôturé)
+# ÉTUDE DE CONCEPTION — Rattachement explicite des situations aux devis (révision 4, cadrage clôturé, base V3.12)
 
 **Nature** : document de travail (relecture), **non officiel**. Aucun fichier SQL, test, `docs/` ni migration n'est modifié.
-**Date** : 2026-10-18 · **Remplace** la révision 2 (commit de672cd).
+**Date** : 2026-10-18 · **Remplace** la révision 3 (commit d8a7afc). Révision 4 : base documentaire V3.12, H7 ramené à un fait vérifié, `WITHOUT ROWID` retiré, citations INV-180 / INV-190 retirées, blocages réduits à un seul.
 **Suite** : la proposition de modification du modèle SQLite est dans `fichiers-a-relire/PROPOSITION__modele_sqlite_v3.14_situation_devis.md`.
 **Identifiants** : le nom `situation_devis` et tous les numéros (`INV-`, `TR-`, `CK-`, `D-`, `C-`, `T-`) restent **provisoires** jusqu'à leur inscription dans le modèle.
 
@@ -25,7 +25,8 @@
 
 ### 0.2 Reste à confirmer
 
-- **H7** — statut de 009a / 009b (§1.3). Constat : le dépôt les montre **non livrées** ; il ne peut pas prouver qu'elles n'ont jamais été appliquées ailleurs. Une confirmation d'une ligne suffit (§5.1).
+- **H7** — statut de 009a / 009b : **fait vérifié dans le dépôt** (§1.3), non une question posée. 009a / 009b ne sont pas livrées ; le dépôt ne montre aucune application ailleurs et ne peut pas la démontrer non plus. Hypothèse de travail retenue : non livrées, sans demande de confirmation.
+- **Base documentaire** — la V3.14 est bâtie sur la **V3.12 officielle** (décision du 2026-10-18 03:30) ; la V3.13 n'est pas promue. Classement des écarts et contrôle des identifiants : proposition, §1 et §2.
 
 ### 0.3 Hors périmètre de ce chantier
 
@@ -38,7 +39,7 @@
 
 ### 1.1 GitHub, `main`
 
-- `main` = **de672cd** (2026-10-18 02:56, mise à jour de cette étude ; contenu identique à ma révision 2). Parent : 7de3cc6.
+- `main` = **29cba9f** (2026-10-18 03:22). Derniers commits : dépôt des révisions 2 et 3 de cette étude et de la première proposition, et un commit de charte graphique étranger au sujet. Migrations et patchs : **inchangés depuis de672cd**.
 - Chaîne métier présente (`src-tauri/migrations/metier/`) : 001, 002, 003, 004, 005, 005a, 005b, 005c, 006, 007, 008, 009 (rangs 1 à 12). **Aucune base de données** dans l'arborescence.
 - Absentes : `009a_bc_annulation_interdite_si_facture` (rang 13) et `009b_acompte_garanties_manuelles` (rang 14).
 
@@ -53,7 +54,7 @@
 | Montant nul | `006_facturation.sql` l.145 : `CHECK (type='solde' OR total_ht <> '0.00')` ; règle de service `M > 0` |
 | Règle d'ordre à horodatages (à remplacer) | `consignation-V3.14-h.patch` (009b, `tr_22_factures_acompte`) |
 
-**Nuance documentaire à conserver** : INV-190, « situation globale au BC », PT-11 et D-48 ne figurent **pas** dans `docs/` (registre officiel arrêté à INV-179) ; ils sont dans les documents de travail `MAJ__*`. Le mot « couvre » et la règle d'ordre acompte / situation ne sont écrits **nulle part** hors du patch `h`. La proposition de modèle (document séparé) les inscrit.
+**Nuance documentaire à conserver** : INV-190, « situation globale au BC », PT-11 et D-48 ne figurent **pas** dans `docs/` (registre officiel arrêté à INV-178) ; ils sont dans les documents de travail `MAJ__*`. Le mot « couvre » et la règle d'ordre acompte / situation ne sont écrits **nulle part** hors du patch `h`. La proposition de modèle (document séparé) les inscrit.
 
 ### 1.3 H7 — résultat factuel de la vérification
 
@@ -62,14 +63,14 @@
 | Élément | Constat |
 |---|---|
 | Branche | un seul `main` ; pas d'autre branche ; aucun tag |
-| Arborescence | 009a et 009b **absentes** de `src-tauri/migrations/metier/` à de672cd |
+| Arborescence | 009a et 009b **absentes** de `src-tauri/migrations/metier/` à 29cba9f |
 | Patchs | `consignation-V3.14.patch` et `-b` à `-h` (fichiers texte dans `fichiers-a-relire/`), dernier = `-h` (f8b244f, 2026-10-17). Les fichiers SQL 009a / 009b n'y existent que comme contenu de patch. Outil associé : `classify009b.py` (campagne de mutation) |
 | Statut déclaré | dans le tableau de suivi des migrations du patch `h` : rang 13 (009a) et rang 14 (009b) « **créée, à relire** » ; rang 15 (010) « prévue, non créée ». Les rangs 1 à 12 sont « livrée ». Les rapports de la révision G précisent qu'**aucune migration livrée (001 à 009) n'est modifiée** |
 | `docs/` officiel | aucune mention de 009a / 009b |
 | Code d'application | aucun lanceur de migrations ni code applicatif dans le dépôt (SQL, tests, documents) : le dépôt ne peut donc pas montrer qu'une migration a été **appliquée** à une base |
 | Déclaration du propriétaire | l'environnement local ne contient aucune base métier hors dépôt (énoncé M4, 2026-10-18) |
 
-**Conclusion** : 009a et 009b ne sont **pas livrées** dans la chaîne de `main` ; leur statut documentaire est « créée, à relire ». **Limite** : le dépôt ne permet pas d'exclure qu'un SQL issu des patchs ait été exécuté dans un autre environnement (hors dépôt, hors machine locale). Je ne le prétends pas.
+**Conclusion** : 009a et 009b ne sont **pas livrées** dans la chaîne de `main` ; leur statut documentaire est « créée, à relire ». C'est un fait vérifié, qui suffit au cadrage. **Limite** : le dépôt ne permet pas d'exclure qu'un SQL issu des patchs ait été exécuté dans un autre environnement ; je ne le prétends pas et je ne demande pas de confirmation.
 
 ---
 
@@ -91,11 +92,11 @@ CREATE TABLE situation_devis (               -- nom provisoire
     facture_id INTEGER NOT NULL REFERENCES factures (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
     devis_id   INTEGER NOT NULL REFERENCES devis    (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
     PRIMARY KEY (facture_id, devis_id)
-) STRICT, WITHOUT ROWID;
+) STRICT;
 CREATE INDEX idx_situation_devis_devis_id ON situation_devis (devis_id);
 ```
 
-Pas de `id`, pas de `created_at`, pas de `bc_id` (redondant : le BC se déduit de la facture). Les conventions de tables imposent `STRICT` (en-tête de 006).
+Pas de `id`, pas de `created_at`, pas de `bc_id` (redondant : le BC se déduit de la facture). Les conventions de tables imposent `STRICT` (en-tête de 006). **`WITHOUT ROWID` est retiré** : aucune migration livrée (001 à 009) ne l'emploie ; la révision 3 le prévoyait à tort.
 
 ### 3.2 Intégrité en base (sondée sur la chaîne 001-009)
 
@@ -107,10 +108,10 @@ Les clés étrangères seules ne garantissent que l'**existence**. Il faut des t
 | Le devis appartient au BC de la facture | `BEFORE INSERT`, lecture de `bc_devis` | devis d'un autre BC : refusé |
 | Pas de doublon | PK | refusé |
 | Couverture immuable | `BEFORE UPDATE`, `BEFORE DELETE` | refusés, y compris `INSERT OR REPLACE` avec `recursive_triggers=ON` |
-| Facture / devis couvert non supprimable | FK `RESTRICT` + triggers existants (INV-06, INV-180) | refusés |
-| Type de facture et appartenance au BC figés | `tr_20` (factures) et INV-184 (`bc_devis`) existants | acquis |
+| Facture / devis couvert non supprimable | FK `RESTRICT` ; facture : INV-06 / TR-21 existants | refusés |
+| Type de facture et appartenance au BC figés | `tr_20` (factures) et INV-184† (`bc_devis`, triggers `tr_99_bc_devis_no_update` / `no_delete`) existants | acquis |
 
-Clé étrangère composite `(bc_id, devis_id) → bc_devis` écartée : elle exigerait un `UNIQUE(bc_id, devis_id)` absent de `bc_devis` et une colonne `bc_id` redondante.
+Conventions §9 : `INSERT OR REPLACE` interdit, `recursive_triggers=ON` obligatoire : le trigger `DELETE` reste un filet. Clé étrangère composite `(bc_id, devis_id) → bc_devis` écartée : elle exigerait un `UNIQUE(bc_id, devis_id)` absent de `bc_devis` et une colonne `bc_id` redondante.
 
 ### 3.3 Enregistrement et atomicité (V4)
 
@@ -118,10 +119,10 @@ Dans la transaction `BEGIN IMMEDIATE` de l'émission : calculs → `INSERT` fact
 
 ### 3.4 Trigger d'acompte (V2)
 
-Dans `tr_22_factures_acompte`, la condition à horodatages du patch `h` est remplacée par :
+`tr_22_factures_acompte` (006, l.345) porte déjà cinq contrôles : devis rattaché au BC (INV-189†), aucun solde (INV-58), un seul acompte actif par devis (INV-52), ≤ total du devis et nette ≤ contractuel (INV-57) ; la chaîne de `main` n'a **aucune** règle d'ordre situation → acompte (sonde : un acompte sur A est accepté après S1). Dans 009b, la condition à horodatages du patch `h` est remplacée par la garde ci-dessous (qui s'ajoute aux cinq contrôles) :
 
 ```sql
-SELECT RAISE(ABORT, 'INV-58: aucun acompte apres une situation sur ce devis')
+SELECT RAISE(ABORT, 'INV-[b]: aucun acompte sur un devis deja couvert par une situation')
  WHERE EXISTS (SELECT 1 FROM situation_devis c WHERE c.devis_id = NEW.devis_id);
 ```
 
@@ -129,7 +130,7 @@ Indépendant des avoirs, du montant, du pourcentage et des horodatages (plus de 
 
 ### 3.5 Ajout ultérieur d'un devis
 
-`bc_devis` n'écrit jamais dans la couverture (INV-187 / INV-188 inchangés). S1 reste {A}. S2, par l'`INSERT … SELECT`, couvre {A, B} (sonde).
+`bc_devis` n'écrit jamais dans la couverture (INV-187† / INV-188† inchangés). S1 reste {A}. S2, par l'`INSERT … SELECT`, couvre {A, B} (sonde).
 
 ### 3.6 Limites de SQLite et diagnostics (V5)
 
@@ -142,7 +143,7 @@ Diagnostics retenus, sans horodatage, jamais bloquants :
 | **D1** | situation sans aucune couverture | `SELECT f.id FROM factures f WHERE f.type='situation' AND NOT EXISTS (SELECT 1 FROM situation_devis c WHERE c.facture_id=f.id)` |
 | **D2** | couverture non monotone : un devis couvert par une situation n'est plus couvert par une situation plus récente du même BC | jointure de deux situations du même BC (`situation_numero` croissant) et de la couverture de la plus ancienne, avec `NOT EXISTS` sur la couverture de la plus récente |
 
-D1 et D2 sont inscrits dans le modèle (§14 de la proposition). **D3 (diagnostic à horodatage) n'est pas intégré** (V5) : l'omission partielle sur la dernière situation reste donc détectable seulement par les tests du service. Ce choix est assumé, il n'est pas rouvert ici.
+D1 et D2 sont inscrits dans le modèle (§14 du modèle ; proposition §4.8). **D3 (diagnostic à horodatage) n'est pas intégré** (V5) : l'omission partielle sur la dernière situation reste donc détectable seulement par les tests du service. Ce choix est assumé, il n'est pas rouvert ici.
 
 ---
 
@@ -160,13 +161,13 @@ Pour mémoire, sans rouvrir : les documents (INV-62, modèle SQLite, modèle mé
 
 009b n'est pas livrée (§1.3). **Recommandation inchangée : intégrer la couverture dans 009b avant sa livraison** — table, index, deux groupes de triggers, réécriture de la condition d'ordre dans `tr_22_factures_acompte`, garde du §5.2. 001 à 009 ne sont pas touchées. Pas de 009c : elle ne ferait que remplacer, dans la même chaîne non livrée, une règle à horodatages écrite quelques lignes plus haut. Pas de 010.
 
-**Condition (H7)** : si 009b avait été livrée ou appliquée quelque part, la couverture irait dans le rang suivant (15, « 010 » dans la numérotation du projet), à ne créer qu'après décision explicite. La confirmation attendue : *« 009a et 009b n'ont jamais été copiées dans `src-tauri/migrations/` ni exécutées sur une base. »* Elle ne bloque pas la rédaction du modèle : seule la ligne 14 du suivi des migrations (§17.1) en dépend.
+**Hypothèse de travail (H7)** : 009b n'est pas livrée (fait vérifié, §1.3). Si elle l'avait été ou appliquée ailleurs, la couverture irait dans le rang suivant (15, « 010 »), à ne créer qu'après décision explicite. Rien ne le montre ; aucune confirmation n'est demandée. Seule la ligne 14 du suivi des migrations (§17.1) en dépend. Le rang et le numéro de la chaîne 009a / 009b relèvent d'AR-06 (copie de travail).
 
 Impact d'une intégration dans 009b : adapter la dizaine de tests d'ordre de 009b (ils fabriquent des situations brutes, sans couverture), supprimer le test « ex æquo d'horodatage = refus », relancer la campagne de mutation.
 
 ### 5.2 Garde sur situation préexistante
 
-La migration s'arrête avec un message explicite si `factures` contient au moins une situation. Garde en lecture seule, sur le modèle des gardes de 009b (tables TEMP, aucune trace). Aucune donnée modifiée, aucun lien fabriqué, aucun mécanisme de récupération. Aucune base réelle n'a été vérifiée par cette étude ; le dépôt n'en contient pas.
+La migration s'arrête avec un message explicite si `factures` contient au moins une situation. Garde en lecture seule, sur le modèle livré dans 005b (`CREATE TEMP TABLE garde_… (… CHECK …)`, `INSERT … SELECT`, `DROP TABLE`) et repris par 009b. **Échec** : la contrainte `CHECK` lève une erreur, le script s'arrête et le lanceur annule la transaction ; base et `user_version` inchangés. Le lanceur n'est pas dans le dépôt : ce comportement n'est vérifiable que par imitation en test. Aucune donnée modifiée, aucun lien fabriqué, aucun mécanisme de récupération. Aucune base réelle n'a été vérifiée par cette étude ; le dépôt n'en contient pas.
 
 **Conduite à tenir si une base avec situations apparaissait** : ne pas appliquer la migration ; sauvegarder ; lister les situations en lecture seule ; faire arbitrer par le propriétaire. Le problème (couverture non reconstituable) ne serait **pas** résolu par la garde, seulement rendu visible. Rien n'est conçu pour ce cas hypothétique ni pour l'import V2 (précédé d'une application de conversion distincte).
 
@@ -191,23 +192,22 @@ La migration s'arrête avec un message explicite si `factures` contient au moins
 | 11 | Garde V6 : base avec une situation / sans situation | migration refusée, base inchangée / acceptée |
 | 12 | Indépendance vis-à-vis des horodatages (mêmes `created_at`, ordre inversé) | même résultat que 1 et 2 |
 | 13 | D1 et D2 | signalent respectivement une situation sans couverture et une couverture non monotone |
-| 14 | Rejeu de la chaîne 001 → 009a → 009b depuis une base vide et depuis le rang 12 ; empreintes de 001 à 009 identiques à GitHub ; campagne de mutation | tout vert |
+| 14 | Rejeu du cas chiffré de la proposition (§4.7) sur la chaîne, avec **témoin** sans couverture (acompte sur A accepté) ; rejeu de la chaîne 001 → 009a → 009b depuis une base vide et depuis le rang 12 ; empreintes de 001 à 009 identiques à GitHub ; campagne de mutation | tout vert |
 
 (Les anciens tests relatifs à M3 — cohérence avec la règle de synthèse — sortent du chantier.)
 
 ---
 
-## 7. Blocages réels restant avant la rédaction officielle du modèle
+## 7. Blocage réel restant avant le SQL
 
-| # | Blocage | Pourquoi il est réel |
+| # | Blocage | Portée |
 |---|---|---|
-| B1 | **Base de rédaction de la V3.14** : V3.12 (officielle dans `docs/`) ou V3.13 (en relecture) | Les migrations livrées citent « modèle V3.13 » ; INV-189, INV-190, PT-10, PT-11, D-48 et le `TR-22` actuel n'existent que dans la V3.13. Une V3.14 bâtie sur V3.12 aurait des références pendantes. Décision de structure à prendre par le propriétaire. |
-| B2 | **H7** — confirmation d'une ligne (§5.1) | Conditionne uniquement le placement de la couverture dans 009b (ligne 14 du suivi des migrations). Ne bloque pas le reste. |
+| B1 | **Attribution des identifiants** (INV, TR, CK, D, C, T) : valider les planchers de non-collision de la proposition (§2) ou arbitrer AR-01 | Ne bloque pas la rédaction du texte (emplacements provisoires). Bloque le **SQL** : les noms de triggers `tr_<NN>_…` dépendent des numéros TR |
 
-Les numéros officiels (INV, TR, CK, D, C, T) ne sont pas un blocage : ils sont à attribuer lors de la rédaction, après contrôle des numéros déjà pris (proposition, §7).
+Les anciens blocages sont levés : **B1 (base de rédaction)** est tranché (V3.12, 2026-10-18 03:30) ; **B2 (H7)** est ramené à un fait vérifié (§1.3). Dépendances ouvertes non bloquantes : AR-06 (rang de 009a / 009b), AR-08 (partie « solde » de TR-22), PT-11 / M3 (hors périmètre).
 
 ---
 
 ## 8. Recommandation
 
-**Le cadrage est clos et la rédaction du modèle V3.14 peut commencer dès que B1 est tranché** ; B2 peut être levé en parallèle. L'implémentation SQL ne doit commencer qu'après validation du modèle V3.14 (conventions §5). Rien n'est validé tant que ce n'est pas implémenté et testé.
+**Le cadrage est clos.** Ordre : validation de la proposition (`fichiers-a-relire/PROPOSITION__modele_sqlite_v3.14_situation_devis.md`) → décision B1 sur les identifiants → rédaction de la V3.14 sur la base V3.12 → patch 009b révisé et ses tests → rejeu complet. L'implémentation SQL ne commence qu'après validation du modèle V3.14 (conventions §5). Rien n'est validé tant que ce n'est pas implémenté et testé.
