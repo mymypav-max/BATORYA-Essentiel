@@ -1,0 +1,1115 @@
+diff --git a/docs/conception/conventions-techniques-v6.md b/docs/conception/conventions-techniques-v6.md
+index aefd4a8..5fd5b3e 100644
+--- a/docs/conception/conventions-techniques-v6.md
++++ b/docs/conception/conventions-techniques-v6.md
+@@ -99,8 +99,11 @@ src-tauri/migrations/metier/003_devis.sql
+ 
+ Règles :
+ 
+-- une migration correspond à une tranche du schéma définie dans le suivi des migrations du modèle de données SQLite ; elle contient les tables de la tranche, avec leurs triggers et leurs index ;
+-- la première migration métier s’appelle `001_initial.sql` ; les suivantes sont nommées `NNN_<objet>.sql` (numéro séquentiel, objet en minuscules sans accent) ;
++- une migration de tranche correspond à une tranche du schéma définie dans le suivi des migrations du modèle de données SQLite ; elle contient les tables de la tranche, avec leurs triggers et leurs index ;
++- la première migration métier s’appelle `001_initial.sql`. Il existe deux catégories de migrations métier, distinguées par leur nom (décision V-2, confirmée par le propriétaire le 2026-10-18) :
++  - une **tranche métier** : `NNN_<objet>.sql` (numéro séquentiel, objet en minuscules sans accent) ;
++  - une **migration corrective** : `NNNx_<objet>.sql` (trois chiffres suivis d’**une lettre minuscule**, objet en minuscules sans accent) ; elle corrige ou fait évoluer le schéma déjà livré sans être une tranche métier, et ne consomme aucun numéro de tranche. Le préfixe `NNN` est celui de la dernière tranche exécutée avant elle ; la lettre ordonne les correctives rattachées à la même tranche (`005a` avant `005b`, `009a` avant `009b`, `009b` avant `009c`) ;
++  - aucune autre catégorie de nom n’existe ;
+ - le modèle de données SQLite passe à la version suivante et est mis à jour **avant** la création ou la modification d’une migration ; l’en-tête de la migration cite la version du modèle ;
+ - une migration n’insère aucune ligne : listes de référence, catalogue par défaut et singletons relèvent du jeu de données d’installation ou du service d’initialisation (l’emplacement du jeu de données sera défini dans ce document lorsqu’il sera introduit) ;
+ - noms SQL : triggers `tr_<NN>_<table>_<règle>` où `NN` est le numéro `TR-NN` du modèle ; index `idx_<table>_<colonnes>` ; les contraintes `UNIQUE` de colonnes restent déclarées dans la table ;
+diff --git a/docs/conception/invariants.md b/docs/conception/invariants.md
+index 2a5918e..acb7bd0 100644
+--- a/docs/conception/invariants.md
++++ b/docs/conception/invariants.md
+@@ -75,7 +75,7 @@ Statut : **pièce obligatoire du modèle de données**
+ | INV-41 | Le statut du BC n'est pas librement modifiable par l'utilisateur | SVC | |
+ | INV-42 | BC `termine` ⇔ solde actif ET Σ reste dû des factures actives hors avoir = 0 ; un solde à 0.00 ne suffit pas ; l'avoir n'est pas un encaissement mais réduit le reste dû via `absorbe` | SVC, CK-06, SQL (`termine ⇔ completed_at`) | C-05, C-08, C-10 |
+ | INV-43 | `date_100_facture` = date d'émission du premier solde actif ; conservée par avoir, règlement, remboursement ; `NULL` seulement à l'annulation du solde ; distincte de `garanties.date_declenchement` | SVC, CK-06 | C-07, C-20 |
+-| INV-44 | Annulation directe du BC : interdite si encaissement actif, ou si une situation a été émise (même annulée) ; autorisée avec acompte non réglé, annulé dans la même transaction ; toute autre facture interdit l'annulation (décision D-05) | SVC, test | C-01, C-19 |
++| INV-44 | Annulation directe du BC : interdite si encaissement actif (même si la facture est neutralisée par avoirs ; un encaissement annulé ou un remboursement n'est pas un encaissement actif), ou si une situation a été émise (même annulée ou créditée) ; autorisée avec acompte non réglé, annulé dans la même transaction, c'est-à-dire neutralisé par un avoir total de motif `correction_erreur` émis avant l'annulation (D-63) ; toute autre facture interdit l'annulation, même si son net après avoirs est nul (décision D-05) | SVC, TRG (TR-103), test | C-01, C-19 |
+ | INV-45 | BC annulé : devis `annule` (BC d'abord, puis devis, dans la même transaction : TR-18), PDF du devis dans `Devis/Annule`, exclu du CA engagé, aucune nouvelle facturation ; CA engagé = Σ max(0, (contractuel − avoirs) − (encaissements − remboursements)) des BC `en_cours` | SVC, TRG (TR-18), test | C-13, C-28 |
+ | INV-46 | Caches BC (`montant_deja_facture_ht`, `avancement`, `date_100_facture`, `statut`, `completed_at`) recalculés par un service financier unique, même transaction ; source de vérité = factures + règlements ; écrits en un seul `UPDATE` ; aucune contrainte `montant_deja_facture_ht <= montant_contractuel_ht` (transitoirement fausse) ; seuls des CHECK de cohérence sûrs : `termine` ⇒ gelé, `date_100_facture` ⇒ gelé et `avancement = 100.00` | SVC, CK-06, SQL (CHECK) | |
+ | INV-47 | Facturation possible uniquement sur un BC `en_cours` | TRG (TR-16) | |
+@@ -254,6 +254,7 @@ Flux : sauvegarde JSON V2 → **convertisseur externe** → `import-v6.json` →
+ | 2026-10-02 | INV-07, INV-141, INV-175, INV-177 | Précisés (seconde passe V3.12) : convention REPLACE vérifiée par les tests 001–003 renforcés (INV-07) ; échec de la restauration si un contrôle obligatoire ou CK-13 échoue, retour par la sauvegarde de sécurité (INV-141) ; TR-17 sans comparaison complète avec le devis, le service construit la cohérence et CK-13 la détecte (INV-175) ; borne d'année 2001–2099 limitée aux dates de numérotation annuelle (INV-177) | La borne ne devait pas devenir une contrainte générale sur les dates ; la logique métier reste au service ; la restauration doit avoir un comportement défini en cas d'incohérence | D-36, D-38, D-39 |
+ | 2026-10-02 | INV-22 | Précisé (seconde passe V3.12, application de D-39) : `tr_96_numerotation_sequences_no_delete` ajouté par la migration 004 ; avec `tr_95` il couvre UPDATE et DELETE, direct ou implicite par REPLACE | Un REPLACE ne déclenche pas les triggers `UPDATE` (vérifié) ; `001_initial.sql` est immuable ; la protection ne doit pas reposer sur la seule convention | D-39 (précision technique, sans nouvelle décision) |
+ | 2026-10-18 | INV-204, INV-205 | **Ajoutés** (V3.14) | Couverture des situations : une situation couvre tous les devis rattachés à son BC à l'émission (table `situation_devis`) ; aucun acompte sur un devis couvert. Aucun INV existant n'est modifié ni retiré (INV-52, INV-57, INV-58, INV-62 inchangés) ; numéros = planchers de non-collision (INV-179 à INV-203 restent réservés aux documents de travail non validés) | D-62 (cadrage validé par le propriétaire le 2026-10-18) |
++| 2026-10-18 | INV-44 | **Précisé** (V3.14) | Encaissement actif (même facture neutralisée par avoirs), situation émise (même créditée) et facture autre qu'un acompte (même à net nul) interdisent l'annulation directe du BC ; l'acompte non réglé est « annulé » par un avoir total de motif `correction_erreur` émis avant l'annulation, dans la même transaction ; garde SQL TR-103 (niveau SVC, TRG, test). Aucun autre INV n'est modifié | D-63 (propriétaire, 2026-10-18) |
+ 
+ ## Contrôle de non-régression (à exécuter à chaque nouvelle version du modèle)
+ 
+diff --git a/docs/conception/modèle-données-sqlite-v6-v3.14.md b/docs/conception/modèle-données-sqlite-v6-v3.14.md
+index bb0b9d8..73b2f3f 100644
+--- a/docs/conception/modèle-données-sqlite-v6-v3.14.md
++++ b/docs/conception/modèle-données-sqlite-v6-v3.14.md
+@@ -8,8 +8,8 @@
+ **Périmètre de la V3.14** (décision du propriétaire du 2026-10-18) :
+ - **Inclus** : la couverture des situations par les devis (INV-204, INV-205 ; D-62 ; C-43 ; T-53 ; TR-104, TR-105 et la clause de couverture de TR-22 ; CK-21, CK-22) et ses deux prérequis déjà livrés, décrits uniquement dans la mesure nécessaire : le rattachement des devis à un BC (`bc_devis`, §4.7 bis) et le devis porté par un acompte (`factures.devis_id`, §4.8 bis).
+ - **Règle de lecture** : pour les objets cités par ces blocs, la chaîne de migrations livrée (`005b_bc_multi_devis.sql`, `006_facturation.sql`) **fait foi**. Les paragraphes de la V3.12 conservés tels quels qui la contredisent encore (`bons_commande.devis_id`, `remise_*` et `acompte_*` du BC au §4.7 ; `cancelled_at`, `avancement_cumule_pct` et index `uq_facture_*` au §4.8 ; contractuel d'un BC à devis unique au §3.1) relèvent de l'alignement général de la V3.14 (copie de travail `fichiers-a-relire/audit-global-coherence/`), **non effectué ici**.
+-- **Non inclus** : la description détaillée des migrations 005 à 009 et de leurs règles ; la V3.13 (aucune reprise en bloc) ; la composition des lignes d'une situation et les colonnes de situation (PT-11 / M3) ; l'annulation du BC (écart H6) ; la situation de montant nul (règle inchangée : refusée).
+-- **Identifiants** : les messages des migrations livrées 005b et 006 portent des numéros d'invariants (184, 187, 188, 189) et des noms de triggers (`tr_99_…`) qui ne sont pas inscrits au registre officiel ; leur inscription est un point ouvert (arbitrage AR-01 de la copie de travail), non traité ici ; ils ne sont ni réattribués ni redéfinis. Les numéros nouveaux de cette révision sont les planchers de non-collision arrêtés le 2026-10-18 (INV à partir de 204, TR de 104, CK de 21, D de 62, C de 43, T de 53) ; les numéros intermédiaires restent réservés.
++- **Non inclus** : la description détaillée des migrations 005 à 009 et de leurs règles ; la V3.13 (aucune reprise en bloc) ; la composition des lignes d'une situation et les colonnes de situation (PT-11 / M3) ; l'annulation du BC (écart H6), à l'exception de sa garde SQL INV-44 (TR-103, D-63, T-54) ajoutée le 2026-10-18 ; la situation de montant nul (règle inchangée : refusée).
++- **Identifiants** : les messages des migrations livrées 005b et 006 portent des numéros d'invariants (184, 187, 188, 189) et des noms de triggers (`tr_99_…`) qui ne sont pas inscrits au registre officiel ; leur inscription est un point ouvert (arbitrage AR-01 de la copie de travail), non traité ici ; ils ne sont ni réattribués ni redéfinis. Les numéros nouveaux de cette révision sont les planchers de non-collision arrêtés le 2026-10-18 (INV à partir de 204, TR de 104, CK de 21, D de 62, C de 43, T de 53) ; D-63 et T-54 sont attribués à la garde d'annulation du BC (INV-44) ; les numéros intermédiaires restent réservés.
+ 
+ ---
+ 
+@@ -686,15 +686,17 @@ Les triggers ne servent que là où un `CHECK` ne suffit pas. Ils lèvent `RAISE
+ | TR-90 | import_anomalies / DELETE, UPDATE | DELETE interdit ; UPDATE limité à `statut` et `traite_at` (une fois) | 130 |
+ | TR-95 | numerotation_sequences / UPDATE | `dernier_numero` ne diminue jamais ; message `INV-22: numerotation_sequences.dernier_numero ne diminue jamais` | 22 |
+ | TR-96 | numerotation_sequences / DELETE | toujours refusé (direct, ou implicite par `INSERT OR REPLACE` si `recursive_triggers=ON`) ; posé par la migration 004 car 001 est immuable ; message `INV-22: numerotation_sequences ne se supprime jamais` | 22 |
++| TR-103 | bons_commande / UPDATE (`statut` vers `annule`) | refusé si un encaissement actif existe sur une facture du BC ; si une situation existe (même créditée) ; si une facture autre qu'un acompte ou un avoir existe (même à net nul) ; si un acompte n'est pas intégralement neutralisé par des avoirs de motif `correction_erreur`. Il lit l'état au moment de l'UPDATE : l'avoir doit exister avant ; l'atomicité avoir + annulation relève du service | 44 |
+ | TR-104 | situation_devis / INSERT | `factures.type = 'situation'` pour `facture_id` ; `(factures.bc_id, devis_id)` présent dans `bc_devis` | 204 |
+ | TR-105 | situation_devis / UPDATE, DELETE | interdits (y compris le `DELETE` implicite d'un `INSERT OR REPLACE` si `recursive_triggers=ON`) | 204 |
+ 
+-Numérotation : TR-97 à TR-103 sont employés par des migrations livrées, des patchs ou des documents de travail non inscrits au registre officiel (arbitrage AR-01) ; ils ne sont pas inscrits ici et ne sont pas réattribués. TR-104 est le plancher de non-collision arrêté le 2026-10-18. Noms SQL : `tr_104_situation_devis_insert`, `tr_105_situation_devis_update`, `tr_105_situation_devis_delete`.
++Numérotation : TR-97 à TR-102 sont employés par des migrations livrées, des patchs ou des documents de travail non inscrits au registre officiel (arbitrage AR-01) ; ils ne sont pas inscrits ici et ne sont pas réattribués. TR-103 (garde d'annulation du BC, créé par 009a et recréé par 009c) est inscrit ci-dessus (D-63). TR-104 est le plancher de non-collision arrêté le 2026-10-18. Noms SQL : `tr_103_bons_commande_annulation_facturee`, `tr_104_situation_devis_insert`, `tr_105_situation_devis_update`, `tr_105_situation_devis_delete`.
+ 
+ Index uniques (hors UNIQUE de colonne, déclarés dans la table : `bons_commande.numero`, `bons_commande.devis_id`, `bc_lignes.devis_ligne_id`, …) : `uq_facture_acompte_actif`, `uq_facture_solde_actif`, `uq_situation_actif`, `pv(origine_pv_id, suffixe)`, `garanties(bc_ligne_id, garantie_type)`, `documents(type_entite, entite_id, type_document, numero_version)`, `urssaf_periodes(date_debut)`, `urssaf_periodes(date_fin)`, `urssaf_periode_encaissements` (deux index partiels), `urssaf_details(periode_id)`.
+ 
+ Rappel : les caches du BC et la création des garanties sont faits par le **service**, pas par des triggers.
+-Autres règles de **service** sans trigger : règle des 30 jours des dépenses (INV-103), annulation du BC (INV-44), borne d'année des dates de numérotation (2001–2099 : INV-177, D-38), devis à 0.00 € non acceptable (INV-178), miroir devis ↔ BC après la création (INV-38, INV-175, contrôlé par CK-13).
++Autres règles de **service** sans trigger : règle des 30 jours des dépenses (INV-103), borne d'année des dates de numérotation (2001–2099 : INV-177, D-38), devis à 0.00 € non acceptable (INV-178), miroir devis ↔ BC après la création (INV-38, INV-175, contrôlé par CK-13).
++Annulation du BC (INV-44) : la garde d'état est portée par TR-103 ; l'émission de l'avoir préalable sur l'acompte non réglé et l'atomicité avoir + annulation restent des règles de **service**.
+ Chaque trigger et chaque index est créé par la migration de la tranche qui crée sa table (§17.1) : TR-90 et TR-95 par `metier/001_initial.sql` ; TR-01, TR-10, TR-11 et TR-14 du devis par `003_devis.sql` ; TR-01, TR-12, TR-13, TR-14, TR-17 et TR-19 du BC, ainsi que TR-18 (posé sur `devis`, mais qui suppose la table `bons_commande`) et TR-96 (posé sur `numerotation_sequences`, table de 001 qui reste inchangée), par `004_bons_commande.sql` ; TR-104, TR-105 et la clause de couverture de TR-22 par la migration 009b révisée (rang 14, §17.1), non livrée à ce jour.
+ 
+ ---
+@@ -918,7 +920,7 @@ BATORYA propose une sauvegarde immédiate, réalisée dans l'**ancien** dossier
+ | T-19 | facture → somme des lignes égale au total | INV-54 |
+ | T-20 | numéro → jamais réattribué | INV-22 |
+ 
+-### 13.3 Tests ajoutés : validation et import V6 (T-21 à T-23), numérotation (T-24) — 2026-09-30 ; premier démarrage `machine.db` (T-25), DDL de la première tranche métier (T-26), fournisseurs (T-27), devis (T-28) — 2026-10-01 ; bons de commande (T-29) — V3.12 ; couverture des situations (T-53) — V3.14 [INV-170, INV-25, INV-171, INV-172, INV-04, INV-05, INV-14, INV-20, INV-21, INV-22, INV-130, INV-136, INV-173 à INV-178, INV-204, INV-205]
++### 13.3 Tests ajoutés : validation et import V6 (T-21 à T-23), numérotation (T-24) — 2026-09-30 ; premier démarrage `machine.db` (T-25), DDL de la première tranche métier (T-26), fournisseurs (T-27), devis (T-28) — 2026-10-01 ; bons de commande (T-29) — V3.12 ; couverture des situations (T-53), garde d'annulation du BC (T-54) — V3.14 [INV-170, INV-25, INV-171, INV-172, INV-04, INV-05, INV-14, INV-20, INV-21, INV-22, INV-130, INV-136, INV-173 à INV-178, INV-204, INV-205]
+ 
+ Ces tests ne lisent jamais un fichier V2. Les tests du convertisseur (`TC-xx`) sont définis dans son propre document.
+ 
+@@ -934,8 +936,9 @@ Ces tests ne lisent jamais un fichier V2. Les tests du convertisseur (`TC-xx`) s
+ | T-28 | `test_003_devis.py` — DDL de la tranche Devis : `devis`, `devis_lignes`, `devis_ligne_garanties` ; 11 triggers (TR-01, TR-10, TR-11, TR-14) et 4 index ; numéro `DEV` (format, année de `date_creation`, immuabilité, numéro historique libre en `origine='import'`) ; dates réelles (`GLOB` + `date(x) IS x`) ; familles décimales ; BLOC-SNAP et BLOC-IMP ; rattachement d'un client `a_rattacher` ; suppression d'un devis sans BC en CASCADE ; non-régression de 001 et 002 | INV-04, INV-05, INV-06, INV-10, INV-11, INV-14, INV-20, INV-21, INV-22, INV-23, INV-30, INV-31, INV-34, INV-36, INV-37, INV-49, INV-131, INV-134, INV-136 |
+ | T-29 | `test_004_bons_commande.py` (à écrire avec la migration 004), par groupes : **création et naissance** (BC valide, chaque écart d'état refusé, devis non `accepte`, client différent, second BC pour un devis) ; **FK et suppression** (devis avec BC non supprimable, devis sans BC supprimé en CASCADE, DELETE d'un BC refusé quel que soit l'état, `INSERT OR REPLACE` refusé avec `recursive_triggers=ON`, `bc_lignes.bc_id` en `RESTRICT`, aucun `ON UPDATE`) ; **numérotation** (format `GLOB` explicite, année issue de `date_creation` et non de `date_acceptation`, immuabilité, unicité, séquence `BCD`, plafond, TR-95) ; **protection de la séquence** (les messages de `tr_95` et `tr_96` portent tous deux `INV-22` : chaque assertion vérifie aussi le libellé, « ne diminue jamais » pour TR-95 et « ne se supprime jamais » pour TR-96, afin de distinguer les deux protections ; TR-96 : `DELETE` direct d'une séquence refusé ; `INSERT OR REPLACE` avec un `dernier_numero` inférieur refusé, la ligne existante restant intacte ; vérification que la valeur existante de `dernier_numero` n'a pas diminué ; `UPDATE` diminuant le compteur toujours refusé par TR-95 ; l'upsert maîtrisé `INSERT … ON CONFLICT(type_objet, annee) DO UPDATE` reste autorisé lorsqu'il augmente correctement le compteur, ainsi que l'`INSERT` d'une nouvelle séquence ; témoin : sans `recursive_triggers=ON`, TR-96 refuse le DELETE direct mais pas le REPLACE) ; **lignes** (`UNIQUE(bc_id, ordre)`, `UNIQUE(devis_ligne_id)`, ligne d'un autre devis refusée, familles décimales, régénération, index `prestation_id`) ; **états** (CHECK de statut avec variantes NULL, BC annulé terminal avec l'exception du rattachement, cohérence sûre des caches, caches écrits en un seul UPDATE) ; **gel** (liste blanche du §7.2, irréversibilité, lignes et garanties figées si le BC est gelé ou annulé) ; **devis ↔ BC** (TR-18 : sortie d'`accepte` refusée, autorisée si le BC est annulé ; CK-13 vide sur données cohérentes et détectant chaque divergence provoquée, dont contractuel ≠ `total_ht` que TR-17 ne refuse pas ; comportements de 003 sans BC inchangés sur la chaîne 001 → 004) ; **garanties de ligne** (unicité, CASCADE depuis la ligne, immuabilité, indépendance du catalogue) ; **import** (BLOC-IMP+, `legacy_numero = numero` refusé, numéro hors format refusé même en `origine='import'`) ; **dates et timestamps** (calendrier exhaustif, `date_fin >= date_debut` avec NULL) ; **précision monétaire** D2 et P2 ; **cas limites** (FK vers une table future absente, `recursive_triggers`). Campagne de mutation : 0 survivant non qualifié (conventions techniques §7.1) | INV-04 à INV-06, INV-10, INV-14, INV-20 à INV-23, INV-31, INV-34, INV-36, INV-37, INV-40, INV-46, INV-48, INV-22, INV-136, INV-164, INV-173 à INV-176 |
+ | T-53 | **Couverture des situations — 13 tests d'acceptation** (spécifiés en V3.14 ; **non écrits ni exécutés** ; à écrire avec la migration 009b révisée ; tests nommés `test_INV_204_…` et `test_INV_205_…` ; campagne de mutation : conventions techniques §7.1) : **(1)** acompte refusé sur un devis couvert (étapes 2 et 7 de C-43), y compris avec des `created_at` identiques ou inversés ; **témoin** : accepté sans couverture [INV-205] ; **(2)** acompte accepté sur un devis rattaché après la situation (étape 4) [INV-205, INV-204] ; **(3)** nouvelle situation après A et B : elle couvre A et B, l'ancienne garde {A} — exhaustivité vérifiée par le test [INV-204] ; **(4)** situation entièrement créditée : couverture inchangée, acompte toujours refusé [INV-204, INV-205] ; **(5)** devis couvert à 0 % d'avancement propre : couvert, acompte refusé [INV-204, INV-205] ; **(6)** couverture d'un devis d'un autre BC refusée [INV-204] ; **(7)** couverture d'une facture qui n'est pas une situation refusée [INV-204] ; **(8)** UPDATE, DELETE et `INSERT OR REPLACE` sur la couverture refusés ; DELETE de la facture ou du devis couvert refusé [INV-204] ; **(9)** échec injecté en cours d'émission : ni situation, ni lignes, ni couverture ; trou de numérotation toléré [INV-204] ; **(10)** plafonds d'acompte, situation de montant nul toujours refusée, autres contrôles de TR-22 : aucune régression [INV-52, INV-57, INV-58] ; **(11)** garde de migration : refus si une situation existe (base et `user_version` inchangés), acceptation sinon [D-62] ; **(12)** CK-21 et CK-22 détectent chacun leur anomalie et ne bloquent rien [INV-204] ; **(13)** rejeu 001 → 009a → 009b depuis une base vide et depuis le rang 12 ; 001 à 009 identiques à GitHub ; campagne de mutation [tous]. Couverture des invariants : INV-204 par les tests (2) à (9) et (12) ; INV-205 par les tests (1), (2), (4) et (5) | INV-204, INV-205 |
++| T-54 | `test_009c_bc_annulation_acompte_encaissement.py` — **garde d'annulation du BC (INV-44)**, 59 tests en 8 groupes : **chaîne** (rang 15, garde `user_version = 14`, seul `tr_103` recréé, base peuplée migrée sans perte) ; **encaissements** (actif sur acompte, solde ou situation ; actif malgré la neutralisation par avoir ; annulé ; importé déjà annulé ; autre BC ; remboursement) ; **situation, solde, acompte** (situation et solde bloquants même crédités ; acompte neutralisé par `correction_erreur` accepté ; neutralisation incomplète, avoir absent ou d'un autre motif refusés) ; **ordre et atomicité** (annulation avant l'avoir refusée ; transaction émulée avec ROLLBACK de l'avoir ; limite sans transaction) ; **messages** ; **non-régression** ; **immuabilité** de 006, 009a et 009b ; **garde de chaîne** ; campagne de mutation (20 mutants) | INV-44 |
+ 
+-Numérotation des tests : T-30 à T-52 sont employés par des tests livrés et des documents de travail non inscrits au registre officiel (arbitrage AR-01) ; ils ne sont pas inscrits ici. T-53 est le plancher de non-collision arrêté le 2026-10-18.
++Numérotation des tests : T-30 à T-52 sont employés par des tests livrés et des documents de travail non inscrits au registre officiel (arbitrage AR-01) ; ils ne sont pas inscrits ici. T-53 est le plancher de non-collision arrêté le 2026-10-18 ; T-54 est attribué à la garde d'annulation du BC.
+ 
+ ---
+ 
+@@ -1028,8 +1031,9 @@ Les rattachements ne faisant que croître (§4.7 bis), toute ligne de CK-22 est
+ | D-38 | **Périmètre de la borne 2001–2099** : la borne ne concerne que les dates dont l'année est exploitée par les conventions de numérotation annuelle (`yy`), au niveau du **service** là où elle est nécessaire ; aucune contrainte générale sur les autres dates, aucune limitation artificielle des dates historiques ou importées, aucun CHECK, aucun changement de la validation calendaire `GLOB` + `date(x) IS x` | borne sur toutes les dates de type D ; CHECK d'année dans le DDL | Périmètre corrigé le 2026-10-02 (seconde passe, instruction de Rémy) ; **Validée** avec la migration 004 le 2026-10-02 |
+ | D-39 | **Écritures SQLite** : `PRAGMA recursive_triggers=ON` fait partie des PRAGMA de connexion ; `INSERT OR REPLACE` et `REPLACE` sont interdits par convention (`INSERT`, `UPDATE` ou UPSERT explicitement maîtrisé) | laisser `recursive_triggers` désactivé (un REPLACE supprime la ligne sans déclencher les triggers `BEFORE DELETE`) ; s'en remettre à la seule convention pour `numerotation_sequences` (précision technique : TR-96, migration 004) | **Validée** 2026-10-01 (réponse de Rémy, C-R3) ; précisée le 2026-10-02 par TR-96 |
+ | D-62 | **Couverture des situations et ordre acompte / situation** : une situation couvre tous les devis rattachés à son BC à l'émission, sans effet rétroactif ; la couverture est enregistrée (`situation_devis`, clé `(facture_id, devis_id)`, sans identifiant artificiel ni horodatage) dans la transaction d'émission ; aucun acompte sur un devis couvert, quels que soient les avoirs, le montant net et l'avancement ; migration refusée si une situation préexiste ; diagnostics CK-21 et CK-22 ; exhaustivité garantie par le service et vérifiée par les tests | déduction de l'ordre par horodatages (proposition de travail du 2026-10-17, écartée) ; sélection libre des devis par situation ; lecture de la couverture dans les lignes de facture ; diagnostic à horodatage (écarté) | **Validée** 2026-10-18 (propriétaire) pour le modèle ; INV-204, INV-205 ; implémentation (migration 009b révisée, T-53) **à venir** |
++| D-63 | **Annulation directe du BC (INV-44)** : interdite si un encaissement actif existe sur une facture du BC (même facture neutralisée par avoirs ; un encaissement annulé et un remboursement ne sont pas des encaissements actifs), si une situation a été émise (même annulée ou créditée), ou si une facture autre qu'un acompte existe (D-05, même à net nul) ; un acompte non réglé est neutralisé par un avoir total de motif `correction_erreur`, émis avant l'annulation dans la même transaction (le motif n'est pas étendu à d'autres usages) ; garde d'état SQL TR-103, recréée par la migration corrective 009c (rang 15) ; atomicité avoir + annulation : service | annulation de la facture d'acompte (impossible dans la chaîne livrée : factures immuables, 006) ; nouveau motif d'avoir ; règle du net nul de 009a (remplacée) | **Validée** 2026-10-18 (propriétaire, option A) ; INV-44 ; implémentation : migration 009c, T-54 |
+ 
+-Numérotation : D-40 à D-61 sont employées par des documents de travail non validés et par les commentaires de migrations livrées ; elles ne sont pas inscrites ici (arbitrage AR-01) et ne sont pas réattribuées. D-62 est le plancher de non-collision arrêté le 2026-10-18.
++Numérotation : D-40 à D-61 sont employées par des documents de travail non validés et par les commentaires de migrations livrées ; elles ne sont pas inscrites ici (arbitrage AR-01) et ne sont pas réattribuées. D-62 est le plancher de non-collision arrêté le 2026-10-18 ; D-63 est attribuée à la garde d'annulation du BC.
+ 
+ **Décisions existantes complétées par la V3.12** (leur énoncé d'origine reste valable) :
+ - **D-16** : en plus de l'absence de garantie native, le contrat n'accepte aucune garantie de ligne ; un BC importé n'a aucun `bc_ligne_garanties` (INV-134). La contradiction de la V3.11 (§10.5 : « devis (+ lignes + garanties de ligne) ») est corrigée.
+@@ -1086,9 +1090,11 @@ Le modèle est prêt pour le DDL lorsque :
+ | `src-tauri/migrations/metier/002_fournisseurs.sql` | `fournisseurs` ; aucun trigger ; `idx_fournisseurs_statut` | V3.10 | T-27 |
+ | `src-tauri/migrations/metier/003_devis.sql` | `devis`, `devis_lignes`, `devis_ligne_garanties` ; 11 triggers ; 4 index | V3.11 | T-28 |
+ | `src-tauri/migrations/metier/004_bons_commande.sql` | `bons_commande`, `bc_lignes`, `bc_ligne_garanties` ; 15 triggers dont TR-96 sur `numerotation_sequences` ; 3 index | V3.12 | T-29 |
+-| `src-tauri/migrations/metier/009b_acompte_garanties_manuelles.sql` | **Migration non livrée, à réviser** (patch de travail `h`, non appliqué) : contenu existant du patch + table `situation_devis` (clé primaire composite, `idx_situation_devis_devis_id`), triggers TR-104 et TR-105, garde d'acompte de TR-22 fondée sur la couverture (elle remplace la condition à horodatages du patch), **garde de migration : refus d'application si une situation existe** ; rang 14 de la chaîne (`PRAGMA user_version`), rang et numéro de la chaîne 009a / 009b à confirmer (arbitrage AR-06) | V3.14 | T-53 |
++| `src-tauri/migrations/metier/009a_bc_annulation_interdite_si_facture.sql` | **Migration corrective livrée**, rang 13 : crée `tr_103_bons_commande_annulation_facturee` (TR-103, INV-44) ; aucune table, aucun index ; règle du net nul remplacée au rang 15 par 009c | V3.14 | — |
++| `src-tauri/migrations/metier/009b_acompte_garanties_manuelles.sql` | **Migration corrective livrée** (`main`, 2026-10-18), rang 14 : contenu du patch + table `situation_devis` (clé primaire composite, `idx_situation_devis_devis_id`), triggers TR-104 et TR-105, garde d'acompte de TR-22 fondée sur la couverture (elle remplace la condition à horodatages du patch), **garde de migration : refus d'application si une situation existe** ; rang 14 de la chaîne (`PRAGMA user_version`) | V3.14 | T-53 |
++| `src-tauri/migrations/metier/009c_bc_annulation_acompte_encaissement.sql` | **Migration corrective**, rang 15 (`PRAGMA user_version = 15`) : recrée `tr_103_bons_commande_annulation_facturee` (TR-103, INV-44, D-63) ; aucune table, aucun index, aucune donnée ; garde d'exécution `user_version = 14` | V3.14 | T-54 |
+ 
+-Les migrations 005 à 009 de la chaîne livrée (rangs 5 à 12 de `PRAGMA user_version`) et la migration corrective 009a ne sont pas décrites dans ce tableau : leur inscription relève de l'alignement général de la V3.14 (voir « Périmètre de la V3.14 »). Si 009b avait été livrée ou appliquée hors dépôt (rien ne le montre), le contenu ci-dessus irait dans la migration du rang suivant, créée après décision explicite. **Aucune migration 010 n'est créée par cette révision.**
++Les migrations 005 à 009 de la chaîne livrée (rangs 5 à 12 de `PRAGMA user_version`) ne sont pas décrites dans ce tableau : leur inscription relève de l'alignement général de la V3.14 (voir « Périmètre de la V3.14 »). Rangs de la chaîne corrective : 009a = 13, 009b = 14, 009c = 15 (arbitrage A du propriétaire, 2026-10-18 ; convention `NNNx_<objet>.sql` : conventions techniques §5). Les tranches suivantes ne sont pas livrées : 010 au rang 16 et 011 au rang 17. **Aucune migration 010 ni 011 n'est créée par cette révision.**
+ 
+ Tranches suivantes (ordre du critère 5) : dépenses, facturation (factures), règlements, garanties, PV, planification.
+ 
+diff --git a/docs/décisions/cdc-errata-v6.md b/docs/décisions/cdc-errata-v6.md
+index 6f796bf..3065de1 100644
+--- a/docs/décisions/cdc-errata-v6.md
++++ b/docs/décisions/cdc-errata-v6.md
+@@ -11,7 +11,7 @@ Ce fichier est un **registre de décisions**, pas une spécification : le détai
+ | E-04 | 2026-09-29 | §23 Numérotation des PV | `PV-0001-26`, `PV-0001-26-01`. | `PVR-00001-26` et `PVR-00001-26-01` (convention TRI-00001-26 de l'audit V5.16 → V6 §24). Le PV initial n'a pas de suffixe. | Uniformisation des numéros de documents. | INV-20, INV-26 | Validé (audit V5.16 → V6) |
+ | E-05 | 2026-09-29 | §18-19 Préfixes | Préfixes « définis à partir du fonctionnement V5.16 ». | Format uniforme `TRI-00001-yy` : `DEV`, `BCD`, `FAC`, `ACP`, `AVO`, `PVR`, `DEP`. Numéros historiques V2 conservés tels quels à la migration (la V5 n'a jamais été distribuée). | Hétérogénéité des conventions V5. | INV-20, INV-27 | Validé (audit V5.16 → V6) — **clause « numéros historiques V2 conservés tels quels à la migration » précisée par E-09** : conservés seulement pour les devis, factures et PV importés ; BC et codes clients importés au format V6 |
+ | E-06 | 2026-09-29 | §12 Clients / audit §24 | Codes `CLI-001`, `FOU-001` (audit). | Codes `CLI-0001`, `FOU-0001` (4 chiffres, sans année). Migration : codes V2 recodés, ancien code en `legacy_numero`. | Cohérence des formats ; évite l'ambiguïté `CLI-001` / `CLI-0001`. | INV-20, INV-27 | Validé (D-01, 2026-09-29) — **« Migration : codes V2 recodés » désormais exécuté par le convertisseur externe (E-09)** ; le format `CLI-0001` reste la règle V6 |
+-| E-07 | 2026-09-29 | §17 Annulation du BC | Annulation possible si aucune situation émise et aucun paiement encaissé ; acompte impayé annulé avec le BC. | Le modèle (V3.4 et versions suivantes) **interdit** l'annulation directe dès qu'une facture autre qu'un acompte non réglé existe (par exemple un solde impayé sans situation), la correction passant par avoir/annulation de facture. Une situation émise (même annulée) interdit toujours l'annulation directe. | Le CDC est silencieux sur le solde impayé sans situation ; le modèle a retenu la règle la plus prudente. | INV-44 ; TR-24 | Validé (D-05, 2026-09-29) |
++| E-07 | 2026-09-29 | §17 Annulation du BC | Annulation possible si aucune situation émise et aucun paiement encaissé ; acompte impayé annulé avec le BC. | Le modèle (V3.4 et versions suivantes) **interdit** l'annulation directe dès qu'une facture autre qu'un acompte non réglé existe (par exemple un solde impayé sans situation), la correction passant par avoir/annulation de facture. Une situation émise (même annulée ou créditée) interdit toujours l'annulation directe. Un encaissement actif l'interdit aussi, même si la facture est neutralisée par avoirs (un encaissement annulé ou un remboursement n'est pas un encaissement actif). Toute facture autre qu'un acompte l'interdit, même si son net après avoirs est nul. L'acompte non réglé est « annulé avec le BC » par un avoir total de motif `correction_erreur`, émis avant l'annulation, dans la même transaction : dans la chaîne de migrations livrée (006) une facture est immuable et ne s'annule pas. | Le CDC est silencieux sur le solde impayé sans situation ; le modèle a retenu la règle la plus prudente. | INV-44 ; TR-24 ; TR-103 | Validé (D-05, 2026-09-29 ; précisions D-63, 2026-10-18) |
+ | E-08 | 2026-09-29 | §39-40 / modèle | Le référentiel réglementaire « remplace les paramètres précédents ». | Versions **append-only** ; `date_debut_effet` strictement croissante ; version applicable à une période = celle en vigueur à sa date de début. | Reproductibilité des calculs historiques (CDC §36). | INV-121 | Validé (D-10, 2026-09-29) |
+ | E-09 | 2026-09-30 | §42 Sauvegardes / migration (modèle V3.5 §10, D-01, D-13 à D-19, INV-131 à INV-136, INV-153 à INV-163, `migration_rapports`, `migration_quarantaine`) | La migration V2 est exécutée par V6 : lecteur V2 tolérant, mode migration (`origine='migration'`) avec exemptions SQL, rapports et quarantaine de migration, compteurs V2 jamais importés. | **Migration V2 externalisée** : V2 JSON → convertisseur externe → `import-v6.json` → import standard V6 (texte complet ci-dessous). Remplace les décisions antérieures de traitement direct de la structure V2 dans SQLite V6. | V6 ne doit pas adapter son modèle métier à la structure et aux incohérences V2 ; contrat d'entrée propre ; une seule source historique (V5 jamais distribuée). | INV-130 à INV-136, INV-144, INV-153, INV-154, INV-161, INV-163, INV-165, INV-169, INV-170 ; INV-132 et INV-155 à INV-160, INV-162 retirés (règles au convertisseur) ; modèle §10, D-21 à D-26 ; T-16, T-21 à T-23 | Validé (brief Rémy, 2026-09-30) ; sous-décisions D-22, D-23, D-24 du modèle **validées le 2026-09-30** (intégrées au modèle V3.6, confirmées par Rémy) |
+ 
+diff --git a/src-tauri/migrations/metier/009c_bc_annulation_acompte_encaissement.sql b/src-tauri/migrations/metier/009c_bc_annulation_acompte_encaissement.sql
+new file mode 100644
+index 0000000..40f5caf
+--- /dev/null
++++ b/src-tauri/migrations/metier/009c_bc_annulation_acompte_encaissement.sql
+@@ -0,0 +1,130 @@
++-- =====================================================================
++-- BATORYA Essentiel V6 — base métier — migration corrective 009c_bc_annulation_acompte_encaissement
++-- Corrective (rang 15, D-63) : l'annulation directe d'un bon de commande (INV-44) est
++-- alignée sur les décisions du propriétaire du produit du 2026-10-18. Ce n'est PAS une
++-- tranche métier : elle ne consomme aucun numéro de tranche (conventions techniques §5,
++-- migration corrective, décision V-2). Son préfixe 009 est celui de la dernière tranche
++-- exécutée avant elle. Rang 15 (arbitrage A du 2026-10-18) : les tranches suivantes
++-- (010, 011) passent aux rangs 16 et 17 ; elles ne sont pas livrées, aucune migration
++-- livrée n'est déplacée, renommée ni réécrite (009a et 009b restent inchangées).
++--
++-- Référence : modèle de données SQLite V3.14 — §8 (TR-103), §15 (D-63), §17.1 (suivi des
++-- migrations, test T-54) ; D-05 (validée 2026-09-29), INV-44, errata E-07, scénario C-19 ;
++-- conventions techniques §5. Invariants liés : INV-06 et INV-53 (une facture ne se
++-- modifie ni ne se supprime : tr_20, tr_21), INV-173 (BC annulé terminal), INV-188 (un BC
++-- annulé ne reçoit ni acompte, ni situation, ni solde ; un avoir reste possible), INV-76
++-- (motif d'avoir, tr_23 de 009b), INV-72 (reste dû, TR-31 de 007).
++--
++-- Ce que remplace cette migration : la règle de 009a (« chaque facture a un montant net
++-- nul après avoirs ») laissait annuler un BC dont la situation ou le solde était
++-- intégralement crédité, et ne lisait aucun règlement. Elle est remplacée par la règle
++-- ci-dessous. Le trigger garde son nom et son numéro (tr_103_bons_commande_annulation_facturee,
++-- TR-103) : il est supprimé puis recréé (DROP TRIGGER / CREATE TRIGGER, même nom), comme
++-- 005c l'a fait pour tr_12 et 009b pour tr_22 et tr_23.
++--
++-- Règle appliquée (décisions du propriétaire du produit du 2026-10-18). Le passage d'un BC
++-- à 'annule' est refusé si au moins une des conditions suivantes est vraie :
++--   1. un encaissement ACTIF existe sur une facture du BC : règlement de type
++--      'encaissement' dont cancelled_at est NULL. Il bloque même si la facture a été
++--      intégralement neutralisée par des avoirs. Un encaissement annulé (cancelled_at
++--      renseigné, y compris un encaissement importé déjà annulé) ne bloque pas. Un
++--      remboursement n'est pas un encaissement. Les règlements d'un autre BC sont sans effet
++--      (le lien passe par factures.bc_id) ;
++--   2. une facture de type 'situation' existe pour ce BC, même annulée, neutralisée ou
++--      intégralement créditée par des avoirs ;
++--   3. une facture autre qu'un acompte (et qu'un avoir) existe pour ce BC, notamment un
++--      solde (D-05 / E-07), même si son net après avoirs est nul ;
++--   4. un acompte du BC n'est pas intégralement neutralisé par un avoir de motif
++--      'correction_erreur' : son total_ht diffère de la somme des total_ht des avoirs qui
++--      le référencent, ou l'un de ces avoirs porte un autre motif.
++-- Exception validée (option A) : un acompte NON RÉGLÉ (aucun encaissement actif, condition 1)
++-- peut être neutralisé par un avoir total de motif 'correction_erreur', puis le BC peut être
++-- annulé, ces opérations étant réalisées dans la même transaction. Cette autorisation ne
++-- concerne que l'annulation d'un BC : elle n'étend pas l'usage de 'correction_erreur'
++-- (tr_23 de 009b continue de n'accepter que ce motif sur un acompte).
++--
++-- Un avoir n'est jamais une facture à contrôler : il est le moyen de neutraliser l'acompte.
++-- Un acompte PRÉVU au devis (devis.acompte_type / acompte_valeur) n'est pas une facture et
++-- ne bloque pas. Un BC sans aucune facture peut être annulé. Un BC déjà annulé n'est pas
++-- concerné (tr_12_bons_commande_annule, INV-173).
++--
++-- Ordre et atomicité. Le trigger lit l'ÉTAT au moment de l'UPDATE du BC (BEFORE UPDATE) : il
++-- exige que l'avoir existe déjà. L'ordre inverse (annuler le BC, puis neutraliser
++-- l'acompte) est donc refusé, quel que soit le service appelant. SQLite ne peut pas imposer
++-- que l'avoir et l'annulation appartiennent à la même transaction : cette atomicité est la
++-- responsabilité du service d'annulation (une seule transaction BEGIN IMMEDIATE : avoir
++-- puis UPDATE du BC ; COMMIT, ou ROLLBACK de l'ensemble si l'un des deux est refusé), et
++-- les tests la vérifient avec l'émulation du runner. Aucun service applicatif n'existe dans
++-- le dépôt à ce jour. Si le service commit l'avoir sans annuler le BC, la base reste
++-- cohérente : l'acompte est neutralisé, le BC reste 'en_cours', l'annulation reste à faire
++-- ou le BC reste exploitable (un nouvel acompte redevient possible, INV-52).
++--
++-- Objet unique : le trigger tr_103_bons_commande_annulation_facturee (BEFORE UPDATE ON
++-- bons_commande), recréé. Il ne s'exécute que pour la transition d'un statut différent de
++-- 'annule' vers 'annule' ; il ne lit, ne crée, ne modifie ni ne supprime aucune ligne ; il
++-- ne lit aucun cache financier du BC (montant_deja_facture_ht, avancement, date_100_facture)
++-- ni l'état dérivé « neutralisée ». Il lit factures et reglements. Quatre RAISE(ABORT)
++-- distincts, tous préfixés INV-44, évalués dans l'ordre des conditions 1 à 4 ci-dessus.
++--
++-- Aucune table, aucun index, aucun CHECK, aucun autre trigger n'est créé, modifié ou
++-- supprimé ; aucune reconstruction de table : le protocole foreign_keys = OFF n'est pas
++-- requis. Les données ne sont ni lues ni modifiées : un BC annulé et facturé avant cette
++-- migration reste tel quel. Une garde d'exécution (lecture seule) exige user_version = 14 :
++-- 009c ne s'applique qu'à une base arrêtée à 009b. Le fichier ne contient ni BEGIN/COMMIT ni
++-- PRAGMA : le runner l'exécute dans une transaction (BEGIN IMMEDIATE), pose
++-- PRAGMA user_version = 15 avant le COMMIT, et un échec entraîne le ROLLBACK intégral.
++-- Toute reconstruction future de bons_commande devra recréer ce trigger à l'identique
++-- (conventions §5, protocole de reconstruction).
++--
++-- Limite assumée : un avoir sur un acompte émis AVANT 009b avec un autre motif que
++-- 'correction_erreur' (le motif était libre sous 006) ne vaut pas neutralisation au sens de
++-- la condition 4 ; l'acompte concerné interdit alors l'annulation du BC.
++--
++-- Conventions : les montants sont comparés en centimes entiers :
++-- CAST(REPLACE(x, '.', '') AS INTEGER). Le trigger est BEFORE : il s'exécute avant les
++-- CHECK de la ligne. Messages en ASCII.
++-- =====================================================================
++
++
++-- ---------------------------------------------------------------------
++-- Garde d'exécution (lecture seule, aucune trace) : user_version doit valoir 14 (009c est
++-- le rang 15 et ne s'applique qu'à une base arrêtée à 009b). Table temporaire supprimée
++-- aussitôt ; échec = erreur de CHECK, donc ROLLBACK.
++-- ---------------------------------------------------------------------
++CREATE TEMP TABLE garde_009c_user_version (
++    user_version INTEGER NOT NULL
++        CONSTRAINT "009c exige user_version = 14 (chaine 009b -> 009c)" CHECK (user_version = 14)
++);
++INSERT INTO garde_009c_user_version (user_version) SELECT user_version FROM pragma_user_version;
++DROP TABLE garde_009c_user_version;
++
++
++-- INV-44 [D-05, D-63] : annulation directe du BC refusée en présence d'un encaissement
++-- actif, d'une situation, d'une facture autre qu'un acompte, ou d'un acompte non
++-- intégralement neutralisé par un avoir correction_erreur.
++DROP TRIGGER tr_103_bons_commande_annulation_facturee;
++
++CREATE TRIGGER tr_103_bons_commande_annulation_facturee
++BEFORE UPDATE ON bons_commande
++WHEN NEW.statut = 'annule' AND OLD.statut <> 'annule'
++BEGIN
++    SELECT RAISE(ABORT, 'INV-44: annulation du bon de commande interdite, un encaissement actif existe sur une facture du bon de commande')
++     WHERE EXISTS (SELECT 1
++                     FROM reglements r JOIN factures f ON f.id = r.facture_id
++                    WHERE f.bc_id = OLD.id
++                      AND r.type = 'encaissement' AND r.cancelled_at IS NULL);
++    SELECT RAISE(ABORT, 'INV-44: annulation du bon de commande interdite, une situation a ete emise (meme annulee ou creditee)')
++     WHERE EXISTS (SELECT 1 FROM factures f WHERE f.bc_id = OLD.id AND f.type = 'situation');
++    SELECT RAISE(ABORT, 'INV-44: annulation du bon de commande interdite, une facture autre qu''un acompte existe (D-05)')
++     WHERE EXISTS (SELECT 1 FROM factures f WHERE f.bc_id = OLD.id AND f.type NOT IN ('acompte', 'avoir'));
++    SELECT RAISE(ABORT, 'INV-44: annulation du bon de commande interdite, un acompte n''est pas integralement neutralise par un avoir correction_erreur')
++     WHERE EXISTS (SELECT 1 FROM factures f
++                    WHERE f.bc_id = OLD.id AND f.type = 'acompte'
++                      AND (CAST(REPLACE(f.total_ht, '.', '') AS INTEGER)
++                           <> (SELECT COALESCE(SUM(CAST(REPLACE(a.total_ht, '.', '') AS INTEGER)), 0)
++                                 FROM factures a
++                                WHERE a.type = 'avoir' AND a.origine_facture_id = f.id)
++                           OR EXISTS (SELECT 1 FROM factures a
++                                       WHERE a.type = 'avoir' AND a.origine_facture_id = f.id
++                                         AND a.motif_avoir IS NOT 'correction_erreur')));
++END;
+diff --git a/src-tauri/tests/metier/test_009a_bc_annulation_interdite_si_facture.py b/src-tauri/tests/metier/test_009a_bc_annulation_interdite_si_facture.py
+index cf14f6f..f584f0e 100644
+--- a/src-tauri/tests/metier/test_009a_bc_annulation_interdite_si_facture.py
++++ b/src-tauri/tests/metier/test_009a_bc_annulation_interdite_si_facture.py
+@@ -14,6 +14,9 @@ Principes de ces tests :
+   * la facturation réelle (lignes de `factures`) n'est jamais confondue avec les caches financiers du BC (montant_deja_facture_ht, avancement, date_100_facture) ;
+   * un BC DÉJÀ annulé ne relève pas de 009a : il est fabriqué au rang 12 (annulation alors permise), puis la chaîne est portée au rang 13 ;
+   * les tests de 006 et 005c décrivent leurs rangs (9 et 8) et ne sont pas modifiés ; ce fichier rejoue au rang 13 le point de départ de leurs scénarios d'annulation.
++REMPLACÉE : la règle du net nul décrite ici est celle du rang 13. À partir du rang 15, 009c (D-63, test_009c) la remplace : encaissement actif, situation et facture autre qu'un acompte
++interdisent l'annulation même si le net est nul ; seul un acompte intégralement neutralisé par un avoir correction_erreur l'autorise. Ces tests restent exacts pour 009a seule et ne sont pas
++réécrits (migration livrée immuable) ; le comportement de la chaîne complète est vérifié par test_009c.
+ Les méthodes portent le nom de l'invariant (test_INV_44_…) ou test_009a_ suivi du groupe (A chaîne, B règle, C chemins d'écriture, D atomicité, E BC déjà annulé,
+ F non-régression, G contournements, H constats et diagnostics, I garde de chaîne : le trigger survit aux migrations suivantes). Les décisions d'interprétation portent « INTERPRETATION » ; les comportements observés mais non
+ spécifiés portent « CONSTAT » : ce ne sont pas des règles.
+@@ -720,9 +723,14 @@ def problemes_de_recreation(sql):
+     return ["bons_commande ou le trigger est supprimé sans recréer " + TRIGGER]
+ 
+ 
++# 009c (D-63) recrée ce trigger avec une règle différente (encaissement actif, situation, facture autre qu'un acompte, acompte neutralisé par correction_erreur) : à partir d'elle,
++# la définition à protéger est celle de 009c, vérifiée par test_009c (groupe H). Ce fichier décrit 009a TELLE QUE LIVRÉE (rang 13) et ne garde que les migrations intermédiaires.
++NOM_SUCCESSEUR = "009c_bc_annulation_acompte_encaissement.sql"
++
++
+ def migrations_suivantes():
+-    """Migrations livrées après 009a (rang 14, 15, …) : vide tant que 010 n'existe pas."""
+-    return [(RANG + 1 + i, p.name, p.read_text(encoding="utf-8")) for i, p in enumerate(sorted(MIGRATIONS.glob("*.sql"))[RANG:])]
++    """Migrations livrées après 009a et avant la corrective qui remplace le trigger (009c) : 009b (rang 14) ; vide d'autres tant qu'aucune n'existe."""
++    return [(RANG + 1 + i, p.name, p.read_text(encoding="utf-8")) for i, p in enumerate(sorted(MIGRATIONS.glob("*.sql"))[RANG:]) if p.name < NOM_SUCCESSEUR]
+ 
+ 
+ class GardeChaine(Base13):
+diff --git a/src-tauri/tests/metier/test_009b_couverture_situations.py b/src-tauri/tests/metier/test_009b_couverture_situations.py
+index f3257fc..02ae4c4 100644
+--- a/src-tauri/tests/metier/test_009b_couverture_situations.py
++++ b/src-tauri/tests/metier/test_009b_couverture_situations.py
+@@ -517,7 +517,7 @@ class T53(Base53):
+                 self.assertEqual(hashlib.sha256((MIGRATIONS / nom).read_bytes()).hexdigest(), empreinte)
+         noms = [p.name for p in sorted(MIGRATIONS.glob("*.sql"))]
+         self.assertEqual(noms[:12], list(EMPREINTES_001_A_009))
+-        self.assertEqual(noms[12:], [B.NOM_009A, B.NOM_009B])
++        self.assertEqual(noms[12:14], [B.NOM_009A, B.NOM_009B])                                    # 009c (rang 15, D-63) suit 009b : voir test_009c
+         # depuis une base vide : 001 → 009 → 009a → 009b
+         db = B.migrer14()
+         self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 14)
+diff --git a/src-tauri/tests/metier/test_009c_bc_annulation_acompte_encaissement.py b/src-tauri/tests/metier/test_009c_bc_annulation_acompte_encaissement.py
+new file mode 100644
+index 0000000..8328b0c
+--- /dev/null
++++ b/src-tauri/tests/metier/test_009c_bc_annulation_acompte_encaissement.py
+@@ -0,0 +1,797 @@
++"""Migration corrective 009c_bc_annulation_acompte_encaissement (rang 15, D-63, test T-54, après 009a et 009b) ; D-05 (validée 2026-09-29), INV-44, errata E-07, scénario C-19 ;
++décisions du propriétaire du produit du 2026-10-18 (option A) ; INV-06, INV-53, INV-72, INV-76, INV-173, INV-188 ; conventions techniques §5 (migration corrective NNNx).
++
++009c recrée UN trigger (tr_103_bons_commande_annulation_facturee ; TR-103 ; même nom que 009a) : un BC ne passe à 'annule' que si
++  1. aucun encaissement ACTIF (reglements.type = 'encaissement' ∧ cancelled_at IS NULL) n'existe sur une facture du BC (même si la facture est neutralisée par avoirs) ;
++  2. aucune situation n'a été émise (même créditée) ;
++  3. aucune facture autre qu'un acompte (et qu'un avoir) n'existe, notamment aucun solde (même net nul) ;
++  4. chaque acompte est intégralement neutralisé par des avoirs de motif 'correction_erreur' (exception « acompte non réglé » validée : avoir total, PUIS annulation du BC).
++Le remboursement n'est pas un encaissement ; un encaissement annulé (y compris importé déjà annulé) ne bloque pas ; les règlements d'un autre BC sont sans effet.
++
++Les tests 006, 007, 009a et 009b décrivent leurs migrations TELLES QUE LIVRÉES (rangs 9, 10, 13 et 14) : ils ne sont pas réécrits. test_009a décrit la règle du net nul (rang 13) ; ce fichier
++vérifie le comportement de la chaîne COMPLÈTE (001 à 009c, rang 15), qui remplace cette règle.
++
++Limites de ce que ces tests prouvent (voir aussi l'en-tête de la migration) :
++  * un trigger SQLite ne voit que l'ÉTAT au moment de l'UPDATE du BC : il garantit que l'avoir existe AVANT l'annulation (l'ordre inverse est refusé) ; il ne peut PAS garantir
++    que l'avoir et l'annulation appartiennent à la même transaction. Cette atomicité relève du service d'annulation (aucun service n'existe dans le dépôt) : le groupe D l'ÉMULE
++    (BEGIN IMMEDIATE, avoir, UPDATE du BC, COMMIT ou ROLLBACK) avec les moyens de test existants ; ce n'est pas la preuve d'un service réel ;
++  * un facture n'étant jamais annulable dans la chaîne livrée (006 : tr_20, aucun cancelled_at), « situation annulée » s'y réalise par neutralisation (avoir total).
++Groupes : A chaîne, B règle (encaissements), C règle (situation, solde, acompte), D ordre et atomicité, E messages, F non-régression, G immuabilité des migrations, H garde de chaîne.
++Les comportements spécifiés portent « CONSTAT » : ce ne sont pas des règles.
++Connexion de test : PRAGMA foreign_keys=ON et PRAGMA recursive_triggers=ON (D-39), sauf les témoins qui le précisent.
++
++Exécution : python3 src-tauri/tests/metier/test_009c_bc_annulation_acompte_encaissement.py
++"""
++import hashlib
++import pathlib
++import re
++import sqlite3
++import sys
++import unittest
++
++sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
++import test_009b_acompte_garanties_manuelles as B  # noqa: E402  (chaîne 001 à 009b, fabriques de devis, BC, factures, avoirs, règlements)
++
++P = B.P
++T = B.T
++MIGRATIONS = B.MIGRATIONS
++NOM_009C = "009c_bc_annulation_acompte_encaissement.sql"
++NOMS = B.NOMS + (NOM_009C,)
++SQL_009C = (MIGRATIONS / NOM_009C).read_text(encoding="utf-8")
++RANG = 15
++TRIGGER = "tr_103_bons_commande_annulation_facturee"
++TS_ANNUL = T.TS_ANNUL
++c, eur = B.c, B.eur
++RE_INV44 = r"^INV-44"
++ETATS_NON_ANNULES = ("en_cours", "gele", "termine")
++
++# Les quatre refus de la règle (messages distincts, tous préfixés INV-44), dans l'ordre d'évaluation du trigger.
++M_ENCAISSEMENT = r"INV-44.*encaissement actif"
++M_SITUATION = r"INV-44.*situation a ete emise"
++M_AUTRE_FACTURE = r"INV-44.*facture autre qu'un acompte"
++M_ACOMPTE = r"INV-44.*acompte n'est pas integralement neutralise"
++
++# Empreintes SHA-256 (fins de ligne normalisées en LF) des migrations qui ne doivent pas changer : 006, 009a et 009b telles que sur GitHub (main a99d4c2).
++EMPREINTES_IMMUABLES = {
++    "006_facturation.sql": "085c702176b25ee943ca7a95a741eed6a528cfb0864f74e4b3f3ba74ebc18c8e",
++    "009a_bc_annulation_interdite_si_facture.sql": "23c49c6fe44fe77ceef040b2441e3fb7406ecb20e00cf8e9793d43e22545e9e3",
++    "009b_acompte_garanties_manuelles.sql": "05677212c5e2459fb8e6b9a0359de6762f9eb9f8c4959789db1f012edd53d088",
++}
++
++
++def migrer15(recursive=True):
++    """Chaîne 001 à 009b (rang 14) puis 009c avec le protocole du runner : BEGIN IMMEDIATE, fichier, foreign_key_check, integrity_check, user_version = 15, COMMIT."""
++    db = B.migrer14(recursive=recursive)
++    T.runner(db, RANG, SQL_009C)
++    return db
++
++
++def schema(db):
++    return {(t, n): (tbl, sql) for t, n, tbl, sql in db.execute("SELECT type, name, tbl_name, sql FROM sqlite_master")}
++
++
++def _norm(sql):
++    return re.sub(r"\s+", " ", sql).strip().rstrip(";").strip()
++
++
++def trigger_009c():
++    """Définition (normalisée) du CREATE TRIGGER de 009c."""
++    for st in T.instructions(SQL_009C):
++        code = T.sans_commentaires(st).strip()
++        if re.match(r"CREATE\s+TRIGGER\s+" + TRIGGER + r"\b", code, re.I):
++            return _norm(code)
++    raise AssertionError("009c ne crée pas " + TRIGGER)
++
++
++class Base15(B.Base14):
++    """Base au rang 15. Fabriques héritées (test_005b à test_009b) ; un avoir est « correction_erreur » par défaut (Base14.cols_facture)."""
++
++    def setUp(self):
++        self.db = migrer15()
++        self._n = 0
++        self._npv = {}
++        self.desynchroniser_ids()
++
++    def isole(self, gardes):
++        """Base du rang 15 dont tous les triggers sont supprimés sauf `gardes` (pour fabriquer un état que les gardes livrées ne laissent pas atteindre)."""
++        t = self._sur(migrer15())
++        for (nom,) in t.db.execute("SELECT name FROM sqlite_master WHERE type='trigger'").fetchall():
++            if nom not in gardes:
++                t.db.execute(f"DROP TRIGGER {nom}")
++        return t
++
++    def essaie(self, sql, *args):
++        """Instruction SQL puis retour arrière (SAVEPOINT) : None si elle réussit, sinon le message de l'erreur d'intégrité."""
++        return P.F.Base9.tente(self, sql, *args)
++
++    # --- annulation du BC (instruction commune de annuler_bc) --------------------------------------------------------------------
++    def tente_annuler(self, b):
++        """Annulation du BC puis retour arrière (SAVEPOINT) : None si elle réussit, sinon le message de l'erreur d'intégrité."""
++        self.db.execute("SAVEPOINT tann")
++        try:
++            self.annuler_bc(b)
++            return None
++        except sqlite3.IntegrityError as e:
++            return str(e)
++        finally:
++            self.db.execute("ROLLBACK TO tann")
++            self.db.execute("RELEASE tann")
++
++    def refuse(self, b, motif=RE_INV44):
++        m = self.tente_annuler(b)
++        self.assertIsNotNone(m, "annulation acceptée à tort")
++        self.assertRegex(m, motif)
++        return m
++
++    def accepte(self, b):
++        m = self.tente_annuler(b)
++        self.assertIsNone(m, m)
++
++    def statut(self, b):
++        return self.un("SELECT statut, cancelled_at, motif_annulation FROM bons_commande WHERE id=?", b)
++
++    def instantane(self):
++        """Factures, lignes de facture et règlements, lus tels quels."""
++        return (self.tous("SELECT * FROM factures ORDER BY id"), self.tous("SELECT * FROM facture_lignes ORDER BY id"),
++                self.tous("SELECT * FROM reglements ORDER BY id"))
++
++    # --- fabrication -----------------------------------------------------------------------------------------------------------
++    def bc6000(self):
++        """BC en cours (un devis de 6000.00, acompte prévu 1000.00)."""
++        return self.monde(devis=[{"lignes": ["4000.00", "2000.00"], "acompte": ("montant", "1000.00")}])
++
++    def avec(self, type_):
++        """BC en cours portant UNE facture du type voulu (acompte 100.00, situation 100.00 couverte, solde au contractuel) ; retourne (bc, facture)."""
++        bc = self.bc6000()
++        if type_ == "acompte":
++            return bc, self.acompte(bc, bc.d[0], "100.00")
++        if type_ == "situation":
++            return bc, self.situation(bc, "100.00", 1, "0.00")
++        return bc, self.solde_final(bc)
++
++    def montant(self, f):
++        return self.un("SELECT total_ht FROM factures WHERE id=?", f)[0]
++
++    def encaisse_tout(self, f, **kw):
++        return self.encaisse(f, self.montant(f), **kw)
++
++    def avoirs_de(self, f):
++        return self.tous("SELECT id, total_ht, motif_avoir FROM factures WHERE origine_facture_id=? ORDER BY id", f)
++
++    def nb_avoirs(self):
++        return self.un("SELECT COUNT(*) FROM factures WHERE type='avoir'")[0]
++
++    def service_annulation(self, bc, entre=None):
++        """ÉMULATION du service d'annulation (option A) : UNE transaction BEGIN IMMEDIATE ; pour chaque acompte non neutralisé, avoir total (correction_erreur) ;
++        `entre()` (point d'injection d'un échec intermédiaire) ; puis UPDATE du BC ; COMMIT. Toute erreur : ROLLBACK de l'ensemble puis l'erreur est relancée."""
++        db = self.db
++        db.execute("BEGIN IMMEDIATE")
++        try:
++            for (f, tot) in self.tous("SELECT id, total_ht FROM factures WHERE bc_id=? AND type='acompte' ORDER BY id", bc.b):
++                reste = c(tot) - sum(c(x) for (x,) in self.tous("SELECT total_ht FROM factures WHERE origine_facture_id=?", f))
++                if reste > 0:
++                    self.neutraliser(f)
++            if entre:
++                entre()
++            self.annuler_bc(bc.b)
++            db.execute("COMMIT")
++        except BaseException:
++            if db.in_transaction:
++                db.execute("ROLLBACK")
++            raise
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# A — chaîne de migration
++# --------------------------------------------------------------------------------------------------------------------
++class Chaine(Base15):
++    def test_009c_A_fichiers_de_la_chaine_dans_l_ordre(self):
++        noms = [p.name for p in sorted(MIGRATIONS.glob("*.sql"))]
++        self.assertEqual(noms[:15], list(NOMS))
++        self.assertEqual(noms[14], NOM_009C)
++        self.assertEqual(len(NOMS), RANG)
++        self.assertLess(B.NOM_009B, NOM_009C)                                                       # 009c s'ordonne après 009b
++        self.assertTrue(all(n > NOM_009C for n in noms[RANG:]))                                      # toute migration suivante (010, 011, …) s'ordonne après 009c
++        self.assertRegex(NOM_009C, r"^[0-9]{3}[a-z]_[a-z0-9_]+\.sql$")                              # convention NNNx_<objet>.sql (conventions techniques §5)
++
++    def test_009c_A_rang_15_et_user_version(self):
++        db = B.migrer14()
++        self.assertEqual(T.db_user_version(db), 14)
++        T.runner(db, RANG, SQL_009C)
++        self.assertEqual(T.db_user_version(db), 15)
++        self.assertEqual(self.un("PRAGMA foreign_keys")[0], 1)
++        self.assertEqual(self.tous("PRAGMA integrity_check"), [("ok",)])
++        self.assertEqual(self.tous("PRAGMA foreign_key_check"), [])
++
++    def test_009c_A_aucune_transaction_aucun_pragma_aucune_donnee_dans_le_fichier(self):
++        code = T.sans_commentaires(SQL_009C)
++        self.assertIsNone(re.search(r"\b(COMMIT|ROLLBACK|PRAGMA\s+(?!user_version|foreign_keys)|ALTER|CREATE\s+(TABLE|INDEX|VIEW)(?!\s))", code.replace("CREATE TEMP TABLE", "")))
++        self.assertIsNone(re.search(r"\bINSERT\s+INTO\s+(?!garde_009c_)", code))                    # seule l'insertion de la garde (table temporaire) est permise
++        self.assertIsNone(re.search(r"\b(UPDATE|DELETE)\b(?![^;]*\bBEFORE\b)", re.sub(r"CREATE TRIGGER.*?END;", "", code, flags=re.S | re.I)))
++        self.assertEqual(code.count("BEGIN"), 1)                                                     # le BEGIN du corps du trigger, aucune transaction
++        for m in re.findall(r"RAISE\(ABORT, '((?:[^']|'')*)'\)", code):
++            self.assertTrue(m.isascii(), m)
++            self.assertTrue(m.startswith("INV-44: "), m)
++
++    def test_009c_A_objets_exacts_seul_le_trigger_est_recree_au_rang_15(self):
++        avant, apres = schema(B.migrer14()), schema(self.db)
++        self.assertEqual(set(apres), set(avant))                                                     # aucun objet créé, aucun supprimé
++        modifies = {k for k in avant if avant[k] != apres[k]}
++        self.assertEqual(modifies, {("trigger", TRIGGER)})                                           # le seul objet modifié, au caractère près
++        self.assertEqual(apres[("trigger", TRIGGER)][0], "bons_commande")
++        self.assertEqual(_norm(apres[("trigger", TRIGGER)][1]), trigger_009c())
++        self.assertNotEqual(_norm(avant[("trigger", TRIGGER)][1]), trigger_009c())                  # la définition de 009a est bien remplacée
++
++    def test_009c_A_la_garde_refuse_toute_base_qui_n_est_pas_au_rang_14(self):
++        for rang, base in ((12, P.migrer12()), (13, B.migrer13()), (15, migrer15())):
++            with self.subTest(rang=rang):
++                avant = (schema(base), T.db_user_version(base))
++                with self.assertRaisesRegex(sqlite3.IntegrityError, "009c exige user_version = 14"):
++                    T.runner(base, RANG, SQL_009C)
++                self.assertEqual((schema(base), T.db_user_version(base)), avant)                     # ROLLBACK intégral : ni trigger, ni user_version, ni table temporaire
++                self.assertEqual(base.execute("SELECT name FROM sqlite_temp_master WHERE name LIKE 'garde_009c%'").fetchall(), [])
++
++    def test_009c_A_une_base_peuplee_au_rang_14_est_migree_sans_perte(self):
++        t = self._sur(B.migrer14())
++        bc = t.bc6000()
++        f = t.acompte(bc, bc.d[0], "100.00")
++        t.encaisse(f, "40.00")
++        avant = t.instantane()
++        T.runner(t.db, RANG, SQL_009C)
++        self.assertEqual(t.instantane(), avant)                                                      # aucune donnée lue ni modifiée
++        self.assertEqual(T.db_user_version(t.db), 15)
++        t.refuse(bc.b, M_ENCAISSEMENT)
++
++    def test_009c_A_un_BC_annule_avant_009c_reste_tel_quel(self):
++        # CONSTAT : 009a laisse annuler un BC dont l'acompte est neutralisé ; 009c ne relit ni ne corrige ce BC (aucune donnée n'est touchée).
++        t = self._sur(B.migrer14())
++        bc = t.bc6000()
++        f = t.acompte(bc, bc.d[0], "100.00")
++        t.avoir(f)
++        t.annuler_bc(bc.b)
++        avant = (t.instantane(), t.tous("SELECT * FROM bons_commande ORDER BY id"))
++        T.runner(t.db, RANG, SQL_009C)
++        self.assertEqual((t.instantane(), t.tous("SELECT * FROM bons_commande ORDER BY id")), avant)
++        self.assertEqual(t.statut(bc.b)[0], "annule")
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# B — encaissements (condition 1)
++# --------------------------------------------------------------------------------------------------------------------
++class Encaissements(Base15):
++    def test_INV_44_B1_encaissement_actif_sur_un_acompte_annulation_refusee(self):
++        for etat in ETATS_NON_ANNULES:
++            with self.subTest(etat=etat):
++                bc, f = self.avec("acompte")
++                self.encaisse(f, "40.00")                                                            # règlement partiel : l'acompte n'est plus « non réglé »
++                self.etat(bc, etat)
++                self.refuse(bc.b, M_ENCAISSEMENT)
++                with self.assertRaisesRegex(sqlite3.IntegrityError, M_ENCAISSEMENT):
++                    self.annuler_bc(bc.b)
++                self.assertEqual(self.statut(bc.b)[0], "termine" if etat == "termine" else "en_cours")
++
++    def test_INV_44_B2_encaissement_actif_sur_une_facture_de_solde_annulation_refusee(self):
++        bc, so = self.avec("solde")
++        self.encaisse_tout(so)
++        self.refuse(bc.b, M_ENCAISSEMENT)
++
++    def test_INV_44_B3_encaissement_actif_sur_une_situation_annulation_refusee(self):
++        bc, s = self.avec("situation")
++        self.encaisse_tout(s)
++        self.refuse(bc.b, M_ENCAISSEMENT)
++
++    def test_INV_44_B4_encaissement_actif_malgre_la_neutralisation_de_la_facture_par_avoir(self):
++        for type_ in ("acompte", "situation", "solde"):
++            with self.subTest(type=type_):
++                bc, f = self.avec(type_)
++                self.encaisse_tout(f)                                                                # facture réglée, puis intégralement créditée
++                self.avoir(f)
++                self.assertTrue(self.neutralisee(f))
++                self.refuse(bc.b, M_ENCAISSEMENT)
++
++    def test_INV_44_B5_encaissement_actif_sur_acompte_neutralise_refus_meme_si_l_avoir_est_correction_erreur(self):
++        bc, f = self.avec("acompte")
++        self.encaisse(f, "100.00")
++        self.avoir(f)                                                                                 # avoir total de motif correction_erreur
++        self.assertEqual([m for (_, _, m) in self.avoirs_de(f)], ["correction_erreur"])
++        self.assertEqual(self.nette(bc), 0)
++        self.refuse(bc.b, M_ENCAISSEMENT)
++
++    def test_INV_44_B6_encaissement_annule_ne_bloque_pas_comme_encaissement_actif(self):
++        bc, f = self.avec("acompte")
++        r = self.encaisse(f, "100.00")
++        self.annuler(r)
++        self.assertEqual(self.un("SELECT COUNT(*) FROM reglements WHERE cancelled_at IS NULL")[0], 0)
++        self.refuse(bc.b, M_ACOMPTE)                                                                 # refus pour l'acompte non neutralisé, pas pour l'encaissement
++        self.avoir(f)
++        self.accepte(bc.b)
++
++    def test_INV_44_B7_annuler_l_encaissement_leve_le_blocage_apres_neutralisation(self):
++        bc, f = self.avec("acompte")
++        r = self.encaisse(f, "100.00")
++        self.avoir(f)
++        self.refuse(bc.b, M_ENCAISSEMENT)
++        self.annuler(r)
++        self.accepte(bc.b)
++
++    def test_INV_44_B8_encaissement_importe_deja_annule_ne_bloque_pas(self):
++        bc, f = self.avec("acompte")
++        self.encaisse(f, "100.00", origine="import", legacy_id="V2-REG-1", cancelled_at=TS_ANNUL, motif_annulation="Import V2 : annule")
++        self.assertEqual(self.un("SELECT origine, cancelled_at IS NOT NULL FROM reglements")[0:2], ("import", 1))
++        self.refuse(bc.b, M_ACOMPTE)
++        self.avoir(f)
++        self.accepte(bc.b)
++
++    def test_INV_44_B9_un_encaissement_annule_et_un_encaissement_actif_bloquent(self):
++        bc, f = self.avec("acompte")
++        r1 = self.encaisse(f, "30.00")
++        self.annuler(r1)
++        self.encaisse(f, "30.00")
++        self.refuse(bc.b, M_ENCAISSEMENT)
++
++    def test_INV_44_B10_les_reglements_d_un_autre_BC_sont_sans_effet(self):
++        bc_a, fa = self.avec("acompte")
++        bc_b, fb = self.avec("acompte")
++        self.encaisse_tout(fb)                                                                       # encaissement actif sur le BC B seulement
++        self.avoir(fa)
++        self.accepte(bc_a.b)
++        self.refuse(bc_b.b, M_ENCAISSEMENT)
++        self.annuler_bc(bc_a.b)
++        self.assertEqual(self.statut(bc_a.b)[0], "annule")
++        self.assertEqual(self.statut(bc_b.b)[0], "en_cours")
++
++    def test_INV_44_B11_un_remboursement_n_est_pas_un_encaissement_actif(self):
++        # État fabriqué par isolement (seul tr_103 conservé) : les gardes de 007 interdisent un remboursement actif sans encaissement actif.
++        t = self.isole({TRIGGER})
++        bc, f = t.avec("acompte")
++        av = t.avoir(f)
++        t.rembourse(av, "10.00")
++        self.assertEqual(t.tous("SELECT type, cancelled_at FROM reglements"), [("remboursement", None)])
++        t.accepte(bc.b)
++        t.annuler_bc(bc.b)
++        self.assertEqual(t.statut(bc.b)[0], "annule")
++
++    def test_INV_44_B12_un_remboursement_avec_son_encaissement_actif_bloque_par_l_encaissement(self):
++        bc, f = self.avec("acompte")
++        self.encaisse(f, "100.00")
++        av = self.avoir(f)
++        self.rembourse(av, "100.00")                                                                  # 007 : remboursement ≤ crédit disponible
++        self.assertEqual(sorted(t for (t,) in self.tous("SELECT type FROM reglements")), ["encaissement", "remboursement"])
++        self.refuse(bc.b, M_ENCAISSEMENT)
++
++    def test_INV_44_B13_le_lien_passe_par_la_facture_du_BC_pas_par_les_dates_ni_les_numeros(self):
++        # un encaissement sur une facture d'un autre BC (même client, même devis impossible) ne se confond pas : deux BC du même client
++        bc_a, fa = self.avec("acompte")
++        bc_b = self.monde(devis=[{"lignes": ["4000.00"], "acompte": ("montant", "500.00")}], client_id=self.un("SELECT client_id FROM bons_commande WHERE id=?", bc_a.b)[0])
++        fb = self.acompte(bc_b, bc_b.d[0], "50.00")
++        self.encaisse_tout(fb)
++        self.avoir(fa)
++        self.accepte(bc_a.b)
++        self.refuse(bc_b.b, M_ENCAISSEMENT)
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# C — situation, solde, acompte (conditions 2, 3 et 4)
++# --------------------------------------------------------------------------------------------------------------------
++class Factures(Base15):
++    def test_INV_44_C1_une_situation_emise_bloque_meme_neutralisee_par_avoir(self):
++        for etat in ETATS_NON_ANNULES:
++            with self.subTest(etat=etat):
++                bc, s = self.avec("situation")
++                self.etat(bc, etat)
++                self.refuse(bc.b, M_SITUATION)                                                       # non créditée
++                self.avoir(s)
++                self.assertTrue(self.neutralisee(s))
++                self.assertEqual(self.nette(bc), 0)
++                self.refuse(bc.b, M_SITUATION)                                                       # intégralement créditée : toujours refusée
++
++    def test_INV_44_C2_une_situation_partiellement_creditee_bloque(self):
++        bc, s = self.avec("situation")
++        self.avoir(s, "10.00")
++        self.refuse(bc.b, M_SITUATION)
++
++    def test_INV_44_C3_une_facture_de_solde_bloque_meme_si_le_net_apres_avoirs_est_nul(self):
++        for etat in ETATS_NON_ANNULES:
++            with self.subTest(etat=etat):
++                bc, so = self.avec("solde")
++                self.etat(bc, etat)
++                self.refuse(bc.b, M_AUTRE_FACTURE)
++                self.avoir(so)
++                self.assertTrue(self.neutralisee(so))
++                self.assertEqual(self.nette(bc), 0)
++                self.refuse(bc.b, M_AUTRE_FACTURE)
++
++    def test_INV_44_C4_situation_solde_et_encaissement_combines(self):
++        bc = self.bc6000()
++        s = self.situation(bc, "100.00", 1, "0.00")
++        self.encaisse(s, "100.00")
++        so = self.solde_final(bc)
++        self.refuse(bc.b, M_ENCAISSEMENT)                                                            # l'encaissement est évalué en premier
++        self.avoir(s)
++        self.avoir(so)
++        self.assertEqual(self.nette(bc), 0)
++        self.refuse(bc.b, M_ENCAISSEMENT)                                                            # même tout crédité
++        self.annuler(self.un("SELECT id FROM reglements")[0])
++        self.refuse(bc.b, M_SITUATION)                                                               # sans encaissement : la situation bloque encore
++        bc2 = self.bc6000()
++        self.situation(bc2, "100.00", 1, "0.00")
++        self.solde_final(bc2)
++        self.refuse(bc2.b, M_SITUATION)
++
++    def test_INV_44_C5_acompte_non_regle_non_neutralise_annulation_refusee(self):
++        for etat in ETATS_NON_ANNULES:
++            with self.subTest(etat=etat):
++                bc, f = self.avec("acompte")
++                self.etat(bc, etat)
++                self.refuse(bc.b, M_ACOMPTE)
++
++    def test_INV_44_C6_acompte_non_regle_integralement_neutralise_par_correction_erreur_annulation_autorisee(self):
++        for etat in ETATS_NON_ANNULES:
++            with self.subTest(etat=etat):
++                bc, f = self.avec("acompte")
++                self.etat(bc, etat)
++                a = self.avoir(f)                                                                    # avoir total, motif correction_erreur (défaut de Base14)
++                self.assertEqual(self.avoirs_de(f), [(a, "100.00", "correction_erreur")])
++                avant = self.instantane()
++                self.accepte(bc.b)
++                self.annuler_bc(bc.b)
++                self.assertEqual(self.statut(bc.b)[0], "annule")
++                self.assertEqual(self.instantane(), avant)                                           # factures, lignes, avoirs, règlements : strictement intacts
++                self.assertEqual(self.un("SELECT COUNT(*) FROM factures WHERE bc_id=?", bc.b)[0], 2)
++
++    def test_INV_44_C7_neutralisation_incomplete_annulation_refusee(self):
++        bc, f = self.avec("acompte")
++        self.avoir(f, "10.00")
++        self.refuse(bc.b, M_ACOMPTE)
++        self.avoir(f, "89.99")                                                                        # il reste 0.01
++        self.refuse(bc.b, M_ACOMPTE)
++        self.avoir(f, "0.01")
++        self.accepte(bc.b)
++
++    def test_INV_44_C8_avoirs_partiels_correction_erreur_cumules_jusqu_a_zero_annulation_autorisee(self):
++        bc, f = self.avec("acompte")
++        for part in ("40.00", "35.00", "25.00"):
++            self.avoir(f, part)
++        self.assertEqual(self.nette(bc), 0)
++        self.accepte(bc.b)
++
++    def test_INV_44_C9_avoir_absent_annulation_refusee_puis_acceptee_apres_l_avoir(self):
++        bc, f = self.avec("acompte")
++        self.assertEqual(self.avoirs_de(f), [])
++        self.refuse(bc.b, M_ACOMPTE)
++        self.avoir(f)
++        self.accepte(bc.b)
++
++    def test_INV_44_C10_un_avoir_total_d_un_autre_motif_ne_vaut_pas_neutralisation(self):
++        # CONSTAT : depuis 009b (tr_23), un avoir sur acompte ne peut être que correction_erreur ; un avoir d'un autre motif n'existe que dans une base antérieure à 009b
++        # (006 laissait le motif libre). État fabriqué par isolement (seul tr_103 conservé).
++        t = self.isole({TRIGGER})
++        bc, f = t.avec("acompte")
++        t.avoir(f, motif_avoir="Erreur de facturation")
++        t.refuse(bc.b, M_ACOMPTE)
++        bc2, f2 = t.avec("acompte")
++        t.avoir(f2, "60.00", motif_avoir="correction_erreur")
++        t.avoir(f2, "40.00", motif_avoir="prestation_non_realisee")
++        t.refuse(bc2.b, M_ACOMPTE)                                                                    # net nul, mais un avoir n'est pas correction_erreur
++
++    def test_INV_44_C11_tr_23_n_accepte_sur_un_acompte_que_correction_erreur_la_dispense_ne_s_etend_pas(self):
++        bc, f = self.avec("acompte")
++        m = self.tente_f(bc, "avoir", "100.00", origine_facture_id=f, motif_avoir="prestation_non_realisee")
++        self.assertRegex(m, "INV-76")
++        m = self.tente_f(bc, "avoir", "100.00", origine_facture_id=f, motif_avoir="Annulation du BC")
++        self.assertRegex(m, "INV-76")
++        self.assertEqual(self.avoirs_de(f), [])
++
++    def test_INV_44_C12_plusieurs_acomptes_sur_plusieurs_devis_tous_doivent_etre_neutralises(self):
++        bc = self.monde_devis([("1000.00", "montant", "300.00"), ("500.00", "montant", "300.00")])
++        a1 = self.acompte(bc, bc.d[0], "100.00")
++        a2 = self.acompte(bc, bc.d[1], "100.00")
++        self.refuse(bc.b, M_ACOMPTE)
++        self.avoir(a1)
++        self.refuse(bc.b, M_ACOMPTE)                                                                  # le second acompte reste à neutraliser
++        self.avoir(a2)
++        self.accepte(bc.b)
++
++    def test_INV_44_C13_acompte_neutralise_puis_remplace_le_nouvel_acompte_bloque_a_son_tour(self):
++        bc, f = self.avec("acompte")
++        self.avoir(f)
++        f2 = self.acompte(bc, bc.d[0], "80.00")                                                       # INV-52 : nouvel acompte possible après neutralisation totale
++        self.refuse(bc.b, M_ACOMPTE)
++        self.avoir(f2)
++        self.accepte(bc.b)
++
++    def test_INV_44_C16_defense_un_sur_credit_d_acompte_n_est_pas_une_neutralisation(self):
++        # État inatteignable avec les gardes livrées (tr_23 : Σ avoirs <= total de l'origine, INV-76), fabriqué par isolement : l'égalité exacte du net est exigée.
++        t = self.isole({TRIGGER})
++        bc, f = t.avec("acompte")
++        t.avoir(f)
++        t.avoir(f, "10.00")
++        self.assertGreater(sum(c(x) for (_, x, _) in t.avoirs_de(f)), c(t.montant(f)))
++        t.refuse(bc.b, M_ACOMPTE)
++
++    def test_INV_44_C14_un_acompte_prevu_au_devis_n_est_pas_une_facture(self):
++        bc = self.bc6000()
++        self.assertEqual(self.un("SELECT COUNT(*) FROM factures WHERE bc_id=?", bc.b)[0], 0)
++        self.accepte(bc.b)
++        self.annuler_bc(bc.b)
++        self.assertEqual(self.statut(bc.b)[0], "annule")
++
++    def test_INV_44_C15_une_facture_autre_qu_un_acompte_bloque_aussi_avec_un_acompte_neutralise(self):
++        bc = self.bc6000()
++        a = self.acompte(bc, bc.d[0], "100.00")
++        self.avoir(a)
++        self.accepte(bc.b)
++        so = self.solde_final(bc)
++        self.refuse(bc.b, M_AUTRE_FACTURE)
++        self.avoir(so)
++        self.refuse(bc.b, M_AUTRE_FACTURE)
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# D — ordre des opérations et atomicité
++# --------------------------------------------------------------------------------------------------------------------
++class OrdreEtAtomicite(Base15):
++    def test_INV_44_D1_ordre_inverse_annuler_le_BC_avant_l_avoir_est_refuse(self):
++        bc, f = self.avec("acompte")
++        avant = self.instantane()
++        with self.assertRaisesRegex(sqlite3.IntegrityError, M_ACOMPTE):
++            self.annuler_bc(bc.b)
++        self.assertEqual(self.statut(bc.b)[0], "en_cours")
++        self.assertEqual(self.instantane(), avant)
++        self.avoir(f)                                                                                 # l'avoir ne peut venir qu'AVANT l'annulation
++        self.annuler_bc(bc.b)
++        self.assertEqual(self.statut(bc.b)[0], "annule")
++
++    def test_INV_44_D2_service_emule_succes_avoir_total_puis_annulation_dans_une_transaction(self):
++        bc, f = self.avec("acompte")
++        self.service_annulation(bc)
++        self.assertFalse(self.db.in_transaction)
++        self.assertEqual(self.statut(bc.b)[0], "annule")
++        self.assertEqual(self.avoirs_de(f)[0][1:], ("100.00", "correction_erreur"))
++        self.assertEqual(self.nette(bc), 0)
++
++    def test_INV_44_D3_service_emule_un_refus_de_l_annulation_defait_aussi_l_avoir(self):
++        bc, f = self.avec("acompte")
++        self.encaisse(f, "40.00")                                                                     # l'avoir passe (007 ne le lit pas), l'annulation est refusée
++        avant = self.instantane()
++        with self.assertRaisesRegex(sqlite3.IntegrityError, M_ENCAISSEMENT):
++            self.service_annulation(bc)
++        self.assertFalse(self.db.in_transaction)
++        self.assertEqual(self.instantane(), avant)                                                    # aucune neutralisation partielle ne subsiste
++        self.assertEqual(self.nb_avoirs(), 0)
++        self.assertEqual(self.statut(bc.b)[0], "en_cours")
++
++    def test_INV_44_D4_service_emule_une_situation_bloque_et_aucun_avoir_ne_subsiste(self):
++        bc = self.bc6000()
++        a = self.acompte(bc, bc.d[0], "100.00")
++        self.situation(bc, "100.00", 1, "100.00")
++        avant = self.instantane()
++        with self.assertRaisesRegex(sqlite3.IntegrityError, M_SITUATION):
++            self.service_annulation(bc)
++        self.assertEqual(self.instantane(), avant)
++        self.assertEqual(self.avoirs_de(a), [])
++        self.assertEqual(self.statut(bc.b)[0], "en_cours")
++
++    def test_INV_44_D5_service_emule_echec_intermediaire_entre_l_avoir_et_l_annulation(self):
++        bc, f = self.avec("acompte")
++        avant = self.instantane()
++
++        def panne():
++            self.assertEqual(self.nb_avoirs(), 1)                                                     # l'avoir existe dans la transaction
++            raise RuntimeError("panne entre l'avoir et l'annulation")
++
++        with self.assertRaisesRegex(RuntimeError, "panne"):
++            self.service_annulation(bc, entre=panne)
++        self.assertFalse(self.db.in_transaction)
++        self.assertEqual(self.instantane(), avant)
++        self.assertEqual(self.nb_avoirs(), 0)
++        self.assertEqual(self.statut(bc.b)[0], "en_cours")
++
++    def test_INV_44_D6_service_emule_plusieurs_acomptes_un_refus_defait_tous_les_avoirs(self):
++        bc = self.monde_devis([("1000.00", "montant", "300.00"), ("500.00", "montant", "300.00")])
++        a1 = self.acompte(bc, bc.d[0], "100.00")
++        a2 = self.acompte(bc, bc.d[1], "100.00")
++        self.encaisse(a2, "10.00")
++        avant = self.instantane()
++        with self.assertRaisesRegex(sqlite3.IntegrityError, M_ENCAISSEMENT):
++            self.service_annulation(bc)
++        self.assertEqual(self.instantane(), avant)
++        self.assertEqual(self.avoirs_de(a1) + self.avoirs_de(a2), [])
++
++    def test_INV_44_D7_CONSTAT_sans_transaction_l_avoir_seul_persiste_et_la_base_reste_coherente(self):
++        # LIMITE ASSUMÉE : SQLite ne peut pas imposer que l'avoir et l'annulation soient dans la même transaction. Un service qui commit l'avoir puis voit l'annulation
++        # refusée laisse un acompte neutralisé et un BC en cours : état valide, aucune annulation partielle ; l'atomicité est la responsabilité du service.
++        bc, f = self.avec("acompte")
++        self.encaisse(f, "40.00")
++        self.avoir(f)                                                                                 # autocommit : persiste
++        self.refuse(bc.b, M_ENCAISSEMENT)
++        self.assertEqual(self.nb_avoirs(), 1)
++        self.assertEqual(self.statut(bc.b)[0], "en_cours")
++        self.assertEqual(self.tous("PRAGMA foreign_key_check"), [])
++
++    def test_INV_44_D8_un_UPDATE_multi_BC_dont_un_est_bloque_est_refuse_en_entier(self):
++        libre, f1 = self.avec("acompte")
++        self.avoir(f1)
++        bloque, f2 = self.avec("acompte")
++        self.db.execute("SAVEPOINT multi")
++        try:
++            with self.assertRaisesRegex(sqlite3.IntegrityError, M_ACOMPTE):
++                self.db.execute("UPDATE bons_commande SET statut='annule', cancelled_at=?, motif_annulation='Client renonce', completed_at=NULL, date_100_facture=NULL, updated_at=? "
++                                "WHERE id IN (?, ?)", (TS_ANNUL, T.TS, libre.b, bloque.b))
++        finally:
++            self.db.execute("ROLLBACK TO multi")
++            self.db.execute("RELEASE multi")
++        self.assertEqual((self.statut(libre.b)[0], self.statut(bloque.b)[0]), ("en_cours", "en_cours"))
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# E — messages
++# --------------------------------------------------------------------------------------------------------------------
++class Messages(Base15):
++    def test_009c_E_quatre_messages_distincts_prefixes_INV_44_et_ASCII(self):
++        msgs = re.findall(r"RAISE\(ABORT, '((?:[^']|'')*)'\)", T.sans_commentaires(SQL_009C))
++        self.assertEqual(len(msgs), 4)
++        self.assertEqual(len(set(msgs)), 4)
++        for m in msgs:
++            self.assertTrue(m.startswith("INV-44: annulation du bon de commande interdite"), m)
++            self.assertTrue(m.isascii(), m)
++        for motif, m in zip((M_ENCAISSEMENT, M_SITUATION, M_AUTRE_FACTURE, M_ACOMPTE), msgs):
++            self.assertRegex(m.replace("''", "'"), motif)
++
++    def test_009c_E_chaque_cause_produit_son_message(self):
++        bc, f = self.avec("acompte")
++        self.refuse(bc.b, M_ACOMPTE)
++        self.encaisse(f, "10.00")
++        self.refuse(bc.b, M_ENCAISSEMENT)
++        bc2, s = self.avec("situation")
++        self.refuse(bc2.b, M_SITUATION)
++        bc3, so = self.avec("solde")
++        self.refuse(bc3.b, M_AUTRE_FACTURE)
++
++    def test_009c_E_l_ordre_d_evaluation_est_encaissement_situation_autre_facture_acompte(self):
++        bc = self.bc6000()
++        a = self.acompte(bc, bc.d[0], "100.00")
++        s = self.situation(bc, "100.00", 1, "100.00")
++        self.refuse(bc.b, M_SITUATION)                                                               # situation + acompte non neutralisé
++        self.encaisse(a, "10.00")
++        self.refuse(bc.b, M_ENCAISSEMENT)                                                            # + encaissement actif
++
++    def test_009c_E_le_message_ne_se_confond_pas_avec_un_refus_d_un_autre_trigger(self):
++        bc, f = self.avec("acompte")
++        m = self.tente_f(bc, "avoir", "999.00", origine_facture_id=f)
++        self.assertIsNotNone(m)
++        self.assertNotRegex(m, RE_INV44)
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# F — non-régression
++# --------------------------------------------------------------------------------------------------------------------
++class NonRegression(Base15):
++    def test_009c_F_un_BC_sans_facture_s_annule_comme_avant(self):
++        for etat in ETATS_NON_ANNULES:
++            with self.subTest(etat=etat):
++                bc = self.bc6000()
++                self.etat(bc, etat)
++                self.accepte(bc.b)
++
++    def test_009c_F_le_trigger_ne_s_applique_qu_a_la_transition_vers_annule(self):
++        bc, f = self.avec("acompte")
++        self.encaisse(f, "100.00")
++        self.geler_bc(bc.b)                                                                            # autres transitions et autres colonnes : aucun effet de tr_103
++        self.terminer_bc(bc.b)
++        self.assertEqual(self.statut(bc.b)[0], "termine")
++        self.db.execute("UPDATE bons_commande SET updated_at=? WHERE id=?", (T.TS2, bc.b))
++        self.refuse(bc.b, M_ENCAISSEMENT)
++
++    def test_009c_F_un_BC_deja_annule_reste_terminal_et_un_avoir_reste_possible(self):
++        bc, f = self.avec("acompte")
++        self.avoir(f, "60.00")
++        self.avoir(f, "40.00")
++        self.annuler_bc(bc.b)
++        self.assertEqual(self.statut(bc.b)[0], "annule")
++        with self.assertRaises(sqlite3.IntegrityError) as cm:                                         # INV-173 : un BC annulé est terminal (tr_12), pas de message INV-44
++            self.db.execute("UPDATE bons_commande SET statut='en_cours', cancelled_at=NULL, motif_annulation=NULL WHERE id=?", (bc.b,))
++        self.assertNotRegex(str(cm.exception), RE_INV44)
++        self.assertIsNotNone(self.tente_f(bc, "acompte", "10.00", devis_id=bc.d[0]))                  # INV-188 : plus de nouvelle facture d'acompte, de situation ni de solde
++
++    def test_009c_F_les_gardes_de_facturation_et_de_reglement_restent_en_place(self):
++        bc, f = self.avec("acompte")
++        self.assertRegex(self.tente_f(bc, "acompte", "10.00", devis_id=bc.d[0]), "INV-52")             # un seul acompte actif par devis
++        self.assertRegex(self.essaie("UPDATE factures SET objet='x' WHERE id=?", f), "INV-53")
++        self.assertRegex(self.essaie("DELETE FROM factures WHERE id=?", f), "INV-06")
++        self.assertRegex(self.tente_r(f, "encaissement", "500.00"), "INV-72")
++
++    def test_009c_F_la_couverture_des_situations_et_l_ordre_acompte_situation_ne_changent_pas(self):
++        bc = self.bc6000()
++        s = self.situation(bc, "100.00", 1, "0.00")
++        self.assertEqual(self.couverture(s), [bc.d[0]])                                               # TR-104/TR-105, INV-205
++        self.assertRegex(self.tente_f(bc, "acompte", "10.00", devis_id=bc.d[0]), "INV-205")
++        self.refuse(bc.b, M_SITUATION)
++
++    def test_009c_F_le_trigger_ne_modifie_aucune_donnee(self):
++        bc, f = self.avec("acompte")
++        avant = (self.instantane(), self.tous("SELECT * FROM bons_commande ORDER BY id"))
++        self.refuse(bc.b, M_ACOMPTE)
++        self.assertEqual((self.instantane(), self.tous("SELECT * FROM bons_commande ORDER BY id")), avant)
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# G — immuabilité des migrations 006, 009a et 009b
++# --------------------------------------------------------------------------------------------------------------------
++class Immuabilite(Base15):
++    def test_009c_G_les_migrations_006_009a_et_009b_sont_identiques_a_GitHub(self):
++        for nom, empreinte in EMPREINTES_IMMUABLES.items():
++            with self.subTest(fichier=nom):
++                contenu = (MIGRATIONS / nom).read_bytes().replace(b"\r\n", b"\n")                      # core.autocrlf=true sous Windows : l'empreinte porte sur le blob Git (LF)
++                self.assertEqual(hashlib.sha256(contenu).hexdigest(), empreinte)
++
++
++# --------------------------------------------------------------------------------------------------------------------
++# H — garde de chaîne : le trigger de 009c survit aux migrations suivantes
++# --------------------------------------------------------------------------------------------------------------------
++RE_SUPPRIME_LE_TRIGGER = re.compile(
++    r"\bDROP\s+TABLE(\s+IF\s+EXISTS)?\s+bons_commande\b"
++    r"|\bALTER\s+TABLE\s+bons_commande\s+RENAME\s+TO\b"
++    r"|\bDROP\s+TRIGGER(\s+IF\s+EXISTS)?\s+" + TRIGGER + r"\b", re.I)
++
++
++def problemes_de_recreation(sql, attendu=None):
++    """Contrôle statique d'une migration ultérieure : liste vide si elle ne touche pas au trigger ou le recrée à l'identique de 009c."""
++    attendu = attendu or trigger_009c()
++    if not RE_SUPPRIME_LE_TRIGGER.search(T.sans_commentaires(sql)):
++        return []
++    for st in T.instructions(sql):
++        code = T.sans_commentaires(st).strip()
++        if re.match(r"CREATE\s+TRIGGER\s+" + TRIGGER + r"\b", code, re.I):
++            return [] if _norm(code) == attendu else ["le trigger est recréé avec une définition différente"]
++    return ["bons_commande ou le trigger est supprimé sans recréer " + TRIGGER]
++
++
++def migrations_suivantes():
++    """Migrations livrées après 009c (rang 16, 17, …) : vide tant que 010 n'existe pas."""
++    return [(RANG + 1 + i, p.name, p.read_text(encoding="utf-8")) for i, p in enumerate(sorted(MIGRATIONS.glob("*.sql"))[RANG:])]
++
++
++class GardeChaine(Base15):
++    def definition(self, db):
++        return [_norm(r[0]) for r in db.execute("SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?", (TRIGGER,))]
++
++    def suite_conserve_le_trigger(self, suite):
++        """Rejoue `suite` sur une base du rang 15 peuplée : le trigger reste identique à 009c et le refus reste effectif après chaque migration."""
++        t = self._sur(migrer15())
++        bc, _ = t.avec("acompte")
++        for rang, nom, sql in suite:
++            T.runner(t.db, rang, sql)
++            self.assertEqual(self.definition(t.db), [trigger_009c()], nom)
++            t.refuse(bc.b, M_ACOMPTE)
++
++    def test_009c_H_le_trigger_est_identique_et_effectif_apres_chaque_migration_suivante(self):
++        self.assertEqual(self.definition(self.db), [trigger_009c()])
++        self.suite_conserve_le_trigger(migrations_suivantes())                                         # 010, 011, … quand elles existeront
++
++    def test_009c_H_toute_migration_suivante_qui_supprime_bons_commande_recree_le_trigger(self):
++        for rang, nom, sql in migrations_suivantes():
++            with self.subTest(migration=nom):
++                self.assertEqual(problemes_de_recreation(sql), [], nom)
++
++    def test_009c_H_temoins_suppression_reconstruction_et_recreation(self):
++        self.assertTrue(problemes_de_recreation(f"DROP TRIGGER {TRIGGER};"))
++        self.assertTrue(problemes_de_recreation("CREATE TABLE bons_commande_new (id INTEGER);\nDROP TABLE bons_commande;\nALTER TABLE bons_commande_new RENAME TO bons_commande;"))
++        corps = trigger_009c()
++        self.assertEqual(problemes_de_recreation(f"DROP TRIGGER {TRIGGER};\n{corps};\n"), [])
++        alteree = corps.replace(" AND OLD.statut <> 'annule'", "")
++        self.assertNotEqual(alteree, corps)
++        self.assertTrue(problemes_de_recreation(f"DROP TRIGGER {TRIGGER};\n{alteree};\n"))
++        self.suite_conserve_le_trigger([(16, "x_recree.sql", f"DROP TRIGGER {TRIGGER};\n{corps};\n")])
++        with self.assertRaises(AssertionError):
++            self.suite_conserve_le_trigger([(16, "x_altere.sql", f"DROP TRIGGER {TRIGGER};\n{alteree};\n")])
++        with self.assertRaises(AssertionError):
++            self.suite_conserve_le_trigger([(16, "x_supprime.sql", f"DROP TRIGGER {TRIGGER};")])
++
++    def test_009c_H_temoin_les_migrations_qui_ne_touchent_pas_au_trigger_ne_sont_pas_signalees(self):
++        self.assertEqual(problemes_de_recreation("CREATE TABLE autre (id INTEGER);\nALTER TABLE bons_commande ADD COLUMN x TEXT;"), [])
++        self.assertEqual(problemes_de_recreation("-- DROP TABLE bons_commande dans un commentaire\nCREATE INDEX i ON factures(bc_id);"), [])
++
++
++if __name__ == "__main__":
++    unittest.main(verbosity=1)
