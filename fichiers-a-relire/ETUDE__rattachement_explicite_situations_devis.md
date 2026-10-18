@@ -1,246 +1,332 @@
-# ÉTUDE DE CONCEPTION — Rattachement explicite des situations aux devis
+# ÉTUDE DE CONCEPTION — Rattachement explicite des situations aux devis (révision 2)
 
-**BATORYA Essentiel V6** · 2026-10-17 · document d'étude, **aucun fichier du dépôt modifié**, aucune migration, aucun test, aucun patch, rien sous `docs/`. Attend la validation humaine avant toute implémentation.
-
-**Base de référence** : dépôt GitHub `mymypav-max/batorya-essentiel`, branche principale, dernier commit **35c055b (2026-10-17 16:44)**, cloné en lecture seule. Chaîne de migrations réellement présente : **001 → 009** (`006_facturation.sql` incluse). Les migrations `009a` et `009b` **n'existent pas dans l'arbre** : elles ne sont déposées que sous forme de patch (`fichiers-a-relire/consignation-V3.14-h.patch`), non appliqué.
+**Nature** : document de travail (relecture). Étude de conception uniquement. **Non officiel.**
+**Date** : 2026-10-18 · **Remplace** la première version de l'étude (2026-10-17, commit 7de3cc6).
+**Périmètre respecté** : aucune migration, aucun test du dépôt, aucun code applicatif, aucun fichier sous `docs/`, aucun patch d'implémentation, aucune tranche lancée. Seul ce fichier est révisé.
+**Statut des orientations** : M1 à M4 (demande du 2026-10-18 02:43) sont des **orientations de travail**, pas des décisions officielles de BATORYA. Elles ne le deviennent qu'après validation humaine. Les identifiants (nom de table, `TR-xx`, `INV-xx`, `CK-xx`) cités ici sont **provisoires**.
 
 ---
 
-## 1. État actuel (observé)
+## 1. État réel du dépôt et références consultées
 
-### 1.1 Ce que le SQL de GitHub contient réellement
+### 1.1 Dépôt GitHub (cloné à neuf le 2026-10-18)
 
-| Objet | Fait observé | Source |
+- `main` = **7de3cc6** (2026-10-17 21:54, ajout de la première version de cette étude, identique octet pour octet à celle que j'avais livrée).
+- Chaîne métier présente dans `src-tauri/migrations/metier/` : `001_initial`, `002_fournisseurs`, `003_devis`, `004_bons_commande`, `005_depenses`, `005a_corrections_v313`, `005b_bc_multi_devis`, `005c_bc_annule_caches_financiers`, `006_facturation`, `007_reglements`, `008_garanties`, `009_pv` (rangs 1 à 12).
+- **`009a_bc_annulation_interdite_si_facture` (rang 13) et `009b_acompte_garanties_manuelles` (rang 14) n'existent pas dans l'arborescence.** Elles n'existent que sous forme de texte dans les fichiers `fichiers-a-relire/consignation-V3.14*.patch` (jusqu'au patch `h`). Rien n'indique qu'elles aient été intégrées : je ne le suppose pas.
+- Aucune base de données dans le dépôt (SQL, tests, documents seulement).
+- La règle « aucun acompte après une situation sur le même devis » **n'est pas dans le SQL de GitHub** : le `tr_22_factures_acompte` livré (006, l.345) ne contient aucune règle d'ordre situation → acompte. Constaté par sonde : après une situation S1 sur A, un acompte sur A **est accepté** par la chaîne GitHub. Cette règle n'existe que dans le patch `h` (009b), réalisée **avec des horodatages**.
+
+### 1.2 Références consultées (ligne = fichier tel qu'il est sur GitHub)
+
+| Sujet | Source | Ce qu'elle dit |
 |---|---|---|
-| `factures` | `devis_id` n'existe que pour l'**acompte** (`CHECK (type='acompte') = (devis_id IS NOT NULL)`). Une situation n'a **pas** de `devis_id`. Elle porte `situation_numero` (ordinal par BC, unique par BC) et `montant_deja_facture_ht` | `006_facturation.sql` l.91-158 |
-| `tr_22_factures_acompte` (006) | contrôle : devis rattaché au BC, aucun acompte après un solde, un acompte actif par devis, ≤ total du devis, nette ≤ contractuel. **Aucune règle sur les situations** | 006 l.345-373 |
-| Effet constaté | acompte **accepté** sur le devis A après une situation sur A, et accepté sur le devis B (sonde de lecture, §6.2) | sonde |
-| `bc_devis` | `devis_id` UNIQUE (un devis ↔ un seul BC), `UQ(bc_id, rang)`, `created_at`. **UPDATE et DELETE refusés** (INV-184). Insertion : devis `accepte`, même client, BC non annulé (INV-40, INV-48, INV-188), aucun solde (INV-187) | 005b l.426-450, 006 l.483 |
-| `bc_lignes` | `devis_ligne_id` **NOT NULL UNIQUE** : chaque ligne de BC désigne une ligne de devis, donc un devis. Insertion refusée si le devis n'est pas rattaché au BC (INV-175). UPDATE/DELETE refusés (INV-186) | 004, 005b l.474-495 |
-| `facture_lignes` | `bc_ligne_id` (FK), `type_ligne ∈ {prestation, synthese, deduction, avancement}`. Une situation **n'accepte que** `avancement` et `deduction` (`synthese` refusée). Lignes immuables (INV-53) | 006 l.159-258, l.449-470 |
-| Lignes d'avancement | « une ligne par ligne de BC applicable » : **service**, non imposée par le SQL. Contrôlée après coup par CK-16 (définie dans `test_006`), qui juge « applicable » une ligne de BC par **`bc_lignes.created_at <= factures.created_at`** | 006 l.33-47 ; `test_006` l.154-158 |
-| Horodatages déjà utilisés | CK-14 (devis rattaché après un solde : `s.created_at < l.created_at`) et CK-16 : **diagnostics seulement**, jamais un trigger bloquant dans la chaîne de GitHub | `test_006` |
+| Hiérarchie documentaire | `docs/conception/conventions-techniques-v6.md` §2, l.16-26 | Ordre : 1 CDC, 2 modèle SQLite (V3.12 validé), 3 `invariants.md`, 4 modèle métier, 5 errata (traçabilité). « Une convention de code ne peut pas contredire ces documents. » |
+| Règles de migration | même fichier, §5, l.70-108 | Numérotation séquentielle ; migration appliquée jamais réécrite ; **le modèle SQLite est mis à jour avant** la création d'une migration ; « une migration n'insère aucune ligne » ; triggers nommés `tr_<NN>_<table>_<règle>` (NN = TR du modèle) ; chaque migration livrée avec son test |
+| Pas de sur-architecture | même fichier, §11, l.233-246 | Pas de mécanisme sans besoin réel |
+| Composition des lignes d'une situation | `docs/conception/invariants.md` l.104 (INV-62) ; `docs/conception/modèle-données-sqlite-v6-v3.12.md` l.390 ; `docs/conception/modèle-métier-V6.md` §11 l.336 | **1 ligne `synthese`** ; le cumul % et le déjà-facturé restent sur la facture |
+| Même sujet, documents en relecture | `fichiers-a-relire/MAJ__invariants.md` l.100 ; `MAJ__modèle-données-sqlite-v6-v3.13.md` l.516 ; `MAJ__modèle-métier-V6.md` l.377 | Identique (INV-62 : « situation = 1 ligne `synthese` », précision « composition avec exécution : PT-11, PT-12 ») |
+| Situation globale au BC | `MAJ__invariants.md` l.221 (INV-190), l.96 (INV-57) ; `MAJ__modèle-métier-V6.md` §12 l.391 ; `MAJ__modèle-données-sqlite-v6-v3.13.md` l.184, l.1197 (D-48), l.1394 (PT-11) | « calculée au niveau global du BC sur l'ensemble du périmètre contractuel **actuellement** accepté (tous les devis rattachés) » ; colonnes : **PT-11 À CONCEVOIR** |
+| Plusieurs devis sur un BC | `MAJ__modèle-métier-V6.md` l.269 ; `MAJ__modèle-données-sqlite-v6-v3.13.md` l.433 | Un acompte ou des situations déjà émis **ne ferment pas** le BC ; l'ajout d'un devis augmente le contractuel, **les factures déjà émises ne sont pas modifiées**, une situation ultérieure se calcule sur le nouveau contractuel |
+| Situation et annulation du BC | `docs/specifications/cdc-fonctionnel-architectural-v6.md` l.516, 520-524 | « Une Situation émise, **même annulée**, interdit toujours l'annulation directe du BC » |
+| SQL livré, lignes de situation | `006_facturation.sql` en-tête l.1-50 ; `tr_22_facture_lignes_insert` l.449+ | situation → `avancement` ou `deduction` seulement ; **`synthese` refusée** ; en-tête : « décisions de l'étape d'implémentation (situations ligne par ligne) » |
+| SQL livré, montant | `006_facturation.sql` l.145 | `CHECK (type = 'solde' OR total_ht <> '0.00')` ; `M > 0` est une règle de service (en-tête l.42) |
+| Décision de travail du 2026-10-17 (D) | `consignation-V3.14-h.patch` l.447 et l.587 (texte), l.55 et l.36 (règle d'ordre des acomptes) | Lignes `avancement` = « situation historique » ; ne décide pas de la composition des nouvelles situations, qui reste conforme à INV-62 / INV-190. Règle d'acompte du 2026-10-17 14:34 |
 
-### 1.2 Ce que la règle « actuelle » est vraiment
+### 1.3 Nuance documentaire importante (à ne pas perdre)
 
-La règle « aucun acompte après une situation, par devis » **n'est pas dans la chaîne de GitHub**. Elle n'existe que dans la proposition de la révision G (patch h, non appliqué, migration `009b`). Elle y est traduite par une **comparaison d'horodatages** : la situation « couvre » un devis si `factures.created_at >= bc_devis.created_at` de ce devis (ex æquo = refus). C'est cette dépendance que l'étude cherche à supprimer.
-
-### 1.3 Cardinalité situation ↔ devis (vérifiée dans les sources)
-
-- **Une situation peut couvrir plusieurs devis.** Elle est « **globale au BC** : elle porte sur l'ensemble du périmètre contractuel actuellement accepté (tous les devis rattachés) » (modèle métier §12 ; INV-190). CK-17 agrège d'ailleurs ses lignes **par devis**.
-- **Un devis peut être couvert par plusieurs situations** (S1, S2, S3… successives).
-- Cardinalité résultante : **N–N**. Avec la règle validée (globale), la situation n°k couvre exactement les devis rattachés **au moment de son émission**.
-- Aucune source ne décrit une situation limitée à un **sous-ensemble** des devis rattachés. Le texte de la demande parle d'une situation « rattachée au devis A » ; il ne contredit pas INV-190 si on lit « couvre A », mais la formulation laisse ouverte la question d'une situation partielle (voir §7, M1). Je ne l'ai pas tranchée.
-
-### 1.4 Contradiction découverte dans les sources (à ne pas résoudre par supposition)
-
-| Source | Ce qu'elle dit des lignes d'une situation |
-|---|---|
-| `docs/` : INV-62 (`docs/conception/invariants.md` l.104) et modèle de données V3.12 (l.390) ; INV-62 des documents de travail (GitHub et révision G) ; modèle métier §11 | une situation = **1 ligne `synthese`**, sans référence à une ligne de BC |
-| `006_facturation.sql` (livré) et ses tests | une situation = **lignes `avancement`** (une par ligne de BC) + `deduction` ; **`synthese` refusée** |
-| Décision validée du 2026-10-17 (D), revue de travail | les lignes d'avancement sont des **situations « historiques »** ; la règle « ne décide pas de la composition des lignes des nouvelles situations, qui reste conforme à INV-62, INV-190 » |
-
-Conséquence directe pour cette étude : **la relation situation ↔ devis qu'on pourrait lire dans les lignes d'avancement n'est pas portée par les décisions validées pour les nouvelles situations.** Elle existe dans le SQL livré, mais son statut documentaire est « historique ». Il serait donc fragile de bâtir la règle d'acompte dessus. C'est la raison pour laquelle je ne recommande pas d'utiliser les lignes comme source de la relation (option A, §3).
-
-Autre divergence mineure notée (sans effet sur cette étude) : `CADRAGE__006` décrit des colonnes `situation_mode`, `situation_valeur_saisie`, `avancement_cumule_pct` sur `factures` ; le 006 livré n'en a aucune (PT-11 reste À CONCEVOIR).
-
-### 1.5 Services applicatifs
-
-Le dépôt **ne contient aucun service** (pas de `src-tauri/src`). Tout ce qui suit sur les services est donc un **contrat à respecter par les futurs services**, pas du code existant.
+**INV-190, la formule « situation globale au BC », PT-11 et D-48 n'existent pas dans `docs/`.** Le registre officiel `docs/conception/invariants.md` s'arrête à INV-179. Ces éléments vivent dans les documents de travail `MAJ__*` (modèle V3.13 « en relecture, non validée » selon l'en-tête du registre MAJ ; D-48 y est marquée « Validée 2026-10-03 »). Dans `docs/`, le modèle métier §12 (l.344-362) donne la formule `contractuel × cumul % − facturation nette antérieure` sans écrire « globale ». Cela reste cohérent (le contractuel est celui du BC), mais **la cohérence de M1 avec « INV-190 » est établie sur les documents de travail, pas sur le corpus officiel**. À signaler à la validation.
 
 ---
 
-## 2. Proposition technique recommandée — option B : table de liaison minimale, additive
+## 2. Orientations métier retenues (à valider)
 
-### 2.1 Structure (provisoire, non officielle)
+### M1 — Une situation couvre tous les devis rattachés au BC à son émission
 
-Une table `situation_devis` (nom proposé, hors familles d'identifiants officiels) :
+- **Vérification des sources** : INV-190 et §12 disent « périmètre contractuel actuellement accepté (tous les devis rattachés) » ; l.433 du modèle V3.13 : une situation ultérieure se calcule sur le nouveau contractuel, les factures déjà émises ne changent pas. L'orientation M1 est **cohérente** avec ces textes.
+- **Nuance** : ces textes définissent le **périmètre du calcul du montant**. Aucun ne définit une **relation de « couverture »** ni ne relie une situation à la règle d'ordre des acomptes. Le mot « couvre » et la règle « aucun acompte après une situation sur ce devis » viennent des règles de travail du 2026-10-17 14:34, consignées **uniquement** dans le patch `h`. Il faudra donc les inscrire (INV-58 étendu ou nouvel INV, au choix de la validation) et non seulement s'appuyer sur INV-190.
+- **Exemple de référence** : A rattaché, S1 émise, B rattaché ensuite → S1 couvre {A} (pour toujours) ; S2 émise après B couvre {A, B}.
+- **Exclu** : tout mécanisme de sélection d'un sous-ensemble de devis par situation. Le périmètre est « tous les devis rattachés à l'instant de l'émission », jamais un choix.
 
-| Colonne | Rôle |
-|---|---|
-| `facture_id` | FK → `factures(id)` `RESTRICT` ; la facture doit être de type `situation` |
-| `devis_id` | FK → `devis(id)` `RESTRICT` |
+### M2 — Existence d'une situation = émission
 
-- **Clé primaire** `(facture_id, devis_id)` : un devis n'est déclaré qu'une fois par situation.
-- **Index** sur `devis_id` (c'est la colonne lue par la règle d'acompte).
-- **Pas de statut, pas de colonne de traçabilité, pas d'horodatage** (aucune justification métier). Variante possible : `created_at` par convention de tables, **jamais lu** par une règle (choix technique T2).
-- Table `STRICT`, comme le reste de la base.
+- Une situation émise reste une situation pour la règle des acomptes, **quel que soit** son montant net après avoirs et son pourcentage.
+- **Conséquence sur les sources** :
+  - le CDC (l.516) retient déjà « émise, même annulée » pour l'annulation du BC. Nuance : la règle du 2026-10-17 14:34 (patch `h`, INV-44 / TR-103) permet d'annuler un BC dont **chaque** facture est ramenée à zéro par des avoirs, ce qui est plus souple que le texte du CDC. Les deux règles sont distinctes (annulation du BC / acompte) ; je ne les confonds pas, mais l'écart CDC ↔ règle 14:34 reste à arbitrer par ailleurs (§7, H6) ;
+  - le SQL livré dérive un état « neutralisée » (`total_ht` crédité en totalité par des avoirs) et l'utilise dans d'autres triggers (situation de référence pour l'avancement, solde). **Le trigger d'acompte ne doit pas réutiliser ce filtre.** C'est le seul endroit où M2 pourrait être violé par inadvertance ; le test 4 le garde.
+  - la table de couverture (§3) ne lit ni les avoirs, ni les montants, ni les pourcentages : M2 est satisfaite **par construction**.
+- **Cas « 0 % » — constat qui ne figure pas dans le prompt** : le SQL livré impose `total_ht <> '0.00'` pour toute facture hors solde, et le service impose `M > 0`. **Une situation dont le montant est 0.00 (avancement global 0 %) ne peut donc pas exister aujourd'hui.** Ce qui est possible : une situation de montant > 0 qui **couvre** un devis dont l'avancement propre est 0 % (l'avancement porte sur d'autres devis). Le test 5 est reformulé en conséquence (§6). Autoriser une situation de montant nul changerait une règle de calcul / comptable : **hors périmètre**, soumis à décision (H1).
 
-### 2.2 Contraintes d'intégrité
+### M3 — Voir §4.
 
-Comme dans le projet (« ni CHECK ni trigger inter-tables » sauf triggers de garde), les contrôles inter-tables sont des **triggers BEFORE INSERT** :
-
-1. la facture désignée est de type `situation` ;
-2. le devis est **rattaché au BC de la situation** (existence d'une ligne `bc_devis` avec le même `bc_id`). Cela empêche toute déclaration incohérente (devis d'un autre BC, devis non rattaché) sans comparer d'horodatages ;
-3. **UPDATE et DELETE refusés** (immuabilité de l'historique, même esprit qu'INV-53 et INV-184) ; le `DELETE` implicite d'un `INSERT OR REPLACE` est couvert par `recursive_triggers=ON` (D-39).
-
-Aucun nouvel identifiant officiel (INV, TR, CK, D, E, T) : les messages réutiliseraient INV-190 / INV-53 / INV-189 existants.
-
-### 2.3 Création de la relation à l'émission d'une situation
-
-Dans la **même transaction** `BEGIN IMMEDIATE` que l'émission (déjà exigée par 006 pour la facture et ses lignes) : après la facture et ses lignes, le service insère **une ligne `situation_devis` par devis rattaché au BC à cet instant** (lecture de `bc_devis` du BC). Un échec en cours de route annule tout (ROLLBACK) : aucune relation orpheline.
-
-### 2.4 Exploitation par le trigger d'acompte
-
-La règle « aucun acompte après une situation » devient, **par devis** : refuser l'acompte du devis D s'il existe une ligne `situation_devis` pour D. Les devis étant uniques à un BC, aucune jointure sur le BC n'est nécessaire. Le contrôle **sort entièrement des horodatages** : disparaissent la comparaison `created_at` et l'interprétation « ex æquo = refus ». Les autres contrôles de `tr_22_factures_acompte` (rattachement INV-189, après un solde, un acompte actif par devis INV-52, plafond de l'acompte prévu du devis, total du devis, nette ≤ contractuel) restent **tels quels** : le plafond reste calculé à partir du devis concerné seul.
-
-### 2.5 Ce que cela donne sur l'exemple de référence
-
-Devis A 1 000 € avec situation S1 ; devis B 500 € rattaché ensuite.
-- `situation_devis` contient (S1, A). L'ajout de B **n'écrit rien** : S1 ne couvre pas B (règle 5), S1 n'est pas modifiée (règle de l'exemple, déjà garantie par `tr_20`/`tr_21`).
-- Acompte sur B : autorisé (si plafond et autres règles respectés). Acompte sur A : refusé.
-- Situation S2 émise ensuite : (S2, A) et (S2, B). L'acompte sur B (ou son renouvellement après avoir total) est alors refusé.
+### M4 — Voir §5.
 
 ---
 
-## 3. Alternatives (seulement celles qui ont un intérêt réel)
+## 3. Modèle technique recommandé — option B (table de liaison explicite)
 
-### A — Lire la relation dans les lignes d'avancement existantes (aucune nouvelle structure)
+Option B retenue comme référence. Le nom `situation_devis` est **provisoire**. Les alternatives A et C ne sont gardées qu'en §3.8.
 
-La relation existe déjà de façon indirecte : ligne d'avancement → ligne de BC → ligne de devis → devis. **Sonde de lecture réalisée** : S1 « couvre » {A} et, après rattachement de B, couvre toujours {A}.
+### 3.1 Structure (provisoire)
 
-| Avantages | Inconvénients |
-|---|---|
-| aucune table, aucun backfill, aucune divergence possible entre deux sources | contredit la lecture documentaire (§1.4) : pour les nouvelles situations, la source validée est **une ligne de synthèse** ; relation indirecte (3 jointures) ; **une situation sans ligne** (acceptée par le SQL, sonde ci-dessous) ne couvre rien ; CK-16 reste fondé sur les horodatages |
+```sql
+CREATE TABLE situation_devis (               -- nom provisoire, non officiel
+    facture_id INTEGER NOT NULL REFERENCES factures (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    devis_id   INTEGER NOT NULL REFERENCES devis    (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+    PRIMARY KEY (facture_id, devis_id)
+) STRICT, WITHOUT ROWID;
+CREATE INDEX idx_situation_devis_devis_id ON situation_devis (devis_id);
+```
 
-Non recommandée comme source de vérité, **mais utile comme preuve de rétro-remplissage** (§5).
+- **Clé** : `(facture_id, devis_id)` — une ligne n'a aucune identité propre ; la clé composite interdit le doublon. L'index sur `devis_id` sert le trigger d'acompte et les contrôles RESTRICT.
+- **Pas de `bc_id`** : il serait redondant et pourrait diverger ; le BC se déduit de la facture.
+- **Pas d'horodatage** : la date d'émission est celle de la facture. Une colonne `created_at` éventuelle (convention de tables du modèle) ne servirait à aucune règle ; à trancher à la mise à jour du modèle (§7, H5).
+- Les conventions imposent `STRICT` (en-tête 006) ; le `WITHOUT ROWID` combiné est possible. La forme exacte (clé composite ou `id` de substitution) sera alignée sur le modèle SQLite lors de sa mise à jour — c'est une décision de présentation, pas de fond.
 
-### C — Jalon ordinal sur `bc_devis` (« numéro de la dernière situation au rattachement »)
+### 3.2 Contrôles d'intégrité en base — et ce qu'ils garantissent (sonde exécutée)
 
-Une colonne sur `bc_devis`, validée par SQL à l'insertion (égale au plus grand `situation_numero` du BC à cet instant, ou 0). Une situation n°k couvre un devis si k est supérieur au jalon. Aucune écriture à l'émission des situations, aucune relation « oubliable ».
+Les clés étrangères seules garantissent seulement l'**existence** de la facture et du devis. **Elles n'empêchent ni de lier une facture qui n'est pas une situation, ni un devis étranger au BC.** Il faut des triggers (style du projet) :
 
-| Avantages | Inconvénients |
-|---|---|
-| garantie SQL la plus forte (rien à oublier à l'émission ; le jalon est vérifié) ; aucune CK d'exhaustivité nécessaire | **modifie une table livrée (005b)** et remplace son trigger d'insertion ; tous les helpers de tests qui insèrent dans `bc_devis` sont à adapter ; **ne sait exprimer que la situation globale** (impossible si une situation partielle devenait légitime, M1) ; historique : jalon inconnu (NULL) pour l'existant, non prouvable ; exige que `situation_numero` soit imposé strictement croissant par le SQL (aujourd'hui seulement unique) |
-
-À retenir si le métier confirme que la situation est **toujours globale** et accepte de toucher `bc_devis`.
-
-### Écartées
-
-Un `devis_id` sur `factures` pour les situations (impossible : une situation couvre plusieurs devis) ; un statut ou une table d'historique (aucune justification métier) ; un maintien des horodatages (contraire à la règle 6).
-
----
-
-## 4. Conséquences sur les services et sur les contrôles SQLite
-
-| Cas demandé | Comportement attendu | Mécanisme |
+| Contrôle | Mécanisme | Résultat de la sonde |
 |---|---|---|
-| 1. Émission d'une situation pour un devis | la facture, ses lignes **et** une ligne `situation_devis` par devis rattaché sont écrites ensemble | **service** (une transaction) ; SQL : FK, PK, triggers d'insertion (§2.2) |
-| 2. Ajout d'un devis B au BC après la situation | `bc_devis` reçoit B ; `situation_devis` et la situation **ne bougent pas** | `bc_devis` inchangé ; immuabilité (tr_20, tr_21, nouveaux triggers) |
-| 3. Acompte sur B | autorisé si les autres règles sont respectées ; `devis_id` = B exclusivement | `tr_22_factures_acompte` (existence dans `situation_devis`) |
-| 4. Acompte sur A, déjà couvert | refusé (`INV-58`, « sur ce devis ») | `tr_22_factures_acompte` |
-| 5. Nouvelles situations | couvrent tous les devis rattachés à leur émission | service + triggers d'insertion de `situation_devis` |
-| 6. Modification ou suppression d'un rattachement de devis | **n'existe pas** : `bc_devis` et `bc_lignes` sont immuables (INV-184, INV-186) ; `situation_devis` serait immuable ; un avoir sur une situation ne change pas la couverture | triggers existants + nouveaux |
-| 7. Échec de l'émission d'une situation | aucune ligne `situation_devis` ne subsiste | ROLLBACK de la transaction du service (FK ⇒ pas d'orphelin) |
+| La facture est une situation | `BEFORE INSERT` : refus si `factures.type <> 'situation'` | lien vers un acompte : **refusé** |
+| Le devis appartient au BC de la facture | `BEFORE INSERT` : refus si `(factures.bc_id, devis_id)` absent de `bc_devis` | lien vers un devis d'un autre BC : **refusé** |
+| Pas de doublon | PK | **refusé** |
+| Couverture immuable | `BEFORE UPDATE` et `BEFORE DELETE` : refus | UPDATE / DELETE : **refusés** ; `INSERT OR REPLACE` avec `recursive_triggers=ON` : **refusé** |
+| Facture ou devis couvert non supprimable | FK `RESTRICT` + triggers existants | `DELETE` facture : refusé (INV-06, tr_21) ; `DELETE` devis : refusé (INV-180) |
+| Le type de la facture ne change plus | `tr_20` (factures immuables) existant | acquis |
+| L'appartenance au BC ne change plus | INV-184 (`bc_devis` immuable) existant | acquis |
 
-**Limite assumée, identique à celle de 006 pour les lignes** : SQLite ne peut pas imposer qu'une situation **ait** toutes ses lignes `situation_devis` au COMMIT. Si le service en oublie une, la situation ne couvre pas le devis et l'acompte correspondant serait accepté à tort. Parades : transaction unique du service ; test d'atomicité ; **diagnostic** à définir (voir M4/T4). Cette limite existe aussi pour A et n'existe pas pour C.
+Alternative écartée : une clé étrangère composite `(bc_id, devis_id) → bc_devis` exigerait un `UNIQUE(bc_id, devis_id)` absent de `bc_devis` (qui n'a que `UNIQUE(devis_id)` et `UNIQUE(bc_id, rang)`) **et** une colonne `bc_id` redondante. Elle toucherait une table livrée pour un gain que les triggers donnent déjà.
 
-**Ne pas déplacer dans l'interface** : le refus d'acompte reste dans le trigger ; le service peut le précontrôler pour un message clair, mais n'est pas la garantie.
+### 3.3 Enregistrement de la couverture à l'émission
 
-**Import** : non traité ici, comme demandé ; l'application de conversion devra fournir les lignes `situation_devis` des situations historiques au format V6.
+Dans la **même transaction** `BEGIN IMMEDIATE` que celle de l'émission (déjà exigée par 006 pour `situation_numero`) :
 
----
+1. calculs et contrôles du service ;
+2. `INSERT` de la facture de type `situation` ;
+3. `INSERT` des lignes de facture (quelle que soit leur composition, §4) ;
+4. **une seule instruction** : `INSERT INTO situation_devis (facture_id, devis_id) SELECT :facture, devis_id FROM bc_devis WHERE bc_id = :bc` ;
+5. `COMMIT`.
 
-## 5. Stratégie de migration corrective
+- L'`INSERT … SELECT` fige « tous les devis rattachés à cet instant » : **aucune liste passée en paramètre, donc aucun sous-ensemble possible côté service** (exigence M1).
+- Le verrou d'écriture pris dès `BEGIN IMMEDIATE` sérialise l'émission et tout rattachement de devis : B est soit rattaché **avant** (donc couvert), soit **après** le `COMMIT` (donc non couvert). Aucun entrelacement possible.
 
-### 5.1 Où placer le changement
+### 3.4 Atomicité de l'émission
 
-`009a` et `009b` ne sont **pas livrées** (absentes de l'arbre de GitHub). Deux voies, à arbitrer (T3) :
+Toute erreur entre 2 et 4 déclenche `ROLLBACK` : ni facture, ni lignes, ni couverture. Sonde : dans un `SAVEPOINT`, facture de S2 + deux liens, puis `ROLLBACK TO` → S2 n'existe plus, le nombre de couvertures est revenu à sa valeur initiale. Remarque : le compteur de numérotation (high-water dans `machine.db`) n'est pas dans la même base ; un échec peut laisser un **trou de numérotation**, que le CDC accepte (l.590). Le test 9 ne doit donc pas exiger la réutilisation du numéro.
 
-- **(i) Intégrer à la `009b` avant sa livraison** : la condition d'ordre y est encore la version à horodatages, jamais validée ; aucune renumérotation ; aucune migration livrée modifiée (001-009 intactes). Mélange toutefois un sujet de plus dans une migration déjà large.
-- **(ii) Nouvelle corrective `009c`** (rang 15) : isole le sujet ; **décale 010 au rang 16** (et `010a`/`011` à 17/…), donc renumérote une seconde fois les documents de travail. À éviter sans besoin.
+### 3.5 Trigger d'acompte (remplace la règle à horodatages du patch `h`)
 
-Dans les deux cas : **pas de migration 010**, aucune migration de 001 à 009 modifiée.
+Dans `tr_22_factures_acompte` (nom existant conservé) :
 
-### 5.2 Base V6 existante dotée de situations (anciennes migrations)
+```sql
+SELECT RAISE(ABORT, 'INV-58: aucun acompte apres une situation sur ce devis')
+ WHERE EXISTS (SELECT 1 FROM situation_devis c WHERE c.devis_id = NEW.devis_id);
+```
 
-Les factures, lignes et situations restent **intactes** (immuables). Pour les situations déjà enregistrées, la relation peut être reconstituée **seulement si elle est prouvable** :
+- Refuse l'acompte sur un devis **déjà couvert** par au moins une situation émise.
+- **Indépendant** des avoirs, du montant, du pourcentage, des horodatages : plus de cas d'égalité d'horodatage (le patch `h` devait décider « ex æquo = refus »).
+- N'affecte pas les acomptes émis **avant** la situation, ni un devis rattaché **après** (sonde : acompte sur B autorisé après S1 {A}).
+- Les autres contrôles du trigger (plafond d'acompte prévu, plafond contractuel, solde actif…) restent inchangés.
 
-| Situation existante | Preuve disponible | Traitement possible |
+### 3.6 Ajout ultérieur d'un devis
+
+Le rattachement (`bc_devis`) n'écrit pas dans la table de couverture ; il reste soumis à INV-187 / INV-188 inchangés. S1 reste {A} pour toujours (sonde : après rattachement de B, S1 couvre toujours uniquement A). La prochaine situation, par l'`INSERT … SELECT`, couvre {A, B} (sonde : S2 {A, B}).
+
+### 3.7 Immutabilité et limites de ce que SQLite garantit
+
+Effets de l'immutabilité (factures, `bc_devis`, couverture) :
+
+- une couverture **erronée mais valide** (devis réellement rattaché) est **permanente** : elle bloquerait à vie l'acompte du devis concerné. Seule une migration corrective, avec décision humaine, pourrait y remédier. Le risque est réduit par la conception « une instruction, aucun paramètre » (§3.3) et par les tests ;
+- une couverture **omise** n'est pas réparable par `UPDATE`, mais peut encore l'être par un `INSERT` tardif (voir ci-dessous).
+
+**SQLite ne peut pas** (limite comparable à celle déjà assumée par 006 pour les lignes) :
+
+1. exiger à l'`COMMIT` qu'une situation ait au moins une ligne de couverture (sonde : une situation sans couverture est acceptée) ;
+2. garantir que la couverture est **complète** (tous les devis rattachés) ;
+3. distinguer l'`INSERT` de l'émission d'un `INSERT` tardif sans horodatage (sonde : une couverture ajoutée après coup sur une situation existante est acceptée). Je ne propose pas d'horodatage pour le bloquer.
+
+**Détection (contrôles de diagnostic, jamais bloquants)** — identifiants à attribuer par la validation :
+
+| Contrôle | Principe | Utilise des horodatages ? |
 |---|---|---|
-| a des lignes d'avancement sur les lignes de BC du devis D | lignes → ligne de BC → ligne de devis → D | rétro-remplissage de (S, D) : **prouvé**, sans horodatage |
-| n'a **aucune ligne**, ou des lignes sur une partie seulement des devis rattachés | aucune | **non reconstituable de façon fiable** : options ci-dessous, aucune choisie |
+| D1 | situation sans aucune couverture | non |
+| D2 | pour deux situations d'un même BC (`situation_numero` croissant), la couverture de la plus récente contient celle de l'ancienne (les rattachements ne font que croître) | non |
+| D3 *(optionnel, à décider)* | devis rattaché avant l'émission d'une situation mais absent de sa couverture | **oui** (`bc_devis.created_at` ≤ `factures.created_at`) |
 
-Options pour le non-reconstituable (décision métier, M4) :
-1. ne rien écrire (la situation ne couvre aucun devis : acompte permis partout, risque d'acompte après situation sur du **déjà** existant) ;
-2. écrire (S, D) pour tous les devis aujourd'hui rattachés (prudent, mais **non prouvé** : peut bloquer à tort un devis ajouté après S) ;
-3. écrire (S, D) selon l'ordre des `created_at` (seule trace chronologique, mais c'est exactement la déduction par horodatage que la règle 6 interdit) ;
-4. ne rien écrire et **lister** ces situations par un diagnostic pour arbitrage humain, puis corriger par une donnée explicite.
+D1 et D2 sont sans horodatage. D3 est le seul à voir l'omission partielle sur la **dernière** situation (invisible de D1 et D2). Justification de son utilité : détecter une panne de service. Justification de sa séparation : en cas d'égalité d'horodatage, il ne peut que signaler « à examiner » ; il **ne décide jamais** d'un refus. Son inclusion est une décision humaine (§7, H4). `bc_devis.rang` n'est pas utilisable comme garde : 005b le définit comme ordre d'association « ni contigu ni imposé ».
 
-On ne sait pas s'il existe des bases V6 réelles contenant des situations : le dépôt ne contient aucune base, et les seules situations connues sont celles fabriquées par les tests.
+### 3.8 Alternatives (rappel)
+
+- **A** — lire la couverture dans les lignes d'avancement : **rejetée comme source de vérité** (statut « historique » des lignes d'avancement, §4 ; une situation sans ligne n'a aucune couverture déductible — sonde). Peut servir de **preuve** lors d'une décision humaine sur une base peuplée (§5).
+- **C** — jalon ordinal sur `bc_devis` : garantie SQL plus forte mais modifie une table livrée et ne vaut que pour des situations strictement globales. Écartée : B suffit, sans toucher aux tables livrées.
 
 ---
 
-## 6. Plan de tests et risques de régression
+## 4. Contradiction documents ↔ migration 006 (M3)
 
-### 6.1 Tests proposés (non écrits, non exécutés)
+### 4.1 Hiérarchie applicable
+
+Conventions §2 : CDC (silencieux sur la composition des lignes de situation) > modèle SQLite V3.12 > `invariants.md` > modèle métier > errata. **Les trois niveaux qui parlent (modèle SQLite l.390, INV-62 l.104, modèle métier l.336) disent la même chose : 1 ligne `synthese`.** La migration 006 est un code d'implémentation placé sous ces documents. La phrase « une convention de code ne peut pas contredire ces documents » vise les conventions ; je l'étends **par analogie** à une migration (la migration implémente le modèle, et §5 impose de mettre le modèle à jour avant elle) ; c'est une extension, pas un texte explicite. L'en-tête de 006 invoque des « décisions de l'étape d'implémentation » (situations ligne par ligne) qui **ne figurent dans aucun document de la hiérarchie**.
+
+### 4.2 La contradiction, en clair
+
+| | Documents (docs/ et MAJ) | SQL livré (006) |
+|---|---|---|
+| Lignes d'une situation | **1 ligne `synthese`** | **`avancement`** (une par ligne de BC) **+ `deduction`**, `synthese` **refusée** |
+| Où vit le cumul % | sur la **facture** (colonnes, PT-11 À CONCEVOIR) | sur **chaque ligne** d'avancement ; **aucune** colonne cumul / mode / valeur saisie sur `factures` |
+
+Décision de travail du 17/10 (D) : les lignes `avancement` désignent des situations **historiques** ; la règle ne décide pas de la composition des **nouvelles** situations, qui reste conforme à INV-62 / INV-190. Elle ne figure que dans le patch `h` et les documents de travail, pas dans `docs/`.
+
+**Les sources confirment-elles l'orientation M3 ?** Oui sur le fond : les trois niveaux hiérarchiques, les documents MAJ et la décision D vont dans le même sens. **Non sur le traitement** : aucune source ne dit ce que devient `avancement` à l'insertion après correction, ni comment représenter le cumul %. Voir 4.5.
+
+### 4.3 Séparation des deux sujets
+
+- **Couverture situation ↔ devis** (§3) : relation entre une facture-situation et des devis. N'a besoin ni des lignes, ni de leur type : elle fonctionne que la situation porte `avancement` (historique), `synthese` (nouveau) ou rien (sonde : une situation sans ligne est acceptée par 006).
+- **Composition des lignes** : contenu d'une facture. N'intervient pas dans la règle d'acompte.
+
+Les deux se corrigent **séparément**. Les triggers concernés sont différents : 009b réécrit des triggers de `factures` (`tr_22_factures_*`, `tr_23_factures_avoir`) ; M3 toucherait `tr_22_facture_lignes_insert` (006, l.449).
+
+### 4.4 Ce qu'une correction M3 devrait produire (orientation, non décidée)
+
+Pour qu'une **nouvelle** situation conforme à INV-62 soit acceptée : `situation → synthese` (une ligne, montant = montant de la situation) et la représentation du cumul %, du mode de saisie et de la valeur saisie **sur la facture** (documents MAJ l.497 : `avancement_cumule_pct` sur `factures`).
+
+Deux niveaux possibles, **sans que je tranche** :
+
+- **M3-α, minimal** : autoriser aussi `synthese` pour une situation dans `tr_22_facture_lignes_insert` (DROP / CREATE TRIGGER). Le SQL **accepte** alors la composition documentée. Limite : il **n'impose** pas INV-62, car une nouvelle situation à lignes `avancement` reste acceptée (rien ne distingue « historique » de « nouveau ») ; la continuité du cumul % par ligne, aujourd'hui portée par le contrôle INV-190 sur `avancement_precedent_pct`, n'a plus de support pour les situations à ligne unique.
+- **M3-β, complet** : colonnes de situation sur `factures` (mode, valeur saisie, cumul %), contrôle de continuité du cumul % sur la facture, refus de `avancement` pour les nouvelles situations. Exige de **concevoir PT-11** (« ce que désigne la valeur *montant* : cumulé ou de la période »), aujourd'hui À CONCEVOIR, et probablement une reconstruction de `factures` (tables immuables, protocole `foreign_keys = OFF`).
+
+### 4.5 Migrations et tests concernés (aucun créé ni modifié)
+
+| Élément | Concerné par | Remarque |
+|---|---|---|
+| `006_facturation.sql` (immuable) | matrice de `tr_22_facture_lignes_insert`, contrôle INV-190 sur `avancement_precedent_pct`, colonnes de `facture_lignes`, index unique d'avancement ; absence des colonnes de situation | ne se modifie pas ; correction = migration corrective ultérieure |
+| Migration corrective M3 | rang **15** (« 010 » dans la numérotation du projet) ou après | **hors périmètre** : ni 010 ni suivantes ; exige validation, PT-11 et mise à jour préalable du modèle |
+| `test_006_facturation.py` (309 tests) | `test_INV_62_une_situation_ne_porte_que_des_lignes_d_avancement_et_de_deduction` (l.2605) à inverser ; familles `T48_D`, `T48_E` (oracle CK-17), `T48_I`, `T48_M`, `T48_N`, `T48_Q`, `T48_R`, `INV_190_*` ; 143 occurrences de « avancement » | les tests livrés ne se modifient pas ; écarts à traiter par rejeu différentiel comme pour 009a / 009b |
+| Aide `emettre_situation` (test_006 l.379) | construit des lignes `avancement` ; réutilisée par les tests 007 et 008 | un changement d'aide se propage à ces fichiers |
+| CK-16 / CK-17 (définis dans test_006) | supposent des lignes `avancement` | à redéfinir ou limiter aux situations historiques |
+| Tests 009b du patch `h` (ordre des acomptes) | construisent des situations brutes sans ligne ni couverture | à adapter à B (§6), indépendamment de M3 |
+
+### 4.6 Dépendances empêchant une correction totalement séparée
+
+1. **PT-11 (À CONCEVOIR)** : sans lui, M3-β ne peut pas être spécifié ; M3-α reste possible mais incomplet.
+2. **Marqueur « historique »** : le SQL ne distingue pas aujourd'hui une situation historique d'une nouvelle. `factures.origine IN ('v6','import')` existe, mais ne couvre que les imports, pas d'éventuelles situations créées sous 006. Décision humaine (H2).
+3. **Ordre imposé par les conventions** : modèle SQLite mis à jour **avant** toute migration.
+4. **006 immuable** : la correction passe obligatoirement par une migration corrective placée après la chaîne.
+
+**Le volet couverture (§3) ne dépend d'aucun de ces points** : il peut être validé et implémenté sans M3.
+
+---
+
+## 5. Stratégie de migration et données historiques (M4)
+
+### 5.1 Placement
+
+Faits : 009b (patch `h`, 466 lignes, rang 14) ne crée aucune table, remplace des triggers (`DROP TRIGGER` / `CREATE TRIGGER`), et utilise déjà des gardes d'exécution en tables TEMP. Elle n'est **pas livrée**. 001 à 009 ne sont pas touchées.
+
+**Recommandation : intégrer la couverture dans 009b avant sa livraison** : table + index + trois triggers de couverture + réécriture de la condition d'ordre de `tr_22_factures_acompte` (la condition à horodatages disparaît) + la garde du §5.2.
+
+Pas de 009c par défaut, parce que :
+- la règle d'acompte de 009b **dépend** de la table : la séparer reviendrait à créer dans 009b une règle à horodatages que la 009c remplacerait immédiatement, dans la même chaîne non livrée ;
+- rien dans le contenu de 009b n'impose la séparation (aucun objet partagé avec la couverture hors `tr_22_factures_acompte`).
+
+**Condition de bascule** : si 009b est livrée ou appliquée avant la validation de cette étude, la couverture ne peut plus y entrer ; elle irait dans la migration suivante (rang 15, numérotation « 010 »), à ne créer qu'après décision explicite, en remplaçant alors la règle à horodatages. Le coût d'une intégration dans 009b : retravailler les tests 009b d'ordre (une dizaine) et relancer la campagne de mutation sur 009b.
+
+Ordre de travail imposé : validation de l'étude → mise à jour du modèle SQLite (avec TR / INV attribués) → patch 009b révisé et tests → rejeu complet.
+
+### 5.2 Situations préexistantes (M4)
+
+**Faits établis** : le dépôt ne contient aucune base ; selon le propriétaire du produit, l'environnement local n'en contient pas d'autre ; l'import V2 sera précédé d'une application de conversion distincte. **Je n'ai vérifié aucune base réelle et je ne le prétends pas.**
+
+**Recommandation (minimale)** : la migration qui crée la couverture **exige une base sans situation préexistante** et s'arrête avec un message explicite si `factures` contient au moins une ligne de type `situation`. Garde en lecture seule, même modèle que les gardes de 009b (tables TEMP, aucune trace).
+
+Justification :
+
+| Solution | Verdict |
+|---|---|
+| **Garde bloquante (retenue)** | Conforme aux faits (aucune base connue) ; n'invente aucun lien ; coût quasi nul ; transforme un risque silencieux en arrêt explicite |
+| Détecter les situations « non reconstituables » et migrer les autres | Exige de définir « reconstituable » (probablement via les lignes `avancement`, dont le statut est précisément contesté en §4) : dispositif complexe sans besoin établi — exclu par la consigne |
+| Laisser les situations existantes sans couverture | Rouvre silencieusement le défaut (acompte accepté après situation sur le même devis) |
+| Rétro-remplir avec les devis actuellement rattachés | **Fabrique** des liens (un devis rattaché après l'émission serait réputé couvert) — interdit |
+
+**Risque résiduel si une base à situations apparaissait** : la garde empêche l'application, mais le problème de fond (couverture non reconstituable) **n'est pas résolu**. **Conduite à tenir** : ne pas appliquer la migration ; sauvegarder la base ; lister les situations concernées en lecture seule ; faire arbitrer par le propriétaire du produit, cas par cas, quelles preuves sont acceptables (historique de rattachement, lignes d'avancement le cas échéant). Aucun mécanisme n'est conçu ici pour ce cas hypothétique. Les conventions disent qu'une migration « n'insère aucune ligne » (§5) ; 005b a toutefois rétro-rempli `bc_devis`, donc un rétro-remplissage ne serait pas interdit par précédent, mais il faudrait le justifier, et ici aucune règle sûre n'existe.
+
+**Imports** : aucun mécanisme spécifique n'est conçu. Simple constat : la règle ne dépend pas de `origine` ; tout chemin qui crée une situation (service, conversion, import) doit enregistrer sa couverture.
+
+---
+
+## 6. Tests à prévoir
+
+**Aucun de ces tests n'est écrit ni exécuté.** Seule la sonde ci-dessous a été exécutée (§6.2). Les tests 1 à 12 couvrent la demande ; 13 à 15 sont ajoutés.
+
+### 6.1 Tests proposés (statut : proposés, non écrits, non exécutés)
 
 | # | Test | Attendu |
 |---|---|---|
-| 1 | situation sur A puis acompte sur B (même BC) | autorisé si plafond et autres règles respectés |
-| 2 | situation sur A puis acompte sur A | refusé `INV-58` |
-| 3 | ajout de B après la situation | `situation_devis` et lignes de S1 strictement inchangées |
-| 4 | S1 {A}, S2 {A, B} puis S3 : périmètres différents | acompte refusé sur A ; sur B refusé seulement après S2 |
-| 5 | rattachements incohérents : devis d'un autre BC, devis non rattaché, facture qui n'est pas une situation | refus par trigger |
-| 6 | atomicité : échec en cours d'émission (SAVEPOINT puis ROLLBACK) | ni facture, ni lignes, ni `situation_devis` |
-| 7 | immuabilité : UPDATE, DELETE, `INSERT OR REPLACE` sur `situation_devis` | refusés |
-| 8 | situation créditée par avoir total | la couverture demeure (interprétation M2) |
-| 9 | situation à 0 % de progression | couvre le devis (interprétation M2) |
-| 10 | régression : plafond d'acompte indépendant par devis, un acompte actif par devis, rattachement INV-189, aucun acompte après un solde, nette ≤ contractuel | inchangés |
-| 11 | mutations : retirer la condition ; condition au niveau du BC ; condition sur un autre devis ; PK absente | toutes détectées |
-| 12 | rejeu de l'existant sur la chaîne complète | aucun écart nouveau |
-| 13 | rétro-remplissage (si adopté) : situation avec lignes ⇒ rangées déduites ; sans lignes ⇒ aucune rangée inventée | conforme à l'option arbitrée |
+| 1 | S1 sur A, puis acompte sur A | refusé (INV-58) |
+| 2 | S1 sur A, rattachement de B, acompte sur B | autorisé si plafonds et autres règles respectés |
+| 3 | Rattachement A et B, puis nouvelle situation | couvre A et B ; une situation antérieure garde sa couverture |
+| 4 | Situation entièrement créditée par avoir(s) | couverture inchangée ; acompte sur le devis toujours refusé |
+| 5a | Situation de montant > 0 couvrant un devis dont l'avancement propre est 0 % | couverture de ce devis présente ; acompte refusé |
+| 5b | *(conditionnel à H1)* situation de montant 0.00 | **refusée aujourd'hui** (CHECK + M > 0) ; test à n'écrire que si H1 change la règle |
+| 6 | Couverture vers un devis d'un autre BC | refusée |
+| 7 | Couverture vers une facture non situation (acompte, solde, avoir) | refusée |
+| 8 | UPDATE, DELETE, `INSERT OR REPLACE` (`recursive_triggers=ON`) sur la couverture ; DELETE de la facture ou du devis couvert | refusés |
+| 9 | Échec injecté entre l'`INSERT` facture et l'`INSERT … SELECT` de couverture | aucune situation, aucune ligne, aucune couverture après `ROLLBACK` ; trou de numérotation toléré |
+| 10 | Plafond d'acompte prévu, plafond contractuel du devis et du BC, acompte après solde, une seule garantie, etc. | aucune régression (rejeu des tests 006, 007, 008, 009, 009a, 009b) |
+| 11 | *(conditionnel à M3)* cohérence avec INV-62 : une nouvelle situation à 1 ligne `synthese` est acceptée ; `avancement` traité selon la décision H2 | à définir après décision |
+| 12 | Rejeu de la chaîne complète 001 → 009a → 009b depuis une base vide et depuis une base au rang 12 ; vérification que 001 à 009 sont inchangées (empreintes comparées à GitHub) ; campagne de mutation | tout vert, `user_version` attendu |
+| 13 | Garde M4 : base à une situation | migration refusée, base inchangée ; base sans situation : acceptée |
+| 14 | Indépendance vis-à-vis des horodatages : mêmes `created_at` au milliseconde près, ou ordre inversé | même résultat que les tests 1 et 2 |
+| 15 | Diagnostics D1 et D2 (et D3 si retenu) | signalent une situation sans couverture, une couverture non monotone ; D3 ne bloque jamais |
 
-### 6.2 Réellement exécuté dans cette étude
+Adaptation des tests 009b du patch `h` : la dizaine de tests d'ordre qui fabriquent des situations brutes devront inscrire la couverture ; le test « ex æquo d'horodatage = refus » disparaît.
 
-Uniquement des **sondes de lecture** (hors dépôt, jetables) sur la chaîne 001-009 **telle que sur GitHub** :
-1. S1 émise sur A : les lignes d'avancement désignent {A} ; après rattachement de B, S1 désigne toujours {A}, ses lignes inchangées, CK-16 vide.
-2. SQL de GitHub : acompte accepté sur A **et** sur B après S1 (aucune règle d'ordre dans 006).
-3. Une situation sans ligne est acceptée par le SQL, ne désigne aucun devis, et CK-16 signale 3 lignes manquantes.
-4. `facture_lignes` et `bc_devis` : UPDATE et DELETE refusés (INV-53, INV-184).
+### 6.2 Réellement exécuté dans cette étude (hors dépôt, jetable)
 
-Ces sondes **ne testent pas la solution proposée**. La suite complète exécutée plus tôt dans la session (2 042 tests verts) porte sur la **variante à horodatages** de la révision G, pas sur celle-ci.
+Sondes de lecture / mémoire sur la chaîne GitHub 001-009, **avec le DDL provisoire de §3 chargé en mémoire seulement** (aucun fichier du dépôt écrit) :
 
-**Limites de l'environnement** : pas de runner Rust (les tests l'émulent), pas de service applicatif dans le dépôt, SQLite de test ≠ SQLite embarqué, aucune base locale réelle.
+- chaîne GitHub : S1 sans couverture déductible hors lignes ; après rattachement de B, S1 inchangée ; **acompte sur A accepté après S1** (règle absente de GitHub) ; CK-16 signale 3 lignes manquantes sur une situation sans ligne ; UPDATE / DELETE sur `facture_lignes` et `bc_devis` refusés (INV-53, INV-184) ;
+- DDL provisoire : lien S1 → A accepté ; lien vers un acompte refusé ; lien vers un devis d'un autre BC refusé ; UPDATE, DELETE, `INSERT OR REPLACE` refusés ; doublon refusé ; DELETE de la facture / du devis couvert refusé ; S2 couvre {A, B} ; `ROLLBACK` : ni S2 ni couverture ; trigger d'acompte d'essai : acompte sur A refusé, couverture de S1 intacte ; **limites constatées** : une situation sans couverture est acceptée, et une couverture peut être ajoutée après coup.
+
+Ces sondes **ne valident pas** la solution : elles confirment les comportements SQLite décrits, rien de plus.
 
 ### 6.3 Risques de régression
 
-- **~10 tests de `test_009b`** (les 8 nouveaux cas d'ordre par devis, plus `aucun_acompte_apres_une_situation` et `une_situation_deja_creditee…`) fabriquent des situations brutes sans lignes ni couverture : ils devraient déclarer la couverture. L'assistant `rattacher_a` (lien daté) et le test d'ex æquo disparaîtraient.
-- Les fabriques de tests qui émettent des situations (`emettre_situation`) **ne créeraient pas** de couverture tant qu'on ne les adapte pas : les tests d'ordre pourraient alors passer à tort. À traiter en même temps.
-- Documents de travail : INV-58, TR-22, modèle §3.2 (réécrire la condition sans horodatage), INV-190 (couverture), signalement de la contradiction INV-62.
-- Aucun impact sur 001-009, ni sur la numérotation, ni sur les données existantes.
+- Réécriture de `tr_22_factures_acompte` dans 009b : relancer les 106 tests 009b et la mutation.
+- La table de couverture est neuve : aucun impact sur 001 à 009.
+- Les triggers à `RAISE(ABORT)` suivent le style existant ; ne pas utiliser `INSERT OR IGNORE` dans le service (masquerait un doublon).
 
 ---
 
-## 7. Points restant à arbitrer
+## 7. Risques résiduels et points nécessitant une décision humaine
 
-### Décisions métier
+**Risques résiduels**
+- Omission ou ajout tardif de couverture non empêchés par SQLite (§3.7) ; atténués par l'`INSERT … SELECT`, les tests et D1-D3.
+- Couverture erronée mais valide : permanente.
+- Désalignement des numéros officiels : TR / INV / CK à attribuer à la validation, rien n'est numéroté ici.
+- Corpus officiel en retard sur les documents de travail (INV-190, PT-11, D-48 absents de `docs/`).
 
-| # | Question | Pourquoi elle compte |
-|---|---|---|
-| **M1** | Une situation est-elle **toujours globale** (tous les devis rattachés à l'émission) ou peut-elle être **limitée à certains devis** ? | Détermine B vs C : seule B sait exprimer une situation partielle. Les sources validées disent « globale » ; la formulation de la demande n'est pas explicite |
-| **M2** | Une situation **entièrement créditée** (avoir total) ou **à 0 %** de progression « couvre-t-elle » encore le devis ? | Interprétation retenue : oui (« émise » = existante). Non confirmée pour le 0 % |
-| **M3** | **Contradiction INV-62 / docs ↔ 006** : une nouvelle situation compte-t-elle des lignes d'avancement ou une seule ligne de synthèse ? | Décide si les lignes peuvent servir de preuve (rétro-remplissage) et si 006 est conforme sur ce point |
-| **M4** | Traitement des situations existantes **non reconstituables** (§5.2, options 1 à 4) | Aucune option n'est choisie par l'étude |
+**Points à arbitrer**
 
-### Choix techniques
-
-| # | Choix |
+| # | Question |
 |---|---|
-| T1 | Nom de la table (provisoire) |
-| T2 | `created_at` sur la table de liaison ou non (jamais lu par une règle) |
-| T3 | Intégrer à `009b` (i) ou ajouter `009c` (ii) |
-| T4 | Diagnostic d'exhaustivité (situation sans couverture pour un devis rattaché avant elle) : sa définition de « rattaché avant elle » exigerait les horodatages **en diagnostic seulement** ; acceptable, ou renoncer à ce diagnostic |
-| T5 | Exiger ou non, côté SQL, que `situation_numero` soit strictement croissant (utile seulement pour C) |
+| H1 | « Situation à 0 % » = devis couvert à 0 % d'avancement propre (possible) ou situation de montant 0.00 (impossible aujourd'hui) ? Le second cas change une règle comptable / de calcul. |
+| H2 | M3 : (a) conception de PT-11 ; (b) M3-α puis M3-β, ou directement β ; (c) après correction, le SQL accepte-t-il encore `avancement` à l'insertion, et avec quel marqueur « historique » ? |
+| H3 | Valider le principe « une situation couvre tous les devis rattachés à l'émission » et le formaliser dans les documents (INV-58 étendu ou nouvel INV) ; promouvoir en `docs/` ce qui est aujourd'hui seulement dans les MAJ. |
+| H4 | Inclure ou non le diagnostic D3 (horodatage, non bloquant). |
+| H5 | Forme finale de la table (clé composite ou `id`), colonne `created_at` éventuelle, nom et numéros. |
+| H6 | Écart CDC §17 (« situation émise, même annulée, interdit l'annulation directe ») ↔ règle du 2026-10-17 14:34 (annulation permise si tout est ramené à zéro). |
+| H7 | Confirmer que 009a et 009b n'ont été ni livrées ni appliquées ailleurs (condition du placement dans 009b). |
+| H8 | Garde M4 bloquante : validée, ou autre conduite préférée si une base à situations existe. |
 
 ---
 
-## 8. Verdict
+## 8. Recommandation finale
 
-- **Cohérence avec les sources** : la solution B est cohérente avec les règles validées du §2 de la demande, additive (aucune table livrée modifiée), indépendante de la composition des lignes de situation et sans horodatage dans la règle bloquante. Elle exprime la cardinalité N–N sans la présupposer.
-- **Prête à être soumise à validation** : **oui sur le plan technique**, sous réserve des arbitrages **M1 à M4**. Informations manquantes : existence éventuelle de bases V6 avec situations réelles ; confirmation du périmètre global ou partiel d'une situation.
-- **Deux points à signaler dès maintenant** : (1) la règle d'ordre n'existe pas dans la chaîne de GitHub, seulement dans le patch h ; (2) la contradiction INV-62 / 006 (§1.4) existe indépendamment de cette étude et mérite sa propre décision.
+**Volet couverture (M1, M2, M4, placement dans 009b)** : le cadrage est **prêt à être soumis à validation**. Il repose sur une table de liaison, un `INSERT … SELECT` unique dans la transaction d'émission, un trigger d'acompte sans horodatage, une garde de migration, et un plan de tests de 15 cas. Conditions : trancher H3, H5, H7, H8, et H1 pour le test 5.
 
-## Recommandation
+**Volet M3 (composition des lignes)** : le **diagnostic** est prêt (contradiction établie, hiérarchie confirmée, tests et migrations concernés listés). **La correction n'est pas prête** : elle dépend de PT-11 et de H2. Elle est séparable du volet couverture.
 
-Adopter **B** (table de liaison minimale `situation_devis`, immuable, écrite par le service à l'émission, lue par `tr_22_factures_acompte`), après réponses à **M1 à M4**, en l'intégrant à la `009b` tant qu'elle n'est pas livrée. Si le métier confirme que la situation est **toujours globale** et accepte de toucher `bc_devis`, **C** offre une garantie SQL plus forte au prix d'une table livrée modifiée. Ne pas retenir A comme source de vérité. **Aucune implémentation avant validation.**
+**Aucune implémentation n'est autorisée par cette étude.** Séquence : validation humaine → mise à jour du modèle SQLite → 009b révisée et tests → rejeu complet. Rien n'est validé tant que ce n'est pas implémenté et testé.
