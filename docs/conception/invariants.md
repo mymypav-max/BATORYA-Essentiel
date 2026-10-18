@@ -1,11 +1,11 @@
 # BATORYA Essentiel V6 — Registre des invariants
 
-Version du registre : 6 — 2026-10-02, seconde passe (rattaché au modèle SQLite V3.12, en relecture, non validé ; V2 : migration V2 externalisée, V3 : high-water, V4 : compte local et initialisation de `machine.db`, V5 : dépenses tardives sur BC, V6 : tranche Bons de commande, voir le journal en bas)
+Version du registre : 7 — 2026-10-18 (INV-204 et INV-205 ajoutés : couverture des situations ; rattaché au modèle SQLite V3.14, en relecture, non validé) ; version 6 — 2026-10-02, seconde passe (rattaché au modèle SQLite V3.12, en relecture, non validé ; V2 : migration V2 externalisée, V3 : high-water, V4 : compte local et initialisation de `machine.db`, V5 : dépenses tardives sur BC, V6 : tranche Bons de commande, voir le journal en bas)
 Statut : **pièce obligatoire du modèle de données**
 
 ## Mode d'emploi
 
-- Un invariant (**INV-xx**) est une règle métier ou technique déjà validée. Son numéro est **stable** : il n'est jamais réutilisé ni renuméroté. Les numéros absents de la séquence (trous entre sections) sont **réservés** : ils ne sont jamais attribués rétroactivement, une nouvelle règle reçoit le numéro suivant le plus élevé (INV-179, …).
+- Un invariant (**INV-xx**) est une règle métier ou technique déjà validée. Son numéro est **stable** : il n'est jamais réutilisé ni renuméroté. Les numéros absents de la séquence (trous entre sections) sont **réservés** : ils ne sont jamais attribués rétroactivement, une nouvelle règle reçoit un numéro supérieur à tous les numéros déjà employés, y compris dans les documents de travail non validés (INV-179 à INV-203 y sont employés ; INV-204 et INV-205 sont attribués à la couverture des situations ; le suivant libre est INV-206).
 - Chaque INV a une **garde** et **un test du même nom** (`test_INV_xx`) : SQL (CHECK, UNIQUE, FK, index partiel), TRG (trigger `TR-xx`), SVC (service applicatif), CK (requête de contrôle `CK-xx`).
 - Avant de valider une nouvelle version du modèle, on la compare à ce registre. **Aucun INV ne disparaît ou ne change de sens sans ligne dans le journal des retraits/modifications** (en bas), avec date, motif et décision.
 - Toute règle nouvelle : ajouter une ligne (nouveau numéro), sa garde, son test.
@@ -102,6 +102,8 @@ Statut : **pièce obligatoire du modèle de données**
 | INV-60 | Le statut d'une facture n'est jamais persisté ; `en_retard` est un indicateur transversal dérivé ; facture à `reste_du=0` = `reglee` | SVC (pas de colonne) | C-02 |
 | INV-61 | Une facture ayant un encaissement actif ou un avoir actif ne s'annule pas (correction par avoir) ; acompte/situation non annulable si situation ou solde actif postérieur ; `cancelled_at` irréversible | TRG (TR-24) | C-19 |
 | INV-62 | Composition des lignes : acompte = 1 ligne `synthese` ; situation = 1 ligne `synthese` du montant de la situation ; solde = lignes BC + lignes `deduction` ; négatifs uniquement `deduction` | SQL, SVC | C-08 |
+| INV-204 | **Couverture d'une situation** : une situation couvre tous les devis rattachés à son BC à l'instant de son émission ; la couverture est enregistrée (`situation_devis`, clé primaire `(facture_id, devis_id)`) dans la transaction d'émission, ne comprend que des devis du BC de la facture, appartient à une facture de type `situation` et est immuable ; un devis rattaché ensuite n'est couvert que par les situations émises après ; l'exhaustivité est garantie par le service et vérifiée par les tests, non par SQLite | SQL (PK, FK `RESTRICT`), TRG (TR-104, TR-105), SVC (émission atomique), CK-21, CK-22 | C-43, T-53 |
+| INV-205 | **Aucun acompte sur un devis couvert** par une situation, quels que soient les avoirs, le montant net et l'avancement de cette situation ; l'acompte émis avant la situation, ou sur un devis rattaché après, reste possible | TRG (TR-22) | C-43, T-53 |
 
 ## G. Règlements, avoirs, remboursements
 
@@ -251,12 +253,13 @@ Flux : sauvegarde JSON V2 → **convertisseur externe** → `import-v6.json` →
 | 2026-10-01 | INV-133, INV-134, INV-141, INV-169 | Précisés : CK-13 ajouté aux contrôles de fin d'import et de restauration (INV-133, INV-141) ; aucune garantie de ligne importée (INV-134) ; import d'un BC annulé par les étapes normales (INV-169) | Cohérence devis ↔ BC contrôlée après import et restauration ; contradiction de la V3.11 sur les garanties de ligne corrigée | D-16, D-36 |
 | 2026-10-02 | INV-07, INV-141, INV-175, INV-177 | Précisés (seconde passe V3.12) : convention REPLACE vérifiée par les tests 001–003 renforcés (INV-07) ; échec de la restauration si un contrôle obligatoire ou CK-13 échoue, retour par la sauvegarde de sécurité (INV-141) ; TR-17 sans comparaison complète avec le devis, le service construit la cohérence et CK-13 la détecte (INV-175) ; borne d'année 2001–2099 limitée aux dates de numérotation annuelle (INV-177) | La borne ne devait pas devenir une contrainte générale sur les dates ; la logique métier reste au service ; la restauration doit avoir un comportement défini en cas d'incohérence | D-36, D-38, D-39 |
 | 2026-10-02 | INV-22 | Précisé (seconde passe V3.12, application de D-39) : `tr_96_numerotation_sequences_no_delete` ajouté par la migration 004 ; avec `tr_95` il couvre UPDATE et DELETE, direct ou implicite par REPLACE | Un REPLACE ne déclenche pas les triggers `UPDATE` (vérifié) ; `001_initial.sql` est immuable ; la protection ne doit pas reposer sur la seule convention | D-39 (précision technique, sans nouvelle décision) |
+| 2026-10-18 | INV-204, INV-205 | **Ajoutés** (V3.14) | Couverture des situations : une situation couvre tous les devis rattachés à son BC à l'émission (table `situation_devis`) ; aucun acompte sur un devis couvert. Aucun INV existant n'est modifié ni retiré (INV-52, INV-57, INV-58, INV-62 inchangés) ; numéros = planchers de non-collision (INV-179 à INV-203 restent réservés aux documents de travail non validés) | D-62 (cadrage validé par le propriétaire le 2026-10-18) |
 
 ## Contrôle de non-régression (à exécuter à chaque nouvelle version du modèle)
 
 1. Extraire tous les `INV-xx` cités dans le modèle ; chacun doit exister ici.
 2. Vérifier que chaque INV de ce registre est encore cité dans le modèle (sinon : ligne dans le journal).
 3. Vérifier que chaque INV a un test nommé `test_INV_xx` dans la suite de tests SQL/domaine.
-4. Rejouer les cas chiffrés C-01 à C-29.
+4. Rejouer les cas chiffrés C-01 à C-29 et C-43.
 5. Vérifier qu'aucun INV de la section L ne décrit un « lecteur V2 » dans V6 : toute règle V2 vit dans le document du convertisseur.
 6. Vérifier qu'aucun motif `GLOB` n'utilise de quantificateur `{n}` (non supporté par SQLite) et qu'aucun contrôle de date réelle n'est écrit `date(x) = x` (utiliser `GLOB` + `date(x) IS x`).
