@@ -1,15 +1,13 @@
 # 01 — Cadrage de Léon V6
 
-Ce dossier définira pourquoi Léon existe dans BATORYA Essentiel V6, pour quels utilisateurs et dans quelles limites.
+Ce dossier contient le cadrage fonctionnel de Léon pour **BATORYA Essentiel V6**.
 
-## À documenter
+## Source de référence
 
-- Besoins utilisateurs et situations d'usage prioritaires.
-- Objectifs, exclusions et limites de responsabilité.
-- Valeur ajoutée par rapport aux fonctions classiques de l'application.
-- Exigences de fonctionnement local et contraintes matérielles à confirmer.
-- Risques, critères de réussite et conditions de validation.
+- [Cadrage fonctionnel de Léon V1](./CADRAGE_FONCTIONNEL_LEON_V1.md) — document unique de référence pour la mission, les limites fonctionnelles, la fiabilité, le contrat de contexte, la continuité conversationnelle, la sobriété des ressources, les décisions validées et les points restant à concevoir.
 
-## Statut
+Le contrat de contexte a été intégré à ce document afin d’éviter deux sources documentaires susceptibles de diverger. Les décisions validées et les points encore ouverts y sont distingués explicitement.
 
-Cadrage à élaborer. Aucun besoin détaillé n'est approuvé par ce fichier.
+## Règle de lecture
+
+Ce cadrage concerne exclusivement Léon dans BATORYA Essentiel V6. Il ne fige pas les choix techniques encore à étudier ni le catalogue d’intents, qui évoluera avec le développement des fonctionnalités de BATORYA.
