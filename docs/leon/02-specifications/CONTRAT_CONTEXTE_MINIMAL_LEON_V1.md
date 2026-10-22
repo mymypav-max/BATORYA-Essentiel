@@ -98,25 +98,21 @@ Règles :
 
 Les identifiants internes ne doivent pas être exposés dans la réponse utilisateur sauf nécessité fonctionnelle.
 
-## 6. Actualisation du contexte courant
+## 6. Transmission de l'écran au moment de l'activation
 
-L'application doit actualiser son contexte de navigation lorsqu'un changement pertinent survient, par exemple :
-- changement de module ou d'écran ;
-- changement d'onglet ou d'étape ;
-- sélection ou désélection d'un objet ;
-- remplacement de l'objet sélectionné.
+Le besoin fonctionnel est volontairement simple : lorsque l'utilisateur active Léon, BATORYA transmet l'écran actuellement affiché. Il n'est pas nécessaire que Léon reçoive en permanence les changements d'écran ni qu'il analyse la navigation en arrière-plan.
 
-Cette actualisation est une opération d'état de l'interface, pas un appel au modèle. Elle ne doit pas provoquer de recherche métier, d'inférence ni de traitement IA en arrière-plan.
+Léon interprète d'abord la formulation de l'utilisateur. Il utilise l'écran comme contexte complémentaire si celui-ci aide à lever une ambiguïté, comprendre un « ici », « cette page », « pourquoi je ne peux pas valider ? » ou identifier l'opération évoquée. Si la question est générale et ne dépend pas de l'écran — par exemple « Comment fonctionne un avoir ? » — l'écran peut être ignoré.
 
-Règles de cohérence proposées :
-1. le contexte reflète la dernière situation connue de l'interface ;
-2. le contexte est fourni à Léon lors d'une sollicitation, ou lors d'une reprise explicitement demandée ;
-3. le contexte de navigation courant et l'instantané associé à une demande en cours restent distinguables ;
-4. un changement d'écran ne supprime pas la mémoire conversationnelle ;
-5. le contexte doit signaler qu'un élément est inconnu ou indisponible plutôt que conserver silencieusement une ancienne valeur devenue trompeuse ;
-6. le contexte ne contient pas d'objet sélectionné si l'interface n'en a effectivement aucun.
+Règles proposées :
+1. l'écran est capturé et transmis au moment de l'activation de Léon ;
+2. l'écran ne remplace jamais la demande explicite de l'utilisateur et ne doit pas la contredire par simple présomption ;
+3. aucun traitement IA ni lecture métier n'est déclenché par un simple changement d'écran ;
+4. l'écran ne suffit pas à prouver l'état d'une donnée métier ni la cause d'un blocage ; une lecture autorisée reste nécessaire lorsque la réponse exige des faits vérifiés ;
+5. la navigation ne supprime pas la mémoire conversationnelle ;
+6. une demande qui fait référence à un objet ou à une opération non identifiables avec fiabilité peut nécessiter une clarification ciblée.
 
-La stratégie précise de mise à jour (événements UI, état centralisé ou autre mécanisme) sera choisie au moment de la conception de l'architecture applicative. Ce document ne prescrit pas de bibliothèque ni de structure de code.
+Le contrat n'impose pas à ce stade une représentation technique particulière de l'écran. L'identifiant ou le nom transmis devra simplement être assez fiable pour fournir un repère utile, sans créer une taxonomie détaillée de navigation prématurément.
 
 ## 7. Enrichissement par lectures autorisées
 
