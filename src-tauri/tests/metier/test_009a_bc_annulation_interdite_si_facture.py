@@ -14,6 +14,9 @@ Principes de ces tests :
   * la facturation réelle (lignes de `factures`) n'est jamais confondue avec les caches financiers du BC (montant_deja_facture_ht, avancement, date_100_facture) ;
   * un BC DÉJÀ annulé ne relève pas de 009a : il est fabriqué au rang 12 (annulation alors permise), puis la chaîne est portée au rang 13 ;
   * les tests de 006 et 005c décrivent leurs rangs (9 et 8) et ne sont pas modifiés ; ce fichier rejoue au rang 13 le point de départ de leurs scénarios d'annulation.
+REMPLACÉE : la règle du net nul décrite ici est celle du rang 13. À partir du rang 15, 009c (D-63, test_009c) la remplace : encaissement actif, situation et facture autre qu'un acompte
+interdisent l'annulation même si le net est nul ; seul un acompte intégralement neutralisé par un avoir correction_erreur l'autorise. Ces tests restent exacts pour 009a seule et ne sont pas
+réécrits (migration livrée immuable) ; le comportement de la chaîne complète est vérifié par test_009c.
 Les méthodes portent le nom de l'invariant (test_INV_44_…) ou test_009a_ suivi du groupe (A chaîne, B règle, C chemins d'écriture, D atomicité, E BC déjà annulé,
 F non-régression, G contournements, H constats et diagnostics, I garde de chaîne : le trigger survit aux migrations suivantes). Les décisions d'interprétation portent « INTERPRETATION » ; les comportements observés mais non
 spécifiés portent « CONSTAT » : ce ne sont pas des règles.
@@ -720,9 +723,15 @@ def problemes_de_recreation(sql):
     return ["bons_commande ou le trigger est supprimé sans recréer " + TRIGGER]
 
 
+# 009c (D-63) recrée ce trigger avec une règle différente (encaissement actif, situation, facture autre qu'un acompte, acompte neutralisé par correction_erreur) : à partir d'elle,
+# la définition à protéger est celle de 009c, vérifiée par test_009c (groupe H). Ce fichier décrit 009a TELLE QUE LIVRÉE (rang 13) et ne garde que les migrations intermédiaires.
+NOM_SUCCESSEUR = "009c_bc_annulation_acompte_encaissement.sql"
+NOM_009B = "009b_acompte_garanties_manuelles.sql"                                        # rang 14 : migration intermédiaire livrée entre 009a et 009c
+
+
 def migrations_suivantes():
-    """Migrations livrées après 009a (rang 14, 15, …) : vide tant que 010 n'existe pas."""
-    return [(RANG + 1 + i, p.name, p.read_text(encoding="utf-8")) for i, p in enumerate(sorted(MIGRATIONS.glob("*.sql"))[RANG:])]
+    """Migrations livrées après 009a et avant la corrective qui remplace le trigger (009c) : 009b (rang 14) ; vide d'autres tant qu'aucune n'existe."""
+    return [(RANG + 1 + i, p.name, p.read_text(encoding="utf-8")) for i, p in enumerate(sorted(MIGRATIONS.glob("*.sql"))[RANG:]) if p.name < NOM_SUCCESSEUR]
 
 
 class GardeChaine(Base13):
@@ -730,17 +739,24 @@ class GardeChaine(Base13):
         return [_norm(r[0]) for r in db.execute("SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?", (TRIGGER,))]
 
     def suite_conserve_le_trigger(self, suite):
-        """Rejoue `suite` (liste de (rang, nom, sql)) sur une base du rang 13 peuplée : le trigger reste identique et le refus reste effectif après chaque migration."""
+        """Rejoue `suite` (liste de (rang, nom, sql)) sur une base du rang 13 peuplée : le trigger reste identique et le refus reste effectif après chaque migration.
+        Retourne les noms des migrations rejouées et contrôlées (preuve de ce qui a été exercé)."""
         t = self._sur(migrer13())
         bc, _ = t.avec_facture("acompte")                                                          # pas de situation : 009b (D-62) refuse de s'appliquer sur une base qui en contient
+        controlees = []
         for rang, nom, sql in suite:
             T.runner(t.db, rang, sql)
             self.assertEqual(self.definition(t.db), [trigger_attendu()], nom)
             t.refuse_annuler(bc.b)
+            controlees.append(nom)
+        return controlees
 
     def test_009a_I_le_trigger_est_identique_et_effectif_apres_chaque_migration_suivante(self):
         self.assertEqual(self.definition(self.db), [trigger_attendu()])                          # au rang 13 (et sur toute chaîne jouée jusqu'ici)
-        self.suite_conserve_le_trigger(migrations_suivantes())                                    # 010, 011, … quand elles existeront
+        suite = migrations_suivantes()
+        self.assertEqual([(r, n) for r, n, _ in suite][:1], [(RANG + 1, NOM_009B)])                 # non-vacuité : 009b (rang 14) fait bien partie des migrations examinées
+        controlees = self.suite_conserve_le_trigger(suite)
+        self.assertEqual(controlees, [n for _, n, _ in suite])                                     # 009b puis toute migration intercalaire éventuelle : toutes rejouées et contrôlées
 
     def test_009a_I_toute_migration_suivante_qui_supprime_bons_commande_recree_le_trigger(self):
         for rang, nom, sql in migrations_suivantes():

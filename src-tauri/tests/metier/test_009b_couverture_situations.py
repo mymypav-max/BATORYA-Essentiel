@@ -511,13 +511,15 @@ class T53(Base53):
 
     # 13 --------------------------------------------------------------------------------------------------------------------
     def test_T53_13_rejeu_001_009a_009b_depuis_une_base_vide_et_depuis_le_rang_12_001_a_009_identiques_a_GitHub(self):
-        # 001 à 009 : octet pour octet ceux de GitHub (main da2969a)
+        # 001 à 009 : identiques à ceux de GitHub (main da2969a). Les empreintes sont celles du contenu stocké par Git (fins de ligne LF) : sous Windows avec
+        # core.autocrlf=true, le fichier de travail est en CRLF ; on normalise CRLF → LF avant le SHA-256, sans toucher aux empreintes de référence.
         for nom, empreinte in EMPREINTES_001_A_009.items():
             with self.subTest(fichier=nom):
-                self.assertEqual(hashlib.sha256((MIGRATIONS / nom).read_bytes()).hexdigest(), empreinte)
+                contenu = (MIGRATIONS / nom).read_bytes().replace(b"\r\n", b"\n")
+                self.assertEqual(hashlib.sha256(contenu).hexdigest(), empreinte)
         noms = [p.name for p in sorted(MIGRATIONS.glob("*.sql"))]
         self.assertEqual(noms[:12], list(EMPREINTES_001_A_009))
-        self.assertEqual(noms[12:], [B.NOM_009A, B.NOM_009B])
+        self.assertEqual(noms[12:14], [B.NOM_009A, B.NOM_009B])                                    # 009c (rang 15, D-63) suit 009b : voir test_009c
         # depuis une base vide : 001 → 009 → 009a → 009b
         db = B.migrer14()
         self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 14)
