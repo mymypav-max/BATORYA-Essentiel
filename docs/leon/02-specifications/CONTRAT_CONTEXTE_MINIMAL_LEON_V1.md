@@ -21,7 +21,7 @@ Le contrat doit permettre de :
 
 ## 2. Principes directeurs
 
-1. **BATORYA est la source du contexte d'interface.** Léon ne doit pas déduire le module actif à partir du seul texte utilisateur lorsque l'application peut le fournir.
+1. **BATORYA fournit l'écran affiché au moment de l'activation de Léon.** Léon interprète d'abord la demande de l'utilisateur ; l'écran est un contexte complémentaire à utiliser lorsqu'il aide à comprendre ou traiter cette demande, jamais une contrainte qui doit orienter toutes les réponses.
 2. **Le contexte est construit à la demande.** Ouvrir un écran ou changer d'onglet actualise l'état de navigation, mais ne déclenche pas à lui seul un traitement IA.
 3. **Minimal par défaut.** Ne transmettre que les informations nécessaires pour interpréter la demande. Ne pas injecter une fiche client, un devis complet ou un lot de données par simple précaution.
 4. **Référence ne signifie pas contenu.** Une référence d'objet permet de demander une lecture autorisée ; elle ne signifie pas que ses champs métier ont déjà été chargés.
@@ -35,7 +35,7 @@ Le contrat doit permettre de :
 
 ### 3.1 Contexte courant de navigation
 
-Il décrit la position actuelle de l'utilisateur dans BATORYA : chapitre/module, écran, onglet ou étape si ces éléments existent, et éventuel objet sélectionné. Il est actualisé par BATORYA indépendamment de toute inférence du modèle.
+Il indique simplement quel écran est affiché lorsque l'utilisateur active Léon. BATORYA transmet cette information au moment de l'activation. Léon ne doit pas exiger d'autres détails de navigation par défaut ; un onglet, une étape ou une référence d'objet ne sont fournis que s'ils existent déjà, sont facilement disponibles et sont utiles à la demande. L'écran sert de contexte supplémentaire, pas de point de départ obligatoire de l'interprétation.
 
 ### 3.2 Données métier récupérées pour une demande
 
@@ -47,35 +47,37 @@ Elle conserve les éléments nécessaires à la continuité du dialogue : object
 
 ## 4. Contenu minimal proposé
 
-Le contrat devrait être composé de deux parties logiques : un **contexte courant** fourni par BATORYA et un **contexte de requête** construit lorsque l'utilisateur sollicite Léon.
+Le contrat devrait être composé d'une demande utilisateur, accompagnée du **contexte d'écran au moment de l'activation**. Les autres informations ne sont ajoutées que si elles sont déjà disponibles et présentent une utilité réelle pour la demande.
 
 ### 4.1 Contexte courant
 
 | Élément proposé | Rôle | Règle |
 |---|---|---|
 | Identifiant/version du contrat | Identifier la structure transmise | Sert à détecter une version non prise en charge ; format technique à choisir |
-| Chapitre ou module actif | Situer la demande dans BATORYA | Valeur contrôlée par l'application, si disponible |
-| Identifiant logique de l'écran | Identifier la vue active | Utiliser un identifiant stable défini par l'application, pas le titre affiché seul |
+| Écran affiché à l'activation | Donner à Léon un repère d'interface | Information principale de contexte, fournie par BATORYA au moment où l'utilisateur active Léon |
+| Identifiant ou nom de l'écran | Identifier la vue affichée | Transmettre une identification fiable déjà disponible ; le mécanisme exact reste à choisir |
 | Onglet ou étape active | Préciser la position dans un parcours | Facultatif : seulement si la vue en possède un |
 | Objet métier sélectionné | Identifier l'objet courant | Facultatif ; type et identifiant stable, jamais un objet deviné par Léon |
 | Instant d'actualisation | Apprécier la fraîcheur du contexte | Horodatage produit par BATORYA ; format à définir |
 | État de disponibilité | Signaler si le contexte est complet ou partiel | Distinguer « non applicable », « inconnu » et « indisponible » si cela change le comportement |
 
-Le minimum opérationnel visé est donc : **module/écran connus, éventuelle référence d'objet, et fraîcheur de l'information**. Onglet et étape ne sont transmis que s'ils sont utiles et réellement disponibles.
+Le minimum opérationnel visé est donc : **la demande de l'utilisateur et l'écran affiché au moment où il active Léon**. Une référence d'objet, un onglet ou une étape ne sont ajoutés que s'ils sont naturellement disponibles et pertinents. Il n'est pas nécessaire de concevoir un contrat de navigation détaillé si le seul écran affiché suffit.
 
 Ne sont pas requis par défaut : le contenu complet de l'écran, tous les champs visibles, la liste complète des objets, l'historique de navigation, toutes les données métier ou une capture d'écran.
 
 ### 4.2 Contexte de requête
 
-À chaque sollicitation de Léon, BATORYA devrait associer à la demande :
+À l'activation de Léon, BATORYA devrait lui transmettre :
 - le texte de la demande utilisateur ;
-- un instantané du contexte courant au moment où la demande est prise en charge ;
-- un identifiant de requête ou mécanisme équivalent permettant d'associer les lectures à cette demande, si nécessaire à l'implémentation ;
-- les références conversationnelles déjà établies, fournies par le mécanisme distinct de mémoire lorsque cela est utile.
+- l'écran affiché à cet instant ;
+- éventuellement, une référence d'objet déjà sélectionné si elle est disponible et utile ;
+- les éléments de mémoire conversationnelle pertinents, selon le contrat distinct de mémoire.
+
+Un identifiant de requête peut être ajouté si l'implémentation en a réellement besoin pour associer des lectures à une demande.
 
 L'identifiant de requête et la représentation exacte sont des propositions techniques, pas des décisions validées.
 
-**Important :** l'instantané associé à une demande en cours ne doit pas être modifié rétroactivement si l'utilisateur navigue pendant que Léon prépare sa réponse. La navigation actualise le contexte courant pour les interactions suivantes. Si Léon a besoin du nouvel écran pour poursuivre, cette nouvelle information doit être prise en compte explicitement, sans mélanger silencieusement les deux états.
+**Important :** l'écran transmis décrit l'interface au moment où l'utilisateur active Léon. Si l'utilisateur change ensuite d'écran pendant que Léon traite la demande, ce changement ne doit pas réécrire silencieusement le contexte initial de cette demande. Le nouvel écran sera transmis à l'activation suivante, sauf mécanisme explicite de reprise qui justifie de le prendre en compte.
 
 ## 5. Références aux objets métier
 
@@ -232,9 +234,8 @@ Cet exemple illustre la méthode ; il ne définit pas à lui seul la règle mét
 
 Les questions suivantes restent ouvertes et ne doivent pas être considérées comme décidées :
 
-1. Quels identifiants stables utiliser pour les chapitres, modules, écrans, onglets et étapes ?
-2. Quel niveau de granularité d'écran est utile sans rendre le contrat fragile aux changements d'interface ?
-3. Le contrat doit-il inclure un titre d'écran lisible en complément de son identifiant logique ?
+1. Quelle identification simple de l'écran est déjà disponible ou la plus facile à fournir de manière fiable ?
+2. L'écran affiché suffit-il dans la plupart des cas, ou certains parcours nécessitent-ils aussi une référence d'objet explicitement sélectionné ?
 4. Quelle représentation technique choisir pour les états inconnus, non applicables, non transmis, périmés et indisponibles ?
 5. Comment détecter qu'une référence d'objet n'est plus valide entre sa sélection et une lecture ?
 6. Quelles limites de résultats et de taille appliquer aux lectures ?
@@ -257,9 +258,10 @@ Les questions suivantes restent ouvertes et ne doivent pas être considérées c
 
 Le contrat pourra être considéré comme suffisamment défini lorsque les revues permettront de vérifier que :
 
-- un écran ou module connu est transmis sans que Léon ait à l'inventer ;
-- l'absence d'objet sélectionné est représentée explicitement ;
-- le contexte de requête peut être distingué de l'état de navigation ultérieur ;
+- l'écran affiché au moment de l'activation est transmis sans que Léon ait à l'inventer ;
+- la demande utilisateur reste le point de départ de l'interprétation, l'écran étant un contexte complémentaire ;
+- les références d'objet ne sont transmises que lorsqu'elles existent et sont utiles ;
+- l'écran initial associé à une demande en cours n'est pas remplacé silencieusement par un écran ultérieur ;
 - aucun changement de navigation ne déclenche à lui seul un traitement IA ;
 - les lectures sont limitées à des capacités nommées, contrôlées et en lecture seule ;
 - les informations non disponibles et les erreurs ne sont pas confondues avec des résultats métier ;
