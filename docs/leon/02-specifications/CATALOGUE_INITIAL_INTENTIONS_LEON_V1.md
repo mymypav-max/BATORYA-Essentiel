@@ -28,7 +28,7 @@ La présence d'une intention dans ce catalogue ne garantit pas que Léon puisse 
 ## 2. Principes de classification
 
 1. Classer selon **l'objectif de l'utilisateur**, pas uniquement selon les mots employés, l'écran courant ou le type de document mentionné.
-2. Une demande reçoit une **famille principale**. Une ou plusieurs familles secondaires peuvent être ajoutées si la réponse exige réellement plusieurs domaines. Ne créer pas une nouvelle famille pour chaque combinaison.
+2. Une demande reçoit une **famille principale**. Une ou plusieurs familles secondaires peuvent être ajoutées si la réponse exige réellement plusieurs domaines. Ne pas créer une nouvelle famille pour chaque combinaison.
 3. Les familles transversales décrivent le type d'aide demandé ; les familles métier fournissent le domaine de connaissances et les règles applicables.
 4. Le guidage est une famille transversale dédiée. Il coordonne les étapes ; le domaine métier reste l'autorité sur les prérequis et les règles propres à l'opération.
 5. La navigation courante et la mémoire conversationnelle sont deux contextes distincts. Changer d'écran ne doit pas effacer automatiquement l'objectif conversationnel.
