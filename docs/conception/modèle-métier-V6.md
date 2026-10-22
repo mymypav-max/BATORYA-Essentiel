@@ -101,7 +101,7 @@ Le code client est indépendant de la numérotation des documents.
 
 * **actif** ;
 * **archivé** : un client ayant un historique n'est jamais supprimé ;
-* **à rattacher** : statut réservé à un client issu de l'import de données historiques, en attente de rattachement à un client existant. Le rattachement réaffecte les documents concernés, est tracé dans l'historique et ne modifie pas les snapshots. C'est la seule modification de client autorisée sur un document gelé ; sur un devis `refuse` ou `annule`, il constitue également l'unique modification autorisée.
+* **à rattacher** : statut réservé à un client issu de l'import de données historiques, en attente de rattachement à un client existant. Le rattachement réaffecte les documents concernés, est tracé dans l'historique et ne modifie pas les snapshots. C'est la seule modification de client autorisée sur un devis ou un BC dont le contenu contractuel est verrouillé (§ 9) ; sur un devis `refuse` ou `annule`, il constitue également l'unique modification autorisée.
 
 **Règles**
 
@@ -161,7 +161,7 @@ Le Devis représente une proposition commerciale adressée à un client.
 * remise globale (aucune, pourcentage ou montant) ;
 * acompte prévu (aucun, pourcentage ou montant) ;
 * total HT ;
-* statut, gel, annulation (date et motif) ;
+* statut, annulation (date et motif) ;
 * dates de création et de modification.
 
 **Statuts**
@@ -176,9 +176,9 @@ L'expiration de la validité est un état dérivé, jamais stocké.
 **Règles**
 
 * La **date de création** est distincte de la **date d'acceptation** ; la date de création est immuable, la date de validité reste modifiable.
-* Un devis est modifiable s'il est En attente, ou Accepté et **non gelé**. Un devis Refusé ou Annulé est immuable, **sauf** rattachement d'un client `a_rattacher` par modification de `client_id` uniquement. Un devis gelé conserve la même exception de rattachement ; les snapshots et les autres données commerciales ne changent pas.
-* Le devis est le **seul point d'édition** : toute modification d'un devis accepté non gelé régénère le BC correspondant (lignes, garanties de lignes, montant contractuel, snapshots).
-* Un devis accepté produit **un seul BC**, de façon idempotente.
+* Un devis est modifiable, par **révision**, s'il est En attente, ou Accepté tant que son BC n'a reçu aucune facture (§ 9). Après modification d'un devis accepté, la nouvelle version doit être **acceptée de nouveau** par le client avant de devenir la version contractuelle de référence et d'être synchronisée dans le BC. Un devis Refusé ou Annulé est immuable, **sauf** rattachement d'un client `a_rattacher` par modification de `client_id` uniquement. Dès la première facture du BC, le devis conserve la même exception de rattachement ; les snapshots et les autres données commerciales ne changent pas.
+* Le devis est le **seul point d'édition** : avant la première facture du BC, une version révisée puis acceptée de nouveau est répercutée sur le BC correspondant (lignes, garanties de lignes, montant contractuel ; snapshots : point à arbitrer, modèle de données V3.14 §7.4).
+* L'acceptation d'un devis le **rattache à un BC** : le BC est créé ou, lorsque les règles le permettent (§ 9), le devis rejoint un BC existant. Le rattachement est **unique** (un devis n'appartient qu'à un seul BC), **atomique** et **idempotent** ; un BC peut regrouper plusieurs devis acceptés.
 * Un devis sans BC peut être supprimé physiquement ; ses lignes et garanties sont supprimées en cascade. Dès qu'un BC existe, la relation future `bons_commande.devis_id` en `RESTRICT` interdit sa suppression.
 
 **Relations**
@@ -219,7 +219,7 @@ Le BC est le dossier métier central après acceptation du devis. Il ne s'agit p
 
 * identifiant ;
 * numéro (`BCD-00001-26`) ;
-* devis d'origine (un seul BC par devis) ;
+* devis d'origine (le devis qui a créé le BC ; un devis n'appartient qu'à un seul BC, et un BC peut regrouper plusieurs devis acceptés) ;
 * client et snapshots (client, entreprise, chantier) ;
 * date de création (= date d'acceptation) ;
 * dates de début et de fin éventuelles (utilisées par le Gantt) ;
@@ -229,7 +229,7 @@ Le BC est le dossier métier central après acceptation du devis. Il ne s'agit p
 * **avancement** (facturation nette / contractuel ; 100 % dès qu'un solde actif existe) ;
 * date du 100 % facturé ;
 * état, date de passage à Terminé ;
-* gel, annulation (date et motif) ;
+* annulation (date et motif) ;
 * dates de création et de modification.
 
 L'avancement mesure la facturation, jamais l'avancement physique du chantier. Facturation cumulée, avancement, date du 100 %, état et date de passage à Terminé sont recalculés par un seul service financier, à partir des factures et des règlements, dans la même transaction que l'opération.
@@ -255,23 +255,23 @@ L'avancement mesure la facturation, jamais l'avancement physique du chantier. Fa
 
 Les lignes du BC sont une copie des lignes du devis (mêmes données, plus la référence de la ligne de devis d'origine).
 
-* **Avant le gel**, elles sont **synchronisées** avec le devis : toute modification du devis les régénère dans la même transaction, avec leurs garanties de lignes et le montant contractuel.
-* **Après le gel**, elles ne bougent plus.
-* Aucune facture ne référence une ligne du BC avant le gel.
+* **Avant la première facture du BC**, elles sont **synchronisées** avec la dernière version acceptée du devis, dans la même transaction, avec leurs garanties de lignes et le montant contractuel.
+* **Dès la première facture du BC**, elles ne bougent plus (le rattachement d'un nouveau devis, § 9, ajoute les lignes de ce devis sans modifier les lignes existantes).
+* Aucune facture ne référence une ligne du BC avant la première facture.
 
 ⸻
 
-## 9. Gel commercial
+## 9. Verrou du contenu contractuel (première facture)
 
-Le gel fige la structure commerciale du devis **et** du BC. Il est posé dans la transaction de l'événement qui le provoque, au premier de :
+Le gel progressif du BC est **abandonné** (erratum E-22) : aucun événement ne « gèle » plus le devis ou le BC. Le champ technique `frozen_at` est conservé au schéma, sans signification métier.
 
-1. le premier **encaissement actif**, même partiel, sur un acompte ;
-2. l'émission d'une **situation** ;
-3. l'émission du **solde**.
+Le contenu contractuel est protégé par un **verrou au niveau du BC**, posé par l'émission de la **première facture** du BC :
 
-* Un acompte émis mais non encaissé **ne gèle pas**. Si le devis ou le BC est alors modifié, l'acompte non réglé est **annulé automatiquement** (acteur système) et peut être réémis.
-* Le gel est **irréversible** ; l'annulation d'une facture ne dégèle pas.
-* Une fois gelés, le devis et le BC n'acceptent plus que les changements de statut, d'annulation, de rattachement client et, pour le BC, les recalculs de caches et les dates de début et de fin.
+* Une facture est **émise** dès son insertion en base : il n'existe pas de brouillon (§ 10). La première facture émise (acompte, situation ou solde) verrouille le contenu contractuel de **tous** les devis rattachés au BC.
+* **Avant** la première facture, tous les champs métier d'un devis restent modifiables par **révision** : version initiale, révisions numérotées à partir de 1, numéro du devis inchangé, snapshots complets des versions validées conservés, révisions abandonnées non conservées. Après modification d'un devis déjà accepté, la nouvelle version doit être **acceptée de nouveau** par le client avant de devenir la version contractuelle de référence et d'être synchronisée dans le BC.
+* **Dès** la première facture, aucun devis rattaché ne peut plus être révisé ni modifié directement ; le devis et le BC n'acceptent plus que les changements de statut, d'annulation, de rattachement client et, pour le BC, les recalculs de caches et les dates de début et de fin. Un **avoir**, même intégral, ne rouvre pas cette possibilité. Les évolutions ultérieures relèvent d'un mécanisme distinct, à cadrer.
+* Un nouveau devis accepté peut encore être **rattaché au BC** jusqu'à la création du solde final (arbitrage Q23), sans rouvrir les contenus contractuels existants.
+* Un acompte émis mais non encaissé n'est plus annulé automatiquement : comme toute facture émise, il verrouille le BC.
 
 ⸻
 
@@ -373,7 +373,7 @@ Le Solde est **toujours le document final** de facturation du BC, y compris lors
 * Un seul solde actif par BC. Un solde annulé peut être réémis.
 * Dès qu'un solde actif existe : plus d'acompte, plus de situation, et **aucun avoir ne rouvre la facturation** (aucun nouveau solde par avoir).
 * « 100 % facturé » signifie la **présence d'un solde actif**.
-* L'émission du solde déclenche la création des garanties (§ 24) et le gel.
+* L'émission du solde déclenche la création des garanties (§ 24).
 
 ⸻
 
@@ -621,7 +621,7 @@ Le Document représente la matérialisation PDF d'un objet métier.
 
 L'Historique représente les événements métier significatifs ; il est **append-only** et indépendant de l'interface.
 
-Événements tracés : création, modification, acceptation, refus, annulation, gel, émission, règlement et annulation de règlement, remboursement, avoir, passage à Terminé et retour à En cours, déclenchement de garantie, annulation automatique d'un acompte, rattachement d'un client, déclaration et correction URSSAF, import de données historiques, restauration.
+Événements tracés : création, modification, acceptation, refus, annulation, émission, règlement et annulation de règlement, remboursement, avoir, passage à Terminé et retour à En cours, déclenchement de garantie, rattachement d'un client, déclaration et correction URSSAF, import de données historiques, restauration.
 
 L'acteur d'un événement est l'utilisateur, le système ou l'import.
 
@@ -709,7 +709,7 @@ JSON V2 → convertisseur externe → `import-v6.json` → import V6
 * Le convertisseur externe porte les particularités de la V2 ; V6 n'adapte pas son modèle à la V2.
 * L'import V6 n'accepte qu'un fichier `import-v6.json` conforme (lecteur strict), en deux temps (validation sans écriture, puis transaction unique), **uniquement sur une base métier vide**.
 * Toutes les règles métier s'appliquent aux données importées. La seule exception est la conservation du numéro historique des devis, factures et PV importés, déjà remis aux clients.
-* Les valeurs dérivées (état du BC, avancement, gel) sont recalculées par V6.
+* Les valeurs dérivées (état du BC, avancement) sont recalculées par V6.
 * Les compteurs historiques compatibles initialisent la numérotation V6 ; un saut de numéro est acceptable.
 * Les éléments à contrôler sont signalés à l'utilisateur (bandeau) jusqu'à traitement ; les données non représentables sont conservées pour consultation.
 
@@ -742,7 +742,7 @@ CLIENT
    │      │
    │      └── LIGNES DEVIS (+ garanties de ligne)
    │
-   └── BC  (un seul par devis)
+   └── BC  (un devis n'appartient qu'à un seul BC ; un BC peut regrouper plusieurs devis acceptés)
           │
           ├── LIGNES BC (+ garanties de ligne)
           │
@@ -798,10 +798,10 @@ Les relations définies ici sont traduites en repositories et en tables SQLite (
 Le modèle V6 garantit notamment que :
 
 1. un document conserve son historique après modification du catalogue, des paramètres ou du référentiel (snapshots) ;
-2. un devis accepté produit un BC de manière idempotente (un seul BC par devis) ;
+2. l'acceptation d'un devis le rattache, de manière idempotente, à un seul BC (créé ou existant) ; un BC peut regrouper plusieurs devis acceptés ;
 3. un BC est Terminé seulement si un solde actif existe et que le reste dû des factures actives (hors avoirs) est nul ;
-4. le devis et le BC sont gelés, irréversiblement, au premier encaissement actif d'un acompte, à l'émission d'une situation ou à l'émission du solde ;
-5. un acompte non réglé est annulé automatiquement si le devis ou le BC est modifié avant le gel ;
+4. le contenu contractuel des devis rattachés à un BC est verrouillé, au niveau du BC, dès l'émission de la première facture ; un avoir, même intégral, ne le rouvre pas ;
+5. avant cette première facture, un devis reste modifiable par révision et sa nouvelle version, acceptée de nouveau par le client, est synchronisée dans le BC ;
 6. un BC dont la facturation dépasse un acompte non réglé ne peut pas être annulé directement ; une situation émise (même annulée) l'interdit toujours ;
 7. le solde est toujours la facture finale ; un solde à 0 € est autorisé ; aucune situation, aucun acompte et aucun nouvel avoir-solde après un solde actif ;
 8. une facture peut recevoir plusieurs règlements ; le reste à payer est calculé, jamais saisi ; un encaissement ne dépasse pas le reste dû ;
@@ -826,6 +826,6 @@ Ce document est le modèle métier de BATORYA Essentiel V6. Il est aligné sur :
 
 * le modèle de données SQLite V6 (V3.10) ;
 * le registre des invariants (`invariants.md`, version 3) ;
-* les errata au CDC gelé (`cdc-errata-v6.md`, E-01 à E-09).
+* les errata au CDC gelé (`cdc-errata-v6.md`, E-01 à E-09 et E-22).
 
 Il ne définit pas les tables SQLite, les types SQL, les index, les repositories, les services TypeScript, les composants React ni les commandes Tauri : ces éléments relèvent des documents techniques correspondants.

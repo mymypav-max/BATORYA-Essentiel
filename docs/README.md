@@ -8,6 +8,7 @@ Ce dossier contient la documentation de référence de BATORYA Essentiel V6 : au
 - `conception/` — invariants, modèle métier et modèle de données SQLite V6
 - `décisions/` — décisions et errata validés
 - `specifications/` — cahier des charges fonctionnel et architectural V6
+- `suivi/` — journal de continuité des sessions de travail (n'est pas un document de référence)
 
 Il n'existe pas de dossier `migration/` autonome à ce stade. La migration V2 → V6 est décrite dans les documents de conception, de décisions et dans le CDC.
 
@@ -29,6 +30,9 @@ Il n'existe pas de dossier `migration/` autonome à ce stade. La migration V2 �
 ### Spécifications
 - `specifications/cdc-fonctionnel-architectural-v6.md` — CDC fonctionnel et architectural V6 consolidé
 
+### Suivi (hors référence)
+- `suivi/journal-continuite.md` — journal de continuité des sessions (état du dépôt, actions, commandes, réconciliation)
+
 ## Règle de cohérence documentaire
 
 Le CDC V6 doit être lu conjointement avec les documents de référence ci-dessus.
@@ -43,4 +47,4 @@ Cette documentation concerne exclusivement **BATORYA Essentiel V6**.
 
 Les concepts, fonctionnalités ou contraintes propres à BATORYA Entreprise ne doivent pas être introduits dans Essentiel V6 par anticipation.
 
-Le contenu de `docs/` ne constitue pas du code applicatif. Il sert de référence pour la conception et l'implémentation de BATORYA Essentiel V6.
+Le contenu de `docs/` ne constitue pas du code applicatif. Il sert de référence pour la conception et l'implémentation de BATORYA Essentiel V6, à l'exception de `suivi/`, qui est un journal d'exploitation et ne constitue pas une référence.

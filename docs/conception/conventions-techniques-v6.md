@@ -15,13 +15,15 @@ Le document est volontairement évolutif : les conventions seront complétées a
 
 ## 2. Documents de référence
 
-Avant toute implémentation ou modification structurelle, les références suivantes doivent être considérées dans cet ordre de priorité métier et architectural :
+Avant toute implémentation ou modification structurelle, les références suivantes doivent être considérées dans cet ordre de priorité métier et architectural (sous réserve de la règle de précédence ci-dessous) :
 
 1. `docs/specifications/cdc-fonctionnel-architectural-v6.md`
 2. `docs/conception/modèle-données-sqlite-v6-v3.12.md`
 3. `docs/conception/invariants.md`
 4. `docs/conception/modèle-métier-V6.md`
 5. `docs/décisions/cdc-errata-v6.md` pour la traçabilité historique uniquement.
+
+**Règle de précédence** (décision du propriétaire du 2026-10-22, rédaction en relecture, non validée officiellement) : lorsqu'un document contredit les invariants (`invariants.md`) ou le modèle de données SQLite courant (V3.14, en relecture ; la V3.12 reste la dernière version validée), ce sont les invariants et/ou le modèle qui prévalent. Le CDC, le modèle métier et les autres documents non encore actualisés ne prévalent pas du seul fait qu'ils conservent une formulation antérieure ; la contradiction est corrigée dans le document concerné ou enregistrée par un erratum (`docs/décisions/cdc-errata-v6.md`). Cette règle ne classe pas les autres documents entre eux.
 
 Une convention de code ne peut pas contredire ces documents.
 
@@ -39,6 +41,13 @@ Pour chaque nouveau fichier, son nom et son emplacement doivent être cohérents
 Si une nouvelle catégorie de fichier ou une nouvelle branche d’arborescence devient nécessaire, elle est d’abord définie dans ce document avant de devenir une convention permanente.
 
 Les fichiers temporaires de travail ne doivent pas être ajoutés au dépôt sous un nom ambigu ou générique.
+
+### Dossier de suivi de session
+
+Le dossier `docs/suivi/` contient le journal de continuité des sessions de travail (`journal-continuite.md`).
+Il n'est pas un document de référence : il ne fait autorité ni sur le CDC, ni sur le modèle de données SQLite, ni sur les invariants, ni sur le modèle métier, ni sur les errata, et il ne contient aucune décision.
+Il enregistre l'état du dépôt, les actions réalisées, les commandes exécutées et leur résultat.
+Les noms de fichiers y sont en minuscules, séparés par des tirets.
 
 ## 4. Arborescence technique actuelle
 
@@ -99,9 +108,12 @@ src-tauri/migrations/metier/003_devis.sql
 
 Règles :
 
-- une migration correspond à une tranche du schéma définie dans le suivi des migrations du modèle de données SQLite ; elle contient les tables de la tranche, avec leurs triggers et leurs index ;
-- la première migration métier s’appelle `001_initial.sql` ; les suivantes sont nommées `NNN_<objet>.sql` (numéro séquentiel, objet en minuscules sans accent) ;
-- le modèle de données SQLite passe à la version suivante et est mis à jour **avant** la création ou la modification d’une migration ; l’en-tête de la migration cite la version du modèle ;
+- une migration de tranche correspond à une tranche du schéma définie dans le suivi des migrations du modèle de données SQLite ; elle contient les tables de la tranche, avec leurs triggers et leurs index ;
+- la première migration métier s’appelle `001_initial.sql`. Il existe deux catégories de migrations métier, distinguées par leur nom (décision V-2, confirmée par le propriétaire le 2026-10-18) :
+  - une **tranche métier** : `NNN_<objet>.sql` (numéro séquentiel, objet en minuscules sans accent) ;
+  - une **migration corrective** : `NNNx_<objet>.sql` (trois chiffres suivis d’**une lettre minuscule**, objet en minuscules sans accent) ; elle corrige ou fait évoluer le schéma déjà livré sans être une tranche métier, et ne consomme aucun numéro de tranche. Le préfixe `NNN` est celui de la dernière tranche exécutée avant elle ; la lettre ordonne les correctives rattachées à la même tranche (`005a` avant `005b`, `009a` avant `009b`, `009b` avant `009c`) ;
+  - aucune autre catégorie de nom n’existe ;
+- le modèle de données SQLite passe à la version suivante et est mis à jour **avant** la création ou la modification d’une migration ; l’en-tête d’une migration cite la version courante du modèle, qu’elle soit validée ou en relecture ;
 - une migration n’insère aucune ligne : listes de référence, catalogue par défaut et singletons relèvent du jeu de données d’installation ou du service d’initialisation (l’emplacement du jeu de données sera défini dans ce document lorsqu’il sera introduit) ;
 - noms SQL : triggers `tr_<NN>_<table>_<règle>` où `NN` est le numéro `TR-NN` du modèle ; index `idx_<table>_<colonnes>` ; les contraintes `UNIQUE` de colonnes restent déclarées dans la table ;
 - chaque migration métier est livrée avec son test (section 7).
