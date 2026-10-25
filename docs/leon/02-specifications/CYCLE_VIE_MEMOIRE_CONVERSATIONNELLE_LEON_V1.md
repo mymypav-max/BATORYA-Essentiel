@@ -32,6 +32,7 @@ Pendant une conversation active, Léon peut conserver les éléments pertinents 
 - les précisions et réponses apportées par l'utilisateur ;
 - les interprétations confirmées ou les ambiguïtés qui restent ouvertes ;
 - les faits métier effectivement vérifiés, avec assez d'information pour savoir ce qui a été vérifié et ce qui doit l'être à nouveau ;
+- les éléments déjà établis qui peuvent être réutilisés sans répétition systématique, en les rappelant seulement lorsqu'ils aident à comprendre, justifier la réponse ou confirmer l'objet concerné ;
 - les étapes déjà expliquées et la progression de l'accompagnement ;
 - les références aux objets métier déjà identifiés de façon fiable ;
 - les engagements de dialogue utiles, notamment les questions en attente et les précisions attendues de l'utilisateur, afin qu'une réponse ultérieure puisse être interprétée correctement même après un changement d'écran.
@@ -65,7 +66,7 @@ En revanche, le nouvel écran ne doit pas réécrire rétroactivement le context
 4. Léon conserve l'objectif de départ, tient compte du nouvel écran transmis à cette interaction et demande une lecture autorisée si des données sont nécessaires.
 5. Il ne recommence pas toute la conversation et ne suppose pas que le changement d'écran a résolu le problème.
 
-Si le message suivant ne permet pas de déterminer s'il se rattache à la demande précédente ou s'il s'agit d'un nouveau sujet, Léon interprète le contexte lorsqu'il est suffisamment clair et ne pose une question que si l'ambiguïté change substantiellement la réponse.
+Si le message suivant ne permet pas de déterminer s'il se rattache à la demande précédente ou s'il s'agit d'un nouveau sujet, Léon interprète le contexte lorsqu'il est suffisamment clair et ne pose une question que si l'ambiguïté change substantiellement la réponse. Il réutilise les faits déjà établis sans les répéter systématiquement ; il les rappelle uniquement lorsque cela facilite la compréhension, justifie la réponse ou aide à confirmer l'objet concerné.
 
 ## 6. Règle des 30 minutes d'inactivité — confirmée en revue
 
@@ -150,7 +151,8 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 
 - un changement d'écran ne fait pas perdre le fil d'une demande en cours ;
 - l'écran transmis à une interaction est un contexte complémentaire et ne remplace pas la demande explicite ;
-- les messages de suivi peuvent réutiliser les précisions pertinentes déjà fournies ;
+- les messages de suivi peuvent réutiliser les précisions pertinentes déjà fournies sans les répéter systématiquement ;
+- les faits déjà établis ne sont rappelés que lorsqu'ils sont utiles à la compréhension, à la justification de la réponse ou à la confirmation de l'objet concerné ;
 - une réponse à une question en attente peut être comprise après un changement d'écran, tant que la conversation n'a pas expiré ou été réinitialisée ;
 - les questions en attente sont abandonnées lors de l'expiration ou du démarrage explicite d'une nouvelle conversation ;
 - les données métier susceptibles d'avoir changé sont revérifiées avant de servir de faits actuels ;
@@ -183,6 +185,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 12. L'expiration au bout de 30 minutes est silencieuse lorsqu'elle survient sans sollicitation de Léon : aucune notification ni aucun traitement en arrière-plan n'est déclenché. Si l'utilisateur fait ensuite référence à la conversation expirée, Léon explique brièvement que le contexte n'est plus disponible.
 13. Si une réponse de Léon dépasse 30 minutes de génération, le délai n'expire pas au milieu de ce tour : le contexte reste disponible jusqu'à la fin de la réponse, puis le délai glissant repart à partir de la délivrance de celle-ci.
 14. La mémoire conserve les questions en attente et les précisions attendues de l'utilisateur pour interpréter ses réponses ultérieures, y compris après un changement d'écran. Ces éléments sont abandonnés à l'expiration ou au démarrage explicite d'une nouvelle conversation.
+15. Léon réutilise les faits et précisions déjà établis sans les répéter systématiquement ; il les rappelle uniquement si cela aide à comprendre ou justifier sa réponse, ou à confirmer l'objet concerné.
 
 ### Points restant à arbitrer
 
