@@ -35,7 +35,7 @@ Pendant une conversation active, Léon peut conserver les éléments pertinents 
 - les références aux objets métier déjà identifiés de façon fiable ;
 - les engagements de dialogue utiles, par exemple une question posée à laquelle l'utilisateur doit encore répondre.
 
-La mémoire n'a pas vocation à conserver systématiquement chaque détail de l'interface, toutes les données renvoyées par les services, ni une copie complète des objets métier. Le niveau exact de détail et le format de représentation seront définis lors de la conception technique.
+La mémoire n'a pas vocation à conserver systématiquement chaque détail de l'interface, toutes les données renvoyées par les services, ni une copie complète des objets métier.\n\n**Décision confirmée en revue :** la continuité repose sur deux éléments complémentaires :\n- un résumé structuré de la conversation, contenant l'objectif, les précisions utiles, les faits vérifiés et la progression ;\n- les derniers échanges utiles, pour préserver le contexte immédiat et interpréter correctement les références courtes.\n\nLe résumé est actualisé à l'occasion des interactions avec Léon, sans traitement IA en arrière-plan. La taille du résumé et le nombre d'échanges récents conservés restent à définir techniquement. Il n'est pas exigé de conserver indéfiniment l'intégralité des messages mot pour mot.
 
 ## 4. Ce que la mémoire ne doit pas faire
 
@@ -166,11 +166,13 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 2. Une réponse en cours peut se terminer même si le délai est atteint pendant sa génération ; le contexte ne doit pas être coupé au milieu du tour.
 3. L'utilisateur peut demander explicitement une nouvelle conversation, ce qui supprime immédiatement le contexte précédent.
 4. La mémoire est conservée uniquement en RAM, sans persistance ni restauration après fermeture normale ou inattendue de BATORYA.
-5. Les données métier sont distinctes de la mémoire conversationnelle et ne sont pas supprimées par son expiration.
+5. La mémoire combine un résumé structuré de fond et les derniers échanges utiles, plutôt que de conserver indéfiniment l'historique intégral.
+6. Le résumé est actualisé lors des interactions avec Léon, sans traitement IA en arrière-plan.
+7. Les données métier sont distinctes de la mémoire conversationnelle et ne sont pas supprimées par son expiration.
 
 ### Points restant à arbitrer
 
-1. Définir les limites de taille et de détail de la mémoire pour préserver la fluidité sur les configurations ciblées.
+1. Définir les limites de taille du résumé structuré et le nombre ou la taille des derniers échanges utiles conservés, afin de préserver la fluidité.
 2. Déterminer les exigences techniques d'isolation, de suppression effective et de journalisation sans contenu conversationnel inutile.
 3. Préparer ultérieurement des tests fonctionnels couvrant navigation, suivi, changement de sujet, données métier périmées, réinitialisation explicite et expiration.
 
