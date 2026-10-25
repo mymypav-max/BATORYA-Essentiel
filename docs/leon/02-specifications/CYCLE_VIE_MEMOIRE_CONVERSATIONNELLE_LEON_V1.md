@@ -86,7 +86,7 @@ Le choix fonctionnel est confirmé. La manière technique de mesurer et d'appliq
 
 1. Léon ne doit plus utiliser le contexte conversationnel expiré pour interpréter une nouvelle demande.
 2. La prochaine sollicitation démarre une nouvelle conversation sans présumer que l'objectif précédent, ses précisions ou ses références sont encore disponibles.
-3. Si l'utilisateur fait référence à la conversation précédente — par exemple « on reprend où on en était ? » — Léon indique simplement qu'il ne dispose plus du contexte nécessaire et demande les éléments minimums pour reprendre.
+3. Si l'utilisateur fait référence à la conversation précédente — par exemple « on reprend où on en était ? » — Léon indique brièvement qu'il ne dispose plus du contexte nécessaire, puis demande uniquement les informations indispensables pour reprendre. Il ne tente pas de reconstruire l'échange à partir de suppositions.
 4. Les données métier de BATORYA ne sont ni supprimées ni modifiées par l'expiration de la mémoire.
 5. Aucun message ne doit laisser croire que Léon a conservé des informations qui ont été supprimées ou ne sont plus accessibles.
 
@@ -154,7 +154,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - la navigation seule ne renouvelle pas le délai d'inactivité ;
 - le délai de 30 minutes est appliqué sans interrompre arbitrairement une réponse en cours ;
 - après expiration, Léon ne prétend pas connaître l'ancien contexte ;
-- la reprise après expiration demande seulement les informations indispensables ;
+- la reprise après expiration indique brièvement que le contexte précédent n'est plus disponible, puis demande seulement les informations indispensables, sans reconstruire la conversation par supposition ;
 - une information manquante qui empêche une réponse fiable entraîne une question de clarification ciblée, jamais une supposition présentée comme un fait ;
 - l'expiration de la mémoire ne modifie aucune donnée métier ;
 - aucun traitement IA en arrière-plan n'est déclenché pour entretenir la mémoire ;
@@ -173,6 +173,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 7. Les données métier sont distinctes de la mémoire conversationnelle et ne sont pas supprimées par son expiration.
 8. Si une information manquante empêche une réponse fiable ou l'identification certaine d'un objet métier, Léon pose une question ciblée au lieu de deviner.
 9. Le démarrage explicite d'une nouvelle conversation passe par une action dédiée dans l'interface de Léon, distincte d'un changement de sujet ; son emplacement et sa présentation restent à concevoir.
+10. Après expiration, si l'utilisateur demande de reprendre l'ancienne conversation, Léon explique brièvement qu'il n'en a plus le contexte et demande les seules précisions nécessaires, sans inventer ni reconstruire l'échange.
 
 ### Points restant à arbitrer
 
