@@ -22,7 +22,8 @@ Le principe déjà retenu dans le cadrage est une expiration après **30 minutes
 5. **Expiration claire :** après 30 minutes sans interaction avec Léon, le contexte conversationnel expire et ne doit plus être présenté comme disponible.
 6. **Séparation des données :** la mémoire conversationnelle n'est ni la base métier BATORYA, ni une copie durable des dossiers clients ou documents.
 7. **Fiabilité :** une information conservée en mémoire n'est pas automatiquement une donnée métier encore à jour. Une donnée susceptible d'avoir changé doit être vérifiée à nouveau par une lecture autorisée.
-8. **Gestion des informations manquantes :** Léon ne comble jamais une lacune de mémoire par une supposition présentée comme certaine. Si l'information manquante empêche une réponse fiable ou l'identification certaine d'un objet métier, il pose une question de clarification ciblée.
+8. **Minimisation des données :** la mémoire ne conserve que les informations nécessaires à la continuité de la conversation. Elle évite de recopier inutilement des données personnelles ou confidentielles et le contenu intégral des documents métier.
+9. **Gestion des informations manquantes :** Léon ne comble jamais une lacune de mémoire par une supposition présentée comme certaine. Si l'information manquante empêche une réponse fiable ou l'identification certaine d'un objet métier, il pose une question de clarification ciblée.
 
 ## 3. Ce que la mémoire doit conserver
 
@@ -38,7 +39,7 @@ Pendant une conversation active, Léon peut conserver les éléments pertinents 
 - les références aux objets métier déjà identifiés de façon fiable ;
 - les engagements de dialogue utiles, notamment les questions en attente et les précisions attendues de l'utilisateur, afin qu'une réponse ultérieure puisse être interprétée correctement même après un changement d'écran.
 
-La mémoire n'a pas vocation à conserver systématiquement chaque détail de l'interface, toutes les données renvoyées par les services, ni une copie complète des objets métier.\n\n**Décision confirmée en revue :** la continuité repose sur deux éléments complémentaires :\n- un résumé structuré de la conversation, contenant l'objectif, les précisions utiles, les faits vérifiés et la progression ;\n- les derniers échanges utiles, pour préserver le contexte immédiat et interpréter correctement les références courtes.\n\nLe résumé est actualisé à l'occasion des interactions avec Léon, sans traitement IA en arrière-plan. La taille du résumé et le nombre d'échanges récents conservés restent à définir techniquement. Il n'est pas exigé de conserver indéfiniment l'intégralité des messages mot pour mot.
+La mémoire n'a pas vocation à conserver systématiquement chaque détail de l'interface, toutes les données renvoyées par les services, ni une copie complète des objets métier. Elle applique un principe de minimisation : conserver uniquement les éléments utiles à la continuité (par exemple une référence d'objet, son objet et quelques faits pertinents), sans recopier inutilement les coordonnées personnelles, coordonnées bancaires, autres informations confidentielles ou le contenu intégral d'un document.\n\n**Décision confirmée en revue :** la continuité repose sur deux éléments complémentaires :\n- un résumé structuré de la conversation, contenant l'objectif, les précisions utiles, les faits vérifiés et la progression ;\n- les derniers échanges utiles, pour préserver le contexte immédiat et interpréter correctement les références courtes.\n\nLe résumé est actualisé à l'occasion des interactions avec Léon, sans traitement IA en arrière-plan. La taille du résumé et le nombre d'échanges récents conservés restent à définir techniquement. Il n'est pas exigé de conserver indéfiniment l'intégralité des messages mot pour mot.
 
 ## 4. Ce que la mémoire ne doit pas faire
 
@@ -49,6 +50,7 @@ La mémoire conversationnelle :
 - ne transforme pas une hypothèse en fait vérifié ;
 - ne confond pas une déclaration de l'utilisateur avec une donnée métier vérifiée indépendamment ;
 - ne donne aucun droit d'accès supplémentaire aux données métier ;
+- ne conserve pas inutilement les données personnelles ou confidentielles, les coordonnées bancaires ni le contenu intégral des documents métier ;
 - ne permet aucune écriture ou action métier ;
 - ne doit pas persister indéfiniment simplement parce que BATORYA reste ouvert ;
 - ne doit pas être entretenue par un traitement IA périodique ou en arrière-plan.
@@ -165,6 +167,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - la reprise après expiration indique brièvement que le contexte précédent n'est plus disponible, puis demande seulement les informations indispensables, sans reconstruire la conversation par supposition ;
 - une information manquante qui empêche une réponse fiable entraîne une question de clarification ciblée, jamais une supposition présentée comme un fait ;
 - les faits métier vérifiés, les déclarations de l'utilisateur et les hypothèses non confirmées restent explicitement distingués dans la mémoire ;
+- la mémoire ne conserve que les données nécessaires à la continuité et évite les copies inutiles de données personnelles ou confidentielles et de documents complets ;
 - l'expiration de la mémoire ne modifie aucune donnée métier ;
 - aucun traitement IA en arrière-plan n'est déclenché pour entretenir la mémoire ;
 - le mécanisme de stockage et de suppression est défini avant implémentation ;
@@ -190,6 +193,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 14. La mémoire conserve les questions en attente et les précisions attendues de l'utilisateur pour interpréter ses réponses ultérieures, y compris après un changement d'écran. Ces éléments sont abandonnés à l'expiration ou au démarrage explicite d'une nouvelle conversation.
 15. Léon réutilise les faits et précisions déjà établis sans les répéter systématiquement ; il les rappelle uniquement si cela aide à comprendre ou justifier sa réponse, ou à confirmer l'objet concerné.
 16. La mémoire distingue explicitement les faits métier vérifiés (et le moment de leur vérification lorsque pertinent), les déclarations de l'utilisateur et les hypothèses non confirmées. Une hypothèse ne devient jamais un fait vérifié sans vérification appropriée.
+17. La mémoire applique un principe de minimisation : elle conserve uniquement les éléments nécessaires à la continuité et évite de recopier inutilement des données personnelles ou confidentielles, des coordonnées bancaires et le contenu intégral de documents métier.
 
 ### Points restant à arbitrer
 
