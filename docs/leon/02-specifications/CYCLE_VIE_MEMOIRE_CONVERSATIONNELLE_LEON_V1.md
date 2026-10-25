@@ -1,11 +1,11 @@
 # Cycle de vie de la mémoire conversationnelle de Léon — BATORYA Essentiel V6
 
-**Statut :** proposition de conception — non validée  
+**Statut :** proposition de conception — décisions fonctionnelles partielles confirmées en revue, document complet non validé  
 **Version :** V1 de travail  
 **Périmètre :** BATORYA Essentiel V6 exclusivement  
 **Dépendances :** `CADRAGE_FONCTIONNEL_LEON_V1.md` et proposition de contrat de contexte minimal
 
-> Ce document précise le comportement fonctionnel attendu de la mémoire conversationnelle. Il ne choisit pas encore son mécanisme technique de stockage et ne vaut pas validation d'une architecture.
+> Ce document précise le comportement fonctionnel attendu de la mémoire conversationnelle. Les décisions explicitement marquées comme confirmées ont été validées lors de la revue, mais le document complet et son architecture restent à valider.
 
 ## 1. Objectif
 
@@ -66,9 +66,9 @@ En revanche, le nouvel écran ne doit pas réécrire rétroactivement le context
 
 Si le message suivant ne permet pas de déterminer s'il se rattache à la demande précédente ou s'il s'agit d'un nouveau sujet, Léon interprète le contexte lorsqu'il est suffisamment clair et ne pose une question que si l'ambiguïté change substantiellement la réponse.
 
-## 6. Définition proposée des 30 minutes d'inactivité
+## 6. Règle des 30 minutes d'inactivité — confirmée en revue
 
-Pour la V1, la règle proposée est la suivante :
+Pour la V1, les règles suivantes sont confirmées :
 
 - le délai de 30 minutes est calculé depuis la dernière interaction de l'utilisateur avec Léon ;
 - envoyer un nouveau message à Léon renouvelle le délai ;
@@ -77,7 +77,7 @@ Pour la V1, la règle proposée est la suivante :
 - un traitement interne ou une lecture métier en cours ne constitue pas, à lui seul, une interaction utilisateur renouvelant le délai ;
 - après 30 minutes sans interaction avec Léon, la conversation est considérée comme expirée.
 
-Cette définition est une proposition fonctionnelle à valider. Elle ne fixe pas encore la manière technique de mesurer le délai.
+Le choix fonctionnel est confirmé. La manière technique de mesurer et d'appliquer le délai reste à définir.
 
 ## 7. Comportement à l'expiration
 
@@ -97,7 +97,7 @@ L'expiration au bout de 30 minutes est distincte d'un changement de sujet avant 
 
 Lorsqu'un utilisateur pose clairement une nouvelle question sans lien avec la précédente, Léon doit répondre à cette nouvelle demande sans forcer artificiellement l'ancien objectif dans l'interprétation. Les éléments antérieurs peuvent rester disponibles tant qu'ils sont utiles à une référence ultérieure et que la conversation n'a pas expiré.
 
-Le mécanisme permettant à l'utilisateur de demander explicitement une nouvelle conversation ou d'abandonner l'objectif en cours reste à préciser. Aucun bouton ou comportement d'interface n'est imposé par le présent document.
+**Décision confirmée en revue :** l'utilisateur pourra demander explicitement de démarrer une nouvelle conversation. Cette action abandonne immédiatement le contexte conversationnel précédent, sans attendre l'expiration des 30 minutes. Le contrôle d'interface permettant cette action reste à concevoir. Un simple changement de sujet ne déclenche pas à lui seul la suppression de toute la mémoire.
 
 ## 9. Données métier et fraîcheur des informations
 
@@ -110,18 +110,24 @@ Exemples :
 
 Si la réponse de suivi dépend de l'état métier actuel, BATORYA doit fournir une nouvelle lecture autorisée. Si cette lecture est indisponible, Léon doit le signaler plutôt que de présenter l'ancien résultat comme actuel.
 
-## 10. Stockage, confidentialité et suppression
+## 10. Stockage, confidentialité et suppression — choix fonctionnel confirmé
 
-Le cadrage exige une mémoire limitée et un fonctionnement local, mais ne fixe pas encore le mécanisme de stockage. La proposition fonctionnelle est de limiter la durée de conservation au besoin de continuité de la conversation et de supprimer le contexte expiré.
+**Décision confirmée en revue :** pour la V1, la mémoire conversationnelle est conservée uniquement en mémoire vive (RAM). Elle n'est pas enregistrée dans SQLite ni dans un fichier et n'est pas restaurée après fermeture de BATORYA.
+
+Conséquences attendues :
+- à l'expiration des 30 minutes, le contexte conversationnel est supprimé ;
+- lorsqu'une nouvelle conversation est demandée explicitement, le contexte précédent est supprimé immédiatement ;
+- à la fermeture normale ou à l'arrêt inattendu de BATORYA, la mémoire disparaît et n'est pas restaurée à la prochaine ouverture ;
+- les données métier dans SQLite ne sont pas modifiées par ces suppressions ;
+- aucun traitement IA périodique ou en arrière-plan n'est lancé pour entretenir la mémoire.
 
 Restent à définir dans la conception technique :
-- si la mémoire est uniquement conservée en mémoire vive ou si une persistance locale temporaire est nécessaire ;
-- comment le contexte est isolé entre les conversations et les utilisateurs éventuels du même poste ;
-- comment garantir sa suppression à l'expiration et à la fermeture de l'application ;
-- quelles données, le cas échéant, peuvent apparaître dans les journaux techniques ;
-- comment éviter qu'une fermeture inattendue de BATORYA ne restaure une conversation expirée.
+- comment isoler le contexte de la conversation active et éviter qu'il soit partagé entre utilisateurs éventuels du même poste ;
+- comment supprimer effectivement les références et buffers de contexte à l'expiration ou à la réinitialisation, dans les limites garanties par l'environnement d'exécution ;
+- quelles données, le cas échéant, peuvent apparaître dans les journaux techniques et comment éviter d'y copier le contenu conversationnel ;
+- comment tester que la fermeture ou un arrêt inattendu ne restaure pas de mémoire expirée.
 
-Aucune persistance durable de la mémoire conversationnelle n'est décidée par ce document. La base métier SQLite reste distincte et ne doit pas être utilisée comme stockage implicite de la mémoire de Léon.
+La mémoire en RAM est un choix fonctionnel pour la V1 ; ses modalités d'implémentation et de vérification restent à spécifier.
 
 ## 11. Séquence fonctionnelle de référence
 
@@ -152,14 +158,20 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - aucun traitement IA en arrière-plan n'est déclenché pour entretenir la mémoire ;
 - le mécanisme de stockage et de suppression est défini avant implémentation.
 
-## 13. Points à arbitrer avant validation
+## 13. Décisions confirmées et points restant à arbitrer
 
-1. Confirmer que les 30 minutes sont mesurées depuis la dernière interaction de l'utilisateur avec Léon, et non depuis la dernière activité dans BATORYA.
-2. Confirmer le comportement proposé pendant une réponse en cours lorsque le délai arrive à échéance.
-3. Déterminer si l'utilisateur doit pouvoir démarrer explicitement une nouvelle conversation ou abandonner l'objectif en cours.
-4. Choisir le mécanisme de stockage et de suppression, en privilégiant la solution locale la plus simple qui respecte la confidentialité et la continuité attendue.
-5. Définir les limites de taille et de détail de la mémoire pour préserver la fluidité sur les configurations ciblées.
-6. Déterminer le comportement à la fermeture normale ou inattendue de l'application.
-7. Préparer ultérieurement des tests fonctionnels couvrant navigation, suivi, changement de sujet, données métier périmées et expiration.
+### Décisions confirmées en revue
 
-**Statut final :** proposition de cycle de vie à examiner. Les règles et critères ci-dessus ne sont pas considérés comme validés tant que les arbitrages n'ont pas été confirmés.
+1. Le délai de 30 minutes est calculé depuis la dernière interaction de l'utilisateur avec Léon ; la navigation seule ne le renouvelle pas.
+2. Une réponse en cours peut se terminer même si le délai est atteint pendant sa génération ; le contexte ne doit pas être coupé au milieu du tour.
+3. L'utilisateur peut demander explicitement une nouvelle conversation, ce qui supprime immédiatement le contexte précédent.
+4. La mémoire est conservée uniquement en RAM, sans persistance ni restauration après fermeture normale ou inattendue de BATORYA.
+5. Les données métier sont distinctes de la mémoire conversationnelle et ne sont pas supprimées par son expiration.
+
+### Points restant à arbitrer
+
+1. Définir les limites de taille et de détail de la mémoire pour préserver la fluidité sur les configurations ciblées.
+2. Déterminer les exigences techniques d'isolation, de suppression effective et de journalisation sans contenu conversationnel inutile.
+3. Préparer ultérieurement des tests fonctionnels couvrant navigation, suivi, changement de sujet, données métier périmées, réinitialisation explicite et expiration.
+
+**Statut final :** proposition de cycle de vie partiellement confirmée en revue. Les décisions listées en section 13 sont retenues fonctionnellement ; les points restant à arbitrer, les détails techniques et les critères d'acceptation doivent encore être finalisés avant validation complète du document.
