@@ -49,6 +49,7 @@ La mémoire conversationnelle :
 
 - ne remplace pas le contexte d'écran transmis à l'activation de Léon ;
 - ne remplace pas une nouvelle lecture métier lorsque le statut, le montant, l'échéance ou toute autre donnée peut avoir changé ;
+- ne présente pas un ancien résultat comme actuel si une nouvelle lecture métier échoue ou est indisponible ;
 - ne transforme pas une hypothèse en fait vérifié ;
 - ne continue pas à utiliser une interprétation que l'utilisateur a explicitement corrigée ;
 - ne confond pas une déclaration de l'utilisateur avec une donnée métier vérifiée indépendamment ;
@@ -118,7 +119,7 @@ Exemples :
 - un règlement peut avoir été enregistré depuis la dernière vérification ;
 - une échéance ou un montant peut ne plus correspondre à l'état présent.
 
-Si la réponse de suivi dépend de l'état métier actuel, BATORYA doit fournir une nouvelle lecture autorisée. Si cette lecture est indisponible, Léon doit le signaler plutôt que de présenter l'ancien résultat comme actuel. Dans la mémoire, les résultats de lecture métier restent identifiés comme des faits vérifiés à un instant donné ; les propos de l'utilisateur sont conservés comme ses déclarations, et les hypothèses non confirmées restent clairement marquées comme telles. Si une déclaration de l'utilisateur contredit une donnée métier lue dans BATORYA, Léon conserve leur origine distincte, signale brièvement la contradiction et, si la réponse dépend de l'état actuel, demande une nouvelle lecture métier autorisée. Il ne privilégie pas silencieusement l'une des deux informations et ne modifie aucune donnée.
+Si la réponse de suivi dépend de l'état métier actuel, BATORYA doit fournir une nouvelle lecture autorisée. Si cette lecture est indisponible, Léon indique simplement que la vérification n'a pas abouti. Il peut conserver le dernier résultat vérifié s'il reste utile, mais doit le marquer comme ancien et ne jamais le présenter comme l'état actuel. Il propose une prochaine étape adaptée sans prétendre avoir effectué une vérification qui a échoué. Dans la mémoire, les résultats de lecture métier restent identifiés comme des faits vérifiés à un instant donné ; les propos de l'utilisateur sont conservés comme ses déclarations, et les hypothèses non confirmées restent clairement marquées comme telles. Si une déclaration de l'utilisateur contredit une donnée métier lue dans BATORYA, Léon conserve leur origine distincte, signale brièvement la contradiction et, si la réponse dépend de l'état actuel, demande une nouvelle lecture métier autorisée. Il ne privilégie pas silencieusement l'une des deux informations et ne modifie aucune donnée.
 
 ## 10. Stockage, confidentialité et suppression — choix fonctionnel confirmé
 
@@ -213,6 +214,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 22. La mémoire respecte un budget technique global à définir plutôt qu'un nombre fixe de sujets. La demande active, les questions en attente, les faits vérifiés pertinents et les derniers échanges utiles sont prioritaires. Si une information est écartée et devient ensuite nécessaire, Léon demande une précision au lieu de s'y fier ou de l'inventer.
 23. Lorsqu'une correction de l'utilisateur invalide une interprétation de Léon, la correction remplace l'information erronée dans le contexte utile. Léon ne réutilise pas l'interprétation invalidée et ne conserve pas inutilement le détail de son erreur.
 24. Si une déclaration de l'utilisateur contredit une donnée métier vérifiée dans BATORYA, Léon conserve distinctement les deux informations et leur origine, signale brièvement la contradiction et demande une nouvelle lecture métier autorisée si l'état actuel est nécessaire à la réponse. Il ne modifie aucune donnée et ne présente pas l'une des informations comme confirmée sans vérification.
+25. Si une lecture métier échoue ou est indisponible, Léon indique que la vérification n'a pas abouti. Il peut conserver le dernier résultat vérifié s'il reste utile, en le marquant comme ancien ; il ne le présente jamais comme actuel et propose une prochaine étape adaptée sans prétendre avoir vérifié l'état présent.
 
 ### Points restant à arbitrer
 
