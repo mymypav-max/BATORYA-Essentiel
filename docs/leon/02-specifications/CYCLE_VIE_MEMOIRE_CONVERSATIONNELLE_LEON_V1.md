@@ -73,7 +73,7 @@ Pour la V1, les règles suivantes sont confirmées :
 
 - le délai de 30 minutes est calculé depuis la dernière interaction de l'utilisateur avec Léon ;
 - envoyer un nouveau message à Léon renouvelle le délai ;
-- une réponse en cours de génération ne doit pas être interrompue uniquement parce que le délai arrive à échéance ; le contexte reste disponible pour terminer ce tour, puis le délai repart après la réponse ;
+- une réponse en cours de génération ne doit pas être interrompue uniquement parce que le délai arrive à échéance ; le contexte reste disponible pour terminer ce tour. Le délai glissant de 30 minutes repart à la fin de la réponse, une fois celle-ci délivrée à l'utilisateur ;
 - la navigation dans BATORYA, l'ouverture ou la fermeture d'un module et le maintien de l'application ouverte ne renouvellent pas le délai ;
 - un traitement interne ou une lecture métier en cours ne constitue pas, à lui seul, une interaction utilisateur renouvelant le délai ;
 - après 30 minutes sans interaction avec Léon, la conversation est considérée comme expirée.
@@ -153,7 +153,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - les messages de suivi peuvent réutiliser les précisions pertinentes déjà fournies ;
 - les données métier susceptibles d'avoir changé sont revérifiées avant de servir de faits actuels ;
 - la navigation seule ne renouvelle pas le délai d'inactivité ;
-- le délai de 30 minutes est appliqué sans interrompre arbitrairement une réponse en cours ;
+- le délai de 30 minutes est appliqué sans interrompre arbitrairement une réponse en cours ; si la génération dépasse ce délai, le contexte reste disponible jusqu'à la fin de la réponse et le délai repart lorsque la réponse est délivrée ;
 - après expiration, Léon ne prétend pas connaître l'ancien contexte ;
 - l'expiration est silencieuse et ne déclenche ni notification automatique ni traitement IA en arrière-plan ;
 - la reprise après expiration indique brièvement que le contexte précédent n'est plus disponible, puis demande seulement les informations indispensables, sans reconstruire la conversation par supposition ;
@@ -168,7 +168,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 ### Décisions confirmées en revue
 
 1. Le délai de 30 minutes est calculé depuis la dernière interaction de l'utilisateur avec Léon ; la navigation seule ne le renouvelle pas.
-2. Une réponse en cours peut se terminer même si le délai est atteint pendant sa génération ; le contexte ne doit pas être coupé au milieu du tour.
+2. Une réponse en cours peut se terminer même si le délai est atteint pendant sa génération ; le contexte ne doit pas être coupé au milieu du tour. Le délai glissant de 30 minutes repart à la fin de la réponse, une fois celle-ci délivrée à l'utilisateur.
 3. Une action dédiée dans l'interface permet à l'utilisateur de démarrer explicitement une nouvelle conversation et supprime immédiatement le contexte précédent ; un simple changement de sujet ne déclenche pas cette suppression.
 4. La mémoire est conservée uniquement en RAM, sans persistance ni restauration après fermeture normale ou inattendue de BATORYA.
 5. La mémoire combine un résumé structuré de fond et les derniers échanges utiles, plutôt que de conserver indéfiniment l'historique intégral.
@@ -179,6 +179,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 10. Après expiration, si l'utilisateur demande de reprendre l'ancienne conversation, Léon explique brièvement qu'il n'en a plus le contexte et demande les seules précisions nécessaires, sans inventer ni reconstruire l'échange.
 11. Si BATORYA se ferme pendant la génération d'une réponse, celle-ci est interrompue ; la génération et le contexte conversationnel ne sont pas restaurés ni repris automatiquement à la prochaine ouverture.
 12. L'expiration au bout de 30 minutes est silencieuse lorsqu'elle survient sans sollicitation de Léon : aucune notification ni aucun traitement en arrière-plan n'est déclenché. Si l'utilisateur fait ensuite référence à la conversation expirée, Léon explique brièvement que le contexte n'est plus disponible.
+13. Si une réponse de Léon dépasse 30 minutes de génération, le délai n'expire pas au milieu de ce tour : le contexte reste disponible jusqu'à la fin de la réponse, puis le délai glissant repart à partir de la délivrance de celle-ci.
 
 ### Points restant à arbitrer
 
