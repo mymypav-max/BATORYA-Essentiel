@@ -52,6 +52,7 @@ La mémoire conversationnelle :
 - ne transforme pas une hypothèse en fait vérifié ;
 - ne continue pas à utiliser une interprétation que l'utilisateur a explicitement corrigée ;
 - ne confond pas une déclaration de l'utilisateur avec une donnée métier vérifiée indépendamment ;
+- ne résout pas silencieusement une contradiction entre une déclaration de l'utilisateur et une donnée métier lue dans BATORYA ;
 - ne donne aucun droit d'accès supplémentaire aux données métier ;
 - ne conserve pas inutilement les données personnelles ou confidentielles, les coordonnées bancaires ni le contenu intégral des documents métier ;
 - ne permet aucune écriture ou action métier ;
@@ -117,7 +118,7 @@ Exemples :
 - un règlement peut avoir été enregistré depuis la dernière vérification ;
 - une échéance ou un montant peut ne plus correspondre à l'état présent.
 
-Si la réponse de suivi dépend de l'état métier actuel, BATORYA doit fournir une nouvelle lecture autorisée. Si cette lecture est indisponible, Léon doit le signaler plutôt que de présenter l'ancien résultat comme actuel. Dans la mémoire, les résultats de lecture métier restent identifiés comme des faits vérifiés à un instant donné ; les propos de l'utilisateur sont conservés comme ses déclarations, et les hypothèses non confirmées restent clairement marquées comme telles.
+Si la réponse de suivi dépend de l'état métier actuel, BATORYA doit fournir une nouvelle lecture autorisée. Si cette lecture est indisponible, Léon doit le signaler plutôt que de présenter l'ancien résultat comme actuel. Dans la mémoire, les résultats de lecture métier restent identifiés comme des faits vérifiés à un instant donné ; les propos de l'utilisateur sont conservés comme ses déclarations, et les hypothèses non confirmées restent clairement marquées comme telles. Si une déclaration de l'utilisateur contredit une donnée métier lue dans BATORYA, Léon conserve leur origine distincte, signale brièvement la contradiction et, si la réponse dépend de l'état actuel, demande une nouvelle lecture métier autorisée. Il ne privilégie pas silencieusement l'une des deux informations et ne modifie aucune donnée.
 
 ## 10. Stockage, confidentialité et suppression — choix fonctionnel confirmé
 
@@ -174,6 +175,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - la reprise après expiration indique brièvement que le contexte précédent n'est plus disponible, puis demande seulement les informations indispensables, sans reconstruire la conversation par supposition ;
 - une information manquante qui empêche une réponse fiable entraîne une question de clarification ciblée, jamais une supposition présentée comme un fait ;
 - les faits métier vérifiés, les déclarations de l'utilisateur et les hypothèses non confirmées restent explicitement distingués dans la mémoire ;
+- en cas de contradiction entre une déclaration utilisateur et une donnée métier vérifiée, Léon conserve l'origine de chacune, signale la contradiction et demande une nouvelle lecture autorisée si l'état actuel est déterminant ;
 - la mémoire ne conserve que les données nécessaires à la continuité et évite les copies inutiles de données personnelles ou confidentielles et de documents complets ;
 - l'expiration de la mémoire ne modifie aucune donnée métier ;
 - aucun traitement IA en arrière-plan n'est déclenché pour entretenir la mémoire ;
@@ -210,6 +212,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 21. Si l'utilisateur envoie une demande clairement indépendante pendant la génération d'une réponse, Léon termine la réponse en cours avant de traiter la nouvelle demande. L'éventuelle possibilité d'interrompre volontairement une génération reste à définir séparément.
 22. La mémoire respecte un budget technique global à définir plutôt qu'un nombre fixe de sujets. La demande active, les questions en attente, les faits vérifiés pertinents et les derniers échanges utiles sont prioritaires. Si une information est écartée et devient ensuite nécessaire, Léon demande une précision au lieu de s'y fier ou de l'inventer.
 23. Lorsqu'une correction de l'utilisateur invalide une interprétation de Léon, la correction remplace l'information erronée dans le contexte utile. Léon ne réutilise pas l'interprétation invalidée et ne conserve pas inutilement le détail de son erreur.
+24. Si une déclaration de l'utilisateur contredit une donnée métier vérifiée dans BATORYA, Léon conserve distinctement les deux informations et leur origine, signale brièvement la contradiction et demande une nouvelle lecture métier autorisée si l'état actuel est nécessaire à la réponse. Il ne modifie aucune donnée et ne présente pas l'une des informations comme confirmée sans vérification.
 
 ### Points restant à arbitrer
 
