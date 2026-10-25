@@ -119,6 +119,7 @@ Conséquences attendues :
 - à l'expiration des 30 minutes, le contexte conversationnel est supprimé ;
 - lorsqu'une nouvelle conversation est demandée explicitement, le contexte précédent est supprimé immédiatement ;
 - à la fermeture normale ou à l'arrêt inattendu de BATORYA, la mémoire disparaît et n'est pas restaurée à la prochaine ouverture ;
+- si BATORYA se ferme pendant la génération d'une réponse de Léon, la génération est interrompue avec l'application ; à la prochaine ouverture, Léon ne reprend pas automatiquement cette génération et ne restaure pas la conversation interrompue ;
 - les données métier dans SQLite ne sont pas modifiées par ces suppressions ;
 - aucun traitement IA périodique ou en arrière-plan n'est lancé pour entretenir la mémoire.
 
@@ -158,7 +159,8 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - une information manquante qui empêche une réponse fiable entraîne une question de clarification ciblée, jamais une supposition présentée comme un fait ;
 - l'expiration de la mémoire ne modifie aucune donnée métier ;
 - aucun traitement IA en arrière-plan n'est déclenché pour entretenir la mémoire ;
-- le mécanisme de stockage et de suppression est défini avant implémentation.
+- le mécanisme de stockage et de suppression est défini avant implémentation ;
+- une fermeture pendant la génération interrompt la réponse et ne provoque aucune reprise ou restauration automatique au redémarrage.
 
 ## 13. Décisions confirmées et points restant à arbitrer
 
@@ -174,6 +176,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 8. Si une information manquante empêche une réponse fiable ou l'identification certaine d'un objet métier, Léon pose une question ciblée au lieu de deviner.
 9. Le démarrage explicite d'une nouvelle conversation passe par une action dédiée dans l'interface de Léon, distincte d'un changement de sujet ; son emplacement et sa présentation restent à concevoir.
 10. Après expiration, si l'utilisateur demande de reprendre l'ancienne conversation, Léon explique brièvement qu'il n'en a plus le contexte et demande les seules précisions nécessaires, sans inventer ni reconstruire l'échange.
+11. Si BATORYA se ferme pendant la génération d'une réponse, celle-ci est interrompue ; la génération et le contexte conversationnel ne sont pas restaurés ni repris automatiquement à la prochaine ouverture.
 
 ### Points restant à arbitrer
 
