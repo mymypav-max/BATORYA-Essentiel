@@ -155,6 +155,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - la navigation seule ne renouvelle pas le délai d'inactivité ;
 - le délai de 30 minutes est appliqué sans interrompre arbitrairement une réponse en cours ;
 - après expiration, Léon ne prétend pas connaître l'ancien contexte ;
+- l'expiration est silencieuse et ne déclenche ni notification automatique ni traitement IA en arrière-plan ;
 - la reprise après expiration indique brièvement que le contexte précédent n'est plus disponible, puis demande seulement les informations indispensables, sans reconstruire la conversation par supposition ;
 - une information manquante qui empêche une réponse fiable entraîne une question de clarification ciblée, jamais une supposition présentée comme un fait ;
 - l'expiration de la mémoire ne modifie aucune donnée métier ;
@@ -177,6 +178,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 9. Le démarrage explicite d'une nouvelle conversation passe par une action dédiée dans l'interface de Léon, distincte d'un changement de sujet ; son emplacement et sa présentation restent à concevoir.
 10. Après expiration, si l'utilisateur demande de reprendre l'ancienne conversation, Léon explique brièvement qu'il n'en a plus le contexte et demande les seules précisions nécessaires, sans inventer ni reconstruire l'échange.
 11. Si BATORYA se ferme pendant la génération d'une réponse, celle-ci est interrompue ; la génération et le contexte conversationnel ne sont pas restaurés ni repris automatiquement à la prochaine ouverture.
+12. L'expiration au bout de 30 minutes est silencieuse lorsqu'elle survient sans sollicitation de Léon : aucune notification ni aucun traitement en arrière-plan n'est déclenché. Si l'utilisateur fait ensuite référence à la conversation expirée, Léon explique brièvement que le contexte n'est plus disponible.
 
 ### Points restant à arbitrer
 
