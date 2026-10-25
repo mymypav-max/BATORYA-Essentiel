@@ -22,6 +22,7 @@ Le principe déjà retenu dans le cadrage est une expiration après **30 minutes
 5. **Expiration claire :** après 30 minutes sans interaction avec Léon, le contexte conversationnel expire et ne doit plus être présenté comme disponible.
 6. **Séparation des données :** la mémoire conversationnelle n'est ni la base métier BATORYA, ni une copie durable des dossiers clients ou documents.
 7. **Fiabilité :** une information conservée en mémoire n'est pas automatiquement une donnée métier encore à jour. Une donnée susceptible d'avoir changé doit être vérifiée à nouveau par une lecture autorisée.
+8. **Gestion des informations manquantes :** Léon ne comble jamais une lacune de mémoire par une supposition présentée comme certaine. Si l'information manquante empêche une réponse fiable ou l'identification certaine d'un objet métier, il pose une question de clarification ciblée.
 
 ## 3. Ce que la mémoire doit conserver
 
@@ -154,6 +155,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - le délai de 30 minutes est appliqué sans interrompre arbitrairement une réponse en cours ;
 - après expiration, Léon ne prétend pas connaître l'ancien contexte ;
 - la reprise après expiration demande seulement les informations indispensables ;
+- une information manquante qui empêche une réponse fiable entraîne une question de clarification ciblée, jamais une supposition présentée comme un fait ;
 - l'expiration de la mémoire ne modifie aucune donnée métier ;
 - aucun traitement IA en arrière-plan n'est déclenché pour entretenir la mémoire ;
 - le mécanisme de stockage et de suppression est défini avant implémentation.
@@ -169,6 +171,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 5. La mémoire combine un résumé structuré de fond et les derniers échanges utiles, plutôt que de conserver indéfiniment l'historique intégral.
 6. Le résumé est actualisé lors des interactions avec Léon, sans traitement IA en arrière-plan.
 7. Les données métier sont distinctes de la mémoire conversationnelle et ne sont pas supprimées par son expiration.
+8. Si une information manquante empêche une réponse fiable ou l'identification certaine d'un objet métier, Léon pose une question ciblée au lieu de deviner.
 
 ### Points restant à arbitrer
 
