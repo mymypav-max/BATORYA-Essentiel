@@ -31,6 +31,7 @@ Pendant une conversation active, Léon peut conserver les éléments pertinents 
 - l'objectif initial de l'utilisateur et la question à résoudre ;
 - les précisions et réponses apportées par l'utilisateur ;
 - les interprétations confirmées ou les ambiguïtés qui restent ouvertes ;
+- la nature des informations conservées, en distinguant explicitement les faits métier vérifiés (avec leur moment de vérification si utile), les déclarations de l'utilisateur et les hypothèses non confirmées ;
 - les faits métier effectivement vérifiés, avec assez d'information pour savoir ce qui a été vérifié et ce qui doit l'être à nouveau ;
 - les éléments déjà établis qui peuvent être réutilisés sans répétition systématique, en les rappelant seulement lorsqu'ils aident à comprendre, justifier la réponse ou confirmer l'objet concerné ;
 - les étapes déjà expliquées et la progression de l'accompagnement ;
@@ -46,6 +47,7 @@ La mémoire conversationnelle :
 - ne remplace pas le contexte d'écran transmis à l'activation de Léon ;
 - ne remplace pas une nouvelle lecture métier lorsque le statut, le montant, l'échéance ou toute autre donnée peut avoir changé ;
 - ne transforme pas une hypothèse en fait vérifié ;
+- ne confond pas une déclaration de l'utilisateur avec une donnée métier vérifiée indépendamment ;
 - ne donne aucun droit d'accès supplémentaire aux données métier ;
 - ne permet aucune écriture ou action métier ;
 - ne doit pas persister indéfiniment simplement parce que BATORYA reste ouvert ;
@@ -110,7 +112,7 @@ Exemples :
 - un règlement peut avoir été enregistré depuis la dernière vérification ;
 - une échéance ou un montant peut ne plus correspondre à l'état présent.
 
-Si la réponse de suivi dépend de l'état métier actuel, BATORYA doit fournir une nouvelle lecture autorisée. Si cette lecture est indisponible, Léon doit le signaler plutôt que de présenter l'ancien résultat comme actuel.
+Si la réponse de suivi dépend de l'état métier actuel, BATORYA doit fournir une nouvelle lecture autorisée. Si cette lecture est indisponible, Léon doit le signaler plutôt que de présenter l'ancien résultat comme actuel. Dans la mémoire, les résultats de lecture métier restent identifiés comme des faits vérifiés à un instant donné ; les propos de l'utilisateur sont conservés comme ses déclarations, et les hypothèses non confirmées restent clairement marquées comme telles.
 
 ## 10. Stockage, confidentialité et suppression — choix fonctionnel confirmé
 
@@ -162,6 +164,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - l'expiration est silencieuse et ne déclenche ni notification automatique ni traitement IA en arrière-plan ;
 - la reprise après expiration indique brièvement que le contexte précédent n'est plus disponible, puis demande seulement les informations indispensables, sans reconstruire la conversation par supposition ;
 - une information manquante qui empêche une réponse fiable entraîne une question de clarification ciblée, jamais une supposition présentée comme un fait ;
+- les faits métier vérifiés, les déclarations de l'utilisateur et les hypothèses non confirmées restent explicitement distingués dans la mémoire ;
 - l'expiration de la mémoire ne modifie aucune donnée métier ;
 - aucun traitement IA en arrière-plan n'est déclenché pour entretenir la mémoire ;
 - le mécanisme de stockage et de suppression est défini avant implémentation ;
@@ -186,6 +189,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 13. Si une réponse de Léon dépasse 30 minutes de génération, le délai n'expire pas au milieu de ce tour : le contexte reste disponible jusqu'à la fin de la réponse, puis le délai glissant repart à partir de la délivrance de celle-ci.
 14. La mémoire conserve les questions en attente et les précisions attendues de l'utilisateur pour interpréter ses réponses ultérieures, y compris après un changement d'écran. Ces éléments sont abandonnés à l'expiration ou au démarrage explicite d'une nouvelle conversation.
 15. Léon réutilise les faits et précisions déjà établis sans les répéter systématiquement ; il les rappelle uniquement si cela aide à comprendre ou justifier sa réponse, ou à confirmer l'objet concerné.
+16. La mémoire distingue explicitement les faits métier vérifiés (et le moment de leur vérification lorsque pertinent), les déclarations de l'utilisateur et les hypothèses non confirmées. Une hypothèse ne devient jamais un fait vérifié sans vérification appropriée.
 
 ### Points restant à arbitrer
 
