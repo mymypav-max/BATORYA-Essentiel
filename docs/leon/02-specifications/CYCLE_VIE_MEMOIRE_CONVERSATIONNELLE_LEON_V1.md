@@ -32,6 +32,7 @@ Pendant une conversation active, Léon peut conserver les éléments pertinents 
 - l'objectif principal de l'utilisateur et les différents sujets secondaires ouverts dans la même conversation, chacun avec sa progression et ses éventuelles questions en attente ;
 - l'objectif initial de l'utilisateur et la question à résoudre ;
 - les précisions et réponses apportées par l'utilisateur ;
+- les corrections pertinentes apportées par l'utilisateur, afin de remplacer l'interprétation invalidée par l'information corrigée, sans conserver inutilement le détail de l'erreur initiale ;
 - les interprétations confirmées ou les ambiguïtés qui restent ouvertes ;
 - la nature des informations conservées, en distinguant explicitement les faits métier vérifiés (avec leur moment de vérification si utile), les déclarations de l'utilisateur et les hypothèses non confirmées ;
 - les faits métier effectivement vérifiés, avec assez d'information pour savoir ce qui a été vérifié et ce qui doit l'être à nouveau ;
@@ -49,6 +50,7 @@ La mémoire conversationnelle :
 - ne remplace pas le contexte d'écran transmis à l'activation de Léon ;
 - ne remplace pas une nouvelle lecture métier lorsque le statut, le montant, l'échéance ou toute autre donnée peut avoir changé ;
 - ne transforme pas une hypothèse en fait vérifié ;
+- ne continue pas à utiliser une interprétation que l'utilisateur a explicitement corrigée ;
 - ne confond pas une déclaration de l'utilisateur avec une donnée métier vérifiée indépendamment ;
 - ne donne aucun droit d'accès supplémentaire aux données métier ;
 - ne conserve pas inutilement les données personnelles ou confidentielles, les coordonnées bancaires ni le contenu intégral des documents métier ;
@@ -71,7 +73,7 @@ En revanche, le nouvel écran ne doit pas réécrire rétroactivement le context
 4. Léon conserve l'objectif de départ, tient compte du nouvel écran transmis à cette interaction et demande une lecture autorisée si des données sont nécessaires.
 5. Il ne recommence pas toute la conversation et ne suppose pas que le changement d'écran a résolu le problème.
 
-Si le message suivant ne permet pas de déterminer s'il se rattache à la demande précédente ou s'il s'agit d'un nouveau sujet, Léon interprète le contexte lorsqu'il est suffisamment clair et ne pose une question que si l'ambiguïté change substantiellement la réponse. Il réutilise les faits déjà établis sans les répéter systématiquement ; il les rappelle uniquement lorsque cela facilite la compréhension, justifie la réponse ou aide à confirmer l'objet concerné.
+Si le message suivant ne permet pas de déterminer s'il se rattache à la demande précédente ou s'il s'agit d'un nouveau sujet, Léon interprète le contexte lorsqu'il est suffisamment clair et ne pose une question que si l'ambiguïté change substantiellement la réponse. Il réutilise les faits déjà établis sans les répéter systématiquement ; il les rappelle uniquement lorsque cela facilite la compréhension, justifie la réponse ou aide à confirmer l'objet concerné. Lorsqu'une correction de l'utilisateur invalide une interprétation précédente, Léon remplace cette interprétation par la correction et ne s'appuie plus sur l'association erronée.
 
 ## 6. Règle des 30 minutes d'inactivité — confirmée en revue
 
@@ -161,6 +163,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - plusieurs messages successifs clairement liés avant la fin d'une réponse sont traités comme une même demande ; en cas de contradiction ou d'ambiguïté importante, Léon demande une clarification plutôt que de produire des réponses concurrentes ;
 - si un message reçu pendant la génération constitue clairement une demande indépendante, Léon termine la réponse en cours puis traite cette nouvelle demande ; l'interruption volontaire éventuelle reste à définir séparément ;
 - les faits déjà établis ne sont rappelés que lorsqu'ils sont utiles à la compréhension, à la justification de la réponse ou à la confirmation de l'objet concerné ;
+- les corrections de l'utilisateur remplacent les interprétations invalidées ; l'erreur initiale n'est pas conservée au-delà de ce qui est nécessaire pour éviter de la reproduire ;
 - une réponse à une question en attente peut être comprise après un changement d'écran, tant que la conversation n'a pas expiré ou été réinitialisée ;
 - les questions en attente sont abandonnées lors de l'expiration ou du démarrage explicite d'une nouvelle conversation ;
 - les données métier susceptibles d'avoir changé sont revérifiées avant de servir de faits actuels ;
@@ -206,6 +209,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 20. Plusieurs messages utilisateur successifs reçus avant la fin d'une réponse sont traités comme une même demande lorsqu'ils sont clairement liés. Léon évite les réponses concurrentes et demande une clarification ciblée en cas de contradiction ou d'ambiguïté importante.
 21. Si l'utilisateur envoie une demande clairement indépendante pendant la génération d'une réponse, Léon termine la réponse en cours avant de traiter la nouvelle demande. L'éventuelle possibilité d'interrompre volontairement une génération reste à définir séparément.
 22. La mémoire respecte un budget technique global à définir plutôt qu'un nombre fixe de sujets. La demande active, les questions en attente, les faits vérifiés pertinents et les derniers échanges utiles sont prioritaires. Si une information est écartée et devient ensuite nécessaire, Léon demande une précision au lieu de s'y fier ou de l'inventer.
+23. Lorsqu'une correction de l'utilisateur invalide une interprétation de Léon, la correction remplace l'information erronée dans le contexte utile. Léon ne réutilise pas l'interprétation invalidée et ne conserve pas inutilement le détail de son erreur.
 
 ### Points restant à arbitrer
 
