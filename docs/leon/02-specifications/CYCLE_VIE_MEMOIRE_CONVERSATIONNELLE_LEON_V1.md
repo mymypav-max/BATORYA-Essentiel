@@ -34,7 +34,7 @@ Pendant une conversation active, Léon peut conserver les éléments pertinents 
 - les faits métier effectivement vérifiés, avec assez d'information pour savoir ce qui a été vérifié et ce qui doit l'être à nouveau ;
 - les étapes déjà expliquées et la progression de l'accompagnement ;
 - les références aux objets métier déjà identifiés de façon fiable ;
-- les engagements de dialogue utiles, par exemple une question posée à laquelle l'utilisateur doit encore répondre.
+- les engagements de dialogue utiles, notamment les questions en attente et les précisions attendues de l'utilisateur, afin qu'une réponse ultérieure puisse être interprétée correctement même après un changement d'écran.
 
 La mémoire n'a pas vocation à conserver systématiquement chaque détail de l'interface, toutes les données renvoyées par les services, ni une copie complète des objets métier.\n\n**Décision confirmée en revue :** la continuité repose sur deux éléments complémentaires :\n- un résumé structuré de la conversation, contenant l'objectif, les précisions utiles, les faits vérifiés et la progression ;\n- les derniers échanges utiles, pour préserver le contexte immédiat et interpréter correctement les références courtes.\n\nLe résumé est actualisé à l'occasion des interactions avec Léon, sans traitement IA en arrière-plan. La taille du résumé et le nombre d'échanges récents conservés restent à définir techniquement. Il n'est pas exigé de conserver indéfiniment l'intégralité des messages mot pour mot.
 
@@ -90,7 +90,7 @@ Le choix fonctionnel est confirmé. La manière technique de mesurer et d'appliq
 4. Les données métier de BATORYA ne sont ni supprimées ni modifiées par l'expiration de la mémoire.
 5. Aucun message ne doit laisser croire que Léon a conservé des informations qui ont été supprimées ou ne sont plus accessibles.
 
-Il est préférable de ne pas imposer à l'utilisateur un récapitulatif complet : Léon demande uniquement les éléments indispensables pour comprendre à nouveau la demande.
+Il est préférable de ne pas imposer à l'utilisateur un récapitulatif complet : Léon demande uniquement les éléments indispensables pour comprendre à nouveau la demande. Les questions en attente et les précisions attendues sont abandonnées avec le contexte expiré.
 
 ## 8. Nouvelle conversation et changement de sujet
 
@@ -98,7 +98,7 @@ L'expiration au bout de 30 minutes est distincte d'un changement de sujet avant 
 
 Lorsqu'un utilisateur pose clairement une nouvelle question sans lien avec la précédente, Léon doit répondre à cette nouvelle demande sans forcer artificiellement l'ancien objectif dans l'interprétation. Les éléments antérieurs peuvent rester disponibles tant qu'ils sont utiles à une référence ultérieure et que la conversation n'a pas expiré.
 
-**Décision confirmée en revue :** l'utilisateur pourra démarrer explicitement une nouvelle conversation au moyen d'une action dédiée dans l'interface de Léon, distincte du simple changement de sujet. Cette action abandonne immédiatement le contexte conversationnel précédent, sans attendre l'expiration des 30 minutes. Les détails d'emplacement et de présentation du contrôle restent à concevoir. Un simple changement de sujet ne déclenche pas à lui seul la suppression de toute la mémoire.
+**Décision confirmée en revue :** l'utilisateur pourra démarrer explicitement une nouvelle conversation au moyen d'une action dédiée dans l'interface de Léon, distincte du simple changement de sujet. Cette action abandonne immédiatement le contexte conversationnel précédent, y compris les questions en attente et les précisions attendues, sans attendre l'expiration des 30 minutes. Les détails d'emplacement et de présentation du contrôle restent à concevoir. Un simple changement de sujet ne déclenche pas à lui seul la suppression de toute la mémoire.
 
 ## 9. Données métier et fraîcheur des informations
 
@@ -151,6 +151,8 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - un changement d'écran ne fait pas perdre le fil d'une demande en cours ;
 - l'écran transmis à une interaction est un contexte complémentaire et ne remplace pas la demande explicite ;
 - les messages de suivi peuvent réutiliser les précisions pertinentes déjà fournies ;
+- une réponse à une question en attente peut être comprise après un changement d'écran, tant que la conversation n'a pas expiré ou été réinitialisée ;
+- les questions en attente sont abandonnées lors de l'expiration ou du démarrage explicite d'une nouvelle conversation ;
 - les données métier susceptibles d'avoir changé sont revérifiées avant de servir de faits actuels ;
 - la navigation seule ne renouvelle pas le délai d'inactivité ;
 - le délai de 30 minutes est appliqué sans interrompre arbitrairement une réponse en cours ; si la génération dépasse ce délai, le contexte reste disponible jusqu'à la fin de la réponse et le délai repart lorsque la réponse est délivrée ;
@@ -180,6 +182,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 11. Si BATORYA se ferme pendant la génération d'une réponse, celle-ci est interrompue ; la génération et le contexte conversationnel ne sont pas restaurés ni repris automatiquement à la prochaine ouverture.
 12. L'expiration au bout de 30 minutes est silencieuse lorsqu'elle survient sans sollicitation de Léon : aucune notification ni aucun traitement en arrière-plan n'est déclenché. Si l'utilisateur fait ensuite référence à la conversation expirée, Léon explique brièvement que le contexte n'est plus disponible.
 13. Si une réponse de Léon dépasse 30 minutes de génération, le délai n'expire pas au milieu de ce tour : le contexte reste disponible jusqu'à la fin de la réponse, puis le délai glissant repart à partir de la délivrance de celle-ci.
+14. La mémoire conserve les questions en attente et les précisions attendues de l'utilisateur pour interpréter ses réponses ultérieures, y compris après un changement d'écran. Ces éléments sont abandonnés à l'expiration ou au démarrage explicite d'une nouvelle conversation.
 
 ### Points restant à arbitrer
 
