@@ -102,7 +102,7 @@ Il est préférable de ne pas imposer à l'utilisateur un récapitulatif complet
 
 L'expiration au bout de 30 minutes est distincte d'un changement de sujet avant expiration.
 
-Lorsqu'un utilisateur pose clairement une nouvelle question sans lien avec la précédente, Léon doit répondre à cette nouvelle demande sans forcer artificiellement l'ancien objectif dans l'interprétation. Les éléments antérieurs peuvent rester disponibles tant qu'ils sont utiles à une référence ultérieure et que la conversation n'a pas expiré. Si plusieurs sujets sont traités dans la même conversation, Léon conserve un objectif principal et distingue les sujets secondaires, leur progression et leurs questions en attente afin de pouvoir y revenir sans mélanger leurs informations.
+Lorsqu'un utilisateur pose clairement une nouvelle question sans lien avec la précédente, Léon doit répondre à cette nouvelle demande sans forcer artificiellement l'ancien objectif dans l'interprétation. Les éléments antérieurs peuvent rester disponibles tant qu'ils sont utiles à une référence ultérieure et que la conversation n'a pas expiré. Si plusieurs sujets sont traités dans la même conversation, Léon conserve un objectif principal et distingue les sujets secondaires, leur progression et leurs questions en attente afin de pouvoir y revenir sans mélanger leurs informations. Il suit naturellement un nouveau sujet sans annoncer systématiquement le changement ; il ne le signale que si cela permet d'éviter une confusion importante.
 
 **Décision confirmée en revue :** l'utilisateur pourra démarrer explicitement une nouvelle conversation au moyen d'une action dédiée dans l'interface de Léon, distincte du simple changement de sujet. Cette action abandonne immédiatement le contexte conversationnel précédent, y compris les questions en attente et les précisions attendues, sans attendre l'expiration des 30 minutes. Les détails d'emplacement et de présentation du contrôle restent à concevoir. Un simple changement de sujet ne déclenche pas à lui seul la suppression de toute la mémoire.
 
@@ -186,6 +186,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 6. Le résumé est actualisé lors des interactions avec Léon, sans traitement IA en arrière-plan.
 7. Les données métier sont distinctes de la mémoire conversationnelle et ne sont pas supprimées par son expiration.
 8. Une même conversation peut contenir plusieurs sujets : la mémoire conserve un objectif principal et distingue les sujets secondaires, leur progression et leurs questions en attente. Le délai d'inactivité reste global à la conversation.
+9. Léon suit naturellement un changement de sujet sans l'annoncer systématiquement ; il ne le signale que si cela aide à éviter une confusion importante.
 8. Si une information manquante empêche une réponse fiable ou l'identification certaine d'un objet métier, Léon pose une question ciblée au lieu de deviner.
 9. Le démarrage explicite d'une nouvelle conversation passe par une action dédiée dans l'interface de Léon, distincte d'un changement de sujet ; son emplacement et sa présentation restent à concevoir.
 10. Après expiration, si l'utilisateur demande de reprendre l'ancienne conversation, Léon explique brièvement qu'il n'en a plus le contexte et demande les seules précisions nécessaires, sans inventer ni reconstruire l'échange.
@@ -197,6 +198,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 16. La mémoire distingue explicitement les faits métier vérifiés (et le moment de leur vérification lorsque pertinent), les déclarations de l'utilisateur et les hypothèses non confirmées. Une hypothèse ne devient jamais un fait vérifié sans vérification appropriée.
 17. La mémoire applique un principe de minimisation : elle conserve uniquement les éléments nécessaires à la continuité et évite de recopier inutilement des données personnelles ou confidentielles, des coordonnées bancaires et le contenu intégral de documents métier.
 18. Une conversation peut regrouper plusieurs sujets : Léon conserve un objectif principal et distingue les sujets secondaires, chacun avec sa progression et ses questions en attente. Le délai de 30 minutes s'applique globalement à la conversation ; l'expiration ou le démarrage explicite d'une nouvelle conversation abandonne tous les sujets mémorisés.
+19. Léon suit naturellement un nouveau sujet sans annoncer systématiquement le changement ; il ne le signale que si cela aide à éviter une confusion importante.
 
 ### Points restant à arbitrer
 
