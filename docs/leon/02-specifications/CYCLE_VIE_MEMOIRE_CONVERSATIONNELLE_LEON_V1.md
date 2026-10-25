@@ -58,6 +58,7 @@ La mémoire conversationnelle :
 - ne conserve pas inutilement les données personnelles ou confidentielles, les coordonnées bancaires ni le contenu intégral des documents métier ;
 - ne permet aucune écriture ou action métier ;
 - ne doit pas persister indéfiniment simplement parce que BATORYA reste ouvert ;
+- ne doit pas être supprimée par la seule fermeture du panneau de Léon ; le contexte reste en RAM et le délai d'inactivité continue de s'écouler ;
 - ne doit pas être entretenue par un traitement IA périodique ou en arrière-plan.
 
 ## 5. Changement d'écran pendant une conversation
@@ -84,7 +85,7 @@ Pour la V1, les règles suivantes sont confirmées :
 - le délai de 30 minutes est calculé depuis la dernière interaction de l'utilisateur avec Léon ;
 - envoyer un nouveau message à Léon renouvelle le délai ; plusieurs messages successifs avant la fin d'une réponse sont regroupés dans une même demande lorsqu'ils sont clairement liés, sans lancer de réponses concurrentes ;
 - une réponse en cours de génération ne doit pas être interrompue automatiquement, que ce soit parce que le délai arrive à échéance ou parce qu'une nouvelle demande indépendante est reçue ; le contexte reste disponible pour terminer ce tour. Le délai glissant de 30 minutes repart à la fin de la réponse, une fois celle-ci délivrée à l'utilisateur ;
-- la navigation dans BATORYA, l'ouverture ou la fermeture d'un module et le maintien de l'application ouverte ne renouvellent pas le délai ;
+- la navigation dans BATORYA, l'ouverture ou la fermeture d'un module, la fermeture du panneau de Léon et le maintien de l'application ouverte ne renouvellent pas le délai ; fermer le panneau ne supprime pas la mémoire, qui reste disponible jusqu'à expiration ou réinitialisation ;
 - un traitement interne ou une lecture métier en cours ne constitue pas, à lui seul, une interaction utilisateur renouvelant le délai ;
 - après 30 minutes sans interaction avec Léon, la conversation est considérée comme expirée.
 
@@ -169,7 +170,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - une réponse à une question en attente peut être comprise après un changement d'écran, tant que la conversation n'a pas expiré ou été réinitialisée ;
 - les questions en attente sont abandonnées lors de l'expiration ou du démarrage explicite d'une nouvelle conversation ;
 - les données métier susceptibles d'avoir changé sont revérifiées avant de servir de faits actuels ;
-- la navigation seule ne renouvelle pas le délai d'inactivité ;
+- la navigation seule et la fermeture du panneau de Léon ne renouvellent pas le délai d'inactivité ; la fermeture du panneau ne supprime pas la mémoire ;
 - le délai de 30 minutes est appliqué sans interrompre arbitrairement une réponse en cours ; si la génération dépasse ce délai, le contexte reste disponible jusqu'à la fin de la réponse et le délai repart lorsque la réponse est délivrée ;
 - après expiration, Léon ne prétend pas connaître l'ancien contexte ;
 - l'expiration est silencieuse et ne déclenche ni notification automatique ni traitement IA en arrière-plan ;
@@ -215,6 +216,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 23. Lorsqu'une correction de l'utilisateur invalide une interprétation de Léon, la correction remplace l'information erronée dans le contexte utile. Léon ne réutilise pas l'interprétation invalidée et ne conserve pas inutilement le détail de son erreur.
 24. Si une déclaration de l'utilisateur contredit une donnée métier vérifiée dans BATORYA, Léon conserve distinctement les deux informations et leur origine, signale brièvement la contradiction et demande une nouvelle lecture métier autorisée si l'état actuel est nécessaire à la réponse. Il ne modifie aucune donnée et ne présente pas l'une des informations comme confirmée sans vérification.
 25. Si une lecture métier échoue ou est indisponible, Léon indique que la vérification n'a pas abouti. Il peut conserver le dernier résultat vérifié s'il reste utile, en le marquant comme ancien ; il ne le présente jamais comme actuel et propose une prochaine étape adaptée sans prétendre avoir vérifié l'état présent.
+26. Fermer le panneau de Léon ne supprime pas la conversation : le contexte reste en RAM et le délai glissant de 30 minutes continue de s'écouler. L'utilisateur peut reprendre le fil en rouvrant le panneau avant expiration. La fermeture du panneau ne renouvelle pas le délai.
 
 ### Points restant à arbitrer
 
