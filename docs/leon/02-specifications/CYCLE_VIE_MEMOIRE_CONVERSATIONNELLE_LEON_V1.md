@@ -59,7 +59,8 @@ La mémoire conversationnelle :
 - ne permet aucune écriture ou action métier ;
 - ne doit pas persister indéfiniment simplement parce que BATORYA reste ouvert ;
 - ne doit pas être supprimée par la seule fermeture du panneau de Léon ; le contexte reste en RAM et le délai d'inactivité continue de s'écouler ;
-- ne doit pas être entretenue par un traitement IA périodique ou en arrière-plan.
+- ne doit pas être entretenue par un traitement IA périodique ou en arrière-plan ;
+- ne nécessite pas d'afficher un compte à rebours permanent ou un indicateur visuel du temps restant.
 
 ## 5. Changement d'écran pendant une conversation
 
@@ -89,7 +90,7 @@ Pour la V1, les règles suivantes sont confirmées :
 - un traitement interne ou une lecture métier en cours ne constitue pas, à lui seul, une interaction utilisateur renouvelant le délai ;
 - après 30 minutes sans interaction avec Léon, la conversation est considérée comme expirée.
 
-Le choix fonctionnel est confirmé. La manière technique de mesurer et d'appliquer le délai reste à définir.
+Le choix fonctionnel est confirmé. La manière technique de mesurer et d'appliquer le délai reste à définir. Aucun compte à rebours permanent ni indicateur visuel du temps restant n'est affiché ; l'expiration est silencieuse et n'est expliquée que si cela devient utile à la demande de l'utilisateur.
 
 ## 7. Comportement à l'expiration
 
@@ -173,7 +174,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 - la navigation seule et la fermeture du panneau de Léon ne renouvellent pas le délai d'inactivité ; la fermeture du panneau ne supprime pas la mémoire ;
 - le délai de 30 minutes est appliqué sans interrompre arbitrairement une réponse en cours ; si la génération dépasse ce délai, le contexte reste disponible jusqu'à la fin de la réponse et le délai repart lorsque la réponse est délivrée ;
 - après expiration, Léon ne prétend pas connaître l'ancien contexte ;
-- l'expiration est silencieuse et ne déclenche ni notification automatique ni traitement IA en arrière-plan ;
+- l'expiration est silencieuse et ne déclenche ni notification automatique ni traitement IA en arrière-plan ; aucun compte à rebours permanent ni indicateur visuel du temps restant n'est affiché ;
 - la reprise après expiration indique brièvement que le contexte précédent n'est plus disponible, puis demande seulement les informations indispensables, sans reconstruire la conversation par supposition ;
 - une information manquante qui empêche une réponse fiable entraîne une question de clarification ciblée, jamais une supposition présentée comme un fait ;
 - les faits métier vérifiés, les déclarations de l'utilisateur et les hypothèses non confirmées restent explicitement distingués dans la mémoire ;
@@ -217,6 +218,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 24. Si une déclaration de l'utilisateur contredit une donnée métier vérifiée dans BATORYA, Léon conserve distinctement les deux informations et leur origine, signale brièvement la contradiction et demande une nouvelle lecture métier autorisée si l'état actuel est nécessaire à la réponse. Il ne modifie aucune donnée et ne présente pas l'une des informations comme confirmée sans vérification.
 25. Si une lecture métier échoue ou est indisponible, Léon indique que la vérification n'a pas abouti. Il peut conserver le dernier résultat vérifié s'il reste utile, en le marquant comme ancien ; il ne le présente jamais comme actuel et propose une prochaine étape adaptée sans prétendre avoir vérifié l'état présent.
 26. Fermer le panneau de Léon ne supprime pas la conversation : le contexte reste en RAM et le délai glissant de 30 minutes continue de s'écouler. L'utilisateur peut reprendre le fil en rouvrant le panneau avant expiration. La fermeture du panneau ne renouvelle pas le délai.
+27. Aucun compte à rebours permanent ni indicateur visuel du temps restant n'est affiché. L'expiration reste silencieuse ; Léon explique la perte du contexte uniquement lorsqu'elle est pertinente pour répondre à une référence à l'ancienne conversation.
 
 ### Points restant à arbitrer
 
