@@ -98,7 +98,7 @@ L'expiration au bout de 30 minutes est distincte d'un changement de sujet avant 
 
 Lorsqu'un utilisateur pose clairement une nouvelle question sans lien avec la précédente, Léon doit répondre à cette nouvelle demande sans forcer artificiellement l'ancien objectif dans l'interprétation. Les éléments antérieurs peuvent rester disponibles tant qu'ils sont utiles à une référence ultérieure et que la conversation n'a pas expiré.
 
-**Décision confirmée en revue :** l'utilisateur pourra demander explicitement de démarrer une nouvelle conversation. Cette action abandonne immédiatement le contexte conversationnel précédent, sans attendre l'expiration des 30 minutes. Le contrôle d'interface permettant cette action reste à concevoir. Un simple changement de sujet ne déclenche pas à lui seul la suppression de toute la mémoire.
+**Décision confirmée en revue :** l'utilisateur pourra démarrer explicitement une nouvelle conversation au moyen d'une action dédiée dans l'interface de Léon, distincte du simple changement de sujet. Cette action abandonne immédiatement le contexte conversationnel précédent, sans attendre l'expiration des 30 minutes. Les détails d'emplacement et de présentation du contrôle restent à concevoir. Un simple changement de sujet ne déclenche pas à lui seul la suppression de toute la mémoire.
 
 ## 9. Données métier et fraîcheur des informations
 
@@ -166,17 +166,19 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 
 1. Le délai de 30 minutes est calculé depuis la dernière interaction de l'utilisateur avec Léon ; la navigation seule ne le renouvelle pas.
 2. Une réponse en cours peut se terminer même si le délai est atteint pendant sa génération ; le contexte ne doit pas être coupé au milieu du tour.
-3. L'utilisateur peut demander explicitement une nouvelle conversation, ce qui supprime immédiatement le contexte précédent.
+3. Une action dédiée dans l'interface permet à l'utilisateur de démarrer explicitement une nouvelle conversation et supprime immédiatement le contexte précédent ; un simple changement de sujet ne déclenche pas cette suppression.
 4. La mémoire est conservée uniquement en RAM, sans persistance ni restauration après fermeture normale ou inattendue de BATORYA.
 5. La mémoire combine un résumé structuré de fond et les derniers échanges utiles, plutôt que de conserver indéfiniment l'historique intégral.
 6. Le résumé est actualisé lors des interactions avec Léon, sans traitement IA en arrière-plan.
 7. Les données métier sont distinctes de la mémoire conversationnelle et ne sont pas supprimées par son expiration.
 8. Si une information manquante empêche une réponse fiable ou l'identification certaine d'un objet métier, Léon pose une question ciblée au lieu de deviner.
+9. Le démarrage explicite d'une nouvelle conversation passe par une action dédiée dans l'interface de Léon, distincte d'un changement de sujet ; son emplacement et sa présentation restent à concevoir.
 
 ### Points restant à arbitrer
 
 1. Définir les limites de taille du résumé structuré et le nombre ou la taille des derniers échanges utiles conservés, afin de préserver la fluidité.
 2. Déterminer les exigences techniques d'isolation, de suppression effective et de journalisation sans contenu conversationnel inutile.
-3. Préparer ultérieurement des tests fonctionnels couvrant navigation, suivi, changement de sujet, données métier périmées, réinitialisation explicite et expiration.
+3. Concevoir l'emplacement et la présentation de l'action dédiée « Nouvelle conversation » dans l'interface.
+4. Préparer ultérieurement des tests fonctionnels couvrant navigation, suivi, changement de sujet, données métier périmées, réinitialisation explicite et expiration.
 
 **Statut final :** proposition de cycle de vie partiellement confirmée en revue. Les décisions listées en section 13 sont retenues fonctionnellement ; les points restant à arbitrer, les détails techniques et les critères d'acceptation doivent encore être finalisés avant validation complète du document.
