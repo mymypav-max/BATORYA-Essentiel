@@ -89,7 +89,7 @@ Si le message suivant ne permet pas de déterminer s'il se rattache à la demand
 Pour la V1, les règles suivantes sont confirmées :
 
 - le délai de 30 minutes est calculé depuis la dernière interaction de l'utilisateur avec Léon ;
-- envoyer un nouveau message à Léon renouvelle le délai ; plusieurs messages successifs avant la fin d'une réponse sont regroupés dans une même demande lorsqu'ils sont clairement liés, sans lancer de réponses concurrentes ;
+- en fonctionnement normal, envoyer un nouveau message à Léon renouvelle le délai ; plusieurs messages successifs avant la fin d'une réponse sont regroupés dans une même demande lorsqu'ils sont clairement liés, sans lancer de réponses concurrentes. Pendant la génération, le délai ne peut pas faire expirer le tour en cours ; après délivrance de la réponse, un nouveau délai complet de 30 minutes commence ;
 - une réponse en cours de génération ne doit pas être interrompue automatiquement, que ce soit parce que le délai arrive à échéance ou parce qu'une nouvelle demande indépendante est reçue ; le contexte reste disponible pour terminer ce tour. Le délai glissant de 30 minutes repart à la fin de la réponse, une fois celle-ci délivrée à l'utilisateur ;
 - la navigation dans BATORYA, l'ouverture ou la fermeture d'un module, la fermeture du panneau de Léon et le maintien de l'application ouverte ne renouvellent pas le délai ; fermer le panneau ne supprime pas la mémoire, qui reste disponible jusqu'à expiration ou réinitialisation ;
 - un traitement interne ou une lecture métier en cours ne constitue pas, à lui seul, une interaction utilisateur renouvelant le délai ;
