@@ -1,238 +1,197 @@
-# Cycle de vie de la mémoire conversationnelle de Léon — BATORYA Essentiel V6
+# Cycle de vie de la conversation — Léon V1
 
-**Statut :** proposition de conception — décisions fonctionnelles partielles confirmées en revue, document complet non validé  
-**Version :** V1 de travail  
-**Périmètre :** BATORYA Essentiel V6 exclusivement  
-**Dépendances :** `CADRAGE_FONCTIONNEL_LEON_V1.md` et proposition de contrat de contexte minimal
+**Statut :** décisions fonctionnelles arbitrées le 27 octobre 2026 ; spécification technique à poursuivre  
+**Périmètre :** BATORYA Essentiel V6 — Léon V1 uniquement  
+**Nature :** spécification fonctionnelle ; aucune implémentation applicative n'est décrite comme existante  
+**Document de référence :** ce document remplace les propositions antérieures contradictoires sur le cycle de vie de la conversation.
 
-> Ce document précise le comportement fonctionnel attendu de la mémoire conversationnelle. Les décisions explicitement marquées comme confirmées ont été validées lors de la revue, mais le document complet et son architecture restent à valider.
+## 1. Objectif et principes
 
-## 1. Objectif
+Ce document définit le démarrage, la continuité, l'annulation, l'expiration et la suppression d'une conversation de Léon V1.
 
-Définir comment Léon conserve le fil d'une conversation, le reprend après un changement d'écran et cesse de s'appuyer sur son contexte après une période d'inactivité.
+Principes retenus :
 
-Le principe déjà retenu dans le cadrage est une expiration après **30 minutes d'inactivité**. Pour éviter les interprétations divergentes, la proposition ci-dessous définit l'inactivité comme l'absence d'interaction de l'utilisateur avec Léon, et non l'absence de navigation dans BATORYA.
+- Léon est un assistant local, sollicité explicitement. L'ouverture du panneau ou la navigation dans BATORYA ne déclenche aucune inférence.
+- Une seule génération peut être active à la fois.
+- La mémoire conversationnelle est temporaire et conservée en RAM uniquement.
+- La fermeture du panneau n'est pas la fermeture de la conversation.
+- La fermeture complète de BATORYA met fin à la conversation.
+- La mémoire conversationnelle, les connaissances documentées et les données métier sont trois catégories séparées.
+- Léon reste en lecture seule côté métier : aucune création, modification, suppression, validation ou autre action métier.
 
-## 2. Principes directeurs
+## 2. Démarrage et continuité
 
-1. **Continuité :** un changement d'écran ou de module ne démarre pas, à lui seul, une nouvelle conversation.
-2. **Demande prioritaire :** l'objectif formulé par l'utilisateur reste le fil directeur. L'écran courant est un contexte complémentaire, pas une nouvelle intention supposée.
-3. **Mémoire utile :** Léon conserve uniquement les éléments nécessaires pour comprendre les références, éviter les répétitions et poursuivre la résolution.
-4. **Pas de traitement en arrière-plan :** la conservation du contexte ne déclenche pas de traitement IA lorsque l'utilisateur ne sollicite pas Léon.
-5. **Expiration claire :** après 30 minutes sans interaction avec Léon, le contexte conversationnel expire et ne doit plus être présenté comme disponible.
-6. **Séparation des données :** la mémoire conversationnelle n'est ni la base métier BATORYA, ni une copie durable des dossiers clients ou documents.
-7. **Fiabilité :** une information conservée en mémoire n'est pas automatiquement une donnée métier encore à jour. Une donnée susceptible d'avoir changé doit être vérifiée à nouveau par une lecture autorisée.
-8. **Minimisation des données :** la mémoire ne conserve que les informations nécessaires à la continuité de la conversation. Elle évite de recopier inutilement des données personnelles ou confidentielles et le contenu intégral des documents métier.
-9. **Gestion des informations manquantes :** Léon ne comble jamais une lacune de mémoire par une supposition présentée comme certaine. Si l'information manquante empêche une réponse fiable ou l'identification certaine d'un objet métier, il pose une question de clarification ciblée.
+### 2.1 Ouverture et fermeture du panneau
 
-## 3. Ce que la mémoire doit conserver
+- Ouvrir le panneau Léon ne lance pas le modèle et ne démarre aucune génération.
+- Fermer le panneau ne supprime pas la conversation et n'interrompt pas une génération en cours.
+- Une génération continue en arrière-plan lorsque le panneau est fermé.
+- À la réouverture, l'utilisateur retrouve l'état de la conversation tant qu'elle n'a pas expiré et que BATORYA n'est pas fermé.
 
-Pendant une conversation active, Léon peut conserver les éléments pertinents suivants :
+### 2.2 Une réponse terminée n'est pas une conversation terminée
 
-- l'objectif principal de l'utilisateur, la question à résoudre et les différents sujets secondaires ouverts dans la même conversation, chacun avec sa progression et ses éventuelles questions en attente ;
-- les précisions et réponses apportées par l'utilisateur ;
-- les corrections pertinentes apportées par l'utilisateur, afin de remplacer l'interprétation invalidée par l'information corrigée, sans conserver inutilement le détail de l'erreur initiale ;
-- les interprétations confirmées ou les ambiguïtés qui restent ouvertes ;
-- la nature des informations conservées, en distinguant explicitement les faits métier vérifiés (avec leur moment de vérification si utile), les déclarations de l'utilisateur et les hypothèses non confirmées ;
-- les faits métier effectivement vérifiés, avec assez d'information pour savoir ce qui a été vérifié et ce qui doit l'être à nouveau ;
-- les éléments déjà établis qui peuvent être réutilisés sans répétition systématique, en les rappelant seulement lorsqu'ils aident à comprendre, justifier la réponse ou confirmer l'objet concerné ;
-- les étapes déjà expliquées et la progression de l'accompagnement ;
-- les références aux objets métier déjà identifiés de façon fiable ;
-- les engagements de dialogue utiles, notamment les questions en attente et les précisions attendues de l'utilisateur, afin qu'une réponse ultérieure puisse être interprétée correctement même après un changement d'écran.
+La fin d'une génération libère Léon pour une nouvelle demande. Elle n'efface ni l'historique ni le contexte conversationnel. La conversation reste disponible jusqu'à l'expiration, à une réinitialisation explicite ou à la fermeture complète de BATORYA.
 
-La mémoire n'a pas vocation à conserver systématiquement chaque détail de l'interface, toutes les données renvoyées par les services, ni une copie complète des objets métier. Elle applique un principe de minimisation : conserver uniquement les éléments utiles à la continuité (par exemple une référence d'objet, son objet et quelques faits pertinents), sans recopier inutilement les coordonnées personnelles, coordonnées bancaires, autres informations confidentielles ou le contenu intégral d'un document.
+### 2.3 Contexte utilisé par Léon
 
-**Décision confirmée en revue :** la continuité repose sur deux éléments complémentaires :
-- un résumé structuré de la conversation, contenant l'objectif, les précisions utiles, les faits vérifiés et la progression ;
-- les derniers échanges utiles, pour préserver le contexte immédiat et interpréter correctement les références courtes.
+Pour la V1, Léon ne reçoit pas automatiquement le contexte de la page ou de l'écran affiché. Il s'appuie sur le message de l'utilisateur, les connaissances documentées et, lorsque la demande le nécessite, des données métier fournies ponctuellement par un mécanisme autorisé en lecture seule.
 
-Le résumé est actualisé à l'occasion des interactions avec Léon, sans traitement IA en arrière-plan. La taille du résumé et le nombre d'échanges récents conservés restent à définir techniquement. La mémoire doit respecter un budget technique global à définir, plutôt qu'un nombre fixe de sujets. En cas de contrainte de capacité, la priorité va à la demande active, aux questions en attente, aux faits vérifiés pertinents et aux échanges récents utiles. Si une information est écartée, Léon ne doit plus s'y fier et doit demander une précision si elle redevient nécessaire. Si plusieurs messages utilisateur arrivent avant la fin d'une réponse, Léon les traite comme une même demande lorsque leur lien est clair, plutôt que de lancer des réponses concurrentes. En cas de contradiction ou d'ambiguïté importante, il demande une clarification. Si un nouveau message correspond clairement à une demande indépendante, Léon termine la réponse déjà en cours, puis traite la nouvelle demande ; il ne l'interrompt pas automatiquement. Il n'est pas exigé de conserver indéfiniment l'intégralité des messages mot pour mot.
+Les services et données métier accessibles ne sont pas exhaustivement définis dans ce document. Ils seront précisés à mesure que BATORYA sera conçu et implémenté. Si une donnée requise n'est pas disponible, Léon le signale et ne la devine pas.
 
-## 4. Ce que la mémoire ne doit pas faire
+## 3. Gestion d'une génération
 
-La mémoire conversationnelle :
+### 3.1 Un seul message en traitement
 
-- ne remplace pas le contexte d'écran transmis à l'activation de Léon ;
-- ne remplace pas une nouvelle lecture métier lorsque le statut, le montant, l'échéance ou toute autre donnée peut avoir changé ;
-- ne présente pas un ancien résultat comme actuel si une nouvelle lecture métier échoue ou est indisponible ;
-- ne transforme pas une hypothèse en fait vérifié ;
-- ne continue pas à utiliser une interprétation que l'utilisateur a explicitement corrigée ;
-- ne confond pas une déclaration de l'utilisateur avec une donnée métier vérifiée indépendamment ;
-- ne résout pas silencieusement une contradiction entre une déclaration de l'utilisateur et une donnée métier lue dans BATORYA ;
-- ne donne aucun droit d'accès supplémentaire aux données métier ;
-- ne conserve pas inutilement les données personnelles ou confidentielles, les coordonnées bancaires ni le contenu intégral des documents métier ;
-- ne permet aucune écriture ou action métier ;
-- ne doit pas persister indéfiniment simplement parce que BATORYA reste ouvert ;
-- ne doit pas être supprimée par la seule fermeture du panneau de Léon ; le contexte reste en RAM et le délai d'inactivité continue de s'écouler ;
-- ne doit pas être entretenue par un traitement IA périodique ou en arrière-plan ;
-- ne nécessite pas d'afficher un compte à rebours permanent ou un indicateur visuel du temps restant.
+Pendant que Léon génère une réponse, la saisie et l'envoi d'un nouveau message sont bloqués. Aucun message n'est placé en file d'attente et aucune génération concurrente n'est lancée.
 
-## 5. Changement d'écran pendant une conversation
+Si l'utilisateur veut envoyer une autre demande avant la fin, il doit d'abord annuler la génération en cours.
 
-Un changement d'écran ne doit ni effacer l'objectif en cours, ni être interprété automatiquement comme une nouvelle demande.
+### 3.2 Annulation volontaire
 
-Lors d'une nouvelle interaction avec Léon, BATORYA peut lui transmettre l'écran alors affiché, conformément au contrat de contexte. Léon peut alors utiliser ce nouvel écran comme contexte complémentaire du message de suivi.
+L'utilisateur peut arrêter explicitement une génération. Après l'annulation :
 
-En revanche, le nouvel écran ne doit pas réécrire rétroactivement le contexte associé à une demande précédente. Si une réponse est déjà en cours de préparation, un changement d'écran seul ne doit pas en modifier silencieusement le sens.
+1. la génération est réellement interrompue ;
+2. les ressources mobilisées par cette génération sont libérées ;
+3. la partie de réponse déjà produite reste visible et porte la mention « Réponse interrompue » ;
+4. cette réponse partielle reste dans le contexte de la conversation active ;
+5. l'utilisateur peut envoyer une nouvelle demande.
 
-**Exemple :**
-1. L'utilisateur demande de l'aide pour retrouver un client pendant la préparation d'un devis.
-2. Il ouvre le carnet clients.
-3. Il revient vers Léon et précise qu'il ne trouve toujours pas le client.
-4. Léon conserve l'objectif de départ, tient compte du nouvel écran transmis à cette interaction et demande une lecture autorisée si des données sont nécessaires.
-5. Il ne recommence pas toute la conversation et ne suppose pas que le changement d'écran a résolu le problème.
+Léon peut s'appuyer sur la réponse partielle pour interpréter la demande suivante. Il doit la traiter comme incomplète, jamais comme une réponse terminée ou comme une information métier vérifiée. Si la nouvelle demande est ambiguë, il demande une précision plutôt que de supposer.
 
-Si le message suivant ne permet pas de déterminer s'il se rattache à la demande précédente ou s'il s'agit d'un nouveau sujet, Léon interprète le contexte lorsqu'il est suffisamment clair et ne pose une question que si l'ambiguïté change substantiellement la réponse. Il réutilise les faits déjà établis sans les répéter systématiquement ; il les rappelle uniquement lorsque cela facilite la compréhension, justifie la réponse ou aide à confirmer l'objet concerné. Lorsqu'une correction de l'utilisateur invalide une interprétation précédente, Léon remplace cette interprétation par la correction et ne s'appuie plus sur l'association erronée.
+### 3.3 Délai maximal de génération
 
-## 6. Règle des 30 minutes d'inactivité — confirmée en revue
+Une génération ne doit pas pouvoir tourner indéfiniment. Un délai maximal sera défini à partir des essais du modèle local sur le matériel cible ; aucune durée chiffrée n'est fixée à ce stade.
 
-Pour la V1, les règles suivantes sont confirmées :
+En cas de dépassement :
 
-- le délai de 30 minutes est calculé depuis la dernière interaction de l'utilisateur avec Léon ;
-- en fonctionnement normal, envoyer un nouveau message à Léon renouvelle le délai ; plusieurs messages successifs avant la fin d'une réponse sont regroupés dans une même demande lorsqu'ils sont clairement liés, sans lancer de réponses concurrentes. Pendant la génération, le délai ne peut pas faire expirer le tour en cours ; après délivrance de la réponse, un nouveau délai complet de 30 minutes commence ;
-- une réponse en cours de génération ne doit pas être interrompue automatiquement, que ce soit parce que le délai arrive à échéance ou parce qu'une nouvelle demande indépendante est reçue ; le contexte reste disponible pour terminer ce tour. Le délai glissant de 30 minutes repart à la fin de la réponse, une fois celle-ci délivrée à l'utilisateur ;
-- la navigation dans BATORYA, l'ouverture ou la fermeture d'un module, la fermeture du panneau de Léon et le maintien de l'application ouverte ne renouvellent pas le délai ; fermer le panneau ne supprime pas la mémoire, qui reste disponible jusqu'à expiration ou réinitialisation ;
-- un traitement interne ou une lecture métier en cours ne constitue pas, à lui seul, une interaction utilisateur renouvelant le délai ;
-- après 30 minutes sans interaction avec Léon, la conversation est considérée comme expirée.
+- la génération est arrêtée ;
+- les ressources sont libérées ;
+- la réponse partielle reste visible avec la mention « Réponse interrompue » ;
+- le contexte conversationnel est conservé tant qu'il n'a pas expiré ;
+- l'utilisateur peut réessayer.
 
-Le choix fonctionnel est confirmé. La manière technique de mesurer et d'appliquer le délai reste à définir. Aucun compte à rebours permanent ni indicateur visuel du temps restant n'est affiché ; l'expiration est silencieuse et n'est expliquée que si cela devient utile à la demande de l'utilisateur.
+### 3.4 Erreur technique
 
-## 7. Comportement à l'expiration
+Si le moteur local échoue pendant la génération :
+
+- Léon signale l'échec technique ;
+- la réponse partielle reste visible avec une indication d'échec technique ;
+- le contexte conversationnel reste disponible jusqu'à son expiration ;
+- les ressources de génération sont libérées ;
+- aucune relance automatique n'est effectuée.
+
+Une réponse partielle, interrompue ou affectée par une erreur ne doit jamais être présentée comme complète.
+
+## 4. Expiration après 30 minutes
+
+### 4.1 Règle de délai
+
+La conversation expire après 30 minutes d'inactivité. Le délai est établi à partir de l'événement pertinent le plus récent : la réception du dernier message de l'utilisateur ou la fin de la dernière génération.
+
+La génération en cours n'est pas interrompue par le seul écoulement du délai de mémoire. À la fin de la génération — réponse terminée, annulation, dépassement du délai maximal ou erreur — le délai d'inactivité est recalculé à partir de l'événement le plus récent.
+
+Les événements suivants ne réinitialisent pas le délai : ouvrir ou fermer le panneau Léon, naviguer dans BATORYA, changer de module, laisser l'application ouverte ou effectuer un traitement interne. La fermeture du panneau n'efface pas la conversation.
+
+### 4.2 Nettoyage effectif
+
+L'expiration doit être appliquée par deux mécanismes complémentaires :
+
+1. un nettoyage automatique après le délai ;
+2. une vérification de l'expiration avant toute nouvelle interaction transmise au modèle.
+
+Si le nettoyage automatique a été retardé, la vérification préalable doit effacer le contexte expiré avant qu'il puisse être réutilisé.
 
 À l'expiration :
 
-1. Léon ne doit plus utiliser le contexte conversationnel expiré pour interpréter une nouvelle demande.
-2. La prochaine sollicitation démarre une nouvelle conversation sans présumer que l'objectif précédent, ses précisions ou ses références sont encore disponibles.
-3. Si l'utilisateur fait référence à la conversation précédente — par exemple « on reprend où on en était ? » — Léon indique brièvement qu'il ne dispose plus du contexte nécessaire, puis demande uniquement les informations indispensables pour reprendre. Il ne tente pas de reconstruire l'échange à partir de suppositions.
-4. Les données métier de BATORYA ne sont ni supprimées ni modifiées par l'expiration de la mémoire.
-5. Aucun message ne doit laisser croire que Léon a conservé des informations qui ont été supprimées ou ne sont plus accessibles.
+- l'historique visible disparaît du panneau, même si celui-ci reste ouvert ;
+- le contexte conversationnel temporaire est effacé ;
+- Léon revient à son état initial ;
+- la prochaine demande démarre silencieusement une nouvelle conversation ;
+- aucun avertissement préalable ou message d'expiration n'est affiché.
 
-Il est préférable de ne pas imposer à l'utilisateur un récapitulatif complet : Léon demande uniquement les éléments indispensables pour comprendre à nouveau la demande. Les questions en attente et les précisions attendues sont abandonnées avec le contexte expiré.
+L'ancienne conversation ne doit pas être reconstruite à partir de suppositions. Les connaissances documentées ne sont pas effacées. L'expiration de la conversation ne supprime ni ne modifie les données métier de BATORYA.
 
-## 8. Nouvelle conversation et changement de sujet
+## 5. Nouvelle conversation demandée par l'utilisateur
 
-L'expiration au bout de 30 minutes est distincte d'un changement de sujet avant expiration.
+Une action « Nouvelle conversation » permet de repartir de zéro sans attendre l'expiration.
 
-Lorsqu'un utilisateur pose clairement une nouvelle question sans lien avec la précédente, Léon doit répondre à cette nouvelle demande sans forcer artificiellement l'ancien objectif dans l'interprétation. Les éléments antérieurs peuvent rester disponibles tant qu'ils sont utiles à une référence ultérieure et que la conversation n'a pas expiré. Si plusieurs sujets sont traités dans la même conversation, Léon conserve un objectif principal et distingue les sujets secondaires, leur progression et leurs questions en attente afin de pouvoir y revenir sans mélanger leurs informations. Il suit naturellement un nouveau sujet sans annoncer systématiquement le changement ; il ne le signale que si cela permet d'éviter une confusion importante.
+- Si la conversation est vide, l'action s'exécute immédiatement, sans confirmation.
+- Si des messages existent, une confirmation est demandée.
+- Si l'utilisateur annule la confirmation, la conversation reste inchangée et une génération en cours continue.
+- Si l'utilisateur confirme, toute génération en cours est annulée, puis l'historique et le contexte temporaire sont effacés.
+- La nouvelle conversation est affichée vierge et prête à recevoir un message.
 
-**Décision confirmée en revue :** l'utilisateur pourra démarrer explicitement une nouvelle conversation au moyen d'une action dédiée dans l'interface de Léon, distincte du simple changement de sujet. Cette action abandonne immédiatement le contexte conversationnel précédent, y compris les questions en attente et les précisions attendues, sans attendre l'expiration des 30 minutes. Aucun récapitulatif n'est généré automatiquement avant cette suppression. Si l'utilisateur souhaite conserver des éléments, il peut demander un résumé avant de démarrer la nouvelle conversation ; ce résumé constitue une réponse ordinaire et n'est pas restauré automatiquement dans le nouveau contexte. Les détails d'emplacement et de présentation du contrôle restent à concevoir. Un simple changement de sujet ne déclenche pas à lui seul la suppression de toute la mémoire.
+Aucun résumé n'est généré automatiquement avant l'effacement. L'action ne supprime ni les connaissances documentées ni les données métier.
 
-## 9. Données métier et fraîcheur des informations
+## 6. Fermeture complète de BATORYA
 
-La mémoire peut retenir qu'une lecture a été effectuée et ce qu'elle a établi à cet instant. Elle ne doit pas considérer automatiquement que le résultat demeure actuel.
+La fermeture complète de BATORYA met immédiatement fin à la conversation :
 
-Exemples :
-- le statut d'un devis peut avoir changé ;
-- un règlement peut avoir été enregistré depuis la dernière vérification ;
-- une échéance ou un montant peut ne plus correspondre à l'état présent.
+- toute génération en cours est interrompue ;
+- le moteur est arrêté proprement et les ressources sont libérées ;
+- l'historique et le contexte conversationnel ne sont pas sauvegardés sur disque ;
+- la conversation n'est pas restaurée au prochain lancement.
 
-Si la réponse de suivi dépend de l'état métier actuel, BATORYA doit fournir une nouvelle lecture autorisée. Si cette lecture est indisponible, Léon indique simplement que la vérification n'a pas abouti. Il peut conserver le dernier résultat vérifié s'il reste utile, mais doit le marquer comme ancien et ne jamais le présenter comme l'état actuel. Il propose une prochaine étape adaptée sans prétendre avoir effectué une vérification qui a échoué. Dans la mémoire, les résultats de lecture métier restent identifiés comme des faits vérifiés à un instant donné ; les propos de l'utilisateur sont conservés comme ses déclarations, et les hypothèses non confirmées restent clairement marquées comme telles. Si une déclaration de l'utilisateur contredit une donnée métier lue dans BATORYA, Léon conserve leur origine distincte, signale brièvement la contradiction et, si la réponse dépend de l'état actuel, demande une nouvelle lecture métier autorisée. Il ne privilégie pas silencieusement l'une des deux informations et ne modifie aucune donnée.
+La fermeture de l'application est prioritaire : BATORYA n'attend pas la fin d'une génération qui ne sera pas conservée.
 
-## 10. Stockage, confidentialité et suppression — choix fonctionnel confirmé
+## 7. Séparation des informations
 
-**Décision confirmée en revue :** pour la V1, la mémoire conversationnelle est conservée uniquement en mémoire vive (RAM). Elle n'est pas enregistrée dans SQLite ni dans un fichier et n'est pas restaurée après fermeture de BATORYA.
+### 7.1 Mémoire conversationnelle
 
-Conséquences attendues :
-- à l'expiration des 30 minutes, le contexte conversationnel est supprimé ;
-- lorsqu'une nouvelle conversation est demandée explicitement, le contexte précédent est supprimé immédiatement, sans générer automatiquement de synthèse ; l'utilisateur peut demander un résumé avant cette action, mais celui-ci n'est pas réinjecté automatiquement dans la nouvelle conversation ;
-- à la fermeture normale ou à l'arrêt inattendu de BATORYA, la mémoire disparaît et n'est pas restaurée à la prochaine ouverture ;
-- si BATORYA se ferme pendant la génération d'une réponse de Léon, la génération est interrompue avec l'application ; à la prochaine ouverture, Léon ne reprend pas automatiquement cette génération et ne restaure pas la conversation interrompue ;
-- les données métier dans SQLite ne sont pas modifiées par ces suppressions ;
-- aucun traitement IA périodique ou en arrière-plan n'est lancé pour entretenir la mémoire.
+Elle contient temporairement les messages et les éléments nécessaires à la continuité de l'échange, notamment les précisions de l'utilisateur et les réponses partielles. Elle est conservée en RAM uniquement, puis effacée à l'expiration, à la réinitialisation ou à la fermeture complète de BATORYA.
 
-Restent à définir dans la conception technique :
-- le budget global de mémoire et les règles de priorité/éviction des éléments, sans fixer un nombre maximal arbitraire de sujets ;
-- comment isoler le contexte de la conversation active et éviter qu'il soit partagé entre utilisateurs éventuels du même poste ;
-- comment supprimer effectivement les références et buffers de contexte à l'expiration ou à la réinitialisation, dans les limites garanties par l'environnement d'exécution ;
-- quelles données, le cas échéant, peuvent apparaître dans les journaux techniques et comment éviter d'y copier le contenu conversationnel ;
-- comment tester que la fermeture ou un arrêt inattendu ne restaure pas de mémoire expirée.
+### 7.2 Connaissances documentées
 
-La mémoire en RAM est un choix fonctionnel pour la V1 ; ses modalités d'implémentation et de vérification restent à spécifier.
+Les explications sur le fonctionnement de BATORYA, son vocabulaire, ses procédures et ses règles métier validées sont conservées dans une documentation locale versionnée. Elles ne sont pas supprimées à la fin d'une conversation.
 
-## 11. Séquence fonctionnelle de référence
+### 7.3 Données métier
 
-1. L'utilisateur active Léon et formule une demande.
-2. BATORYA transmet le message, l'écran affiché à l'activation et, si utile et déjà disponible, les éléments pertinents de la conversation en cours.
-3. Léon interprète la demande à la lumière de son objectif conversationnel et du contexte d'écran complémentaire.
-4. Si nécessaire, une lecture métier ciblée est exécutée par un service autorisé en lecture seule.
-5. Léon répond et conserve les éléments utiles à la continuité.
-6. Une nouvelle interaction utilisateur avec Léon renouvelle le délai d'inactivité ; la navigation seule ne le fait pas.
-7. Après 30 minutes sans interaction avec Léon, le contexte conversationnel expire.
-8. À la sollicitation suivante, Léon démarre sans s'appuyer sur le contexte expiré.
+Léon ne suppose pas connaître les données propres à l'utilisateur. Une lecture métier autorisée n'est effectuée que si la demande l'exige et si un mécanisme de lecture existe. Les calculs ou vérifications métier doivent s'appuyer sur les résultats fiables fournis par BATORYA.
 
-Cette séquence est une référence fonctionnelle proposée, pas la description d'une implémentation existante.
+Les données lues peuvent être utilisées dans le contexte de la conversation active lorsque c'est nécessaire, mais ne constituent pas une mémoire personnelle persistante de Léon. Aucun cache métier indépendant entre conversations n'est prévu pour V1. Une donnée susceptible d'avoir changé doit être vérifiée à nouveau avant d'être présentée comme actuelle.
 
-## 12. Critères d'acceptation proposés
+## 8. Critères d'acceptation fonctionnels
 
-Le cycle de vie sera suffisamment défini pour être traduit en conception technique lorsque la revue permettra de vérifier que :
+La conception et les tests devront vérifier que :
 
-- un changement d'écran ne fait pas perdre le fil d'une demande en cours ;
-- l'écran transmis à une interaction est un contexte complémentaire et ne remplace pas la demande explicite ;
-- les messages de suivi peuvent réutiliser les précisions pertinentes déjà fournies sans les répéter systématiquement ;
-- plusieurs messages successifs clairement liés avant la fin d'une réponse sont traités comme une même demande ; en cas de contradiction ou d'ambiguïté importante, Léon demande une clarification plutôt que de produire des réponses concurrentes ;
-- si un message reçu pendant la génération constitue clairement une demande indépendante, Léon termine la réponse en cours puis traite cette nouvelle demande ; l'interruption volontaire éventuelle reste à définir séparément ;
-- les faits déjà établis ne sont rappelés que lorsqu'ils sont utiles à la compréhension, à la justification de la réponse ou à la confirmation de l'objet concerné ;
-- les corrections de l'utilisateur remplacent les interprétations invalidées ; l'erreur initiale n'est pas conservée au-delà de ce qui est nécessaire pour éviter de la reproduire ;
-- une réponse à une question en attente peut être comprise après un changement d'écran, tant que la conversation n'a pas expiré ou été réinitialisée ;
-- les questions en attente sont abandonnées lors de l'expiration ou du démarrage explicite d'une nouvelle conversation ;
-- les données métier susceptibles d'avoir changé sont revérifiées avant de servir de faits actuels ;
-- la navigation seule et la fermeture du panneau de Léon ne renouvellent pas le délai d'inactivité ; la fermeture du panneau ne supprime pas la mémoire ;
-- le délai de 30 minutes est appliqué sans interrompre arbitrairement une réponse en cours ; si la génération dépasse ce délai, le contexte reste disponible jusqu'à la fin de la réponse et le délai repart lorsque la réponse est délivrée ;
-- après expiration, Léon ne prétend pas connaître l'ancien contexte ;
-- l'expiration est silencieuse et ne déclenche ni notification automatique ni traitement IA en arrière-plan ; aucun compte à rebours permanent ni indicateur visuel du temps restant n'est affiché ;
-- la reprise après expiration indique brièvement que le contexte précédent n'est plus disponible, puis demande seulement les informations indispensables, sans reconstruire la conversation par supposition ;
-- une information manquante qui empêche une réponse fiable entraîne une question de clarification ciblée, jamais une supposition présentée comme un fait ;
-- les faits métier vérifiés, les déclarations de l'utilisateur et les hypothèses non confirmées restent explicitement distingués dans la mémoire ;
-- en cas de contradiction entre une déclaration utilisateur et une donnée métier vérifiée, Léon conserve l'origine de chacune, signale la contradiction et demande une nouvelle lecture autorisée si l'état actuel est déterminant ;
-- la mémoire ne conserve que les données nécessaires à la continuité et évite les copies inutiles de données personnelles ou confidentielles et de documents complets ;
-- l'expiration de la mémoire ne modifie aucune donnée métier ;
-- aucun traitement IA en arrière-plan n'est déclenché pour entretenir la mémoire ;
-- le mécanisme de stockage et de suppression est défini avant implémentation ;
-- le budget technique global de mémoire et les règles de priorité/éviction sont définis, sans nombre fixe de sujets ; si un élément évincé devient nécessaire, Léon demande une précision plutôt que de l'inventer ;
-- une fermeture pendant la génération interrompt la réponse et ne provoque aucune reprise ou restauration automatique au redémarrage.
+- ouvrir le panneau ne déclenche pas de génération ;
+- fermer le panneau n'annule pas la génération et ne supprime pas la conversation ;
+- la saisie et l'envoi sont bloqués pendant une génération ;
+- l'utilisateur peut annuler une génération et envoyer ensuite un nouveau message ;
+- une réponse partielle annulée reste visible, marquée « Réponse interrompue » et utilisable comme contexte incomplet ;
+- une erreur technique est signalée, la réponse partielle est conservée et aucune relance automatique n'a lieu ;
+- le dépassement du délai maximal interrompt la génération et conserve la réponse partielle ;
+- la mémoire expire après 30 minutes selon la règle définie ;
+- l'expiration efface l'historique affiché et le contexte, sans avertissement ;
+- toute interaction vérifie l'expiration avant d'utiliser le contexte ;
+- « Nouvelle conversation » demande confirmation uniquement si des messages existent ;
+- confirmer une nouvelle conversation annule toute génération en cours et efface l'ancien contexte ;
+- fermer BATORYA interrompt immédiatement la génération et aucune conversation n'est restaurée au redémarrage ;
+- les connaissances documentées et les données métier restent séparées de la mémoire conversationnelle ;
+- aucune écriture métier n'est possible depuis Léon.
 
-## 13. Décisions confirmées et points restant à arbitrer
+## 9. Évolutions futures — hors périmètre V1
 
-### Décisions fonctionnelles confirmées en revue
+**Confidentialité des traces résiduelles du système d'exploitation**
 
-**Durée de vie et déclencheurs**
-1. Le délai d'inactivité est de 30 minutes et se mesure à partir des interactions de l'utilisateur avec Léon ; la navigation seule, l'ouverture/fermeture d'un module et le maintien de BATORYA ouvert ne le renouvellent pas.
-2. Une réponse déjà en cours n'est pas interrompue automatiquement par l'expiration du délai. Le contexte reste disponible jusqu'à la délivrance de cette réponse, puis le délai de 30 minutes repart à partir de sa délivrance.
-3. La fermeture du panneau de Léon ne supprime pas le contexte : celui-ci reste en RAM et le délai continue de s'écouler. La fermeture de BATORYA, normale ou inattendue, met fin au contexte et aucune conversation interrompue n'est restaurée au redémarrage.
-4. L'expiration est silencieuse : pas de notification, de compte à rebours permanent, d'indicateur du temps restant ni de traitement IA en arrière-plan. Si l'utilisateur fait référence à un échange expiré, Léon explique brièvement que le contexte n'est plus disponible.
+Pour une version ultérieure, étudier les moyens de limiter les traces résiduelles des conversations pouvant résulter du fonctionnement du système d'exploitation ou des outils de diagnostic, notamment :
 
-**Conversation et continuité**
-5. La mémoire combine un résumé structuré et les derniers échanges utiles, plutôt que de conserver indéfiniment l'historique intégral. Elle est actualisée uniquement à l'occasion des interactions avec Léon.
-6. Le changement d'écran ne supprime pas l'objectif en cours et l'écran transmis à la prochaine interaction reste un contexte complémentaire ; il ne réécrit pas rétroactivement les demandes précédentes.
-7. Une même conversation peut contenir plusieurs sujets. Léon conserve un objectif principal et distingue les sujets secondaires, leur progression et leurs questions en attente ; le délai d'inactivité reste global à la conversation.
-8. Léon suit naturellement un changement de sujet sans l'annoncer systématiquement, sauf si le signaler évite une confusion importante. Un changement de sujet n'efface pas à lui seul la mémoire.
-9. Les questions en attente et les précisions attendues sont conservées pour interpréter les réponses ultérieures, y compris après un changement d'écran, et sont abandonnées à l'expiration ou à la réinitialisation.
-10. Plusieurs messages utilisateur successifs reçus avant la fin d'une réponse sont traités comme une même demande lorsqu'ils sont clairement liés. Léon évite les réponses concurrentes et demande une clarification ciblée en cas de contradiction ou d'ambiguïté importante.
-11. Si une demande clairement indépendante arrive pendant la génération d'une réponse, Léon termine la réponse en cours avant de traiter la nouvelle demande. L'interruption volontaire d'une génération reste à définir séparément.
+- fichier d'échange ou pagination mémoire ;
+- dumps mémoire et rapports de plantage ;
+- journaux techniques et diagnostics ;
+- autres mécanismes de stockage temporaire susceptibles de contenir des fragments de conversation.
 
-**Contenu, fiabilité et minimisation**
-12. La mémoire conserve les éléments nécessaires à la continuité : objectif, précisions, progression, références fiables aux objets métier, faits pertinents et questions en attente. Elle n'a pas vocation à conserver indéfiniment tous les messages mot pour mot.
-13. Léon réutilise les faits et précisions déjà établis sans les répéter systématiquement ; il les rappelle seulement lorsqu'ils aident à comprendre ou justifier la réponse, ou à confirmer l'objet concerné.
-14. Une correction utilisateur remplace l'interprétation invalidée ; Léon ne réutilise pas cette interprétation et ne conserve pas inutilement le détail de son erreur.
-15. La mémoire distingue les faits métier vérifiés (avec le moment de vérification lorsque pertinent), les déclarations de l'utilisateur et les hypothèses non confirmées. Une hypothèse ne devient pas un fait vérifié par simple répétition.
-16. Si une déclaration utilisateur contredit une donnée métier vérifiée, Léon conserve séparément les deux informations et leur origine, signale brièvement la contradiction et demande une nouvelle lecture métier autorisée si l'état actuel est déterminant. Il ne modifie aucune donnée.
-17. Si une lecture métier échoue, Léon le signale. Il peut conserver un résultat antérieur utile en le marquant comme ancien, mais ne le présente jamais comme actuel et ne prétend pas avoir vérifié ce qui n'a pas pu l'être.
-18. Si une information manquante empêche une réponse fiable ou l'identification certaine d'un objet métier, Léon pose une question ciblée au lieu de deviner.
-19. La mémoire applique un principe de minimisation : elle conserve uniquement les éléments nécessaires à la continuité et évite les copies inutiles de données personnelles ou confidentielles, de coordonnées bancaires et de documents métier complets.
-20. La mémoire reste distincte des données métier et ne permet aucune écriture ni action métier. Son expiration ne modifie aucune donnée métier.
+Cette étude devra définir les protections réalistes, leurs limites, leurs effets sur les performances et les moyens de les tester. Elle ne doit pas conduire à promettre un effacement physique absolu. Ce sujet est explicitement hors périmètre de Léon V1.
 
-**Stockage et réinitialisation**
-21. La mémoire conversationnelle V1 est conservée uniquement en RAM : aucune persistance dans SQLite ou dans un fichier et aucune restauration après fermeture de BATORYA.
-22. Une action dédiée « Nouvelle conversation » permet de supprimer immédiatement le contexte précédent, y compris les questions en attente, sans attendre l'expiration. Aucun résumé n'est généré automatiquement ; si l'utilisateur demande un résumé avant cette action, il reste une réponse ordinaire et n'est pas réinjecté automatiquement dans la nouvelle conversation.
-23. Le budget mémoire est global et non fondé sur un nombre fixe de sujets. La demande active, les questions en attente, les faits vérifiés pertinents et les derniers échanges utiles sont prioritaires. Si un élément écarté redevient nécessaire, Léon demande une précision plutôt que de prétendre s'en souvenir ou de l'inventer.
+## 10. Points techniques restant à spécifier
 
-### Points restant à arbitrer ou à spécifier
+Les règles fonctionnelles ci-dessus sont retenues. Les éléments suivants restent à définir avant implémentation :
 
-1. Définir le budget technique global, la taille du résumé structuré et le nombre ou la taille des derniers échanges utiles conservés.
-2. Préciser le comportement de l'interface et les règles de mise en file des messages reçus pendant une génération, notamment la possibilité éventuelle d'interrompre volontairement une réponse.
-3. Définir les exigences techniques d'isolation du contexte entre utilisateurs éventuels du même poste, de suppression des références et buffers en RAM, et de journalisation sans contenu conversationnel inutile.
-4. Concevoir l'emplacement et la présentation de l'action « Nouvelle conversation ».
-5. Définir le mécanisme technique du délai d'inactivité, notamment sa suspension pendant une réponse longue et son redémarrage à la délivrance de celle-ci.
-6. Préparer et exécuter les tests d'acceptation couvrant navigation, suivis, sujets multiples, messages successifs, données métier périmées, échec de lecture, réinitialisation, expiration, fermeture du panneau et arrêt pendant une génération.
+1. le délai maximal de génération, mesuré sur le matériel cible ;
+2. le mécanisme d'arrêt effectif du moteur local et de libération des ressources ;
+3. le mécanisme technique de temporisation, de nettoyage automatique et de vérification avant interaction ;
+4. le format et le budget de la mémoire conversationnelle en RAM ;
+5. les services de lecture métier autorisés, au fur et à mesure de l'implémentation de BATORYA ;
+6. les tests de non-restauration après fermeture et de non-réutilisation d'un contexte expiré.
 
-**Statut :** proposition de cycle de vie partiellement confirmée en revue. Les décisions fonctionnelles ci-dessus sont retenues, mais les arbitrages techniques et la validation des critères d'acceptation restent nécessaires avant de considérer la spécification comme finalisée.
+Aucun code, schéma SQLite ou règle métier n'est modifié par cette spécification.
