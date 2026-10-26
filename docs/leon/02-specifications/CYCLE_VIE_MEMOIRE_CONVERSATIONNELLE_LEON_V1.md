@@ -110,7 +110,7 @@ L'expiration au bout de 30 minutes est distincte d'un changement de sujet avant 
 
 Lorsqu'un utilisateur pose clairement une nouvelle question sans lien avec la précédente, Léon doit répondre à cette nouvelle demande sans forcer artificiellement l'ancien objectif dans l'interprétation. Les éléments antérieurs peuvent rester disponibles tant qu'ils sont utiles à une référence ultérieure et que la conversation n'a pas expiré. Si plusieurs sujets sont traités dans la même conversation, Léon conserve un objectif principal et distingue les sujets secondaires, leur progression et leurs questions en attente afin de pouvoir y revenir sans mélanger leurs informations. Il suit naturellement un nouveau sujet sans annoncer systématiquement le changement ; il ne le signale que si cela permet d'éviter une confusion importante.
 
-**Décision confirmée en revue :** l'utilisateur pourra démarrer explicitement une nouvelle conversation au moyen d'une action dédiée dans l'interface de Léon, distincte du simple changement de sujet. Cette action abandonne immédiatement le contexte conversationnel précédent, y compris les questions en attente et les précisions attendues, sans attendre l'expiration des 30 minutes. Les détails d'emplacement et de présentation du contrôle restent à concevoir. Un simple changement de sujet ne déclenche pas à lui seul la suppression de toute la mémoire.
+**Décision confirmée en revue :** l'utilisateur pourra démarrer explicitement une nouvelle conversation au moyen d'une action dédiée dans l'interface de Léon, distincte du simple changement de sujet. Cette action abandonne immédiatement le contexte conversationnel précédent, y compris les questions en attente et les précisions attendues, sans attendre l'expiration des 30 minutes. Aucun récapitulatif n'est généré automatiquement avant cette suppression. Si l'utilisateur souhaite conserver des éléments, il peut demander un résumé avant de démarrer la nouvelle conversation ; ce résumé constitue une réponse ordinaire et n'est pas restauré automatiquement dans le nouveau contexte. Les détails d'emplacement et de présentation du contrôle restent à concevoir. Un simple changement de sujet ne déclenche pas à lui seul la suppression de toute la mémoire.
 
 ## 9. Données métier et fraîcheur des informations
 
@@ -129,7 +129,7 @@ Si la réponse de suivi dépend de l'état métier actuel, BATORYA doit fournir 
 
 Conséquences attendues :
 - à l'expiration des 30 minutes, le contexte conversationnel est supprimé ;
-- lorsqu'une nouvelle conversation est demandée explicitement, le contexte précédent est supprimé immédiatement ;
+- lorsqu'une nouvelle conversation est demandée explicitement, le contexte précédent est supprimé immédiatement, sans générer automatiquement de synthèse ; l'utilisateur peut demander un résumé avant cette action, mais celui-ci n'est pas réinjecté automatiquement dans la nouvelle conversation ;
 - à la fermeture normale ou à l'arrêt inattendu de BATORYA, la mémoire disparaît et n'est pas restaurée à la prochaine ouverture ;
 - si BATORYA se ferme pendant la génération d'une réponse de Léon, la génération est interrompue avec l'application ; à la prochaine ouverture, Léon ne reprend pas automatiquement cette génération et ne restaure pas la conversation interrompue ;
 - les données métier dans SQLite ne sont pas modifiées par ces suppressions ;
@@ -200,7 +200,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 8. Une même conversation peut contenir plusieurs sujets : la mémoire conserve un objectif principal et distingue les sujets secondaires, leur progression et leurs questions en attente. Le délai d'inactivité reste global à la conversation.
 9. Léon suit naturellement un changement de sujet sans l'annoncer systématiquement ; il ne le signale que si cela aide à éviter une confusion importante.
 8. Si une information manquante empêche une réponse fiable ou l'identification certaine d'un objet métier, Léon pose une question ciblée au lieu de deviner.
-9. Le démarrage explicite d'une nouvelle conversation passe par une action dédiée dans l'interface de Léon, distincte d'un changement de sujet ; son emplacement et sa présentation restent à concevoir.
+9. Le démarrage explicite d'une nouvelle conversation passe par une action dédiée dans l'interface de Léon, distincte d'un changement de sujet ; son emplacement et sa présentation restent à concevoir. Aucun récapitulatif n'est généré automatiquement avant la suppression du contexte ; l'utilisateur peut demander un résumé préalable, qui ne sera pas restauré automatiquement dans la nouvelle conversation.
 10. Après expiration, si l'utilisateur demande de reprendre l'ancienne conversation, Léon explique brièvement qu'il n'en a plus le contexte et demande les seules précisions nécessaires, sans inventer ni reconstruire l'échange.
 11. Si BATORYA se ferme pendant la génération d'une réponse, celle-ci est interrompue ; la génération et le contexte conversationnel ne sont pas restaurés ni repris automatiquement à la prochaine ouverture.
 12. L'expiration au bout de 30 minutes est silencieuse lorsqu'elle survient sans sollicitation de Léon : aucune notification ni aucun traitement en arrière-plan n'est déclenché. Si l'utilisateur fait ensuite référence à la conversation expirée, Léon explique brièvement que le contexte n'est plus disponible.
@@ -219,6 +219,7 @@ Le cycle de vie sera suffisamment défini pour être traduit en conception techn
 25. Si une lecture métier échoue ou est indisponible, Léon indique que la vérification n'a pas abouti. Il peut conserver le dernier résultat vérifié s'il reste utile, en le marquant comme ancien ; il ne le présente jamais comme actuel et propose une prochaine étape adaptée sans prétendre avoir vérifié l'état présent.
 26. Fermer le panneau de Léon ne supprime pas la conversation : le contexte reste en RAM et le délai glissant de 30 minutes continue de s'écouler. L'utilisateur peut reprendre le fil en rouvrant le panneau avant expiration. La fermeture du panneau ne renouvelle pas le délai.
 27. Aucun compte à rebours permanent ni indicateur visuel du temps restant n'est affiché. L'expiration reste silencieuse ; Léon explique la perte du contexte uniquement lorsqu'elle est pertinente pour répondre à une référence à l'ancienne conversation.
+28. Lors du démarrage explicite d'une nouvelle conversation, aucun résumé n'est généré automatiquement. L'utilisateur peut demander un résumé avant de déclencher l'action ; ce résumé reste une réponse ordinaire et n'est pas restauré automatiquement dans la nouvelle conversation.
 
 ### Points restant à arbitrer
 
