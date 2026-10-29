@@ -21,7 +21,7 @@ Il n'existe pas de dossier `migration/` autonome à ce stade. La migration V2 �
 - `conception/invariants.md` — invariants fonctionnels et techniques validés
 - `conception/conventions-techniques-v6.md` — conventions techniques et de code V6
 - `conception/modèle-métier-V6.md` — modèle métier V6
-- `conception/modèle-données-sqlite-v6-v3.14.md` — modèle de données SQLite V3.14, en relecture (non validée) ; dérive de la V3.12
+- `conception/modèle-données-sqlite-v6-v3.14.md` — modèle de données SQLite V3.14, révision partielle, gel décidé le 2026-10-24 ; dérive de la V3.12
 - `conception/modèle-données-sqlite-v6-v3.12.md` — modèle de données SQLite V3.12, base documentaire de la V3.14 (conservée à l'identique)
 
 ### Décisions
@@ -39,7 +39,7 @@ Le CDC V6 doit être lu conjointement avec les documents de référence ci-dessu
 
 Les décisions validées dans les invariants, le modèle métier, le modèle de données SQLite et les errata doivent être cohérentes avec le CDC. Lorsqu'une décision validée a été intégrée au CDC, le CDC présente directement la règle courante ; les documents de décisions conservent la traçabilité des corrections.
 
-Le modèle de données SQLite V3.14 est la version courante en relecture et remplace la V3.12 lors de sa validation ; la V3.12 reste la base documentaire dont elle dérive. Les modèles V3.6 à V3.11 restent historiques et ne doivent pas être réintroduits comme versions courantes.
+Le modèle de données SQLite V3.14 est la version courante (révision partielle, gel décidé le 2026-10-24) et remplace la V3.12 comme référence ; la V3.12 reste la base documentaire dont elle dérive et que la V3.14 complète sans aligner ses sections historiques sur la chaîne de migrations livrée. Les modèles V3.6 à V3.11 restent historiques et ne doivent pas être réintroduits comme versions courantes.
 
 ## Périmètre
 

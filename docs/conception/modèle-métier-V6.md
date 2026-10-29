@@ -245,7 +245,7 @@ L'avancement mesure la facturation, jamais l'avancement physique du chantier. Fa
 * À sa création : **En cours**.
 * **Terminé** ⇔ un **solde actif** existe **et** la somme des restes dus des factures actives (hors avoirs) est nulle. Un solde à 0 € ne suffit pas tant qu'un acompte ou une situation reste dû. Un avoir n'est pas un encaissement ; il intervient par la réduction du reste dû.
 * Le BC repasse En cours si un règlement ou un avoir est annulé et que la condition n'est plus remplie.
-* **Annulation** : interdite directement dès qu'une facture autre qu'un acompte non réglé existe ; une situation émise (même annulée) l'interdit toujours ; un encaissement l'interdit. Un acompte non réglé est annulé avec le BC. La correction passe sinon par avoir ou annulation de facture.
+* **Annulation** : interdite directement si un encaissement actif existe (même si la facture est neutralisée par des avoirs ; un encaissement annulé ou un remboursement n'est pas un encaissement actif), si une situation a été émise (même annulée ou créditée) ou si une facture autre qu'un acompte ou un avoir existe (même si son net après avoirs est nul). L'annulation reste possible avec un acompte non réglé, à condition qu'il ait été intégralement neutralisé par un avoir total de motif `correction_erreur`, émis avant l'annulation, dans la même transaction (D-63, INV-44). La correction passe sinon par avoir ou annulation de facture.
 * Un BC annulé reste conservé dans l'historique et ne participe plus au CA engagé.
 * Le BC n'est pas un document PDF autonome.
 
@@ -802,7 +802,7 @@ Le modèle V6 garantit notamment que :
 3. un BC est Terminé seulement si un solde actif existe et que le reste dû des factures actives (hors avoirs) est nul ;
 4. le contenu contractuel des devis rattachés à un BC est verrouillé, au niveau du BC, dès l'émission de la première facture ; un avoir, même intégral, ne le rouvre pas ;
 5. avant cette première facture, un devis reste modifiable par révision et sa nouvelle version, acceptée de nouveau par le client, est synchronisée dans le BC ;
-6. un BC dont la facturation dépasse un acompte non réglé ne peut pas être annulé directement ; une situation émise (même annulée) l'interdit toujours ;
+6. un BC dont la facturation dépasse un acompte non réglé ne peut pas être annulé directement ; une situation émise (même annulée ou créditée) ou un encaissement actif l'interdit toujours ; un acompte non réglé n'autorise l'annulation que s'il est intégralement neutralisé par un avoir de motif `correction_erreur` émis avant l'annulation (D-63, INV-44) ;
 7. le solde est toujours la facture finale ; un solde à 0 € est autorisé ; aucune situation, aucun acompte et aucun nouvel avoir-solde après un solde actif ;
 8. une facture peut recevoir plusieurs règlements ; le reste à payer est calculé, jamais saisi ; un encaissement ne dépasse pas le reste dû ;
 9. une facture payée ne disparaît jamais pour corriger une erreur : l'avoir corrige ;
